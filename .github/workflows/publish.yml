@@ -1,0 +1,61 @@
+name: Publish to NPM
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for provenance
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build all packages
+        run: npm run build --workspaces --if-present
+
+      - name: Run tests
+        run: npm test --workspaces --if-present
+
+      - name: Validate versions match tag
+        run: |
+          TAG_VERSION=${GITHUB_REF_NAME#v}
+
+          CORE_VERSION=$(node -p "require('./packages/core/package.json').version")
+          if [ "$CORE_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ Version mismatch: core package.json=$CORE_VERSION tag=$TAG_VERSION"
+            exit 1
+          fi
+          echo "✅ core@$CORE_VERSION matches tag $GITHUB_REF_NAME"
+
+          PLUGIN_VERSION=$(node -p "require('./packages/eslint-plugin-nodulus/package.json').version")
+          if [ "$PLUGIN_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ Version mismatch: eslint-plugin-nodulus package.json=$PLUGIN_VERSION tag=$TAG_VERSION"
+            exit 1
+          fi
+          echo "✅ eslint-plugin-nodulus@$PLUGIN_VERSION matches tag $GITHUB_REF_NAME"
+
+      - name: Publish @vlynk-studios/nodulus-core
+        run: npm publish -w packages/core --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @vlynk-studios/eslint-plugin-nodulus
+        run: npm publish -w packages/eslint-plugin-nodulus --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

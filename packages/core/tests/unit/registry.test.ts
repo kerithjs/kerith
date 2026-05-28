@@ -1,0 +1,202 @@
+import { describe, it, expect } from 'vitest';
+import { createRegistry, registryContext, getActiveRegistry, getRegistry } from '../../src/core/registry.js';
+import { NodulusError } from '../../src/core/errors.js';
+
+describe('Registry', () => {
+  it('registers and retrieves a module', async () => {
+    const r = createRegistry();
+    await registryContext.run(r, async () => {
+      getActiveRegistry().registerModule(
+        'users',
+        { imports: [], exports: ['UserService'] },
+        '/src/modules/users',
+        '/src/modules/users/index.ts',
+        'mod_users_001'
+      );
+
+      expect(getActiveRegistry().hasModule('users')).toBe(true);
+      expect(getActiveRegistry().hasModuleById('mod_users_001')).toBe(true);
+      expect(getActiveRegistry().hasModuleById('unknown')).toBe(false);
+
+      const registered = getActiveRegistry().getModule('users');
+      expect(registered).toEqual({
+        id: 'mod_users_001',
+        name: 'users',
+        path: '/src/modules/users',
+        imports: [],
+        exports: ['UserService'],
+        controllers: []
+      });
+
+      const byId = getActiveRegistry().getModuleById('mod_users_001');
+      expect(byId).toEqual(registered);
+
+      const byPath = getActiveRegistry().getModuleByPath('/src/modules/users');
+      expect(byPath).toEqual(registered);
+      
+      // Normalized path check
+      expect(getActiveRegistry().getModuleByPath('\\src\\modules\\users')).toEqual(registered);
+
+      const all = getActiveRegistry().getAllModules();
+      expect(all).toHaveLength(1);
+      expect(all[0].name).toBe('users');
+      expect(all[0].id).toBe('mod_users_001');
+    });
+  });
+
+  it('throws DUPLICATE_MODULE when registering twice with same nitsId or same path', async () => {
+    const r = createRegistry();
+    await registryContext.run(r, async () => {
+      const name = 'auth';
+      const options = { imports: [], exports: [] };
+      const dirPath = '/src/modules/auth';
+      const indexPath = '/src/modules/auth/index.ts';
+      const id = 'mod_auth_123';
+
+      getActiveRegistry().registerModule(name, options, dirPath, indexPath, id);
+
+      // 1. Same ID, different name/path -> Error
+      expect(() => {
+        getActiveRegistry().registerModule('other', options, '/src/modules/other', '/src/modules/other/index.ts', id);
+      }).toThrowError(NodulusError);
+
+      // 2. Same Path, different ID/name -> Error
+      expect(() => {
+        getActiveRegistry().registerModule('auth2', options, dirPath, '/src/modules/auth/index.ts', 'other_id');
+      }).toThrowError(NodulusError);
+      
+      try {
+        getActiveRegistry().registerModule('auth2', options, dirPath, '/src/modules/auth/index.ts', 'other_id');
+      } catch (e: any) {
+        expect(e.code).toBe('DUPLICATE_MODULE');
+      }
+    });
+  });
+
+  it('throws DUPLICATE_MODULE for duplicate names if paths and NITS IDs are different', async () => {
+    const r = createRegistry();
+    await registryContext.run(r, async () => {
+      // Module 1: users in root
+      getActiveRegistry().registerModule(
+        'users', 
+        { imports: [] }, 
+        '/src/modules/users', 
+        '/src/modules/users/index.ts', 
+        'mod_users_original'
+      );
+
+      // Module 2: users in a domain folder (pre-preparing v2.0.0)
+      expect(() => {
+        getActiveRegistry().registerModule(
+          'users', 
+          { imports: [] }, 
+          '/src/domains/billing/modules/users', 
+          '/src/domains/billing/modules/users/index.ts', 
+          'mod_users_billing'
+        );
+      }).toThrowError(NodulusError);
+    });
+  });
+
+  it('registers and resolves aliases', async () => {
+    const r = createRegistry();
+    await registryContext.run(r, async () => {
+      getActiveRegistry().registerAlias('@config', '/src/config');
+      getActiveRegistry().registerAlias('@shared', '/src/shared');
+
+      expect(getActiveRegistry().resolveAlias('@config')).toBe('/src/config');
+      expect(getActiveRegistry().resolveAlias('@shared')).toBe('/src/shared');
+      expect(getActiveRegistry().resolveAlias('@unknown')).toBeUndefined();
+
+      const all = getActiveRegistry().getAllAliases();
+      expect(all).toEqual({
+        '@config': '/src/config',
+        '@shared': '/src/shared'
+      });
+    });
+  });
+
+  it('allows overwriting an existing alias with a different target', async () => {
+    const r = createRegistry();
+    await registryContext.run(r, async () => {
+      getActiveRegistry().registerAlias('@utils', '/src/utils');
+      // Overwrite
+      getActiveRegistry().registerAlias('@utils', '/src/other-utils');
+
+      expect(getActiveRegistry().resolveAlias('@utils')).toBe('/src/other-utils');
+    });
+  });
+
+  it('getDependencyGraph() reflects declared imports', async () => {
+    const r = createRegistry();
+    await registryContext.run(r, async () => {
+      getActiveRegistry().registerModule('users', { imports: ['database'] }, '/users', '/users/index.ts', 'id_u');
+      getActiveRegistry().registerModule('database', { imports: [] }, '/database', '/database/index.ts', 'id_d');
+
+      const graph = getActiveRegistry().getDependencyGraph();
+      expect(graph.get('users')).toEqual(['database']);
+      expect(graph.get('database')).toEqual([]);
+    });
+  });
+
+  it('findCircularDependencies() detects A -> B -> A', async () => {
+    const r = createRegistry();
+    await registryContext.run(r, async () => {
+      getActiveRegistry().registerModule('A', { imports: ['B'] }, '/a', '/a/index.ts', 'id_a');
+      getActiveRegistry().registerModule('B', { imports: ['A'] }, '/b', '/b/index.ts', 'id_b');
+
+      const cycles = getActiveRegistry().findCircularDependencies();
+      expect(cycles.length).toBeGreaterThan(0);
+      expect(cycles[0]).toEqual(['A', 'B', 'A']);
+    });
+  });
+
+  it('seeds and retrieves NITS IDs by path', () => {
+    const r = createRegistry();
+    r.seedNitsIds(new Map([['/abs/path', 'mod_123']]));
+    
+    expect(r.getNitsIdForPath('/abs/path')).toBe('mod_123');
+    // Normalized
+    expect(r.getNitsIdForPath('\\abs\\path')).toBe('mod_123');
+    expect(r.getNitsIdForPath('/unknown')).toBeUndefined();
+  });
+
+  it('getRegistry() exposes NodulusRegistryAdvanced interface', async () => {
+    const r = createRegistry();
+    await registryContext.run(r, async () => {
+      const advancedRegistry = getRegistry();
+      expect(advancedRegistry).toBeDefined();
+      expect(typeof advancedRegistry.hasModule).toBe('function');
+      expect(typeof advancedRegistry.getDependencyGraph).toBe('function');
+    });
+  });
+
+  it('getActiveRegistry() throws REGISTRY_MISSING_CONTEXT outside createApp', () => {
+    expect(() => getActiveRegistry()).toThrow(NodulusError);
+    try {
+      getActiveRegistry();
+    } catch (e: any) {
+      expect(e.code).toBe('REGISTRY_MISSING_CONTEXT');
+    }
+  });
+
+  it('two concurrent registryContext.run() calls have isolated registries', async () => {
+    const rA = createRegistry();
+    const rB = createRegistry();
+
+    await Promise.all([
+      registryContext.run(rA, async () => {
+        getActiveRegistry().registerModule('moduleA', {}, '/pathA', '/pathA/index.ts', 'id_a_unique');
+        await new Promise(resolve => setTimeout(resolve, 10));
+        expect(getActiveRegistry().hasModule('moduleA')).toBe(true);
+        expect(getActiveRegistry().hasModule('moduleB')).toBe(false);
+      }),
+      registryContext.run(rB, async () => {
+        getActiveRegistry().registerModule('moduleB', {}, '/pathB', '/pathB/index.ts', 'id_b_unique');
+        await new Promise(resolve => setTimeout(resolve, 10));
+        expect(getActiveRegistry().hasModule('moduleB')).toBe(true);
+        expect(getActiveRegistry().hasModule('moduleA')).toBe(false);
+      })
+    ]);
+  });
+});

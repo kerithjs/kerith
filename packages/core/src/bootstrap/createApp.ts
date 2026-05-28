@@ -1,0 +1,657 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import fg from 'fast-glob';
+import type { Application } from 'express';
+import type { CreateAppOptions, NodulusApp } from '../types/index.js';
+
+import { loadConfig } from '../core/config.js';
+import { NodulusError } from '../core/errors.js';
+import { createRegistry, registryContext } from '../core/registry.js';
+import { activateAliasResolver } from '../aliases/resolver.js';
+import { updateAliasCache } from '../aliases/cache.js';
+import { writeTsconfigNodulus, ensureTsconfigExtends } from '../config/tsconfig-generator.js';
+import { createLogger, defaultLogHandler } from '../core/logger.js';
+import { setPinoInstance, createDefaultPinoInstance } from '../core/pino-instance.js';
+import { performance } from 'node:perf_hooks';
+import pc from 'picocolors';
+import { extractModuleImports } from '../nits/import-scanner.js';
+import { loadNitsRegistry, saveNitsRegistry, initNitsRegistry, inferProjectName, scanShadowFiles, postReconcileEnsureShadowFiles } from '../nits/nits-store.js';
+import { reconcile, buildUpdatedNitsRegistry, buildNitsIdMap } from '../nits/nits-reconciler.js';
+import { reportReconciliation } from '../nits/nits-reporter.js';
+import { computeModuleHash } from '../nits/nits-hash.js';
+import { normalizePath } from '../core/utils/paths.js';
+import { registerShutdown } from '../core/shutdown.js';
+import type { DiscoveredModule } from '../types/nits.js';
+
+export async function createApp(
+  app: Application,
+  options: CreateAppOptions = {}
+): Promise<NodulusApp> {
+  // Step 0 — Prevent Duplicate Bootstrap
+  if ((app as any).__nodulusBootstrapped) {
+    throw new NodulusError(
+      'DUPLICATE_BOOTSTRAP',
+      'createApp() was called more than once with the same Express instance.'
+    );
+  }
+
+  // Step 0.5 — ESM Environment Validation
+  let isEsm = false;
+  try {
+    const pkgPath = path.resolve(process.cwd(), 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+      if (pkg.type === 'module') {
+        isEsm = true;
+      }
+    }
+  } catch (_e) {
+    // Failsafe
+  }
+
+  if (!isEsm) {
+    throw new NodulusError(
+      'INVALID_ESM_ENV',
+      'Nodulus requires an ESM environment. Please ensure "type": "module" is present in your root package.json file.'
+    );
+  }
+
+  const registry = createRegistry();
+
+  return registryContext.run(registry, async () => {
+    const startTime = performance.now();
+    try {
+
+  // Step 0.1 — Pre-loader Validation
+  const preloadConfig = globalThis.__NODULUS_PRELOAD_CONFIG__;
+  const preloaderActive = preloadConfig?.preloaded === true;
+
+  // Step 1 — Load configuration
+  const config = await loadConfig(options);
+
+  if (config.requirePreloader === true && !preloaderActive) {
+    throw new NodulusError(
+      'PRELOADER_REQUIRED',
+      'The application requires the Nodulus pre-loader to be active.',
+      'Run the application with "node --import ./.nodulus/preload.js" or set requirePreloader: false in nodulus.config.ts.'
+    );
+  }
+  if (config.logger === defaultLogHandler) {
+    setPinoInstance(createDefaultPinoInstance(config.logFormat, config.logLevel));
+  }
+  const log = createLogger(config.logger, config.logLevel, 'boot');
+
+  // Step 1.0.5 — Generar tsconfig.nodulus.json y registrar aliases
+  await writeTsconfigNodulus(config, process.cwd(), log);
+  await ensureTsconfigExtends(process.cwd(), log);
+  log.debug(`[bootstrap] Aliases registrados: ${[...config.resolvedAliases.keys()].join(', ')}`, { _module: 'alias' });
+
+  // Step 1.1 — Pre-loader Warnings
+  if (!preloaderActive && config.resolveAliases !== false) {
+    log.warn('Pre-loader not detected. Alias resolution might fail for top-level imports. Running in legacy mode (v1.4.0).', { suggestion: 'Run "npx nodulus sync-preload" and use "node --import ./.nodulus/preload.js"' });
+  }
+
+  if (preloaderActive) {
+      const getPkg = () => {
+        const depths = ['../package.json', '../../package.json', '../../../package.json'];
+        for (const d of depths) {
+          try {
+            const p = new URL(d, import.meta.url);
+            return JSON.parse(fs.readFileSync(p, 'utf8'));
+          } catch (_e) { /* not a valid package.json path, try next */ }
+        }
+        return {};
+      };
+      const currentVersion = getPkg().version;
+      if (preloadConfig?._version && preloadConfig._version !== currentVersion) {
+          log.warn(`Pre-loader version mismatch: preload.js was generated with v${preloadConfig._version} but nodulus-core v${currentVersion} is installed. Run: nodulus sync-preload`);
+      }
+  }
+
+  if (config.domains || config.shared) {
+    log.warn('Infrastructure (domains/shared) is not yet supported in v1.2.x. These keys in configuration will be ignored until v2.0.0.', { _module: 'config' });
+  }
+
+  log.info('Bootstrap started', {
+    modules: config.modules,
+    prefix: config.prefix || '(none)',
+    strict: config.strict,
+    nodeVersion: process.version,
+  });
+
+  // Step 2 — Resolve modules
+  const globPattern = config.modules.replace(/\\/g, '/');
+  const moduleDirs = await fg(globPattern, {
+    onlyDirectories: true,
+    absolute: true,
+    cwd: process.cwd()
+  });
+
+  moduleDirs.sort();
+
+  const resolvedModules: { name: string, dirPath: string, indexPath: string }[] = [];
+
+  for (const dirPath of moduleDirs) {
+    log.debug(`Discovered module directory: ${dirPath}`, { dirPath, _module: 'module' });
+    const tsPath = path.join(dirPath, 'index.ts');
+    const jsPath = path.join(dirPath, 'index.js');
+    
+    let indexPath: string | null = null;
+    if (fs.existsSync(tsPath)) {
+      indexPath = tsPath;
+    } else if (fs.existsSync(jsPath)) {
+      indexPath = jsPath;
+    }
+
+    if (!indexPath) {
+      throw new NodulusError(
+        'MODULE_NOT_FOUND',
+        `No index.ts or index.js found for module. A module directory must have an index file mapping its dependencies.`,
+        `Directory: ${dirPath}`
+      );
+    }
+    
+    resolvedModules.push({ 
+      name: path.basename(dirPath), 
+      dirPath, 
+      indexPath 
+    });
+  }
+
+  // Step 2.5 — NITS Identity Reconciliation (Identity tracking audit layer)
+  if (config.nits?.enabled !== false) {
+    try {
+      // Step 2.5a — Read/create shadow files for all discovered modules.
+      // scanShadowFiles calls ensureShadowFile per module:
+      //   - First boot: writes a new .nodulus file with a fresh mod_{hex} ID.
+      //   - Subsequent boots: reads the existing file (no-op if already valid).
+      // Errors are swallowed inside shadow-file.ts — bootstrap never fails here.
+      const shadowFileMap = scanShadowFiles(resolvedModules);
+
+      const discovered: DiscoveredModule[] = [];
+      for (const mod of resolvedModules) {
+        const { hash, identifiers } = await computeModuleHash(mod.dirPath);
+        discovered.push({
+          name: mod.name,
+          dirPath: mod.dirPath,
+          domain: undefined, // Reserved for v2.0 (Domains are not supported in v1.x)
+          identifiers,
+          hash,
+          shadowFile: shadowFileMap.get(mod.dirPath),
+        });
+      }
+
+      const cwd = process.cwd();
+      const oldRegistry = await loadNitsRegistry(cwd) || initNitsRegistry(inferProjectName(cwd));
+
+      // Layer 1 Filter: Purge compilation artifacts (e.g. dist/) from registry
+      const rawGlobs = Array.isArray(config.modules) ? config.modules : 
+        (typeof config.modules === 'string' && config.modules.startsWith('{') && config.modules.endsWith('}')) 
+          ? config.modules.slice(1, -1).split(',') 
+          : [config.modules];
+          
+      const modulesRoots = rawGlobs.map(g => normalizePath(path.resolve(cwd, g.split('*')[0])));
+      
+      for (const [id, mod] of Object.entries(oldRegistry.modules)) {
+        const absPath = normalizePath(path.resolve(cwd, mod.path));
+        const isWithinRoots = modulesRoots.some(root => absPath.startsWith(root));
+        if (!isWithinRoots) {
+          log.warn(`[NITS] Purging artifact from registry: ${mod.path}`, { _module: 'nits' });
+          delete oldRegistry.modules[id];
+        }
+      }
+
+      const nitsResult = reconcile(discovered, oldRegistry, cwd, {
+        similarityThreshold: config.nits?.similarityThreshold
+      });
+      
+      reportReconciliation(nitsResult, log);
+      
+      const updatedNits = buildUpdatedNitsRegistry(nitsResult, oldRegistry.project);
+      await saveNitsRegistry(updatedNits, cwd);
+
+      // Step 2.5c — Write shadow files for modules resolved by path/Jaccard (migration path).
+      // Modules that arrived without a shadow file (legacy, pre-v1.5.5) now get one
+      // written with the ID assigned during reconciliation. On the next boot they will
+      // use the shadow-file path (Step 0) and bypass Jaccard entirely.
+      const resolvedDirs = new Map<string, string>(
+        resolvedModules.map(m => [m.dirPath, m.name])
+      );
+      // Pass all valid roots for shadow file creation guard
+      postReconcileEnsureShadowFiles(nitsResult, resolvedDirs, modulesRoots);
+
+      // Seed the registry with the reconciled IDs
+      const nitsIdMap = buildNitsIdMap(nitsResult, cwd);
+      registry.seedNitsIds(nitsIdMap);
+      
+      log.debug('NITS identity reconciliation complete.', { _module: 'nits' });
+    } catch (err: any) {
+      log.warn(`NITS reconciliation failed: ${err.message}. Bootstrap will continue with temporary identities.`, { _module: 'nits' });
+      log.debug('NITS Error detail:', { error: err, _module: 'nits' });
+    }
+  }
+
+  // Step 3 — Activate runtime aliases
+  if (config.resolveAliases !== false) {
+    const pureModuleAliases: Record<string, string> = {};
+    for (const mod of resolvedModules) {
+      const aliasKey = `@modules/${mod.name}`;
+      pureModuleAliases[aliasKey] = mod.indexPath;
+      pureModuleAliases[`${aliasKey}/*`] = `${mod.dirPath}/*`;
+      
+      registry.registerAlias(aliasKey, mod.indexPath);
+      registry.registerAlias(`${aliasKey}/*`, `${mod.dirPath}/*`);
+    }
+
+    const normalizedConfigAliases: Record<string, string> = {};
+    for (const [alias, absPath] of config.resolvedAliases) {
+      registry.registerAlias(alias, absPath);
+      normalizedConfigAliases[alias] = absPath;
+      log.debug(`Alias registered: ${alias} → ${absPath}`, { alias, finalTargetPath: absPath, source: 'config', _module: 'alias' });
+    }
+
+    // Registrar @modules como alias built-in
+    const modulesDir = config.modules.replace(/\/\*$/, '');
+    registry.registerAlias('@modules', path.resolve(process.cwd(), modulesDir));
+
+    await activateAliasResolver(pureModuleAliases, normalizedConfigAliases, log);
+    updateAliasCache(registry.getAllAliases());
+  }
+
+  // Step 4 — Import modules
+  for (const mod of resolvedModules) {
+    const importUrl = pathToFileURL(mod.indexPath).href;
+    let timer: NodeJS.Timeout;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        reject(new NodulusError(
+          'MODULE_LOAD_TIMEOUT',
+          `Module load timed out after ${config.moduleLoadTimeoutMs}ms. Check for unhandled promises or blocking operations in the top-level scope.`,
+          `File: ${mod.indexPath}`
+        ));
+      }, config.moduleLoadTimeoutMs);
+    });
+
+    let imported: any;
+    try {
+      imported = await Promise.race([import(importUrl), timeoutPromise]);
+    } finally {
+      clearTimeout(timer!);
+    }
+
+    // Correlate the imported module with the one added to the registry based on dirPath
+    const allRegistered = registry.getAllModules();
+    const registeredMod = allRegistered.find(m => normalizePath(m.path) === normalizePath(mod.dirPath));
+
+    if (!registeredMod) {
+      throw new NodulusError(
+        'MODULE_NOT_FOUND',
+        `No index.ts found calling Module(). Add Module() to the module's index.ts.`,
+        `File: ${mod.indexPath}`
+      );
+    }
+
+    log.info(`Module loaded: ${pc.green(registeredMod.name)}`, {
+      _module: 'module',
+      name: registeredMod.name,
+      imports: registeredMod.imports,
+      exports: registeredMod.exports,
+      path: registeredMod.path,
+    });
+
+    const actualExports = Object.keys(imported).filter(key => key !== 'default');
+    const declaredExports = registeredMod.exports || [];
+
+    for (const declared of declaredExports) {
+      if (!actualExports.includes(declared)) {
+        throw new NodulusError(
+          'EXPORT_MISMATCH',
+          `A name declared in exports does not exist as a real export of index.ts.`,
+          `Module: ${registeredMod.name}, Missing Export: ${declared}`
+        );
+      }
+    }
+
+    if (config.strict) {
+      for (const actual of actualExports) {
+        if (!declaredExports.includes(actual)) {
+          log.warn(
+            `Module "${registeredMod.name}" exports "${actual}" but it is not declared in Module() options "exports" array.`,
+            { name: registeredMod.name, exportName: actual, _module: 'module' }
+          );
+        }
+      }
+    }
+  }
+
+  // Step 5 — Validate dependencies
+  const allModules = registry.getAllModules();
+  for (const mod of allModules) {
+    const rawMod = registry.getRawModule(mod.name);
+    if (rawMod) {
+      rawMod.imports = rawMod.imports.filter((imp: string) => imp && imp.trim() !== '');
+      mod.imports = rawMod.imports;
+    }
+
+    for (const importName of mod.imports) {
+      if (!registry.hasModule(importName)) {
+        throw new NodulusError(
+          'MISSING_IMPORT',
+          `A module declared in imports does not exist in the registry.`,
+          `Module "${mod.name}" is trying to import missing module "${importName}"`
+        );
+      }
+    }
+  }
+
+  // Step 5.5 — Detect undeclared cross-module imports
+  // Get the modules root directory from the config glob
+  const modulesRoot = config.modules.split('*')[0].replace(/\/$/, '');
+
+  // Single I/O call for all source files
+  const allSourceFiles = await fg(`${modulesRoot}/**/*.{ts,js,mts,mjs}`, {
+    absolute: true,
+    cwd: process.cwd(),
+    ignore: ['**/*.test.*', '**/*.spec.*', '**/*.d.ts', '**/index.*']
+  });
+
+  // Build a Map of module -> source files
+  const filesByModule = new Map<string, string[]>();
+  
+  // Pre-process a Map of normalizedPath -> moduleName
+  const modulePathMap = new Map<string, string>();
+  for (const mod of allModules) {
+    filesByModule.set(mod.name, []);
+    const rawMod = registry.getRawModule(mod.name);
+    if (rawMod) {
+      modulePathMap.set(normalizePath(rawMod.path), mod.name);
+    }
+  }
+
+  // Sort paths by length descending to match the most specific (longest) path first
+  const sortedModulePaths = Array.from(modulePathMap.keys()).sort((a, b) => b.length - a.length);
+  
+  for (const file of allSourceFiles) {
+    // files from fast-glob already have forward slashes
+    for (const modPath of sortedModulePaths) {
+      if (file.startsWith(modPath + '/')) {
+        const modName = modulePathMap.get(modPath)!;
+        filesByModule.get(modName)?.push(file);
+        break;
+      }
+    }
+  }
+
+  for (const registeredMod of allModules) {
+    const rawMod = registry.getRawModule(registeredMod.name);
+    if (!rawMod) continue;
+
+    // Use already grouped files — no additional I/O
+    const sourceFiles = filesByModule.get(registeredMod.name) ?? [];
+
+    const usedImports = new Set<string>();
+
+    for (const file of sourceFiles) {
+      const actualImports = extractModuleImports(file, registry.getRegisteredAliases());
+      for (const imp of actualImports) {
+        const parts = imp.specifier.split('/');
+        const targetModule = imp.specifier.startsWith('@modules/') ? parts[1] : (parts[1] || parts[0]).replace(/^@/, '');
+        if (!targetModule || targetModule === registeredMod.name) continue;
+
+        if (!registry.hasModule(targetModule)) continue;
+
+        usedImports.add(targetModule);
+
+        if (!registeredMod.imports.includes(targetModule)) {
+          const message = `Module "${registeredMod.name}" imports from "${targetModule}" but it is not declared in imports[].`;
+          const details = `File: ${path.normalize(file)}:${imp.line} — Add "${targetModule}" to Module() imports array for "${registeredMod.name}".`;
+
+          if (config.strict) {
+            throw new NodulusError('UNDECLARED_IMPORT', message, details);
+          } else {
+            log.warn(message, {
+              _module: 'module',
+              target: targetModule,
+              file: path.normalize(file),
+              line: imp.line,
+            });
+          }
+        }
+      }
+    }
+
+    for (const declared of registeredMod.imports) {
+      if (!usedImports.has(declared)) {
+        const message = `Module "${registeredMod.name}" declares import "${declared}" but never uses it.`;
+        if (config.strict) {
+          throw new NodulusError('UNUSED_IMPORT', message, `Remove "${declared}" from imports[] in "${registeredMod.name}".`);
+        } else {
+          log.warn(message, { module: registeredMod.name, unusedTarget: declared, _module: 'module' });
+        }
+      }
+    }
+  }
+
+  if (config.strict) {
+    const cycles = registry.findCircularDependencies();
+    if (cycles.length > 0) {
+      const cycleStrings = cycles.map(cycle => cycle.join(' -> ')).join(' | ');
+      throw new NodulusError(
+        'CIRCULAR_DEPENDENCY',
+        `Circular dependency detected. Extract the shared dependency into a separate module.`,
+        `Cycles found: ${cycleStrings}`
+      );
+    }
+  }
+
+  // Step 6 — Discover controllers
+  // Reuse allSourceFiles but including index.* (controllers can be index files of subfolders, but not the module itself)
+  const allControllerFiles = await fg(`${modulesRoot}/**/*.{ts,js,mts,mjs,cjs}`, {
+    absolute: true,
+    cwd: process.cwd(),
+    ignore: ['**/*.types.*', '**/*.d.ts', '**/*.spec.*', '**/*.test.*']
+  });
+  const controllerFilesByModule = new Map<string, string[]>();
+  for (const mod of allModules) {
+    controllerFilesByModule.set(mod.name, []);
+  }
+  
+  for (const file of allControllerFiles) {
+    const normalizedFile = normalizePath(file);
+    for (const modPath of sortedModulePaths) {
+      if (normalizedFile.startsWith(modPath + '/')) {
+        const modName = modulePathMap.get(modPath)!;
+        const rawMod = registry.getRawModule(modName);
+        
+        if (rawMod && normalizedFile === normalizePath(rawMod.indexPath)) {
+          // Exclude the module's main index file
+          break;
+        }
+        
+        controllerFilesByModule.get(modName)?.push(file);
+        break;
+      }
+    }
+  }
+
+  for (const mod of allModules) {
+    const rawMod = registry.getRawModule(mod.name);
+    if (!rawMod) continue;
+
+    const files = controllerFilesByModule.get(mod.name) ?? [];
+    files.sort();
+
+    for (let file of files) {
+      log.debug(`Scanning controller file: ${file}`, { filePath: file, module: mod.name, _module: 'router' });
+      file = path.normalize(file);
+      let imported: any;
+      try {
+        const importUrl = pathToFileURL(file).href;
+        let timer: NodeJS.Timeout;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            reject(new NodulusError(
+              'MODULE_LOAD_TIMEOUT',
+              `Controller load timed out after ${config.moduleLoadTimeoutMs}ms. Check for unhandled promises or blocking operations.`,
+              `File: ${file}`
+            ));
+          }, config.moduleLoadTimeoutMs);
+        });
+
+        try {
+          imported = await Promise.race([import(importUrl), timeoutPromise]);
+        } finally {
+          clearTimeout(timer!);
+        }
+      } catch (err: any) {
+        if (err instanceof NodulusError) throw err;
+        throw new NodulusError(
+          'INVALID_CONTROLLER',
+          `Failed to import controller file. Check for syntax errors or missing dependencies.`,
+          `File: ${file} — ${err.message}`
+        );
+      }
+
+      const resolvedFile = normalizePath(file);
+      const ctrlMeta = registry.getControllerMetadata(resolvedFile);
+      if (ctrlMeta) {
+        const isRouter = imported.default && typeof imported.default === 'function' && typeof imported.default.use === 'function';
+        if (!isRouter) {
+          throw new NodulusError(
+            'INVALID_CONTROLLER',
+            `Controller has no default export of a Router. Add export default router.`,
+            `File: ${file}`
+          );
+        }
+        ctrlMeta.router = imported.default;
+        rawMod.controllers.push(ctrlMeta);
+      }
+    }
+
+    // Note: modules with no controllers are valid (workers, email, listeners, etc.)
+    // REGLA-01: Nodulus does not require controllers — they are Express-specific.
+  }
+
+  // Step 7 — Mount routes
+  const mountedRoutes: import('../types/index.js').MountedRoute[] = [];
+
+  for (const mod of allModules) {
+    const rawMod = registry.getRawModule(mod.name);
+    if (!rawMod) continue;
+
+    for (const ctrl of rawMod.controllers) {
+      if (!ctrl.enabled) {
+        log.info(`Controller "${ctrl.name}" is disabled — skipping mount`, {
+          _module: 'router',
+          module: mod.name,
+          prefix: ctrl.prefix,
+        });
+        continue;
+      }
+
+      const fullPath = (config.prefix + ctrl.prefix).replace(/\/+/g, '/').replace(/\/$/, '') || '/';
+      if (ctrl.router) {
+        if (ctrl.middlewares && ctrl.middlewares.length > 0) {
+           app.use(fullPath, ...ctrl.middlewares, ctrl.router);
+        } else {
+           app.use(fullPath, ctrl.router);
+        }
+
+        let foundRoutes = false;
+        const extractedRoutes: { method: string, path: string }[] = [];
+
+        if (ctrl.router.stack && Array.isArray(ctrl.router.stack)) {
+          for (const layer of ctrl.router.stack) {
+            const routeObj = (layer as any).route;
+            if (routeObj && routeObj.methods) {
+              foundRoutes = true;
+              const routePath = routeObj.path;
+              const methods = Object.keys(routeObj.methods).filter(m => routeObj.methods[m]).map(m => m.toUpperCase());
+              
+              for (const method of methods) {
+                const fullRoutePath = (fullPath + (routePath === '/' ? '' : routePath)).replace(/\/+/g, '/');
+                extractedRoutes.push({ method, path: fullRoutePath });
+                mountedRoutes.push({
+                  method: method as any,
+                  path: fullRoutePath,
+                  module: mod.name,
+                  controller: ctrl.name
+                });
+              }
+            }
+          }
+        }
+
+        if (!foundRoutes) {
+          extractedRoutes.push({ method: 'USE', path: fullPath });
+          mountedRoutes.push({
+            method: 'USE',
+            path: fullPath,
+            module: mod.name,
+            controller: ctrl.name
+          });
+        }
+
+        const methodColors: Record<string, (msg: string) => string> = {
+          GET: pc.green, POST: pc.yellow, PUT: pc.cyan, PATCH: pc.magenta, DELETE: pc.red, USE: pc.gray
+        };
+
+        for (const route of extractedRoutes) {
+          const colorFn = methodColors[route.method] || pc.white;
+          log.info(`  ${colorFn(route.method.padEnd(6))} ${pc.white(route.path)}  ${pc.gray(`(${ctrl.name})`)}`, {
+            _module: 'router',
+            path: route.path,
+            module: mod.name,
+            controller: ctrl.name,
+          });
+        }
+      }
+    }
+  }
+
+    (app as any).__nodulusBootstrapped = true;
+
+    const safeRegisteredModules = allModules.map(m => registry.getModule(m.name)!);
+    const durationMs = Math.round(performance.now() - startTime);
+    
+    if (mountedRoutes.length === 0) {
+      log.warn('Mounted 0 route(s) — no controllers were registered. Is this expected?', { _module: 'router' });
+      log.warn(`${pc.yellow('Bootstrap complete')} — ${pc.cyan(allModules.length)} module(s), ${pc.yellow(mountedRoutes.length)} route(s) in ${pc.yellow(`${durationMs}ms`)}`, {
+        moduleCount: allModules.length,
+        routeCount: mountedRoutes.length,
+        durationMs,
+      });
+    } else {
+      log.info(`Mounted ${mountedRoutes.length} route(s)`, { _module: 'router' });
+      log.info(`${pc.green('Bootstrap complete')} — ${pc.cyan(allModules.length)} module(s), ${pc.cyan(mountedRoutes.length)} route(s) in ${pc.yellow(`${durationMs}ms`)}`, {
+        moduleCount: allModules.length,
+        routeCount: mountedRoutes.length,
+        durationMs,
+      });
+    }
+
+    return {
+      modules: safeRegisteredModules,
+      routes: mountedRoutes,
+      registry,
+      runtime: {
+        preloaderActive,
+        preloaderVersion: preloadConfig?._version ?? null,
+        aliasesAtBoot: preloadConfig?.aliases ?? {}
+      },
+      listen(server, listenOptions) {
+        return registerShutdown({
+          server,
+          onShutdown: listenOptions?.onShutdown,
+          logger: log,
+        });
+      }
+    };
+
+    } catch (err) {
+      registry.clearRegistry();
+      throw err;
+    }
+  });
+}

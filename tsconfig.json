@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@vlynk-studios/nodulus-core": ["./packages/core/src/index.ts"],
+      "eslint-plugin-nodulus": ["./packages/eslint-plugin-nodulus/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "**/dist"]
+}
