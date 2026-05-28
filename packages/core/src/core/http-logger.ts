@@ -8,7 +8,7 @@ import type { HttpLogger, HttpLoggerOptions } from '../types/index.js';
  *
  * @example
  * ```ts
- * import { useHttpLogger } from '@vlynk-studios/nodulus-core';
+ * import { useHttpLogger } from '@kerith/core';
  * 
  * const httpLogger = useHttpLogger({ ignore: ['/health*'] });
  * 

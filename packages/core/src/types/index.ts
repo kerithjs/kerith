@@ -291,12 +291,12 @@ export interface KerithApp {
    */
   runtime: {
     /**
-     * `true` when the process was started with `--import ./.nodulus/preload.js`,
+     * `true` when the process was started with `--import ./.kerith/preload.js`,
      * meaning top-level alias resolution is available.
      */
     preloaderActive: boolean;
     /**
-     * The version of `nodulus-core` that generated `.nodulus/preload.js`,
+     * The version of `@kerith/core` that generated `.kerith/preload.js`,
      * or `null` if the pre-loader is not active.
      */
     preloaderVersion: string | null;

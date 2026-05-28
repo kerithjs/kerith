@@ -99,7 +99,7 @@ export function createModuleCommand() {
 
 function generateIndex(name: string): string {
   return `
-import { Module } from '@vlynk-studios/nodulus-core'
+import { Module } from '@kerith/core'
 
 Module('${name}', {
   imports: [],
@@ -110,7 +110,7 @@ Module('${name}', {
 
 function generateRoutes(name: string): string {
   return `
-import { Controller } from '@vlynk-studios/nodulus-core'
+import { Controller } from '@kerith/core'
 import { Router } from 'express'
 
 Controller('/${name}')
@@ -127,7 +127,7 @@ export default router
 function generateService(name: string): string {
   const capName = name.charAt(0).toUpperCase() + name.slice(1);
   return `
-import { Service } from '@vlynk-studios/nodulus-core'
+import { Service } from '@kerith/core'
 
 Service('${capName}Service', { module: '${name}' })
 
@@ -140,7 +140,7 @@ export class ${capName}Service {
 function generateRepository(name: string): string {
   const capName = name.charAt(0).toUpperCase() + name.slice(1);
   return `
-import { Repository } from '@vlynk-studios/nodulus-core'
+import { Repository } from '@kerith/core'
 
 Repository('${capName}Repository', { module: '${name}', source: 'database' })
 
@@ -153,7 +153,7 @@ export class ${capName}Repository {
 function generateSchema(name: string): string {
   const capName = name.charAt(0).toUpperCase() + name.slice(1);
   return `
-import { Schema } from '@vlynk-studios/nodulus-core'
+import { Schema } from '@kerith/core'
 
 // import { z } from 'zod' // Uncomment and install your preferred validation library
 Schema('${capName}Schema', { module: '${name}' })

@@ -34,7 +34,7 @@ export interface KerithConfig {
   nits?: NitsConfig;
   /**
    * When `true`, `createApp()` throws `PRELOADER_REQUIRED` if the runtime pre-loader
-   * is not active (i.e., the process was not started with `--import ./.nodulus/preload.js`).
+   * is not active (i.e., the process was not started with `--import ./.kerith/preload.js`).
    *
    * Use this to enforce that top-level alias resolution is always available in
    * environments that require it (e.g. strict production deployments).

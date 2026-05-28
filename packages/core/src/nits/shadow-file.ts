@@ -25,7 +25,7 @@ export function generateModuleId(): string {
 // ─── Reader ───────────────────────────────────────────────────────────────────
 
 /**
- * Reads and validates the `.nodulus` shadow file from a module directory.
+ * Reads and validates the `.kerith` shadow file from a module directory.
  *
  * Resolution order:
  *  1. File absent → `null` (silent, expected for legacy modules).
@@ -76,7 +76,7 @@ export function readShadowFile(moduleDirPath: string): ShadowFileRecord | null {
 // ─── Writer ───────────────────────────────────────────────────────────────────
 
 /**
- * Writes a `.nodulus` shadow file to a module directory.
+ * Writes a `.kerith` shadow file to a module directory.
  *
  * **Important:** Does NOT overwrite an existing valid shadow file.
  * Call `readShadowFile` first — if it returns a valid record, skip writing.
@@ -124,7 +124,7 @@ export function writeShadowFile(moduleDirPath: string, record: ShadowFileRecord)
 /**
  * Idempotent entry point for shadow file management.
  *
- * - If a valid `.nodulus` file already exists → returns it unchanged.
+ * - If a valid `.kerith` file already exists → returns it unchanged.
  * - If missing or invalid → generates a new ID, writes the file, returns the record.
  *
  * This is the function the rest of the codebase should call.
@@ -172,7 +172,7 @@ export function ensureShadowFile(
 // ─── Delete (tests / future nodulus clean) ────────────────────────────────────
 
 /**
- * Removes the `.nodulus` shadow file from a module directory.
+ * Removes the `.kerith` shadow file from a module directory.
  * No-op if the file does not exist. Never throws.
  *
  * Intended for use in unit tests and the future `nodulus clean` command.

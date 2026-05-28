@@ -1,35 +1,35 @@
-# Nodulus
+# Kerith
 
-[![npm version](https://img.shields.io/npm/v/@vlynk-studios/nodulus-core.svg)](https://www.npmjs.com/package/@vlynk-studios/nodulus-core)
+[![npm version](https://img.shields.io/npm/v/@kerith/core.svg)](https://www.npmjs.com/package/@kerith/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.6-brightgreen)](https://nodejs.org/)
 
-A lightweight structural layer for Express. Nodulus lets you organise your Node.js application into self-contained modules — handling discovery, route mounting, import aliases, and dependency validation at bootstrap time, with zero overhead at runtime.
+A lightweight structural layer for Express. Kerith lets you organise your Node.js application into self-contained modules — handling discovery, route mounting, import aliases, and dependency validation at bootstrap time, with zero overhead at runtime.
 
 > **Node.js ≥ 20.6** · **Express 5.x** · **ESM Only** · **TypeScript included**
 
 ---
 
-## Why Nodulus?
+## Why Kerith?
 
-Express is minimal by design. Nodulus keeps it that way while adding just enough structure to scale:
+Express is minimal by design. Kerith keeps it that way while adding just enough structure to scale:
 
 - **Module discovery** — point it at a glob `src/modules/*` and it finds, validates, and loads every module automatically.
 - **Route mounting** — controllers declare their prefix; `createApp()` wires them to Express via `app.use()`.
 - **Import aliases** — `@modules/users`, `@config/database` — no more `../../..` paths.
-- **Dependency validation** — declare what your module imports and exports; Nodulus catches mismatches before a single request is handled.
-- **No magic at runtime** — after bootstrap, Nodulus is out of the way. Express handles requests exactly as normal.
+- **Dependency validation** — declare what your module imports and exports; Kerith catches mismatches before a single request is handled.
+- **No magic at runtime** — after bootstrap, Kerith is out of the way. Express handles requests exactly as normal.
 
 ---
 
 ## Packages
 
-Nodulus ships as two focused packages from the same repository:
+Kerith ships as two focused packages from the same repository:
 
 | Package | Description | npm |
 |---|---|---|
-| `@vlynk-studios/nodulus-core` | Core framework — module discovery, routing, aliases, validation | [![npm](https://img.shields.io/npm/v/@vlynk-studios/nodulus-core.svg)](https://www.npmjs.com/package/@vlynk-studios/nodulus-core) |
-| `@vlynk-studios/eslint-plugin-nodulus` | ESLint plugin — static enforcement of Nodulus module boundaries in your editor and CI | [![npm](https://img.shields.io/npm/v/@vlynk-studios/eslint-plugin-nodulus.svg)](https://www.npmjs.com/package/@vlynk-studios/eslint-plugin-nodulus) |
+| `@kerith/core` | Core framework — module discovery, routing, aliases, validation | [![npm](https://img.shields.io/npm/v/@kerith/core.svg)](https://www.npmjs.com/package/@kerith/core) |
+| `@kerith/eslint` | ESLint plugin — static enforcement of Kerith module boundaries in your editor and CI | [![npm](https://img.shields.io/npm/v/@kerith/eslint.svg)](https://www.npmjs.com/package/@kerith/eslint) |
 
 Both packages are independent installs — use one or both depending on your setup. The ESLint plugin is a companion, not a dependency of the core.
 
@@ -38,7 +38,7 @@ Both packages are independent installs — use one or both depending on your set
 ## Installation
 
 ```bash
-npm install @vlynk-studios/nodulus-core
+npm install @kerith/core
 ```
 
 Express 5 is a peer dependency:
@@ -63,25 +63,25 @@ await createApp(app)
 
 The **runtime pre-loader** solves this by registering the alias resolution ESM hook *before* your code runs.
 
-### Automatic setup (`create-nodulus-app`)
+### Automatic setup (`create-Kerith-app`)
 
-If you generated your project using `npx create-nodulus-app`, the pre-loader is **configured automatically**. You don't need to do anything. Your `npm run dev` script automatically syncs the pre-loader before starting the server.
+If you generated your project using `npx create-Kerith-app`, the pre-loader is **configured automatically**. You don't need to do anything. Your `npm run dev` script automatically syncs the pre-loader before starting the server.
 
 ### Manual setup (existing projects)
 
 **1. Generate the pre-loader file:**
 ```bash
-npx nodulus sync-preload
+npx Kerith sync-preload
 ```
 
-This creates `.nodulus/preload.js` — commit it to version control.
+This creates `.Kerith/preload.js` — commit it to version control.
 
 **2. Update your `package.json` scripts:**
 ```json
 {
   "scripts": {
-    "dev":   "nodulus sync-preload --silent && nodulus dev src/server.ts",
-    "start": "node --import ./.nodulus/preload.js src/server.ts"
+    "dev":   "Kerith sync-preload --silent && Kerith dev src/server.ts",
+    "start": "node --import ./.Kerith/preload.js src/server.ts"
   }
 }
 ```
@@ -101,24 +101,24 @@ console.log(runtime.preloaderActive) // true
 
 ### When to run `sync-preload` manually
 
-Because `npm run dev` automatically chains `sync-preload --silent`, the pre-loader is usually kept in sync automatically. However, you need to run `npx nodulus sync-preload` manually when:
-- You add, remove, or change aliases in `nodulus.config.ts` while the server is NOT running.
+Because `npm run dev` automatically chains `sync-preload --silent`, the pre-loader is usually kept in sync automatically. However, you need to run `npx Kerith sync-preload` manually when:
+- You add, remove, or change aliases in `kerith.config.ts` while the server is NOT running.
 - You move your project to a different directory on your local machine (the pre-loader embeds absolute paths to the runtime hook).
-- In CI/CD pipelines to ensure the file is up to date (though committing `.nodulus/preload.js` is the recommended approach).
+- In CI/CD pipelines to ensure the file is up to date (though committing `.Kerith/preload.js` is the recommended approach).
 
 ### Legacy Mode (v1.4.0 compatibility)
 
-If `.nodulus/preload.js` is not found, Nodulus falls back to **Legacy Mode**. 
-In this mode, aliases still work perfectly **inside** modules discovered by `createApp()` (exactly as they did in v1.4.0). However, top-level static imports in your entry file (`server.ts`) will fail to resolve aliases. Nodulus will emit a warning during bootstrap if it detects Legacy Mode, prompting you to run `nodulus sync-preload`.
+If `.Kerith/preload.js` is not found, Kerith falls back to **Legacy Mode**. 
+In this mode, aliases still work perfectly **inside** modules discovered by `createApp()` (exactly as they did in v1.4.0). However, top-level static imports in your entry file (`server.ts`) will fail to resolve aliases. Kerith will emit a warning during bootstrap if it detects Legacy Mode, prompting you to run `Kerith sync-preload`.
 
 ---
 
 ## Alias System
 
-Define your aliases once in `nodulus.config.ts`:
+Define your aliases once in `kerith.config.ts`:
 
 ```typescript
-import { defineConfig } from '@vlynk-studios/nodulus-core'
+import { defineConfig } from '@kerith/core'
 
 export default defineConfig({
   aliases: {
@@ -129,10 +129,10 @@ export default defineConfig({
 })
 ```
 
-Nodulus automatically generates `tsconfig.nodulus.json` with the corresponding `paths`. Add this to your `tsconfig.json` once:
+Kerith automatically generates `tsconfig.Kerith.json` with the corresponding `paths`. Add this to your `tsconfig.json` once:
 
 ```json
-{ "extends": "./tsconfig.nodulus.json" }
+{ "extends": "./tsconfig.Kerith.json" }
 ```
 
 The `@modules` alias is always available — it points to the modules directory configured in `modules`.
@@ -141,7 +141,7 @@ The `@modules` alias is always available — it points to the modules directory 
 
 ## Module boundaries
 
-In Nodulus, `@` always crosses into another module. `./` and `../` always stay within the current module.
+In Kerith, `@` always crosses into another module. `./` and `../` always stay within the current module.
 
 ```typescript
 import { X } from './local-file'         // ✅ internal to the module
@@ -157,21 +157,21 @@ A relative path that escapes the module directory is always an error, regardless
 
 ```typescript
 import express from 'express'
-import { createApp } from '@vlynk-studios/nodulus-core'
+import { createApp } from '@kerith/core'
 
 const app = express()
-const nodulus = await createApp(app)
+const Kerith = await createApp(app)
 const server = app.listen(3000)
-nodulus.listen(server)
+Kerith.listen(server)
 ```
 
-> **Note:** Alias resolution runs through the Node.js ESM Hooks API, which activates inside `createApp()` at bootstrap time. Aliases are available to any file that Nodulus imports dynamically during bootstrap (your modules). They are **not** available to static imports in your entry point file (`app.ts`, `server.ts`) before `createApp()` is called. For bundler-based setups, see [Alias resolution with bundlers](#alias-resolution-with-bundlers).
+> **Note:** Alias resolution runs through the Node.js ESM Hooks API, which activates inside `createApp()` at bootstrap time. Aliases are available to any file that Kerith imports dynamically during bootstrap (your modules). They are **not** available to static imports in your entry point file (`app.ts`, `server.ts`) before `createApp()` is called. For bundler-based setups, see [Alias resolution with bundlers](#alias-resolution-with-bundlers).
 
 ---
 
 ## Project structure
 
-Nodulus expects modules in a consistent layout:
+Kerith expects modules in a consistent layout:
 
 ```
 src/
@@ -186,11 +186,11 @@ src/
 
 ## Module Identity
 
-Each module in Nodulus has a persistent identity stored in a `.nodulus` file
+Each module in Kerith has a persistent identity stored in a `.Kerith` file
 at its root. This file is created automatically on first bootstrap and should
 be committed to Git.
 
-The identity file enables Nodulus to track modules across renames and moves,
+The identity file enables Kerith to track modules across renames and moves,
 even when the module's internal code changes significantly.
 
 **You don't need to manage this file manually.**
@@ -201,25 +201,25 @@ even when the module's internal code changes significantly.
 
 ### `createApp(app, options?)`
 
-Bootstraps the entire application. Runs module discovery, alias resolution, controller mounting, and validation in a deterministic sequence. Throws a `NodulusError` before mounting any routes if anything is invalid — the app is never left in a partial state.
+Bootstraps the entire application. Runs module discovery, alias resolution, controller mounting, and validation in a deterministic sequence. Throws a `KerithError` before mounting any routes if anything is invalid — the app is never left in a partial state.
 
 ```ts
-createApp(app: Application, options?: { logger?: LogHandler }): Promise<NodulusApp>
+createApp(app: Application, options?: { logger?: LogHandler }): Promise<KerithApp>
 ```
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `logger` | `LogHandler` | built-in | Custom log handler |
 
-Returns `NodulusApp`:
+Returns `KerithApp`:
 
 ```ts
-interface NodulusApp {
+interface KerithApp {
   modules:  RegisteredModule[]
   routes:   MountedRoute[]
-  registry: NodulusRegistry
+  registry: KerithRegistry
   runtime: {                       // v1.5.0+
-    preloaderActive:  boolean      // true when --import .nodulus/preload.js is active
+    preloaderActive:  boolean      // true when --import .Kerith/preload.js is active
     preloaderVersion: string | null
     aliasesAtBoot:    Record<string, string>
   }
@@ -232,11 +232,11 @@ interface NodulusApp {
 
 ### `Module(name, options?)`
 
-Declares a module and registers its metadata in the registry. **Must** be called from the module's `index.ts` (or `index.js`), and the `name` **must match the containing folder name exactly** — Nodulus enforces this as a structural rule.
+Declares a module and registers its metadata in the registry. **Must** be called from the module's `index.ts` (or `index.js`), and the `name` **must match the containing folder name exactly** — Kerith enforces this as a structural rule.
 
 ```ts
 // src/modules/orders/index.ts
-import { Module } from '@vlynk-studios/nodulus-core'
+import { Module } from '@kerith/core'
 
 Module('orders', {
   description: 'Purchase order management',
@@ -264,7 +264,7 @@ Declares a file as an Express controller. The controller name is derived automat
 
 ```ts
 // src/modules/users/users.routes.ts
-import { Controller } from '@vlynk-studios/nodulus-core'
+import { Controller } from '@kerith/core'
 import { Router } from 'express'
 import { requireAuth } from '@middleware/auth.js'
 import { UserService } from './users.service.js'
@@ -300,7 +300,7 @@ export default router
 | `options.middlewares` | `RequestHandler[]` | Middlewares applied to all routes in this controller. Default: `[]` |
 | `options.enabled` | `boolean` | If `false`, `createApp()` ignores this controller entirely. Default: `true` |
 
-Nodulus mounts each controller as:
+Kerith mounts each controller as:
 
 ```ts
 app.use(globalPrefix + controllerPrefix, ...middlewares, router)
@@ -310,10 +310,10 @@ app.use(globalPrefix + controllerPrefix, ...middlewares, router)
 
 ### Domain Identifiers
 
-Label your business logic with domain identifiers to register them in the Nodulus registry for tracing, tooling, and future framework features. Identifiers are **entirely optional** — a module with no identifiers is completely valid.
+Label your business logic with domain identifiers to register them in the Kerith registry for tracing, tooling, and future framework features. Identifiers are **entirely optional** — a module with no identifiers is completely valid.
 
 ```ts
-import { Service, Repository, Schema } from '@vlynk-studios/nodulus-core'
+import { Service, Repository, Schema } from '@kerith/core'
 import { z } from 'zod'
 
 Service('UserService')
@@ -346,21 +346,21 @@ Each identifier accepts an optional options object:
 | `description` | `string` | Documentation |
 | `library` | `'zod' \| 'joi' \| 'yup' \| 'ajv' \| string` | Validation library used |
 
-Unlike `Controller` or `Module`, these identifiers do not alter runtime execution — they simply register presence and ownership into the `NodulusRegistry`, which is accessible after bootstrap via `result.registry`.
+Unlike `Controller` or `Module`, these identifiers do not alter runtime execution — they simply register presence and ownership into the `KerithRegistry`, which is accessible after bootstrap via `result.registry`.
 
-> **Note:** Nodulus is validation-agnostic. While examples use Zod, you can use Joi, TypeBox, or any other library.
+> **Note:** Kerith is validation-agnostic. While examples use Zod, you can use Joi, TypeBox, or any other library.
 
 ---
 
 ### Import aliases
 
-Nodulus registers two kinds of aliases:
+Kerith registers two kinds of aliases:
 
 - **Module aliases** — auto-generated for every discovered module:
   ```
   @modules/<name> → src/modules/<name>/index.ts
   ```
-- **Folder or file aliases** — configured in `nodulus.config.ts` (see [Alias System](#alias-system)):
+- **Folder or file aliases** — configured in `kerith.config.ts` (see [Alias System](#alias-system)):
   ```
   @config     → src/config/          (directory — supports subpaths automatically)
   @db         → src/config/db.ts     (file — resolves exactly to that file)
@@ -374,7 +374,7 @@ import { db }          from '@config/database.js'
 ```
 
 > [!IMPORTANT]
-> Nodulus is an **ESM-only** framework. It requires `"type": "module"` in your `package.json`.
+> Kerith is an **ESM-only** framework. It requires `"type": "module"` in your `package.json`.
 > Runtime alias resolution uses the Node.js ESM Hooks API and activates inside `createApp()`. Aliases are **not** available in your entry point before `createApp()` is called.
 
 #### Alias resolution with bundlers
@@ -383,7 +383,7 @@ For bundler-based projects (Vite, esbuild, etc.), you can disable the runtime ho
 
 ```ts
 // vite.config.ts
-import { getAliases } from '@vlynk-studios/nodulus-core'
+import { getAliases } from '@kerith/core'
 
 const aliases = await getAliases()
 
@@ -394,7 +394,7 @@ export default {
 
 ```ts
 // esbuild.config.ts
-import { getAliases } from '@vlynk-studios/nodulus-core'
+import { getAliases } from '@kerith/core'
 import * as esbuild from 'esbuild'
 
 const aliases = await getAliases()
@@ -417,12 +417,12 @@ await esbuild.build({
 
 ---
 
-### `nodulus.config.ts`
+### `kerith.config.ts`
 
 Centralise configuration in the project root. Options passed directly to `createApp()` take priority over the file.
 
 ```typescript
-import { defineConfig } from '@vlynk-studios/nodulus-core'
+import { defineConfig } from '@kerith/core'
 
 export default defineConfig({
   modules:             'src/modules/*',
@@ -452,23 +452,23 @@ export default defineConfig({
 
 Config file loading order (first match wins):
 
-1. `nodulus.config.ts` — development only (requires a TypeScript loader such as `tsx`)
-2. `nodulus.config.js` — always
+1. `kerith.config.ts` — development only (requires a TypeScript loader such as `tsx`)
+2. `kerith.config.js` — always
 
-> **Note:** `nodulus.config.ts` cannot be loaded in production unless your build step compiles it to `.js`. Use `nodulus.config.js` for production deployments, or build it as part of your pipeline.
+> **Note:** `kerith.config.ts` cannot be loaded in production unless your build step compiles it to `.js`. Use `kerith.config.js` for production deployments, or build it as part of your pipeline.
 
 ---
 
 ## CLI Tools
 
-Nodulus provides a built-in CLI to enforce conventions and improve developer experience.
+Kerith provides a built-in CLI to enforce conventions and improve developer experience.
 
-### `nodulus create-module <name>`
+### `Kerith create-module <name>`
 
 Scaffolds a perfectly structured module conforming to the framework constraints.
 
 ```bash
-npx nodulus create-module payments
+npx Kerith create-module payments
 ```
 
 ```text
@@ -495,12 +495,12 @@ npx nodulus create-module payments
 
 ---
 
-### `nodulus sync-tsconfig`
+### `Kerith sync-tsconfig`
 
-Syncs Nodulus aliases into `tsconfig.json` paths so IDEs and TypeScript recognise `@modules/*` and any folder aliases you've configured.
+Syncs Kerith aliases into `tsconfig.json` paths so IDEs and TypeScript recognise `@modules/*` and any folder aliases you've configured.
 
 ```bash
-npx nodulus sync-tsconfig
+npx Kerith sync-tsconfig
 ```
 
 ```text
@@ -519,37 +519,37 @@ Run this command initially, and whenever you create, rename, or drop modules. It
 
 ---
 
-### `nodulus sync-preload` _(v1.5.0+)_
+### `Kerith sync-preload` _(v1.5.0+)_
 
-Generates `.nodulus/preload.js` — a static ESM entry point that registers the alias resolution hook **before** your application code runs. This enables aliases in top-level imports of your server entry file.
+Generates `.Kerith/preload.js` — a static ESM entry point that registers the alias resolution hook **before** your application code runs. This enables aliases in top-level imports of your server entry file.
 
 ```bash
-npx nodulus sync-preload
+npx Kerith sync-preload
 ```
 
 ```text
 ✔ Pre-loader sync complete.
 
 To use the pre-loader, update your package.json scripts:
-  "dev":   "nodulus sync-preload --silent && nodulus dev src/server.ts"
-  "start": "node --import ./.nodulus/preload.js src/server.ts"
+  "dev":   "Kerith sync-preload --silent && Kerith dev src/server.ts"
+  "start": "node --import ./.Kerith/preload.js src/server.ts"
 ```
 
 The generated file embeds your current alias config and is **idempotent** — running it again with the same config produces no changes. Re-run it whenever you add or rename aliases.
 
 > [!IMPORTANT]
-> **Commit `.nodulus/preload.js` to version control.** CI/CD and production environments rely on it being present without needing to run `sync-preload` at deploy time. It is safe to commit — it contains only resolved paths and no secrets.
+> **Commit `.Kerith/preload.js` to version control.** CI/CD and production environments rely on it being present without needing to run `sync-preload` at deploy time. It is safe to commit — it contains only resolved paths and no secrets.
 
 ---
 
-### `nodulus dev` _(v1.5.0+)_
+### `Kerith dev` _(v1.5.0+)_
 
-Starts your application in development mode. Automatically injects `--import ./.nodulus/preload.js` if the file exists, ensuring aliases are available before any module loads.
+Starts your application in development mode. Automatically injects `--import ./.Kerith/preload.js` if the file exists, ensuring aliases are available before any module loads.
 
 The expected workflow is to chain this command with `sync-preload` to ensure the pre-loader is always up to date before the server starts:
 
 ```bash
-npx nodulus sync-preload --silent && npx nodulus dev <entrypoint> [--watch] [--runtime <node|tsx>]
+npx Kerith sync-preload --silent && npx Kerith dev <entrypoint> [--watch] [--runtime <node|tsx>]
 ```
 
 | Option | Description |
@@ -557,20 +557,20 @@ npx nodulus sync-preload --silent && npx nodulus dev <entrypoint> [--watch] [--r
 | `--watch` | Run in watch mode using Chokidar (restarts on file changes) |
 | `--runtime tsx` | Uses `tsx` instead of `node` for TypeScript without a build step |
 
-If `.nodulus/preload.js` does not exist, `nodulus dev` falls back to legacy mode (v1.4.0 behaviour) with a warning. However, chaining `sync-preload` first guarantees it will be present.
+If `.Kerith/preload.js` does not exist, `Kerith dev` falls back to legacy mode (v1.4.0 behaviour) with a warning. However, chaining `sync-preload` first guarantees it will be present.
 
 ---
 
-### `nodulus check`
+### `Kerith check`
 
 Performs static architecture analysis by inspecting raw ASTs across your module structure without evaluating your application code.
 
 ```bash
-npx nodulus check
+npx Kerith check
 ```
 
 ```text
-Nodulus Architecture Analysis
+Kerith Architecture Analysis
 
 ✔ orders — OK
 ✗ payments — 2 problem(s)
@@ -592,16 +592,16 @@ Nodulus Architecture Analysis
 
 ## Logging _(v1.5.3+)_
 
-Nodulus uses a high-performance Pino logging engine internally, providing beautiful console output during development and highly structured JSON data for production observability.
+Kerith uses a high-performance Pino logging engine internally, providing beautiful console output during development and highly structured JSON data for production observability.
 
 ### Environment Variables
 
 | Variable | Description |
 |---|---|
-| `NODULUS_LOG_LEVEL` | Minimum severity to output (`debug`, `info`, `warn`, `error`, `fatal`). Default: `info`. |
-| `NODULUS_LOG_FORMAT` | Forces the output format. Allowed values: `pretty` \| `json` \| `auto`. Default is `auto` (uses `json` if `NODE_ENV=production`, otherwise `pretty`). |
+| `Kerith_LOG_LEVEL` | Minimum severity to output (`debug`, `info`, `warn`, `error`, `fatal`). Default: `info`. |
+| `Kerith_LOG_FORMAT` | Forces the output format. Allowed values: `pretty` \| `json` \| `auto`. Default is `auto` (uses `json` if `NODE_ENV=production`, otherwise `pretty`). |
 
-> **Note:** You can set `NODULUS_LOG_FORMAT=pretty` to force human-readable output even in staging environments where `NODE_ENV=production` might be set.
+> **Note:** You can set `Kerith_LOG_FORMAT=pretty` to force human-readable output even in staging environments where `NODE_ENV=production` might be set.
 
 ### User-space Logger (`useLogger`)
 
@@ -609,7 +609,7 @@ You can create context-aware child loggers for your own modules. This keeps your
 
 **Development Output (`logFormat: 'pretty'`):**
 ```ts
-import { useLogger } from '@vlynk-studios/nodulus-core';
+import { useLogger } from '@kerith/core';
 
 const log = useLogger('my-app');
 log.info('Connecting to database...'); 
@@ -621,17 +621,17 @@ log.info('Connecting to database...');
 {"level":"info","time":"2026-05-08T22:15:30.123Z","service":"my-app","msg":"Connecting to database..."}
 ```
 
-If you pass an `Error` object under the `err` or `error` key in the meta object, Nodulus automatically serializes the full stack trace in JSON mode:
+If you pass an `Error` object under the `err` or `error` key in the meta object, Kerith automatically serializes the full stack trace in JSON mode:
 ```ts
 log.error('Database connection failed', { err: new Error('Timeout') });
 ```
 
 ### Custom Transports (Loki, Datadog, etc.)
 
-If you need to stream logs directly to external providers using Pino transports instead of stdout, you can wrap a custom Pino instance and pass it via `nodulus.config.ts`:
+If you need to stream logs directly to external providers using Pino transports instead of stdout, you can wrap a custom Pino instance and pass it via `kerith.config.ts`:
 
 ```ts
-// nodulus.config.ts
+// kerith.config.ts
 import pino from 'pino';
 
 // Define your external transport (e.g., Datadog, Loki, Axiom)
@@ -643,7 +643,7 @@ const externalPino = pino({
 });
 
 export default {
-  // Redirect all Nodulus internal logs to your custom Pino instance
+  // Redirect all Kerith internal logs to your custom Pino instance
   logger: (level, msg, meta) => externalPino[level](meta || {}, msg)
 };
 ```
@@ -652,35 +652,35 @@ export default {
 
 ## ESLint Plugin
 
-> **Available from v1.3.0** · Package: `@vlynk-studios/eslint-plugin-nodulus`
+> **Available from v1.3.0** · Package: `@kerith/eslint`
 
-`nodulus check` validates your architecture on demand or in CI. `@vlynk-studios/eslint-plugin-nodulus` brings the same rules into your editor — so you catch boundary violations the moment you write the import.
+`Kerith check` validates your architecture on demand or in CI. `@kerith/eslint` brings the same rules into your editor — so you catch boundary violations the moment you write the import.
 
 ```bash
-npm install --save-dev @vlynk-studios/eslint-plugin-nodulus
+npm install --save-dev @kerith/eslint
 ```
 
 ### Setup
 
 ```js
 // eslint.config.js
-import nodulus from '@vlynk-studios/eslint-plugin-nodulus'
+import Kerith from '@kerith/eslint'
 
-export default [nodulus.configs.recommended]
+export default [kerith.configs.recommended]
 ```
 
 To configure rules individually:
 
 ```js
 // eslint.config.js
-import nodulus from '@vlynk-studios/eslint-plugin-nodulus'
+import Kerith from '@kerith/eslint'
 
 export default [
   {
-    plugins: { nodulus },
+    plugins: { Kerith },
     rules: {
-      'nodulus/no-private-imports':    'error',
-      'nodulus/no-undeclared-imports': 'warn',
+      'Kerith/no-private-imports':    'error',
+      'Kerith/no-undeclared-imports': 'warn',
     }
   }
 ]
@@ -690,10 +690,10 @@ export default [
 
 | Rule | Severity (recommended) | Description |
 |---|---|---|
-| `nodulus/no-private-imports` | `error` | Prevents importing internal files from another module directly. Only the public index (`@modules/<name>`) is a valid cross-module import target |
-| `nodulus/no-undeclared-imports` | `warn` | Flags cross-module imports from modules not listed in the consuming module's `imports` array |
+| `Kerith/no-private-imports` | `error` | Prevents importing internal files from another module directly. Only the public index (`@modules/<name>`) is a valid cross-module import target |
+| `Kerith/no-undeclared-imports` | `warn` | Flags cross-module imports from modules not listed in the consuming module's `imports` array |
 
-#### `nodulus/no-private-imports`
+#### `Kerith/no-private-imports`
 
 ```ts
 // ✗ error — accessing a private file directly
@@ -703,7 +703,7 @@ import { UserRepository } from '@modules/users/users.repository.js'
 import { UserService } from '@modules/users'
 ```
 
-#### `nodulus/no-undeclared-imports`
+#### `Kerith/no-undeclared-imports`
 
 ```ts
 // src/modules/orders/index.ts
@@ -716,9 +716,9 @@ import { PaymentService } from '@modules/payments'  // ✗ warn — undeclared i
 import { UserService }    from '@modules/users'      // ✓ correct
 ```
 
-### Relationship to `nodulus check`
+### Relationship to `Kerith check`
 
-| | `nodulus check` | `eslint-plugin-nodulus` |
+| | `Kerith check` | `@kerith/eslint` |
 |---|---|---|
 | When it runs | On demand / CI step | On save / pre-commit / CI lint step |
 | How it works | Full AST analysis across the whole project | Per-file ESLint rule evaluation |
@@ -730,9 +730,9 @@ import { UserService }    from '@modules/users'      // ✓ correct
 
 ## NITS Identity Tracking
 
-Nodulus 1.2.5+ includes **NITS (Nodulus Integrated Tracking System)**, which assigns a stable, unique `mod_{hex}` ID to every module. This allows the framework to track modules across renames, moves, and git branch switches — preventing identity loss during refactors.
+Kerith 1.2.5+ includes **NITS (Kerith Integrated Tracking System)**, which assigns a stable, unique `mod_{hex}` ID to every module. This allows the framework to track modules across renames, moves, and git branch switches — preventing identity loss during refactors.
 
-NITS maintains a state file at `.nodulus/registry.json` in your project root. **This file should be committed to version control.**
+NITS maintains a state file at `.Kerith/registry.json` in your project root. **This file should be committed to version control.**
 
 ### How NITS assigns identities
 
@@ -747,35 +747,35 @@ NITS uses a three-step Verification Triangle algorithm:
 Because `registry.json` tracks project-level state, parallel branches may occasionally produce Git merge conflicts. To resolve them:
 
 1. Accept either side of the conflict to make the JSON valid again.
-2. Run `npx nodulus check`.
+2. Run `npx Kerith check`.
 3. NITS will automatically detect and heal the registry.
-4. Commit the updated `.nodulus/registry.json`.
+4. Commit the updated `.Kerith/registry.json`.
 
 ---
 
 ## Logging
 
-Nodulus emits structured, color-coded log events throughout the bootstrap pipeline.
+Kerith emits structured, color-coded log events throughout the bootstrap pipeline.
 
 ### Default behavior
 
-Nodulus uses a high-performance **Pino** singleton internally. It automatically adapts to the environment:
+Kerith uses a high-performance **Pino** singleton internally. It automatically adapts to the environment:
 - **Development**: Outputs human-readable, colorized logs via `pino-pretty`.
 - **Production**: Outputs structured JSON logs (NDJSON).
 
 | Environment Variable | Description |
 |---|---|
-| `NODULUS_LOG_LEVEL` | Minimum severity. E.g., `debug`, `info`, `warn`. (Or use `NODE_DEBUG=nodulus`) |
-| `NODULUS_LOG_FORMAT` | Format output. `pretty` forces colorized text, `json` forces structured JSON, `auto` detects by environment. |
+| `Kerith_LOG_LEVEL` | Minimum severity. E.g., `debug`, `info`, `warn`. (Or use `NODE_DEBUG=Kerith`) |
+| `Kerith_LOG_FORMAT` | Format output. `pretty` forces colorized text, `json` forces structured JSON, `auto` detects by environment. |
 
 ### Semantic levels
 
-| Level | When Nodulus uses it |
+| Level | When Kerith uses it |
 |---|---|
 | `debug` | Internal bootstrap state, paths resolved, files scanned |
 | `info` | Module loaded, route mounted, bootstrap complete |
 | `warn` | Undeclared import (non-strict), unused import (non-strict), NITS fallback warning |
-| `error` | Never — Nodulus uses `throw NodulusError` instead |
+| `error` | Never — Kerith uses `throw KerithError` instead |
 
 ### Using a custom logger (Pino)
 
@@ -785,7 +785,7 @@ const log = pino()
 
 await createApp(app, {
   logger: (level, message, meta) => {
-    log[level]({ ...meta, framework: 'nodulus' }, message)
+    log[level]({ ...meta, framework: 'Kerith' }, message)
   }
 })
 ```
@@ -798,12 +798,12 @@ await createApp(app, {
 })
 ```
 
-### Using the Nodulus Logger in your app (v1.5.0+)
+### Using the Kerith Logger in your app (v1.5.0+)
 
 You can use the same visual style for your own application logs by using `useLogger`. This creates a logger instance that respects your global log level settings and provides aligned, color-coded output.
 
 ```ts
-import { useLogger } from '@vlynk-studios/nodulus-core'
+import { useLogger } from '@kerith/core'
 
 const log = useLogger('my-app')
 
@@ -813,8 +813,8 @@ log.info('Application started')
 
 ### User-space logs
 
-Nodulus **does not** intercept or wrap standard `console.log` calls from your application code.
-Messages like `Mounted N route(s)` or `Server running on http://localhost:3000` generated in your `app.ts` or `server.ts` are entirely your responsibility and will output normally without the `[Nodulus]` prefix.
+Kerith **does not** intercept or wrap standard `console.log` calls from your application code.
+Messages like `Mounted N route(s)` or `Server running on http://localhost:3000` generated in your `app.ts` or `server.ts` are entirely your responsibility and will output normally without the `[Kerith]` prefix.
 
 ---
 
@@ -822,18 +822,18 @@ Messages like `Mounted N route(s)` or `Server running on http://localhost:3000` 
 
 By default, when you press `Ctrl+C` or a process manager sends `SIGTERM`, Node.js exits immediately — leaving the port open and blocking the next restart (the classic "zombie process" problem).
 
-Nodulus solves this with `nodulus.listen(server)`. Call it once after `app.listen()` and Nodulus handles the rest:
+Kerith solves this with `Kerith.listen(server)`. Call it once after `app.listen()` and Kerith handles the rest:
 
 ```ts
 import express from 'express'
-import { createApp } from '@vlynk-studios/nodulus-core'
+import { createApp } from '@kerith/core'
 
 const app = express()
 
-const nodulus = await createApp(app)
+const Kerith = await createApp(app)
 
 const server = app.listen(3000)
-nodulus.listen(server, {
+Kerith.listen(server, {
   onShutdown: async () => {
     await db.disconnect()
     await redis.quit()
@@ -844,17 +844,17 @@ nodulus.listen(server, {
 ### What happens on shutdown
 
 1. **SIGINT** (Ctrl+C) or **SIGTERM** (kill / PM2 / Docker) fires.
-2. Nodulus calls `server.close()` — no new connections are accepted, port is freed.
+2. Kerith calls `server.close()` — no new connections are accepted, port is freed.
 3. Your `onShutdown()` hook runs (DB close, queue drain, etc.).
 4. Process exits with code `0`.
 
 ### Manual shutdown
 
-`nodulus.listen()` returns a `shutdown()` function you can call programmatically — useful for testing or custom signal logic:
+`Kerith.listen()` returns a `shutdown()` function you can call programmatically — useful for testing or custom signal logic:
 
 ```ts
 const server = app.listen(3000)
-const shutdown = nodulus.listen(server)
+const shutdown = Kerith.listen(server)
 
 // Trigger shutdown from anywhere:
 await shutdown()
@@ -867,15 +867,15 @@ await shutdown()
 
 ## Error handling
 
-All Nodulus errors are instances of `NodulusError` with a machine-readable `code`:
+All Kerith errors are instances of `KerithError` with a machine-readable `code`:
 
 ```ts
-import { NodulusError } from '@vlynk-studios/nodulus-core'
+import { KerithError } from '@kerith/core'
 
 try {
   await createApp(app)
 } catch (err) {
-  if (err instanceof NodulusError) {
+  if (err instanceof KerithError) {
     console.error(err.code)    // 'EXPORT_MISMATCH'
     console.error(err.message) // human-readable description
     console.error(err.details) // additional context (path, module name, etc.)
@@ -902,11 +902,11 @@ try {
 | `ALIAS_INVALID` | Wildcard alias (`/*`) points to a file instead of a directory (strict only) |
 | `DUPLICATE_ALIAS` | Two aliases resolve to the same name but different paths |
 | `DUPLICATE_BOOTSTRAP` | `createApp()` called more than once with the same Express instance |
-| `REGISTRY_MISSING_CONTEXT` | A Nodulus API was called outside of a `createApp()` async context |
+| `REGISTRY_MISSING_CONTEXT` | A Kerith API was called outside of a `createApp()` async context |
 | `INVALID_ESM_ENV` | `createApp()` called in a non-ESM environment (missing `"type": "module"` in `package.json`) |
 | `CLI_ERROR` | A CLI command failed with a validation or runtime error |
 | `PRELOADER_REQUIRED` | _(v1.5.0+)_ `requirePreloader: true` and the runtime pre-loader is not active |
-| `PRELOADER_VERSION_MISMATCH` | _(v1.5.0+)_ `.nodulus/preload.js` was generated by a different version of `nodulus-core` (warning only, not thrown) |
+| `PRELOADER_VERSION_MISMATCH` | _(v1.5.0+)_ `.Kerith/preload.js` was generated by a different version of `@kerith/core` (warning only, not thrown) |
 
 ---
 
@@ -920,7 +920,7 @@ Returns the read-only registry bound to the current async execution context. Onl
 > **@unstable API**: Intended for advanced framework integrations and debugging. Structure may change without a major version bump.
 
 ```ts
-import { getRegistry } from '@vlynk-studios/nodulus-core'
+import { getRegistry } from '@kerith/core'
 
 const registry = getRegistry()
 const allModules   = registry.getAllModules()            // RegisteredModule[]
@@ -928,10 +928,10 @@ const alias        = registry.resolveAlias('@modules/users')
 const allAliases   = registry.getAllAliases()            // Record<string, string>
 ```
 
-`NodulusRegistry` interface (stable):
+`KerithRegistry` interface (stable):
 
 ```ts
-interface NodulusRegistry {
+interface KerithRegistry {
   hasModule(name: string): boolean
   getModule(name: string): RegisteredModule | undefined
   getAllModules(): RegisteredModule[]
@@ -940,10 +940,10 @@ interface NodulusRegistry {
 }
 ```
 
-`NodulusRegistryAdvanced` interface (@unstable):
+`KerithRegistryAdvanced` interface (@unstable):
 
 ```ts
-interface NodulusRegistryAdvanced extends NodulusRegistry {
+interface KerithRegistryAdvanced extends KerithRegistry {
   getDependencyGraph(): Map<string, string[]>
   findCircularDependencies(): string[][]
 }
@@ -957,10 +957,10 @@ interface NodulusRegistryAdvanced extends NodulusRegistry {
 Isolate each domain into a module and share types through `@modules/shared`. Each service stays lean with zero cross-cutting concerns.
 
 ### Monoliths
-Enforce clean module boundaries at bootstrap, not code review. Nodulus catches circular dependencies and missing imports before your server starts.
+Enforce clean module boundaries at bootstrap, not code review. Kerith catches circular dependencies and missing imports before your server starts.
 
 ### Fast prototyping
-Scaffold a new feature by creating a folder and an `index.ts`. Nodulus handles all the boilerplate of wiring routes and middlewares.
+Scaffold a new feature by creating a folder and an `index.ts`. Kerith handles all the boilerplate of wiring routes and middlewares.
 
 ---
 
@@ -971,35 +971,35 @@ Scaffold a new feature by creating a folder and an `index.ts`. Nodulus handles a
 | Node.js | 20.6.0 |
 | Express | 5.x |
 | TypeScript | 5.0+ (optional) |
-| ESLint | 8.0+ (optional, for `eslint-plugin-nodulus`) |
+| ESLint | 8.0+ (optional, for `@kerith/eslint`) |
 
-> **Why 20.6?** Nodulus uses the Node.js [ESM Hooks API](https://nodejs.org/api/module.html#customization-hooks) (`register`) for runtime alias resolution. Native support without `--experimental-loader` requires Node 20.6+.
+> **Why 20.6?** Kerith uses the Node.js [ESM Hooks API](https://nodejs.org/api/module.html#customization-hooks) (`register`) for runtime alias resolution. Native support without `--experimental-loader` requires Node 20.6+.
 
 ---
 
 ## ESM Only
 
-Nodulus is built as a pure ESM package. It does not support CommonJS (`require()`).
+Kerith is built as a pure ESM package. It does not support CommonJS (`require()`).
 
 ```ts
-import { createApp, Module, Controller } from '@vlynk-studios/nodulus-core'
+import { createApp, Module, Controller } from '@kerith/core'
 ```
 
-Your project must have `"type": "module"` in `package.json`. Nodulus validates this at bootstrap and throws `INVALID_ESM_ENV` if it is missing.
+Your project must have `"type": "module"` in `package.json`. Kerith validates this at bootstrap and throws `INVALID_ESM_ENV` if it is missing.
 
 ---
 
 ## TypeScript
 
-Types are bundled — no `@types/nodulus` needed.
+Types are bundled — no `@types/Kerith` needed.
 
 ```ts
 import type {
   CreateAppOptions,
-  NodulusApp,
-  NodulusRegistry,
-  NodulusRegistryAdvanced,
-  NodulusConfig,
+  KerithApp,
+  KerithRegistry,
+  KerithRegistryAdvanced,
+  KerithConfig,
   NitsConfig,
   ModuleOptions,
   ControllerOptions,
@@ -1013,11 +1013,11 @@ import type {
   FeatureRegistration,
   LogLevel,
   LogHandler,
-} from '@vlynk-studios/nodulus-core'
+} from '@kerith/core'
 
 // v1.5.0+ pre-loader utilities
-import type { PreloadConfig } from '@vlynk-studios/nodulus-core'
-import { isPreloaderActive, getPreloadConfig } from '@vlynk-studios/nodulus-core'
+import type { PreloadConfig } from '@kerith/core'
+import { isPreloaderActive, getPreloadConfig } from '@kerith/core'
 ```
 
 ---

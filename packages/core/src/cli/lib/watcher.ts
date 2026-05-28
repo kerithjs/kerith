@@ -3,7 +3,7 @@ import type { WatcherOptions } from "../../types/index.js";
 
 // ─── Default ignored patterns ─────────────────────────────────────────────────
 // These are always combined with whatever the user passes in options.ignored.
-// .nodulus/** is explicitly ignored to avoid re-triggering on NITS registry
+// .kerith/** is explicitly ignored to avoid re-triggering on NITS registry
 // updates that Nodulus itself generates during bootstrap.
 
 const defaultIgnored: (string | ((p: string) => boolean))[] = [

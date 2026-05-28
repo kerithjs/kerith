@@ -21,7 +21,7 @@ import type {
  * Identity resolution priority (highest → lowest):
  *
  *   Step 0   — Shadow File ID  (v1.5.5+, maximum confidence)
- *              Each module carries its own `.nodulus` file with a stable ID.
+ *              Each module carries its own `.kerith` file with a stable ID.
  *              If the discovered module has a valid shadow file and its ID matches
  *              a record in the previous registry, that IS the module — regardless
  *              of path or identifier changes. No Jaccard needed.
@@ -101,12 +101,12 @@ export function reconcile(
     resolvedBy,
     // Persist the shadow file ID so delete-detection can verify whether this
     // module's identity appears on disk in subsequent reconciliation cycles.
-    // Absent for legacy modules (no .nodulus file) — Jaccard is used as fallback.
+    // Absent for legacy modules (no .kerith file) — Jaccard is used as fallback.
     shadowFileId: disc.shadowFile?.id,
   });
 
   // ── STEP 0 (NEW): Match by Shadow File ID ──────────────────────────────────
-  // Only for modules that have a valid `.nodulus` identity file (v1.5.5+).
+  // Only for modules that have a valid `.kerith` identity file (v1.5.5+).
   // The ID is the source of truth — no Jaccard calculation needed.
   //
   // Clone detection: if two discovered modules carry the same shadow-file ID,
@@ -142,7 +142,7 @@ export function reconcile(
           if (disc.identifiers.length > 0) activeHashes.set(disc.hash, record.path);
         } else {
           // Cloned copy — assign a new ID.
-          // Fix Critical 2: delete the duplicate .nodulus file first, then write
+          // Fix Critical 2: delete the duplicate .kerith file first, then write
           // a corrected one. Using ensureShadowFile here would be a no-op because
           // the existing (wrong) file passes validation — causing an infinite loop
           // of warnings on every subsequent boot.
@@ -338,9 +338,9 @@ export function reconcile(
   for (const prev of unmatchedPrev) {
     if (prev.shadowFileId) {
       // This module had a tracked shadow identity in the previous registry.
-      // Step 0 would have matched it if its .nodulus file were still on disk
+      // Step 0 would have matched it if its .kerith file were still on disk
       // anywhere this cycle (even at a different path — that's a move).
-      // Its absence here means the directory — and its .nodulus file — are
+      // Its absence here means the directory — and its .kerith file — are
       // genuinely gone. We implement a 3-cycle grace period before confirming a delete.
       const missingCount = (prev.missingCount || 0) + 1;
       if (missingCount >= 3) {

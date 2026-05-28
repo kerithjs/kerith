@@ -7,7 +7,7 @@ export interface DiscoveredModule {
   identifiers: string[];   // names extracted by nits-hash
   hash: string;
   /**
-   * Identity record read from the `.nodulus` shadow file at the module root.
+   * Identity record read from the `.kerith` shadow file at the module root.
    * Present when the module was created with Nodulus ≥ v1.5.5 or after the first
    * reconciliation that writes the shadow file.
    * `undefined` for legacy modules (created before v1.5.5) — Jaccard is used as fallback.
@@ -27,7 +27,7 @@ export interface NitsModuleRecord {
   lastSeen: string;    // ISO 8601 timestamp
   identifiers: string[];
   /**
-   * Stable ID from the `.nodulus` shadow file captured at the last reconciliation.
+   * Stable ID from the `.kerith` shadow file captured at the last reconciliation.
    * Used as primary identity key for Move vs Delete detection.
    * - Present  → shadow-file path is taken; Jaccard is skipped for this record.
    * - Absent   → legacy module (pre-v1.5.5); Jaccard is used as fallback.
@@ -43,7 +43,7 @@ export interface NitsModuleRecord {
   missingCount?: number;
   /**
    * How identity was resolved for this record in the last reconciliation cycle.
-   * - `'shadow-file'` — matched via `.nodulus` ID (highest confidence).
+   * - `'shadow-file'` — matched via `.kerith` ID (highest confidence).
    * - `'path'`        — matched via exact directory path (Step 1 / Jaccard fallback).
    * - `'jaccard'`     — matched via AST hash similarity (Step 2 / Step 3).
    * Only present in the in-memory result; NOT serialised to `registry.json`.
