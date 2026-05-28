@@ -14,7 +14,7 @@ export function devCommand(): Command {
   const dev = new Command('dev');
 
   dev
-    .description('Run the Nodulus application in development mode with the pre-loader')
+    .description('Run the Kerith application in development mode with the pre-loader')
     .argument('<entrypoint>', 'The main entrypoint file (e.g. src/server.ts)')
     .option('--watch', 'Run in watch mode using chokidar (does not delegate to node --watch)', false)
     .option('--runtime <runtime>', 'Runtime to use (node or tsx)', 'node')

@@ -58,7 +58,7 @@ export function buildActiveAliasesFromConfig(
   return [...aliases];
 }
 
-function isNodulusAlias(specifier: string, activeAliases: readonly string[]): boolean {
+function isKerithAlias(specifier: string, activeAliases: readonly string[]): boolean {
   if (!specifier.startsWith('@')) {
     return false;
   }
@@ -130,7 +130,7 @@ export function extractModuleImports(
 
   const imports: ImportFound[] = [];
   for (const { specifier, line } of parsed) {
-    if (!isNodulusAlias(specifier, activeAliases)) continue;
+    if (!isKerithAlias(specifier, activeAliases)) continue;
     imports.push({ specifier, line, file: filePath });
   }
   return imports;

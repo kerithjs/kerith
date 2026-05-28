@@ -3,7 +3,7 @@ import path from 'node:path';
 import { stringify } from 'comment-json';
 import type { ResolvedConfig, Logger } from '../types/index.js';
 
-export async function generateTsConfigNodulus(config: ResolvedConfig, cwd: string, logger?: Logger): Promise<void> {
+export async function generateTsConfigKerith(config: ResolvedConfig, cwd: string, logger?: Logger): Promise<void> {
   const tsconfigPath = path.join(cwd, 'tsconfig.kerith.json');
   const mainTsconfigPath = path.join(cwd, 'tsconfig.json');
 

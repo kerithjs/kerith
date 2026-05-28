@@ -13,7 +13,7 @@ import type { SchemaOptions } from '../types/index.js';
  *
  * @example
  * // src/modules/users/users.schema.ts
- * import { Schema } from 'nodulus'
+ * import { Schema } from '@kerith/core'
  *
  * Schema('CreateUserSchema', { module: 'users', library: 'zod' })
  *

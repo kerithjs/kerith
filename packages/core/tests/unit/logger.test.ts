@@ -10,9 +10,9 @@ describe('Logger Utility', () => {
     // Intercept Pino's default stdout destination
     stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     
-    vi.stubEnv('NODULUS_LOG_LEVEL', '');
+    vi.stubEnv('KERITH_LOG_LEVEL', '');
     vi.stubEnv('NODE_DEBUG', '');
-    vi.stubEnv('NODULUS_LOG_FORMAT', '');
+    vi.stubEnv('KERITH_LOG_FORMAT', '');
     vi.stubEnv('NODE_ENV', 'production'); // Default to JSON for Pino tests
     
     // Reset Pino instance before each test
@@ -89,13 +89,13 @@ describe('Logger Utility', () => {
   });
 
   describe('Configuration Resolution', () => {
-    it('resolveLogLevel() with NODULUS_LOG_LEVEL=warn returns "warn"', () => {
-      vi.stubEnv('NODULUS_LOG_LEVEL', 'warn');
+    it('resolveLogLevel() with KERITH_LOG_LEVEL=warn returns "warn"', () => {
+      vi.stubEnv('KERITH_LOG_LEVEL', 'warn');
       expect(resolveLogLevel()).toBe('warn');
     });
 
     it('resolveLogLevel() with NODE_DEBUG=nodulus returns "debug"', () => {
-      vi.stubEnv('NODE_DEBUG', 'fs,nodulus,http');
+      vi.stubEnv('NODE_DEBUG', 'fs,kerith,http');
       expect(resolveLogLevel()).toBe('debug');
     });
 
@@ -109,8 +109,8 @@ describe('Logger Utility', () => {
       expect(resolveLogFormat('pretty')).toBe('pretty');
     });
     
-    it('NODULUS_LOG_FORMAT=pretty env variable forces format', () => {
-      vi.stubEnv('NODULUS_LOG_FORMAT', 'pretty');
+    it('KERITH_LOG_FORMAT=pretty env variable forces format', () => {
+      vi.stubEnv('KERITH_LOG_FORMAT', 'pretty');
       expect(resolveLogFormat()).toBe('pretty');
     });
   });

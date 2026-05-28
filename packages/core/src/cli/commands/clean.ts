@@ -25,7 +25,7 @@ export function cleanCommand(): Command {
   const clean = new Command('clean');
 
   clean
-    .description('Removes generated Nodulus artifacts from the project')
+    .description('Removes generated Kerith artifacts from the project')
     .option(
       '--shadow-files',
       'Delete all .kerith identity files from module directories. IDs will be regenerated on next bootstrap.',
@@ -37,7 +37,7 @@ export function cleanCommand(): Command {
       if (!options.shadowFiles) {
         console.log(pc.yellow('\nNo clean target specified. Available options:\n'));
         console.log(`  ${pc.cyan('--shadow-files')}   Delete all .kerith module identity files\n`);
-        console.log(`Run ${pc.white('nodulus clean --help')} for usage.\n`);
+        console.log(`Run ${pc.white('kerith clean --help')} for usage.\n`);
         return;
       }
 

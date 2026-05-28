@@ -22,18 +22,18 @@ export const defaultLogHandler: LogHandler = (level, rawMessage, meta) => {
 
 /**
  * Resolves the effective minimum log level.
- * Priority: explicit logLevel option > NODULUS_LOG_LEVEL > NODE_DEBUG env var > default ('info').
+ * Priority: explicit logLevel option > KERITH_LOG_LEVEL > NODE_DEBUG env var > default ('info').
  */
 export function resolveLogLevel(explicit?: LogLevel): LogLevel {
   if (explicit) return explicit;
 
-  const envLevel = process.env.NODULUS_LOG_LEVEL as LogLevel | undefined;
+  const envLevel = process.env.KERITH_LOG_LEVEL as LogLevel | undefined;
   if (envLevel && envLevel in LEVEL_ORDER) {
     return envLevel;
   }
 
   const nodeDebug = process.env.NODE_DEBUG ?? '';
-  if (nodeDebug.split(',').map(s => s.trim()).includes('nodulus')) {
+  if (nodeDebug.split(',').map(s => s.trim()).includes('kerith')) {
     return 'debug';
   }
 
@@ -42,12 +42,12 @@ export function resolveLogLevel(explicit?: LogLevel): LogLevel {
 
 /**
  * Resolves the effective log format.
- * Priority: explicit logFormat option > NODULUS_LOG_FORMAT > auto (based on NODE_ENV).
+ * Priority: explicit logFormat option > KERITH_LOG_FORMAT > auto (based on NODE_ENV).
  */
 export function resolveLogFormat(explicit?: import('../types/index.js').LogFormat): 'pretty' | 'json' {
   if (explicit && explicit !== 'auto') return explicit;
 
-  const envFormat = process.env.NODULUS_LOG_FORMAT;
+  const envFormat = process.env.KERITH_LOG_FORMAT;
   if (envFormat === 'pretty' || envFormat === 'json') {
     return envFormat;
   }

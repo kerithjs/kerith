@@ -13,7 +13,7 @@ import type { RepositoryOptions } from '../types/index.js';
  *
  * @example
  * // src/modules/users/users.repository.ts
- * import { Repository } from 'nodulus'
+ * import { Repository } from '@kerith/core'
  *
  * Repository('UserRepository', { module: 'users', source: 'database' })
  *

@@ -8,7 +8,7 @@ import { SHADOW_FILE_VERSION } from '../../nits/shadow-file.types.js';
 
 export function createModuleCommand() {
   return new Command('create-module')
-    .description('Scaffolds a new Nodulus module')
+    .description('Scaffolds a new Kerith module')
     .argument('<name>', 'Module name (lowercase, no spaces/special chars)')
     .option('-p, --path <path>', 'Destination folder path (default: src/modules/<name>)')
     .option('--service', 'Include a service file')

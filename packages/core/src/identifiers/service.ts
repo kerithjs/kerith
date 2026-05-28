@@ -13,7 +13,7 @@ import type { ServiceOptions } from '../types/index.js';
  *
  * @example
  * // src/modules/users/users.service.ts
- * import { Service } from 'nodulus'
+ * import { Service } from '@kerith/core'
  *
  * Service('UserService', { module: 'users' })
  *

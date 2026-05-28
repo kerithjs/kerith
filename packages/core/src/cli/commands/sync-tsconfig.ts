@@ -80,7 +80,7 @@ export async function runSyncTsconfig(logger: any, tsconfigPath: string = 'tscon
 
 export function syncTsconfigCommand() {
   return new Command('sync-tsconfig')
-    .description('Syncs Nodulus aliases into tsconfig.json paths array for IDE support')
+    .description('Syncs Kerith aliases into tsconfig.json paths array for IDE support')
     .option('--tsconfig <path>', 'Path to tsconfig.json', 'tsconfig.json')
     .option('--silent', 'Suppress output', false)
     .action(async (options: { tsconfig: string, silent: boolean }) => {
