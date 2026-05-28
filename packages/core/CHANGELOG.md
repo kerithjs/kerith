@@ -5,17 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2026-05-28
+## [1.8.2] — 2026-05-28
 
 ### Changed
-- **Branding Update (Breaking Change)**: The project was entirely rebranded from Nodulus to Kerith.
-  - CLI binary renamed from 
-odulus to kerith.
-  - Config files renamed from 
-odulus.config.* to kerith.config.*.
-  - NPM packages renamed from @vlynk-studios/nodulus-core to @kerith/core.
-  - Preloader variables and hooks updated to __KERITH_PRELOAD_CONFIG__.
-  - NITS directories renamed from .nodulus/ to .kerith/.
+- **Rebranding**: Project renamed from Nodulus to **Kerith** (internal rename, no public API changes).
+  - NPM package: `@vlynk-studios/nodulus-core` → `@kerith/core`
+  - CLI binary: `nodulus` → `kerith`
+  - Config file: `nodulus.config.*` → `kerith.config.*`
+  - NITS directory: `.nodulus/` → `.kerith/`
+  - Preload global: `__NODULUS_PRELOAD_CONFIG__` → `__KERITH_PRELOAD_CONFIG__`
+  - ESLint plugin: `@vlynk-studios/eslint-plugin-nodulus` → `@kerith/eslint-plugin`
+  - Generated tsconfig: `tsconfig.nodulus.json` → `tsconfig.kerith.json`
+  - IPC signal: `nodulus:shutdown` → `kerith:shutdown`
 
 ---
 
@@ -28,7 +29,6 @@ odulus.config.* to kerith.config.*.
 - Triaged and moved `N-50`, `N-51`, and `N-55` into the resolved section of the `Backlog.md` since they were already fixed in prior 1.8.0 updates.
 
 ---
-
 ## [1.8.0] — 2026-05-27
 
 ### Changed

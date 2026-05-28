@@ -13,7 +13,7 @@ const defaultRules = {
 
 const plugin = {
   meta: {
-    name: '@kerith/eslint',
+    name: '@kerith/eslint-plugin',
     version,
   },
   rules: {

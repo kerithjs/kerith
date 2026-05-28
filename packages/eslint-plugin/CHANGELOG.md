@@ -5,17 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2026-05-28
+## [1.8.2] - 2026-05-28
 
 ### Changed
-- **Branding Update (Breaking Change)**: The plugin was renamed from @vlynk-studios/eslint-plugin-nodulus to @kerith/eslint.
-  - Rules updated from 
-odulus/* prefix to kerith/* prefix.
+- **Rebranding**: Plugin renamed from `@vlynk-studios/eslint-plugin-nodulus` to `@kerith/eslint-plugin` (internal rename, no rule logic changes).
+  - Rule prefix: `nodulus/*` -> `kerith/*` (e.g., `kerith/no-private-imports`, `kerith/no-undeclared-imports`)
+  - Plugin meta name: `@kerith/eslint-plugin`
+  - npm package: `@kerith/eslint-plugin`
 
----
+## [1.8.1] - 2026-05-28
 
-## [1.8.1] — 2026-05-28
-- Version synchronized with `nodulus-core@1.8.1`. No new rules or behavioral changes.
+- Version synchronized with `@kerith/core@1.8.1`. No new rules or behavioral changes.
 
 ---
 

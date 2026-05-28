@@ -1,9 +1,9 @@
 # Security Policy
 
-**Package:** `@vlynk-studios/nodulus-core`
-**Current Version:** 1.5.1
-**Maintained by:** Vlynk Studios & Keiver-dev
-**Repository:** https://github.com/Vlynk-Studios/nodulus-core
+**Package:** `@kerith/core`
+**Current Version:** 1.8.1
+**Maintained by:** Vlynk Studios
+**Repository:** https://github.com/KerithJS/kerith
 
 ---
 
@@ -13,17 +13,17 @@ Only the latest stable release receives security patches. Older minor versions a
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.5.x   | ✅ Yes (current)   |
-| 1.4.x   | ⚠️ Critical only   |
-| < 1.4   | ❌ No              |
+| 1.8.x   | ✅ Yes (current)   |
+| 1.7.x   | ⚠️ Critical only   |
+| < 1.7   | ❌ No              |
 
 ---
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in `nodulus-core`, **do not open a public GitHub issue**. Instead, please report it responsibly through one of these channels:
+If you discover a security vulnerability in `@kerith/core`, **do not open a public GitHub issue**. Instead, please report it responsibly through one of these channels:
 
-- **GitHub Security Advisories:** Open a private advisory at `https://github.com/Vlynk-Studios/nodulus-core/security/advisories/new`
+- **GitHub Security Advisories:** Open a private advisory at `https://github.com/Vlynk-Studios/@kerith/core/security/advisories/new`
 - **Email:** Contact the maintainers directly via the email listed in the repository profile.
 
 Please include the following in your report:
@@ -39,11 +39,11 @@ We aim to acknowledge all reports within **48 hours** and to provide a resolutio
 
 ## Security Architecture Overview
 
-`nodulus-core` is a **build-time and bootstrap-time structural layer** for Express.js applications. It is not a web server, authentication provider, or network-facing service. Its attack surface is confined to:
+`@kerith/core` is a **build-time and bootstrap-time structural layer** for Express.js applications. It is not a web server, authentication provider, or network-facing service. Its attack surface is confined to:
 
 - The developer's local filesystem during `createApp()` bootstrap.
-- The `nodulus check` CLI command during CI/CD analysis.
-- The NITS registry file (`.nodulus/registry.json`) written to and read from disk.
+- The `kerith check` CLI command during CI/CD analysis.
+- The NITS registry file (`.kerith/registry.json`) written to and read from disk.
 - Node.js ESM Hooks registered at runtime for alias resolution.
 
 No user-supplied HTTP request data flows through this library at runtime.
@@ -54,7 +54,7 @@ No user-supplied HTTP request data flows through this library at runtime.
 
 ### 1. ESM Alias Resolver (`src/aliases/resolver.ts`)
 
-The alias resolver hooks into the Node.js module resolution pipeline via `node:module`'s `register()` API (requires Node.js ≥ 20.6.0).
+The alias resolver hooks into the Node.js module resolution pipeline via `node:module`'s `register()` API (requires Node.js â‰¥ 20.6.0).
 
 **Protections in place:**
 
@@ -79,32 +79,32 @@ The alias resolver hooks into the Node.js module resolution pipeline via `node:m
 - **ESM environment validation:** The function reads `package.json` to verify `"type": "module"` is present before any module loading occurs. Non-ESM projects fail fast with `INVALID_ESM_ENV`.
 - **Strict mode:** When `strict: true` (default in non-production environments), undeclared cross-module imports detected at runtime cause an immediate `UNDECLARED_IMPORT` error, enforcing explicit dependency declaration.
 - **NITS as an audit-only layer:** NITS I/O errors (disk failures, corrupted registry) are caught and surfaced as `console.warn` messages. They never abort the Express bootstrap, preventing a corrupted registry file from taking down the application server.
-- **No user-controlled input:** `createApp()` reads only from `nodulus.config.ts/js` and the local filesystem. No data from HTTP requests or external network sources is processed.
+- **No user-controlled input:** `createApp()` reads only from `kerith.config.ts/js` and the local filesystem. No data from HTTP requests or external network sources is processed.
 
 ---
 
 ### 3. NITS Registry (`src/nits/nits-store.ts`)
 
-The NITS (Nodulus Integrated Tracking System) assigns stable `mod_{hex8}` identities to modules and persists them to `.nodulus/registry.json`.
+The NITS (Nodulus Integrated Tracking System) assigns stable `mod_{hex8}` identities to modules and persists them to `.kerith/registry.json`.
 
 **Protections in place:**
 
 - **Strict schema validation on load:** `loadNitsRegistry()` rejects any registry file that does not conform to the expected schema. All seven required fields (`name`, `path`, `hash`, `status`, `createdAt`, `lastSeen`, `identifiers`) are validated per module record. A single malformed record causes the entire registry to be discarded and re-initialized (not partially applied), eliminating partial-corruption scenarios.
 - **Module ID format validation:** All keys are validated against the `/^mod_[0-9a-f]{8}$/` regex via `isValidModuleId()`. Records with keys that do not match this format are rejected. This prevents injection of arbitrary strings as module identifiers.
 - **Version mismatch warning:** If the registry `version` field does not match `NITS_REGISTRY_VERSION`, a warning is emitted. The registry is still loaded (non-breaking), but operators are notified of the schema drift.
-- **Atomic writes:** `saveNitsRegistry()` uses a write-then-rename strategy (`registry.json.tmp` → `registry.json`). This ensures the registry is never left in a partially written state even if the process is killed mid-write.
+- **Atomic writes:** `saveNitsRegistry()` uses a write-then-rename strategy (`registry.json.tmp` â†’ `registry.json`). This ensures the registry is never left in a partially written state even if the process is killed mid-write.
 - **Immutable `createdAt` timestamps:** The `createdAt` field is set once on module creation and never overwritten by the reconciler, providing a tamper-evident creation timestamp for each module identity.
 - **Clone before save:** The registry object is cloned before being written to disk to prevent accidental mutation of the in-memory object after the save call returns.
 
 **File should be committed to Git:**
 
-> The `_note` field in the registry file explicitly instructs teams to include `.nodulus/registry.json` in version control. Omitting it from Git would cause all module IDs to be regenerated on every fresh clone, defeating the purpose of stable identity tracking.
+> The `_note` field in the registry file explicitly instructs teams to include `.kerith/registry.json` in version control. Omitting it from Git would cause all module IDs to be regenerated on every fresh clone, defeating the purpose of stable identity tracking.
 
 ---
 
 ### 4. CLI Analyzer (`src/cli/commands/check.ts`)
 
-The `nodulus check` command performs static AST analysis of the project's source files to detect architectural violations.
+The `kerith check` command performs static AST analysis of the project's source files to detect architectural violations.
 
 **Protections in place:**
 
@@ -120,7 +120,7 @@ The `nodulus check` command performs static AST analysis of the project's source
 
 **Protections in place:**
 
-- Configuration files (`nodulus.config.ts` / `nodulus.config.js`) are loaded from the **current working directory only**. There is no mechanism to load configuration from a remote URL or an arbitrary filesystem path.
+- Configuration files (`kerith.config.ts` / `nodulus.config.js`) are loaded from the **current working directory only**. There is no mechanism to load configuration from a remote URL or an arbitrary filesystem path.
 - If a `.ts` config file is found in an environment that cannot transpile TypeScript (e.g., production without a loader), the error message explicitly instructs the operator to use a compiled `.js` config or run with `tsx`/`ts-node`. This prevents silent misconfiguration.
 - The merge strategy (`options > fileConfig > defaults`) ensures that programmatic options passed to `createApp()` always take precedence over file-based configuration, preventing a malicious config file from overriding a security-sensitive programmatic setting.
 
@@ -136,13 +136,13 @@ The `nodulus check` command performs static AST analysis of the project's source
 
 ## Known Security Considerations and Limitations
 
-### Alias Path Injection via `nodulus.config`
+### Alias Path Injection via `kerith.config`
 
-Since Nodulus loads `nodulus.config.ts/js` as a native ESM module, a **malicious config file** could theoretically execute arbitrary code during `createApp()`. This is an accepted risk inherent to all config-as-code patterns (similar to `vite.config.ts`, `webpack.config.js`, etc.). Mitigation lies outside the library scope: treat your project's config files as trusted code and review them like any other source file.
+Since Nodulus loads `kerith.config.ts/js` as a native ESM module, a **malicious config file** could theoretically execute arbitrary code during `createApp()`. This is an accepted risk inherent to all config-as-code patterns (similar to `vite.config.ts`, `webpack.config.js`, etc.). Mitigation lies outside the library scope: treat your project's config files as trusted code and review them like any other source file.
 
 ### Registry File Tampering
 
-The `.nodulus/registry.json` file is validated on load but is not cryptographically signed. A developer with write access to the repository could manually forge module IDs or timestamps. This is mitigated by the strict `isValidRegistry` and `isValidModuleId` checks, which will reject obviously malformed records, but a carefully crafted valid-looking forgery could be accepted. This is considered acceptable for a developer-tooling package.
+The `.kerith/registry.json` file is validated on load but is not cryptographically signed. A developer with write access to the repository could manually forge module IDs or timestamps. This is mitigated by the strict `isValidRegistry` and `isValidModuleId` checks, which will reject obviously malformed records, but a carefully crafted valid-looking forgery could be accepted. This is considered acceptable for a developer-tooling package.
 
 ### `Controller` Excluded from Semantic Hashing (BUG-1, fixed in v1.4.0)
 
@@ -150,7 +150,7 @@ Prior to v1.4.0, the `Controller` identifier was included in the NITS semantic h
 
 ### Node.js Minimum Version
 
-Nodulus requires **Node.js ≥ 20.6.0** for the `--import` flag and native ESM Hooks API (`node:module` `register()`). Running on older Node.js versions will fail at the ESM environment validation step. Ensure your deployment infrastructure and CI pipeline enforce this minimum.
+Nodulus requires **Node.js â‰¥ 20.6.0** for the `--import` flag and native ESM Hooks API (`node:module` `register()`). Running on older Node.js versions will fail at the ESM environment validation step. Ensure your deployment infrastructure and CI pipeline enforce this minimum.
 
 ### ESM-Only
 
@@ -166,11 +166,11 @@ Nodulus dropped CommonJS support in v1.0.0. Projects attempting to use Nodulus i
 | `fast-glob`   | 3.3.3    | Module directory discovery (glob)         |
 | `picocolors`  | 1.1.1    | Terminal color output (logging)           |
 | `comment-json`| 4.6.2    | Preserves comments in `tsconfig.json`     |
-| `acorn`       | 8.16.0   | AST parser for `nodulus check` (dev/peer) |
+| `acorn`       | 8.16.0   | AST parser for `kerith check` (dev/peer) |
 
 All production dependencies are minimal and widely audited. Run `npm audit` regularly to detect upstream vulnerabilities.
 
-**Peer dependency:** `express >= 5.0.0` — Nodulus does not bundle Express and defers all HTTP handling to the host application.
+**Peer dependency:** `express >= 5.0.0` â€” Nodulus does not bundle Express and defers all HTTP handling to the host application.
 
 ---
 
@@ -185,7 +185,7 @@ All production dependencies are minimal and widely audited. Run `npm audit` regu
 | **1.4.0** | REGLA-14: `registerModule` now checks name uniqueness before mutating state. |
 | **1.4.0** | REGLA-31: Reconciler now uses `normalizePath` for consistent cross-platform path comparison. |
 | **1.4.0** | N-48: Fixed `candidate` records persisting in identity limbo (orphaned registry entries). |
-| **1.4.0** | N-46: CLI `nodulus check` no longer crashes on transient file-locking incidents. |
+| **1.4.0** | N-46: CLI `kerith check` no longer crashes on transient file-locking incidents. |
 | **1.3.0** | N-25: `loadNitsRegistry` now emits the underlying parse error before soft-resetting a corrupted registry. |
 | **1.2.6** | `ALIAS_NOT_FOUND` now fails fast on nonexistent alias targets at bootstrap. |
 | **1.2.6** | `UNDECLARED_IMPORT` correctly enforced in strict mode, harmonizing runtime and CLI guarantees. |
@@ -201,4 +201,4 @@ We follow a **90-day responsible disclosure policy**. If a reported vulnerabilit
 
 ---
 
-*Last updated: 2026-04-23 — nodulus-core v1.4.0*
+*Last updated: 2026-05-28 — @kerith/core v1.8.1*

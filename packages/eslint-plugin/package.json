@@ -1,6 +1,6 @@
 {
-  "name": "@kerith/eslint",
-  "version": "1.8.1",
+  "name": "@kerith/eslint-plugin",
+  "version": "1.8.2",
   "description": "ESLint plugin for Kerith architecture validation.",
   "type": "module",
   "main": "./dist/index.js",
