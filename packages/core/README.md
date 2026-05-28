@@ -71,7 +71,7 @@ If you generated your project using `npx create-Kerith-app`, the pre-loader is *
 
 **1. Generate the pre-loader file:**
 ```bash
-npx Kerith sync-preload
+npx kerith sync-preload
 ```
 
 This creates `.Kerith/preload.js` — commit it to version control.
@@ -101,7 +101,7 @@ console.log(runtime.preloaderActive) // true
 
 ### When to run `sync-preload` manually
 
-Because `npm run dev` automatically chains `sync-preload --silent`, the pre-loader is usually kept in sync automatically. However, you need to run `npx Kerith sync-preload` manually when:
+Because `npm run dev` automatically chains `sync-preload --silent`, the pre-loader is usually kept in sync automatically. However, you need to run `npx kerith sync-preload` manually when:
 - You add, remove, or change aliases in `kerith.config.ts` while the server is NOT running.
 - You move your project to a different directory on your local machine (the pre-loader embeds absolute paths to the runtime hook).
 - In CI/CD pipelines to ensure the file is up to date (though committing `.Kerith/preload.js` is the recommended approach).
@@ -468,7 +468,7 @@ Kerith provides a built-in CLI to enforce conventions and improve developer expe
 Scaffolds a perfectly structured module conforming to the framework constraints.
 
 ```bash
-npx Kerith create-module payments
+npx kerith create-module payments
 ```
 
 ```text
@@ -500,7 +500,7 @@ npx Kerith create-module payments
 Syncs Kerith aliases into `tsconfig.json` paths so IDEs and TypeScript recognise `@modules/*` and any folder aliases you've configured.
 
 ```bash
-npx Kerith sync-tsconfig
+npx kerith sync-tsconfig
 ```
 
 ```text
@@ -524,7 +524,7 @@ Run this command initially, and whenever you create, rename, or drop modules. It
 Generates `.Kerith/preload.js` — a static ESM entry point that registers the alias resolution hook **before** your application code runs. This enables aliases in top-level imports of your server entry file.
 
 ```bash
-npx Kerith sync-preload
+npx kerith sync-preload
 ```
 
 ```text
@@ -549,7 +549,7 @@ Starts your application in development mode. Automatically injects `--import ./.
 The expected workflow is to chain this command with `sync-preload` to ensure the pre-loader is always up to date before the server starts:
 
 ```bash
-npx Kerith sync-preload --silent && npx Kerith dev <entrypoint> [--watch] [--runtime <node|tsx>]
+npx kerith sync-preload --silent && npx kerith dev <entrypoint> [--watch] [--runtime <node|tsx>]
 ```
 
 | Option | Description |
@@ -566,7 +566,7 @@ If `.Kerith/preload.js` does not exist, `Kerith dev` falls back to legacy mode (
 Performs static architecture analysis by inspecting raw ASTs across your module structure without evaluating your application code.
 
 ```bash
-npx Kerith check
+npx kerith check
 ```
 
 ```text
@@ -747,7 +747,7 @@ NITS uses a three-step Verification Triangle algorithm:
 Because `registry.json` tracks project-level state, parallel branches may occasionally produce Git merge conflicts. To resolve them:
 
 1. Accept either side of the conflict to make the JSON valid again.
-2. Run `npx Kerith check`.
+2. Run `npx kerith check`.
 3. NITS will automatically detect and heal the registry.
 4. Commit the updated `.Kerith/registry.json`.
 
