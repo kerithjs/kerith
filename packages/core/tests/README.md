@@ -1,6 +1,6 @@
-# Nodulus Core Tests
+# Kerith Core Tests
 
-This directory contains unit and integration tests for the Nodulus Core framework.
+This directory contains unit and integration tests for the Kerith Core framework.
 
 ## Shadow File Tests
 
@@ -25,6 +25,6 @@ it('should test something with a real directory', () => {
 
 ### Why hardcoded IDs in `nits-app` fixture?
 
-The fixture at `tests/fixtures/nits-app` contains `.nodulus` files and a `registry.json` with hardcoded IDs (e.g., `mod_a1b2c3d4`). 
+The fixture at `tests/fixtures/nits-app` contains `.kerith` files and a `registry.json` with hardcoded IDs (e.g., `mod_a1b2c3d4`). 
 
 These are used in `tests/unit/nits-app-lifecycle.test.ts` to simulate complex "moved" and "cloned" scenarios where we need to verify that the reconciler correctly identifies a module by its stable ID, regardless of its current path. Using stable IDs in the fixture allows us to write assertions that check for exact ID preservation across simulated boot cycles.

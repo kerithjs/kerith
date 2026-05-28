@@ -75,7 +75,7 @@ The alias resolver hooks into the Node.js module resolution pipeline via `node:m
 
 **Protections in place:**
 
-- **Duplicate bootstrap guard:** The function checks for a `__nodulusBootstrapped` flag on the Express `app` object before proceeding. A second call with the same instance throws `DUPLICATE_BOOTSTRAP` immediately, preventing double-registration of routes or state corruption.
+- **Duplicate bootstrap guard:** The function checks for a `__KerithBootstrapped` flag on the Express `app` object before proceeding. A second call with the same instance throws `DUPLICATE_BOOTSTRAP` immediately, preventing double-registration of routes or state corruption.
 - **ESM environment validation:** The function reads `package.json` to verify `"type": "module"` is present before any module loading occurs. Non-ESM projects fail fast with `INVALID_ESM_ENV`.
 - **Strict mode:** When `strict: true` (default in non-production environments), undeclared cross-module imports detected at runtime cause an immediate `UNDECLARED_IMPORT` error, enforcing explicit dependency declaration.
 - **NITS as an audit-only layer:** NITS I/O errors (disk failures, corrupted registry) are caught and surfaced as `console.warn` messages. They never abort the Express bootstrap, preventing a corrupted registry file from taking down the application server.
@@ -85,7 +85,7 @@ The alias resolver hooks into the Node.js module resolution pipeline via `node:m
 
 ### 3. NITS Registry (`src/nits/nits-store.ts`)
 
-The NITS (Nodulus Integrated Tracking System) assigns stable `mod_{hex8}` identities to modules and persists them to `.kerith/registry.json`.
+The NITS (Kerith Integrated Tracking System) assigns stable `mod_{hex8}` identities to modules and persists them to `.kerith/registry.json`.
 
 **Protections in place:**
 
@@ -120,7 +120,7 @@ The `kerith check` command performs static AST analysis of the project's source 
 
 **Protections in place:**
 
-- Configuration files (`kerith.config.ts` / `nodulus.config.js`) are loaded from the **current working directory only**. There is no mechanism to load configuration from a remote URL or an arbitrary filesystem path.
+- Configuration files (`kerith.config.ts`) are loaded from the **current working directory only**. There is no mechanism to load configuration from a remote URL or an arbitrary filesystem path.
 - If a `.ts` config file is found in an environment that cannot transpile TypeScript (e.g., production without a loader), the error message explicitly instructs the operator to use a compiled `.js` config or run with `tsx`/`ts-node`. This prevents silent misconfiguration.
 - The merge strategy (`options > fileConfig > defaults`) ensures that programmatic options passed to `createApp()` always take precedence over file-based configuration, preventing a malicious config file from overriding a security-sensitive programmatic setting.
 
@@ -138,7 +138,7 @@ The `kerith check` command performs static AST analysis of the project's source 
 
 ### Alias Path Injection via `kerith.config`
 
-Since Nodulus loads `kerith.config.ts/js` as a native ESM module, a **malicious config file** could theoretically execute arbitrary code during `createApp()`. This is an accepted risk inherent to all config-as-code patterns (similar to `vite.config.ts`, `webpack.config.js`, etc.). Mitigation lies outside the library scope: treat your project's config files as trusted code and review them like any other source file.
+Since Kerith loads `kerith.config.ts/js` as a native ESM module, a **malicious config file** could theoretically execute arbitrary code during `createApp()`. This is an accepted risk inherent to all config-as-code patterns (similar to `vite.config.ts`, `webpack.config.js`, etc.). Mitigation lies outside the library scope: treat your project's config files as trusted code and review them like any other source file.
 
 ### Registry File Tampering
 
@@ -150,11 +150,11 @@ Prior to v1.4.0, the `Controller` identifier was included in the NITS semantic h
 
 ### Node.js Minimum Version
 
-Nodulus requires **Node.js â‰¥ 20.6.0** for the `--import` flag and native ESM Hooks API (`node:module` `register()`). Running on older Node.js versions will fail at the ESM environment validation step. Ensure your deployment infrastructure and CI pipeline enforce this minimum.
+Kerith requires **Node.js â‰¥ 20.6.0** for the `--import` flag and native ESM Hooks API (`node:module` `register()`). Running on older Node.js versions will fail at the ESM environment validation step. Ensure your deployment infrastructure and CI pipeline enforce this minimum.
 
 ### ESM-Only
 
-Nodulus dropped CommonJS support in v1.0.0. Projects attempting to use Nodulus in a CJS context will receive an `INVALID_ESM_ENV` error immediately. There is no CJS compatibility shim, and none is planned.
+Kerith dropped CommonJS support in v1.0.0. Projects attempting to use Kerith in a CJS context will receive an `INVALID_ESM_ENV` error immediately. There is no CJS compatibility shim, and none is planned.
 
 ---
 
@@ -170,7 +170,7 @@ Nodulus dropped CommonJS support in v1.0.0. Projects attempting to use Nodulus i
 
 All production dependencies are minimal and widely audited. Run `npm audit` regularly to detect upstream vulnerabilities.
 
-**Peer dependency:** `express >= 5.0.0` â€” Nodulus does not bundle Express and defers all HTTP handling to the host application.
+**Peer dependency:** `express >= 5.0.0` â€” Kerith does not bundle Express and defers all HTTP handling to the host application.
 
 ---
 
