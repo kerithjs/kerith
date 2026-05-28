@@ -149,15 +149,15 @@ const httpLog = useHttpLogger({ ignore: ["/health"] });
 app.use(express.json());
 app.use(httpLog.requests());
 
-const nodulus = await createApp(app);
+const Kerith = await createApp(app);
 
-log.info(`Mounted ${nodulus.routes.length} route(s)`);
+log.info(`Mounted ${Kerith.routes.length} route(s)`);
 
 const server = app.listen(3000, () => {
   log.info("Server running on http://localhost:3000");
 });
 
-nodulus.listen(server);
+Kerith.listen(server);
 
 // Error handler — must be last
 app.use(httpLog.errors());
