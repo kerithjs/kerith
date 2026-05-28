@@ -138,7 +138,7 @@ afterEach(() => {
 
 /** Creates an empty isolated tmpdir. */
 function mktmp(): string {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-delete-lc-'));
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-delete-lc-'));
   tmpDirs.push(d);
   return d;
 }

@@ -27,7 +27,7 @@ afterEach(() => {
   moduleResolver.clearAllResolverCaches();
 });
 
-describe('file inside a Nodulus module', () => {
+describe('file inside a Kerith module', () => {
   beforeEach(() => {
     vi.spyOn(moduleResolver, 'getModuleImports').mockReturnValue(['users']);
     vi.spyOn(moduleResolver, 'getActiveKerithAliases').mockReturnValue(['@modules']);
@@ -64,7 +64,7 @@ describe('file inside a Nodulus module', () => {
   });
 });
 
-describe('file outside a Nodulus module', () => {
+describe('file outside a Kerith module', () => {
   beforeEach(() => {
     vi.spyOn(moduleResolver, 'getModuleImports').mockReturnValue(null);
   });

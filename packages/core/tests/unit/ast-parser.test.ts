@@ -10,7 +10,7 @@ describe('ast-parser tests', () => {
   });
 
   const runWithTempFile = (content: string, testFn: (filePath: string) => void) => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-ast-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-ast-'));
     const filePath = path.join(tmpDir, 'index.ts');
     fs.writeFileSync(filePath, content);
     

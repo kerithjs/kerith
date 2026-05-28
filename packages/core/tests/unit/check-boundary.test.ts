@@ -22,7 +22,7 @@ function createBoundaryFixture(
   files: Record<string, string>,
   configContent = "export default { modules: 'src/modules/*', strict: false };",
 ): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-boundary-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-boundary-'));
   const usersDir = path.join(root, 'src', 'modules', 'users');
   const paymentsDir = path.join(root, 'src', 'modules', 'payments');
   fs.mkdirSync(usersDir, { recursive: true });

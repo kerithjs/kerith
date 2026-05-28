@@ -7,7 +7,7 @@ import { normalizePath } from '../core/utils/paths.js';
 import type { ModuleOptions } from '../types/index.js';
 
 /**
- * Declares a Nodulus module and registers its options in the application registry.
+ * Declares a Kerith module and registers its options in the application registry.
  * Must be called from the module's index file.
  * 
  * @param name    - Unique name of the module. Must match the folder name.

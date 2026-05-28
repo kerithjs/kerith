@@ -67,7 +67,7 @@ export function createModuleCommand() {
       }
 
       // Write the .kerith shadow file — establishes stable identity from day one.
-      // The ID is never shown to the user; it is a Nodulus internal detail.
+      // The ID is never shown to the user; it is a Kerith internal detail.
       const shadowRecord = {
         version: SHADOW_FILE_VERSION,
         id: generateModuleId(),

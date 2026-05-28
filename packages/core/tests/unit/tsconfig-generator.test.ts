@@ -8,7 +8,7 @@ import {
   ensureTsconfigExtends,
 } from '../../src/config/tsconfig-generator.js';
 import type { ResolvedKerithConfig } from '../../src/config/kerith-config.js';
-const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-tsconfig-test-'));
+const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-tsconfig-test-'));
 
 describe('tsconfig-generator', () => {
   let tmpDir: string;

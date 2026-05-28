@@ -1,5 +1,5 @@
 /**
- * Nodulus Integrated Tracking System (NITS) Constants
+ * Kerith Integrated Tracking System (NITS) Constants
  */
 
 /**

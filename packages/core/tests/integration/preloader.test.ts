@@ -13,7 +13,7 @@ const INDEX_PATH = path.join(CORE_PATH, 'dist/index.js');
 
 describe('Pre-loader Integration (preloader.test.ts)', () => {
   const setupTestApp = () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-preloader-integration-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-preloader-integration-'));
     
     // 1. package.json
     fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({
@@ -54,8 +54,8 @@ describe('Pre-loader Integration (preloader.test.ts)', () => {
         console.log('MSG:' + GREETING);
         
         const mockApp = { use: () => {} };
-        const nodulus = await createApp(mockApp);
-        console.log('PRELOADER_ACTIVE:' + nodulus.runtime.preloaderActive);
+        const Kerith = await createApp(mockApp);
+        console.log('PRELOADER_ACTIVE:' + Kerith.runtime.preloaderActive);
       `);
 
       // 3. Run with --import
@@ -80,8 +80,8 @@ describe('Pre-loader Integration (preloader.test.ts)', () => {
       fs.writeFileSync(path.join(tmpDir, 'main.js'), `
         import { createApp } from '${pathToFileURL(INDEX_PATH).href}';
         const mockApp = { use: () => {} };
-        const nodulus = await createApp(mockApp);
-        console.log('PRELOADER_ACTIVE:' + nodulus.runtime.preloaderActive);
+        const Kerith = await createApp(mockApp);
+        console.log('PRELOADER_ACTIVE:' + Kerith.runtime.preloaderActive);
       `);
 
       const result = spawnSync('node', ['main.js'], { cwd: tmpDir, encoding: 'utf8' });
@@ -107,8 +107,8 @@ describe('Pre-loader Integration (preloader.test.ts)', () => {
       fs.writeFileSync(path.join(tmpDir, 'main.js'), `
         import { createApp } from '${pathToFileURL(INDEX_PATH).href}';
         const mockApp = { use: () => {} };
-        const nodulus = await createApp(mockApp);
-        console.log('BOOTSTRAPPED:' + nodulus.modules.length);
+        const Kerith = await createApp(mockApp);
+        console.log('BOOTSTRAPPED:' + Kerith.modules.length);
       `);
 
       // Should still work because createApp activates the resolver if not active

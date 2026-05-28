@@ -36,7 +36,7 @@ export function devCommand(): Command {
 
         // ─── Build args ────────────────────────────────────────────────────
         // NOTE: --watch is intentionally NOT forwarded to Node/TSX.
-        // Nodulus manages the restart cycle via chokidar (see below).
+        // Kerith manages the restart cycle via chokidar (see below).
 
         const args: string[] = [];
 
@@ -141,7 +141,7 @@ export function devCommand(): Command {
 
         // ─── Watch mode ────────────────────────────────────────────────────
         // Only activated when the user explicitly passes --watch.
-        // chokidar observes src/. Nodulus manages the restart. Express is
+        // chokidar observes src/. Kerith manages the restart. Express is
         // completely unaware of the watcher's existence.
 
         if (options.watch) {

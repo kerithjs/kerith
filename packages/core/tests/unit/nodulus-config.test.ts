@@ -6,7 +6,7 @@ import { loadKerithConfig } from '../../src/config/kerith-config.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-cfg-test-'));
+const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-cfg-test-'));
 
 const writeConfig = (dir: string, name: string, content: string) => {
   fs.writeFileSync(path.join(dir, name), content, 'utf-8');

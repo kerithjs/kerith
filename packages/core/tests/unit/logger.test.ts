@@ -94,7 +94,7 @@ describe('Logger Utility', () => {
       expect(resolveLogLevel()).toBe('warn');
     });
 
-    it('resolveLogLevel() with NODE_DEBUG=nodulus returns "debug"', () => {
+    it('resolveLogLevel() with NODE_DEBUG=Kerith returns "debug"', () => {
       vi.stubEnv('NODE_DEBUG', 'fs,kerith,http');
       expect(resolveLogLevel()).toBe('debug');
     });

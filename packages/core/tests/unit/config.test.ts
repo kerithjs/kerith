@@ -10,7 +10,7 @@ describe('loadConfig', () => {
   });
 
   const runInTmpDir = async (files: Record<string, string>, tests: (tmpDir: string) => Promise<void>) => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-tests-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-tests-'));
     vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
 
     for (const [name, content] of Object.entries(files)) {
@@ -41,7 +41,7 @@ describe('loadConfig', () => {
   });
 
   it('should overwrite defaults dynamically with the config file values', async () => {
-    // Generate JS file because running TS dynamically requires tsx / special loaders in pure nodulus run environment
+    // Generate JS file because running TS dynamically requires tsx / special loaders in pure Kerith run environment
     await runInTmpDir({
       'kerith.config.js': 'export default { prefix: "/file-prefix", strict: false };'
     }, async () => {

@@ -3,9 +3,9 @@ import { fileURLToPath } from 'node:url';
 import { KerithError } from '../core/errors.js';
 
 /**
- * Internal utility — NOT part of the public Nodulus API.
+ * Internal utility — NOT part of the public Kerith API.
  *
- * Walks the V8 call stack to find the file that called one of the Nodulus
+ * Walks the V8 call stack to find the file that called one of the Kerith
  * identifier functions (Module, Service, Controller, Repository, Schema).
  *
  * Stack layout when an identifier function calls this helper:

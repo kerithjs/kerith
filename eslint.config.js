@@ -9,7 +9,7 @@ export default tseslint.config(
   },
   {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off', // Nodulus currently uses any for generic typing signatures in certain internal modules
+      '@typescript-eslint/no-explicit-any': 'off', // Kerith currently uses any for generic typing signatures in certain internal modules
       '@typescript-eslint/no-unused-vars': ['warn', { 
         argsIgnorePattern: '^_', 
         varsIgnorePattern: '^_',

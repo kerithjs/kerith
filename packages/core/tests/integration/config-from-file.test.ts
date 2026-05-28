@@ -15,7 +15,7 @@ const runInTmpApp = async (
   files: Record<string, string>,
   tests: (tmpDir: string, app: ReturnType<typeof makeMockApp>) => Promise<void>,
 ) => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "nodulus-cfg-integration-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "Kerith-cfg-integration-"));
 
   for (const [name, content] of Object.entries(files)) {
     const fullPath = path.join(tmpDir, name);

@@ -4,7 +4,7 @@ import type { WatcherOptions } from "../../types/index.js";
 // ─── Default ignored patterns ─────────────────────────────────────────────────
 // These are always combined with whatever the user passes in options.ignored.
 // .kerith/** is explicitly ignored to avoid re-triggering on NITS registry
-// updates that Nodulus itself generates during bootstrap.
+// updates that Kerith itself generates during bootstrap.
 
 const defaultIgnored: (string | ((p: string) => boolean))[] = [
   "**/node_modules/**",
@@ -26,7 +26,7 @@ const defaultIgnored: (string | ((p: string) => boolean))[] = [
  *
  * Design principles:
  * - Chokidar observes files.
- * - Nodulus manages the restart via the `onRestart` callback.
+ * - Kerith manages the restart via the `onRestart` callback.
  * - Express is unaware of the watcher's existence.
  *
  * @param options - Configuration for the watcher.

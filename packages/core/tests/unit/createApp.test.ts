@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const sourceUrl = pathToFileURL(path.resolve(__dirname, '../../src/index.ts')).href;
 
 const runInTmpApp = async (files: Record<string, string>, tests: (tmpDir: string, app: any) => Promise<void>) => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-app-test-'));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-app-test-'));
   
   for (const [name, content] of Object.entries(files)) {
     const fullPath = path.join(tmpDir, name);

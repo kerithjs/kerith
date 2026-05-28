@@ -14,7 +14,7 @@ describe('Module()', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-module-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-module-test-'));
   });
 
   afterEach(() => {

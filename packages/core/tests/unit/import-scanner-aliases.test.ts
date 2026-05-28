@@ -10,7 +10,7 @@ import {
 function writeTempFile(content: string, ext = '.ts'): string {
   const tmpPath = path.join(
     os.tmpdir(),
-    `nodulus-scanner-aliases-${Date.now()}-${Math.random()}${ext}`,
+    `Kerith-scanner-aliases-${Date.now()}-${Math.random()}${ext}`,
   );
   fs.writeFileSync(tmpPath, content, 'utf-8');
   return tmpPath;
@@ -36,7 +36,7 @@ describe('import-scanner — extractRelativeCrossModuleImports()', () => {
   });
 
   function setupModuleTree(): { usersDir: string; serviceFile: string } {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-relative-aliases-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-relative-aliases-'));
     const usersDir = path.join(tmpDir, 'src', 'modules', 'users');
     const paymentsDir = path.join(tmpDir, 'src', 'modules', 'payments');
     const sharedDir = path.join(tmpDir, 'src', 'shared');

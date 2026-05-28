@@ -25,7 +25,7 @@ describe('module-resolver cache and parsing', () => {
   });
 
   it('parses DomainShared structure successfully extracting allowedDomains array', () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-shared-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-shared-'));
     const indexPath = path.join(tmpDir, 'index.ts');
     
     fs.writeFileSync(indexPath, `
@@ -89,7 +89,7 @@ describe('module-resolver cache and parsing', () => {
   });
 
   it('returns null when DomainShared does not exist inside the target index boundary', () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-shared-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-shared-'));
     const indexPath = path.join(tmpDir, 'index.ts');
     
     fs.writeFileSync(indexPath, `

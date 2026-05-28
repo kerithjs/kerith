@@ -15,7 +15,7 @@ afterEach(() => {
 });
 
 export function createTmpModuleDir(name: string): string {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `nodulus-test-${name}-`));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `Kerith-test-${name}-`));
   tmpDirs.push(tmpDir);
   // Create a basic module structure
   fs.mkdirSync(path.join(tmpDir, 'src', 'modules', name), { recursive: true });

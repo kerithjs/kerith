@@ -13,7 +13,7 @@ const simulateCleanup = (paths: Record<string, string[]>, pathsObj: Record<strin
     if (currentKeys.has(key)) continue;
 
     const val = newPaths[key];
-    const isNodulusModule = key.startsWith('@modules/');
+    const isKerithModule = key.startsWith('@modules/');
     
     // Heuristic duplicated from sync-tsconfig.ts
     const isStaleFolderAlias = 
@@ -26,7 +26,7 @@ const simulateCleanup = (paths: Record<string, string[]>, pathsObj: Record<strin
         (newPaths[`${key}/*`] !== undefined)
       );
 
-    if (isNodulusModule || isStaleFolderAlias) {
+    if (isKerithModule || isStaleFolderAlias) {
       delete newPaths[key];
     }
   }
@@ -36,7 +36,7 @@ const simulateCleanup = (paths: Record<string, string[]>, pathsObj: Record<strin
 describe('P5 tsconfig Sync Robustness', () => {
     
     it('should generate dual mapping and resolve index for directories', async () => {
-        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-p5-1-'));
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-p5-1-'));
         const configDir = path.join(tmpDir, 'src/config');
         fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(path.join(configDir, 'index.ts'), 'export default {}');
@@ -56,7 +56,7 @@ describe('P5 tsconfig Sync Robustness', () => {
     });
 
     it('should handle directory aliases without index file', async () => {
-        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-p5-2-'));
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-p5-2-'));
         const sharedDir = path.join(tmpDir, 'shared');
         fs.mkdirSync(sharedDir, { recursive: true });
 
@@ -75,7 +75,7 @@ describe('P5 tsconfig Sync Robustness', () => {
     });
 
     it('should NOT generate dual mapping for files', async () => {
-        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-p5-3-'));
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-p5-3-'));
         const dbFile = path.join(tmpDir, 'db.ts');
         fs.writeFileSync(dbFile, 'export const db = {}');
 
@@ -114,7 +114,7 @@ describe('P5 tsconfig Sync Robustness', () => {
             expect(cleaned).toHaveProperty('@user-manual');
         });
 
-        it('should NOT remove user aliases that do not match Nodulus pattern', () => {
+        it('should NOT remove user aliases that do not match Kerith pattern', () => {
              const existingPaths = {
                 'external-lib': ['node_modules/external-lib'],
                 '@app': ['./src/app.ts']

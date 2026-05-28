@@ -30,7 +30,7 @@ export interface KerithConfig {
   logLevel?: LogLevel;
   /** Format of the output logs. Default: 'auto' */
   logFormat?: LogFormat;
-  /** NITS (Nodulus Integrated Tracking System) configuration. */
+  /** NITS (Kerith Integrated Tracking System) configuration. */
   nits?: NitsConfig;
   /**
    * When `true`, `createApp()` throws `PRELOADER_REQUIRED` if the runtime pre-loader

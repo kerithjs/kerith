@@ -11,7 +11,7 @@ import {
 import { createRegistry } from '../../src/core/registry.js';
 
 function writeTempFile(content: string, ext = '.ts'): string {
-  const tmpPath = path.join(os.tmpdir(), `nodulus-cli-scanner-${Date.now()}-${Math.random()}${ext}`);
+  const tmpPath = path.join(os.tmpdir(), `Kerith-cli-scanner-${Date.now()}-${Math.random()}${ext}`);
   fs.writeFileSync(tmpPath, content, 'utf-8');
   return tmpPath;
 }
@@ -86,7 +86,7 @@ describe('cli/lib/import-scanner — extractRelativeCrossModuleImports', () => {
   });
 
   it('detects ../ imports that escape the module directory', () => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-relative-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-relative-'));
     const usersDir = path.join(tmpDir, 'src', 'modules', 'users');
     const paymentsDir = path.join(tmpDir, 'src', 'modules', 'payments');
     fs.mkdirSync(usersDir, { recursive: true });

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 describe('E2E Integration', () => {
   let appServer: any;
-  let nodulusInfo: KerithApp;
+  let KerithInfo: KerithApp;
 
   beforeAll(async () => {
     // Pivot CWD into the fixture to mimic a real project running locally.
@@ -21,7 +21,7 @@ describe('E2E Integration', () => {
     const { app, boot } = await import('../../tests/fixtures/basic-app/src/app.js');
     
     appServer = app;
-    nodulusInfo = await boot();
+    KerithInfo = await boot();
   });
 
   afterAll(() => {
@@ -29,10 +29,10 @@ describe('E2E Integration', () => {
   });
 
   it('should successfully boot without errors and resolve all modules', () => {
-    expect(nodulusInfo).toBeDefined();
-    expect(nodulusInfo.modules).toHaveLength(4); // auth, core, notifications, users
+    expect(KerithInfo).toBeDefined();
+    expect(KerithInfo.modules).toHaveLength(4); // auth, core, notifications, users
     
-    const moduleNames = nodulusInfo.modules.map(m => m.name).sort();
+    const moduleNames = KerithInfo.modules.map(m => m.name).sort();
     expect(moduleNames).toEqual(['auth', 'core', 'notifications', 'users']);
   });
 
@@ -59,30 +59,30 @@ describe('E2E Integration', () => {
   it('should guarantee that @modules alias is inherently registered and usable between logical parts', () => {
     // UsersService imported notifications via @modules/notifications/...
     // If it successfully logged/returned and didn't crash, the ESM runtime hook is perfectly intercepting.
-    expect(nodulusInfo.registry.resolveAlias('@modules/notifications')).toBeDefined(); // internal sanity check that alias logic succeeded underneath
-    const aliases = nodulusInfo.registry.getAllAliases();
+    expect(KerithInfo.registry.resolveAlias('@modules/notifications')).toBeDefined(); // internal sanity check that alias logic succeeded underneath
+    const aliases = KerithInfo.registry.getAllAliases();
     expect(aliases['@modules/notifications']).toBeDefined();
   });
 
   // ── T-03: expanded HTTP + registry coverage ────────────────────────────────
 
-  it('T-03a: unregistered path → Express returns 404, not a Nodulus stack trace', async () => {
+  it('T-03a: unregistered path → Express returns 404, not a Kerith stack trace', async () => {
     const res = await request(appServer).get('/api/this-route-does-not-exist-xyz');
     expect(res.status).toBe(404);
-    // Response must NOT contain a Nodulus error code
+    // Response must NOT contain a Kerith error code
     const body = typeof res.body === 'object' ? JSON.stringify(res.body) : String(res.text ?? '');
     expect(body).not.toMatch(/KerithError/);
   });
 
   it('T-03b: registry.getModule("nonExistent") returns undefined and does not throw', () => {
     expect(() => {
-      const result = nodulusInfo.registry.getModule('nonExistent-xyz-module');
+      const result = KerithInfo.registry.getModule('nonExistent-xyz-module');
       expect(result).toBeUndefined();
     }).not.toThrow();
   });
 
   it('T-03c: registry.getAllModules() returns the correct set of module names', () => {
-    const allModules = nodulusInfo.registry.getAllModules();
+    const allModules = KerithInfo.registry.getAllModules();
     expect(Array.isArray(allModules)).toBe(true);
     expect(allModules.length).toBe(4);
     const names = allModules.map((m: any) => m.name).sort();
@@ -108,7 +108,7 @@ describe('E2E Integration', () => {
     };
     const shutdownHook = vi.fn();
     
-    const triggerShutdown = nodulusInfo.listen(mockServer as any, { onShutdown: shutdownHook });
+    const triggerShutdown = KerithInfo.listen(mockServer as any, { onShutdown: shutdownHook });
     
     // Intercept process.exit to prevent the test runner from dying
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);

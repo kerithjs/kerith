@@ -33,7 +33,7 @@ describe('CLI: sync-preload', () => {
   let stdoutSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-sync-preload-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-sync-preload-'));
     fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test-app', type: 'module' }));
     fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default {}');
     vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
@@ -68,13 +68,13 @@ describe('CLI: sync-preload', () => {
   it('creates .kerith/ directory if it does not exist', async () => {
     vi.mocked(loadConfig).mockResolvedValue(makeBaseConfig());
 
-    const nodulusDir = path.join(tmpDir, '.kerith');
-    expect(fs.existsSync(nodulusDir)).toBe(false);
+    const KerithDir = path.join(tmpDir, '.kerith');
+    expect(fs.existsSync(KerithDir)).toBe(false);
 
     await runCommand();
 
-    expect(fs.existsSync(nodulusDir)).toBe(true);
-    expect(fs.existsSync(path.join(nodulusDir, 'preload.js'))).toBe(true);
+    expect(fs.existsSync(KerithDir)).toBe(true);
+    expect(fs.existsSync(path.join(KerithDir, 'preload.js'))).toBe(true);
   });
 
   it('embeds user aliases from kerith.config.ts into the generated file', async () => {

@@ -4,7 +4,7 @@ import type { HttpLogger, HttpLoggerOptions } from '../types/index.js';
 
 /**
  * Opt-in HTTP logger hook that returns Express middlewares for request and error logging.
- * It shares the same Pino instance as the rest of the Nodulus application.
+ * It shares the same Pino instance as the rest of the Kerith application.
  *
  * @example
  * ```ts
@@ -15,7 +15,7 @@ import type { HttpLogger, HttpLoggerOptions } from '../types/index.js';
  * // Mount `requests()` early in your Express pipeline
  * app.use(httpLogger.requests());
  * 
- * // ... your routes and Nodulus app here ...
+ * // ... your routes and Kerith app here ...
  * 
  * // Mount `errors()` at the very end to catch unhandled exceptions
  * app.use(httpLogger.errors());

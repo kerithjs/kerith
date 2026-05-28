@@ -163,7 +163,7 @@ describe('computeModuleHash', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-nits-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-nits-test-'));
   });
 
   afterEach(() => {
@@ -236,7 +236,7 @@ describe('computeModuleHash', () => {
   });
 
   it('uses filename as fallback when no identifiers are found', async () => {
-    write(tmpDir, 'plain.ts', "// no nodulus calls here");
+    write(tmpDir, 'plain.ts', "// no Kerith calls here");
     const { hash: h1 } = await computeModuleHash(tmpDir);
     expect(h1).toHaveLength(10);
 

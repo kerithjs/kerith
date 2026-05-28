@@ -29,7 +29,7 @@ const runInTmpApp = async (
   files: Record<string, string>,
   tests: (tmpDir: string, app: ReturnType<typeof makeMockApp>) => Promise<void>,
 ) => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "nodulus-integration-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "Kerith-integration-"));
 
   for (const [name, content] of Object.entries(files)) {
     const fullPath = path.join(tmpDir, name);
@@ -692,10 +692,10 @@ describe("Integration Tests", () => {
       // The fixture is named registry-snapshot-moved.json (not registry.json),
       // so we copy it into a tmp dir that loadNitsRegistry can resolve.
       const fixtureFile = path.join(FIXTURE_DIR, '.kerith', 'registry-snapshot-moved.json');
-      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-bug2-valid-'));
-      const nodulusDir = path.join(tmpDir, '.kerith');
-      fs.mkdirSync(nodulusDir, { recursive: true });
-      fs.copyFileSync(fixtureFile, path.join(nodulusDir, 'registry.json'));
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-bug2-valid-'));
+      const KerithDir = path.join(tmpDir, '.kerith');
+      fs.mkdirSync(KerithDir, { recursive: true });
+      fs.copyFileSync(fixtureFile, path.join(KerithDir, 'registry.json'));
 
       try {
         const registry = await loadNitsRegistry(tmpDir);
@@ -711,7 +711,7 @@ describe("Integration Tests", () => {
 
     it('returns null when the registry contains an invalid module ID (regression: mod_users_legacy)', async () => {
       // Write a temporary registry with the originally broken ID to a tmp dir
-      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-bug2-'));
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-bug2-'));
       const nitulusDir = path.join(tmpDir, '.kerith');
       fs.mkdirSync(nitulusDir, { recursive: true });
       fs.writeFileSync(
@@ -1135,7 +1135,7 @@ describe("Integration Tests", () => {
             rewriteImportsSync(fullPath);
           } else if (file.name.endsWith('.ts')) {
             let content = fs.readFileSync(fullPath, 'utf8');
-            content = content.replace(/from\s+['"](?:@vlynk-studios\/nodulus-core|@kerith\/core)['"]/g, `from '${localSrcUrl}'`);
+            content = content.replace(/from\s+['"](?:@vlynk-studios\/Kerith-core|@kerith\/core)['"]/g, `from '${localSrcUrl}'`);
             fs.writeFileSync(fullPath, content);
           }
         }
@@ -1170,7 +1170,7 @@ describe("Integration Tests", () => {
             rewriteImportsSync(fullPath);
           } else if (file.name.endsWith('.ts')) {
             let content = fs.readFileSync(fullPath, 'utf8');
-            content = content.replace(/from\s+['"](?:@vlynk-studios\/nodulus-core|@kerith\/core)['"]/g, `from '${localSrcUrl}'`);
+            content = content.replace(/from\s+['"](?:@vlynk-studios\/Kerith-core|@kerith\/core)['"]/g, `from '${localSrcUrl}'`);
             fs.writeFileSync(fullPath, content);
           }
         }
@@ -1178,7 +1178,7 @@ describe("Integration Tests", () => {
       rewriteImportsSync(tmpDir);
 
       // Introduce an undeclared import in a SECONDARY file (not index.ts).
-      // Secondary files are statically scanned by Nodulus for cross-module
+      // Secondary files are statically scanned by Kerith for cross-module
       // import violations — index.ts is dynamically imported, so injecting a
       // bare @modules/* there would fail with ERR_MODULE_NOT_FOUND before the
       // UNDECLARED_IMPORT check even runs.

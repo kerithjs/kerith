@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 // Helper: write a temp file and return its path
 function writeTempFile(content: string, ext = '.ts'): string {
-  const tmpPath = path.join(os.tmpdir(), `nodulus-test-${Date.now()}${ext}`);
+  const tmpPath = path.join(os.tmpdir(), `Kerith-test-${Date.now()}${ext}`);
   fs.writeFileSync(tmpPath, content, 'utf-8');
   return tmpPath;
 }
@@ -102,7 +102,7 @@ describe('NITS Import Scanner', () => {
 
     it('detects broken imports in a project structure', async () => {
       // Setup a project root with a file that imports from an old module
-      const projectRoot = path.join(os.tmpdir(), `nodulus-proj-${Date.now()}`);
+      const projectRoot = path.join(os.tmpdir(), `Kerith-proj-${Date.now()}`);
       fs.mkdirSync(projectRoot, { recursive: true });
       
       const appFile = path.join(projectRoot, 'app.ts');
@@ -136,7 +136,7 @@ describe('NITS Import Scanner', () => {
     });
 
     it('does not report imports that already use the new alias', async () => {
-      const projectRoot = path.join(os.tmpdir(), `nodulus-proj-new-${Date.now()}`);
+      const projectRoot = path.join(os.tmpdir(), `Kerith-proj-new-${Date.now()}`);
       fs.mkdirSync(projectRoot, { recursive: true });
       
       const appFile = path.join(projectRoot, 'app.ts');
@@ -160,7 +160,7 @@ describe('NITS Import Scanner', () => {
     });
 
     it('returns array with empty brokenImports if moved modules exist but no files use old aliases', async () => {
-      const projectRoot = path.join(os.tmpdir(), `nodulus-proj-empty-${Date.now()}`);
+      const projectRoot = path.join(os.tmpdir(), `Kerith-proj-empty-${Date.now()}`);
       fs.mkdirSync(projectRoot, { recursive: true });
       
       const appFile = path.join(projectRoot, 'app.ts');
@@ -184,7 +184,7 @@ describe('NITS Import Scanner', () => {
     });
 
     it('includes correct line number in each BrokenImport', async () => {
-      const projectRoot = path.join(os.tmpdir(), `nodulus-proj-lines-${Date.now()}`);
+      const projectRoot = path.join(os.tmpdir(), `Kerith-proj-lines-${Date.now()}`);
       fs.mkdirSync(projectRoot, { recursive: true });
       
       const appFile = path.join(projectRoot, 'app.ts');
@@ -213,7 +213,7 @@ describe('NITS Import Scanner', () => {
     });
 
     it('correctly identifies sub-path imports as broken', async () => {
-      const projectRoot = path.join(os.tmpdir(), `nodulus-proj-sub-${Date.now()}`);
+      const projectRoot = path.join(os.tmpdir(), `Kerith-proj-sub-${Date.now()}`);
       fs.mkdirSync(projectRoot, { recursive: true });
       
       const appFile = path.join(projectRoot, 'app.ts');
@@ -314,7 +314,7 @@ describe('§1.3 [BLOCKER]: extractModuleImports — dynamic import resilience', 
   });
 
   function tmp(content: string, ext = '.ts'): string {
-    const p = path.join(os.tmpdir(), `nodulus-dyn-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+    const p = path.join(os.tmpdir(), `Kerith-dyn-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
     fs.writeFileSync(p, content, 'utf-8');
     tmpFiles.push(p);
     return p;

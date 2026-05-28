@@ -35,7 +35,7 @@ const testerJs = new RuleTester({
 
 const rootOpt = [{ projectRoot: configRoot }];
 
-testerJs.run('no-undeclared-imports — nodulus.config aliases (REGLA-22)', rule, {
+testerJs.run('no-undeclared-imports — Kerith.config aliases (REGLA-22)', rule, {
   valid: [{ code: "import express from 'express';", filename: usersService, options: rootOpt }],
   invalid: [
     {

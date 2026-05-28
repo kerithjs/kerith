@@ -8,7 +8,7 @@ export interface DiscoveredModule {
   hash: string;
   /**
    * Identity record read from the `.kerith` shadow file at the module root.
-   * Present when the module was created with Nodulus ≥ v1.5.5 or after the first
+   * Present when the module was created with Kerith ≥ v1.5.5 or after the first
    * reconciliation that writes the shadow file.
    * `undefined` for legacy modules (created before v1.5.5) — Jaccard is used as fallback.
    * @since v1.5.5

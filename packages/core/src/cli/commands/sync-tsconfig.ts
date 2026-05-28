@@ -41,7 +41,7 @@ export async function runSyncTsconfig(logger: any, tsconfigPath: string = 'tscon
             if (currentKeys.has(key)) continue;
 
             const val = paths[key];
-            const isNodulusModule = key.startsWith('@modules/');
+            const isKerithModule = key.startsWith('@modules/');
             const isStaleFolderAlias = 
                 key.startsWith('@') && 
                 Array.isArray(val) && 
@@ -50,7 +50,7 @@ export async function runSyncTsconfig(logger: any, tsconfigPath: string = 'tscon
                 (val[0].startsWith('./') || val[0].startsWith('../')) && 
                 ((key.endsWith('/*') && val[0].endsWith('/*')) || (paths[`${key}/*`] !== undefined));
 
-            if (isNodulusModule || isStaleFolderAlias) {
+            if (isKerithModule || isStaleFolderAlias) {
                 delete paths[key];
             }
         }

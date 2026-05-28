@@ -117,7 +117,7 @@ function parseImportSpecifiers(
 }
 
 /**
- * REGLA-22: only include imports that match active Nodulus aliases (inclusion list).
+ * REGLA-22: only include imports that match active Kerith aliases (inclusion list).
  * Relative cross-module imports are handled by `extractRelativeCrossModuleImports`.
  */
 export function extractModuleImports(

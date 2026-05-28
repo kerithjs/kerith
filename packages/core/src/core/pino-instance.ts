@@ -94,7 +94,7 @@ function formatPrettyLine(obj: Record<string, unknown>): string {
 
 // ── Custom inline stream (replaces pino-pretty transport) ────────────────────
 // This avoids the pino-pretty worker-thread approach which fails in consumer
-// projects because pino-pretty is only in devDependencies of nodulus-core.
+// projects because pino-pretty is only in devDependencies of Kerith-core.
 function createPrettyStream() {
   return {
     write(chunk: string) {

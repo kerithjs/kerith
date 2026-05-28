@@ -4,7 +4,7 @@ import { getFileCallerInfo } from '../core/caller.js';
 import type { RepositoryOptions } from '../types/index.js';
 
 /**
- * Declares a file as a named repository and registers it in the Nodulus registry.
+ * Declares a file as a named repository and registers it in the Kerith registry.
  *
  * The `module` field is inferred from the parent folder name when not provided explicitly.
  *

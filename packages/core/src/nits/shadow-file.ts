@@ -169,13 +169,13 @@ export function ensureShadowFile(
   return record;
 }
 
-// ─── Delete (tests / future nodulus clean) ────────────────────────────────────
+// ─── Delete (tests / future Kerith clean) ────────────────────────────────────
 
 /**
  * Removes the `.kerith` shadow file from a module directory.
  * No-op if the file does not exist. Never throws.
  *
- * Intended for use in unit tests and the future `nodulus clean` command.
+ * Intended for use in unit tests and the future `Kerith clean` command.
  *
  * @param moduleDirPath - Absolute path to the module's root directory.
  */

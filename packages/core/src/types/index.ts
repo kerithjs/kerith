@@ -26,7 +26,7 @@ export interface ModuleEntry {
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 /**
- * Function that receives a log event from Nodulus.
+ * Function that receives a log event from Kerith.
  * 
  * @param level   - Severity level.
  * @param message - Human-readable message.
@@ -99,7 +99,7 @@ export interface ModuleOptions {
   imports?: string[];
   /**
    * Names of exports that form the public API of this module.
-   * Nodulus validates that each name exists as a real export of index.ts.
+   * Kerith validates that each name exists as a real export of index.ts.
    * Error EXPORT_MISMATCH if a name is missing.
    */
   exports?: string[];
@@ -194,14 +194,14 @@ export type LogFormat = 'pretty' | 'json' | 'auto';
  * has been **removed** from this interface and must now be declared in
  * `kerith.config.ts` via `defineConfig()`.
  *
- * `onShutdown` was moved to {@link ListenOptions} (passed to `nodulus.listen()`).
+ * `onShutdown` was moved to {@link ListenOptions} (passed to `Kerith.listen()`).
  *
  * The only option that remains here is `logger`, because it is a runtime
  * artifact (a function reference) that cannot be serialised in a config file.
  */
 export interface CreateAppOptions {
   /**
-   * Custom log handler. If omitted, Nodulus uses the default pino instance
+   * Custom log handler. If omitted, Kerith uses the default pino instance
    * configured via `logLevel` and `logFormat` in `kerith.config.ts`.
    */
   logger?: LogHandler;
@@ -285,7 +285,7 @@ export interface KerithApp {
   routes: MountedRoute[];
   registry: KerithRegistry;
   /**
-   * Runtime metadata about the Nodulus pre-loader.
+   * Runtime metadata about the Kerith pre-loader.
    * Populated during Step 0 of the bootstrap pipeline.
    * @since v1.5.0
    */
@@ -307,7 +307,7 @@ export interface KerithApp {
     aliasesAtBoot: Record<string, string>;
   };
   /**
-   * Registers the HTTP server instance with the Nodulus shutdown manager.
+   * Registers the HTTP server instance with the Kerith shutdown manager.
    * Once called, SIGINT (Ctrl+C) and SIGTERM signals will trigger a graceful
    * shutdown sequence:
    *   1. Close the HTTP server (no new connections accepted).
@@ -323,7 +323,7 @@ export interface KerithApp {
    * @example
    * ```ts
    * const server = app.listen(3000);
-   * nodulus.listen(server, { onShutdown: async () => { await db.close(); } });
+   * Kerith.listen(server, { onShutdown: async () => { await db.close(); } });
    * ```
    * @since v1.5.1
    */
@@ -357,9 +357,9 @@ export interface WatcherOptions {
   debounceMs?: number;
   /** Callback to execute when a change is detected. Receives the path of the modified file. */
   onRestart: (changedPath: string) => void | Promise<void>;
-  /** Nodulus logger instance. */
+  /** Kerith logger instance. */
   logger: Logger; // reference to the existing internal Logger
 }
 
-/** Structured error codes thrown by Nodulus (includes CLI / check violations). */
+/** Structured error codes thrown by Kerith (includes CLI / check violations). */
 export type { KerithErrorCode } from '../core/errors.js';
