@@ -1,7 +1,7 @@
 {
-  "name": "nodulus-suite",
+  "name": "kerith-suite",
   "private": true,
-  "description": "Nodulus Core and its surrounding ecosystem.",
+  "description": "Kerith Core and its surrounding ecosystem.",
   "type": "module",
   "workspaces": [
     "packages/*"

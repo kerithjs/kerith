@@ -43,19 +43,19 @@ jobs:
           fi
           echo "✅ core@$CORE_VERSION matches tag $GITHUB_REF_NAME"
 
-          PLUGIN_VERSION=$(node -p "require('./packages/eslint-plugin-nodulus/package.json').version")
+          PLUGIN_VERSION=$(node -p "require('./packages/eslint-plugin/package.json').version")
           if [ "$PLUGIN_VERSION" != "$TAG_VERSION" ]; then
-            echo "❌ Version mismatch: eslint-plugin-nodulus package.json=$PLUGIN_VERSION tag=$TAG_VERSION"
+            echo "❌ Version mismatch: @kerith/eslint package.json=$PLUGIN_VERSION tag=$TAG_VERSION"
             exit 1
           fi
-          echo "✅ eslint-plugin-nodulus@$PLUGIN_VERSION matches tag $GITHUB_REF_NAME"
+          echo "✅ @kerith/eslint@$PLUGIN_VERSION matches tag $GITHUB_REF_NAME"
 
-      - name: Publish @vlynk-studios/nodulus-core
+      - name: Publish @kerith/core
         run: npm publish -w packages/core --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @vlynk-studios/eslint-plugin-nodulus
-        run: npm publish -w packages/eslint-plugin-nodulus --provenance --access public
+      - name: Publish @kerith/eslint
+        run: npm publish -w packages/eslint-plugin --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

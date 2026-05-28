@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { getActiveRegistry } from '../core/registry.js';
-import { NodulusError } from '../core/errors.js';
+import { KerithError } from '../core/errors.js';
 import { getModuleCallerInfo } from '../core/caller.js';
 import { generateModuleId } from '../nits/nits-id.js';
 import { normalizePath } from '../core/utils/paths.js';
@@ -25,7 +25,7 @@ export function Module(name: string, options: ModuleOptions = {}): void {
   if (normalizedDirPath) {
     const folderName = path.basename(normalizedDirPath);
     if (folderName && folderName !== name) {
-      throw new NodulusError(
+      throw new KerithError(
         'INVALID_MODULE_DECLARATION',
         `Module name "${name}" does not match its containing folder "${folderName}".`,
         `The module name in Module() MUST match the folder name exactly.`
@@ -37,7 +37,7 @@ export function Module(name: string, options: ModuleOptions = {}): void {
   const fileName = path.basename(indexPath);
   const isIndexFile = /index\.(ts|js|mts|mjs)$/.test(fileName);
   if (!isIndexFile) {
-    throw new NodulusError(
+    throw new KerithError(
       'INVALID_MODULE_DECLARATION',
       `Module() was called from "${fileName}", but it must be called only from the module's index file.`,
       `File: ${indexPath}`

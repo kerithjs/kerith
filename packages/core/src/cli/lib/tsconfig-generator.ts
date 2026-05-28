@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import fg from 'fast-glob';
-import type { NodulusConfig } from '../../config/nodulus-config.types.js';
+import type { KerithConfig } from '../../config/kerith-config.types.js';
 
-export async function generatePathAliases(config: NodulusConfig, cwd: string): Promise<Record<string, string[]>> {
+export async function generatePathAliases(config: KerithConfig, cwd: string): Promise<Record<string, string[]>> {
   const pathsObj: Record<string, string[]> = {};
 
   // 1. Register base modules generated paths

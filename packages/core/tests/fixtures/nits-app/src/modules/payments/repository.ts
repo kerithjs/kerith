@@ -1,3 +1,3 @@
-import { Repository } from '@vlynk-studios/nodulus-core';
+import { Repository } from '@kerith/core';
 Repository('PaymentRepository', { module: 'payments' });
 export class PaymentRepository {}

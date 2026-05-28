@@ -1,7 +1,7 @@
 {
-  "name": "@vlynk-studios/eslint-plugin-nodulus",
+  "name": "@kerith/eslint",
   "version": "1.8.1",
-  "description": "ESLint rules for Nodulus Architecture validation.",
+  "description": "ESLint plugin for Kerith architecture validation.",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
@@ -21,9 +21,9 @@
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
+    "kerith",
     "eslint",
-    "eslintplugin",
-    "nodulus"
+    "eslint-plugin"
   ],
   "author": "Vlynk Studios & Keiver-dev",
   "license": "MIT",
@@ -33,13 +33,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Vlynk-Studios/nodulus",
-    "directory": "packages/eslint-plugin-nodulus"
+    "url": "https://github.com/Vlynk-Studios/kerith",
+    "directory": "packages/eslint-plugin"
   },
   "bugs": {
-    "url": "https://github.com/Vlynk-Studios/nodulus/issues"
+    "url": "https://github.com/Vlynk-Studios/kerith/issues"
   },
-  "homepage": "https://github.com/Vlynk-Studios/nodulus/tree/main/packages/eslint-plugin-nodulus#readme",
+  "homepage": "https://github.com/Vlynk-Studios/kerith/tree/main/packages/eslint-plugin#readme",
   "peerDependencies": {
     "eslint": ">=8.0.0"
   },

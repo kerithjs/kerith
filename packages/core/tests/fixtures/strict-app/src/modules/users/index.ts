@@ -1,4 +1,4 @@
-import { Module } from '@vlynk-studios/nodulus-core';
+import { Module } from '@kerith/core';
 
 Module('users', {
   imports: ['auth'],

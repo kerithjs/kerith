@@ -21,11 +21,11 @@ describe('Resolver Guard 2 (anti-double-registration)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearAliasResolverOptions();
-    delete (globalThis as any).__NODULUS_PRELOAD_CONFIG__;
+    delete (globalThis as any).__KERITH_PRELOAD_CONFIG__;
   });
 
   afterEach(() => {
-    delete (globalThis as any).__NODULUS_PRELOAD_CONFIG__;
+    delete (globalThis as any).__KERITH_PRELOAD_CONFIG__;
   });
 
   it('activateAliasResolver() calls module.register() when global is not present (v1.4.0 behavior)', async () => {
@@ -33,8 +33,8 @@ describe('Resolver Guard 2 (anti-double-registration)', () => {
     expect(nodeModule.register).toHaveBeenCalledTimes(1);
   });
 
-  it('activateAliasResolver() does not call module.register() if globalThis.__NODULUS_PRELOAD_CONFIG__.preloaded === true', async () => {
-    (globalThis as any).__NODULUS_PRELOAD_CONFIG__ = {
+  it('activateAliasResolver() does not call module.register() if globalThis.__KERITH_PRELOAD_CONFIG__.preloaded === true', async () => {
+    (globalThis as any).__KERITH_PRELOAD_CONFIG__ = {
       preloaded: true,
       aliases: {}
     };
@@ -45,7 +45,7 @@ describe('Resolver Guard 2 (anti-double-registration)', () => {
   });
 
   it('mergeAliasesIntoPreloadConfig() adds aliases without overwriting existing ones', async () => {
-    (globalThis as any).__NODULUS_PRELOAD_CONFIG__ = {
+    (globalThis as any).__KERITH_PRELOAD_CONFIG__ = {
       preloaded: true,
       aliases: {
         '@existing': '/abs/existing'
@@ -54,7 +54,7 @@ describe('Resolver Guard 2 (anti-double-registration)', () => {
 
     await activateAliasResolver({ '@modules': '/abs/src/modules' }, { '@custom': '/abs/src/custom' }, dummyLog);
     
-    const config = (globalThis as any).__NODULUS_PRELOAD_CONFIG__;
+    const config = (globalThis as any).__KERITH_PRELOAD_CONFIG__;
     expect(config.aliases).toEqual({
       '@existing': '/abs/existing',
       '@modules': expect.stringContaining('modules'),

@@ -23,7 +23,7 @@ describe('ast-parser tests', () => {
 
   it('correctly detects Module("users", { imports: ["auth"] })', () => {
     runWithTempFile(`
-      import { Module } from '@vlynk-studios/nodulus-core';
+      import { Module } from '@kerith/core';
       Module('users', { imports: ['auth'] });
     `, (filePath) => {
       const res = extractIdentifierCall(filePath, 'Module');
@@ -35,7 +35,7 @@ describe('ast-parser tests', () => {
 
   it('correctly detects Domain("billing", { modules: ["payments"] })', () => {
     runWithTempFile(`
-      import { Domain } from '@vlynk-studios/nodulus-core';
+      import { Domain } from '@kerith/core';
       Domain('billing', { modules: ['payments'] });
     `, (filePath) => {
       const res = extractIdentifierCall(filePath, 'Domain');
@@ -47,7 +47,7 @@ describe('ast-parser tests', () => {
 
   it('returns null if the callee does not match the requested name', () => {
     runWithTempFile(`
-      import { Module } from '@vlynk-studios/nodulus-core';
+      import { Module } from '@kerith/core';
       Module('core', { imports: [] });
     `, (filePath) => {
       const res = extractIdentifierCall(filePath, 'Domain'); // requesting Domain when it is Module

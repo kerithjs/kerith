@@ -30,7 +30,7 @@ afterEach(() => {
 describe('file inside a Nodulus module', () => {
   beforeEach(() => {
     vi.spyOn(moduleResolver, 'getModuleImports').mockReturnValue(['users']);
-    vi.spyOn(moduleResolver, 'getActiveNodulusAliases').mockReturnValue(['@modules']);
+    vi.spyOn(moduleResolver, 'getActiveKerithAliases').mockReturnValue(['@modules']);
   });
 
   const validCases = [

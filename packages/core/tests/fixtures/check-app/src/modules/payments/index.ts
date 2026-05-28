@@ -1,4 +1,4 @@
 /* eslint-disable */
 // @ts-ignore
-import { Module } from '@vlynk-studios/nodulus-core';
+import { Module } from '@kerith/core';
 Module('payments', { imports: ['users'] });

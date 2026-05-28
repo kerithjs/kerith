@@ -1,4 +1,4 @@
-import { Controller } from '@vlynk-studios/nodulus-core';
+import { Controller } from '@kerith/core';
 import { Router } from 'express';
 import { AuthService } from '@modules/auth';
 import { UsersService } from './index.js';

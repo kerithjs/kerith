@@ -15,7 +15,7 @@ import type { DiscoveredModule, NitsModuleRecord } from '../../types/nits.js';
 function resolveCorePkgVersion(): string | null {
   const depths = [
     '../../package.json',      // dist/cli/ → packages/core/ (dev/local link)
-    '../../../package.json',   // dist/cli/ → node_modules/@vlynk-studios/nodulus-core/ (prod)
+    '../../../package.json',   // dist/cli/ → node_modules/@vlynk-studios/Kerith-core/ (prod)
     '../../../../package.json',
   ];
   for (const depth of depths) {
@@ -23,7 +23,7 @@ function resolveCorePkgVersion(): string | null {
       const url = new URL(depth, import.meta.url);
       if (fs.existsSync(url)) {
         const pkg = JSON.parse(fs.readFileSync(url, 'utf8'));
-        if (pkg.name?.includes('nodulus')) return pkg.version;
+        if (pkg.name?.includes('kerith')) return pkg.version;
       }
     } catch {
       // Ignore error and try the next depth
@@ -50,9 +50,9 @@ export function checkCommand(): Command {
 
         // Pre-loader verification
         try {
-            const preloadPath = path.join(cwd, '.nodulus', 'preload.js');
+            const preloadPath = path.join(cwd, '.kerith', 'preload.js');
             if (!fs.existsSync(preloadPath)) {
-                console.log(`\n  ${AYU.orange}⚠  Pre-loader not detected. Run "npx nodulus sync-preload" to optimize alias resolution.\x1b[0m\n`);
+                console.log(`\n  ${AYU.orange}⚠  Pre-loader not detected. Run "npx kerith sync-preload" to optimize alias resolution.\x1b[0m\n`);
             } else {
                 const content = fs.readFileSync(preloadPath, 'utf8');
                 const versionMatch = content.match(/_version:\s*'([^']+)'/);
@@ -61,7 +61,7 @@ export function checkCommand(): Command {
                     const currentVersion = resolveCorePkgVersion();
                     
                     if (currentVersion && preloadVersion !== currentVersion) {
-                        console.log(`\n  ${AYU.orange}⚠  Pre-loader version mismatch (found v${preloadVersion}, core is v${currentVersion}). Run "npx nodulus sync-preload" to update.\x1b[0m\n`);
+                        console.log(`\n  ${AYU.orange}⚠  Pre-loader version mismatch (found v${preloadVersion}, core is v${currentVersion}). Run "npx kerith sync-preload" to update.\x1b[0m\n`);
                     }
                 }
             }

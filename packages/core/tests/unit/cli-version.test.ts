@@ -7,7 +7,7 @@ import fs from "node:fs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe("CLI: Version Flag", () => {
-  it("nodulus --version outputs the version from package.json", () => {
+  it("kerith --version outputs the version from package.json", () => {
     // Read the actual valid version from the package.json to test against
     const pkgPath = path.resolve(__dirname, "../../package.json");
     const pkgJSON = JSON.parse(fs.readFileSync(pkgPath, "utf8"));

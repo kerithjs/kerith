@@ -192,7 +192,7 @@ export type LogFormat = 'pretty' | 'json' | 'auto';
  * All declarative configuration (modules, prefix, strict, aliases, logLevel,
  * logFormat, resolveAliases, requirePreloader, moduleLoadTimeoutMs, nits, etc.)
  * has been **removed** from this interface and must now be declared in
- * `nodulus.config.ts` via `defineConfig()`.
+ * `kerith.config.ts` via `defineConfig()`.
  *
  * `onShutdown` was moved to {@link ListenOptions} (passed to `nodulus.listen()`).
  *
@@ -202,7 +202,7 @@ export type LogFormat = 'pretty' | 'json' | 'auto';
 export interface CreateAppOptions {
   /**
    * Custom log handler. If omitted, Nodulus uses the default pino instance
-   * configured via `logLevel` and `logFormat` in `nodulus.config.ts`.
+   * configured via `logLevel` and `logFormat` in `kerith.config.ts`.
    */
   logger?: LogHandler;
 }
@@ -245,7 +245,7 @@ export interface MountedRoute {
 }
 
 /** Stable registry interface — guaranteed across minor versions. */
-export interface NodulusRegistry {
+export interface KerithRegistry {
   hasModule(name: string): boolean;
   getModule(name: string): RegisteredModule | undefined;
   getAllModules(): RegisteredModule[];
@@ -259,7 +259,7 @@ export interface NodulusRegistry {
  * Advanced registry interface — exposes internal graph utilities.
  * @unstable May change between minor versions.
  */
-export interface NodulusRegistryAdvanced extends NodulusRegistry {
+export interface KerithRegistryAdvanced extends KerithRegistry {
   /** @unstable */
   getDependencyGraph(): Map<string, string[]>;
   /** @unstable */
@@ -280,10 +280,10 @@ export interface ListenOptions {
   onShutdown?: () => void | Promise<void>;
 }
 
-export interface NodulusApp {
+export interface KerithApp {
   modules: RegisteredModule[];
   routes: MountedRoute[];
-  registry: NodulusRegistry;
+  registry: KerithRegistry;
   /**
    * Runtime metadata about the Nodulus pre-loader.
    * Populated during Step 0 of the bootstrap pipeline.
@@ -333,7 +333,7 @@ export interface NodulusApp {
 export interface GetAliasesOptions {
   /**
    * If false, only returns auto-generated @modules/* aliases.
-   * Config-defined aliases (from nodulus.config.ts `aliases`) are excluded.
+   * Config-defined aliases (from kerith.config.ts `aliases`) are excluded.
    * Default: true (returns all aliases).
    */
   includeFolders?: boolean;
@@ -362,4 +362,4 @@ export interface WatcherOptions {
 }
 
 /** Structured error codes thrown by Nodulus (includes CLI / check violations). */
-export type { NodulusErrorCode } from '../core/errors.js';
+export type { KerithErrorCode } from '../core/errors.js';

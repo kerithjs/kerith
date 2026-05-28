@@ -16,16 +16,16 @@ export * from './core/logger.js';
 export * from './core/http-logger.js';
 export * from './preload/index.js';
 
-export * from './config/nodulus-config.types.js';
-export type * from './config/nodulus-config.types.js';
-export * from './config/nodulus-config.js';
-export type * from './config/nodulus-config.js';
+export * from './config/kerith-config.types.js';
+export type * from './config/kerith-config.types.js';
+export * from './config/kerith-config.js';
+export type * from './config/kerith-config.js';
 
 export type {
   CreateAppOptions,
-  NodulusApp,
-  NodulusRegistry,
-  NodulusRegistryAdvanced,
+  KerithApp,
+  KerithRegistry,
+  KerithRegistryAdvanced,
   RegisteredModule,
   MountedRoute,
   ModuleOptions,

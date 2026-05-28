@@ -9,7 +9,7 @@ const moduleImportsCache = new Map<string, string[]>();
 const moduleRootCache = new Map<string, string | null>();
 const activeAliasesCache = new Map<string, string[]>();
 
-const CONFIG_CANDIDATES = ['nodulus.config.ts', 'nodulus.config.js', 'nodulus.config.mjs'] as const;
+const CONFIG_CANDIDATES = ['kerith.config.ts', 'kerith.config.js', 'kerith.config.mjs'] as const;
 const INDEX_EXTENSIONS = ['.ts', '.js', '.mts', '.mjs'] as const;
 
 function normalizePath(filePath: string): string {
@@ -78,8 +78,8 @@ export function findModuleRoot(
   return result;
 }
 
-/** REGLA-22 — inclusion list of active Nodulus aliases. */
-export function isNodulusAlias(specifier: string, activeAliases: readonly string[]): boolean {
+/** REGLA-22 — inclusion list of active Kerith aliases. */
+export function isKerithAlias(specifier: string, activeAliases: readonly string[]): boolean {
   if (!specifier.startsWith('@')) return false;
   return activeAliases.some(
     alias => specifier === alias || specifier.startsWith(`${alias}/`),
@@ -87,10 +87,10 @@ export function isNodulusAlias(specifier: string, activeAliases: readonly string
 }
 
 /**
- * Loads alias keys from `nodulus.config.*` in `cwd`.
+ * Loads alias keys from `kerith.config.*` in `cwd`.
  * Falls back to `['@modules']` when no config is found.
  */
-export function getActiveNodulusAliases(cwd: string = process.cwd()): string[] {
+export function getActiveKerithAliases(cwd: string = process.cwd()): string[] {
   if (activeAliasesCache.has(cwd)) {
     return activeAliasesCache.get(cwd)!;
   }

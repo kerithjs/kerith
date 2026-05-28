@@ -6,7 +6,7 @@ import {
   getDomainFromFilePath,
   getDomainSharedAllowed,
   findModuleRoot,
-  getActiveNodulusAliases,
+  getActiveKerithAliases,
   isRelativeBoundaryCrossing,
   clearAllResolverCaches,
 } from '../../src/utils/module-resolver.js';
@@ -29,7 +29,7 @@ describe('module-resolver cache and parsing', () => {
     const indexPath = path.join(tmpDir, 'index.ts');
     
     fs.writeFileSync(indexPath, `
-      import { DomainShared } from '@vlynk-studios/nodulus-core';
+      import { DomainShared } from '@kerith/core';
       DomainShared('permissions', { allowedDomains: ['billing', 'audit'] });
     `);
 
@@ -47,7 +47,7 @@ describe('module-resolver cache and parsing', () => {
     fs.mkdirSync(usersDir, { recursive: true });
     fs.writeFileSync(
       path.join(usersDir, 'index.ts'),
-      "import { Module } from '@vlynk-studios/nodulus-core';\nModule('users', { imports: [] });",
+      "import { Module } from '@kerith/core';\nModule('users', { imports: [] });",
     );
     fs.writeFileSync(path.join(usersDir, 'users.service.ts'), 'export class U {}');
 
@@ -64,15 +64,15 @@ describe('module-resolver cache and parsing', () => {
     }
   });
 
-  it('getActiveNodulusAliases reads nodulus.config.js', () => {
+  it('getActiveKerithAliases reads kerith.config.js', () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'eslint-aliases-'));
     fs.writeFileSync(
-      path.join(tmpDir, 'nodulus.config.js'),
+      path.join(tmpDir, 'kerith.config.js'),
       "export default { aliases: { '@middleware': './src/middleware' } };",
     );
 
     try {
-      expect(getActiveNodulusAliases(tmpDir)).toEqual(
+      expect(getActiveKerithAliases(tmpDir)).toEqual(
         expect.arrayContaining(['@modules', '@middleware']),
       );
     } finally {

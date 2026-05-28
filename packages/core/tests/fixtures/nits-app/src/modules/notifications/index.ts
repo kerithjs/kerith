@@ -1,2 +1,2 @@
-import { Module } from '@vlynk-studios/nodulus-core';
+import { Module } from '@kerith/core';
 Module('notifications', { imports: ['users'] });

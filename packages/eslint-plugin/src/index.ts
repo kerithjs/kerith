@@ -7,13 +7,13 @@ const require = createRequire(import.meta.url);
 const { version } = require('../package.json');
 
 const defaultRules = {
-  'nodulus/no-private-imports': 'error',
-  'nodulus/no-undeclared-imports': 'warn',
+  'kerith/no-private-imports': 'error',
+  'kerith/no-undeclared-imports': 'warn',
 } satisfies Linter.RulesRecord;
 
 const plugin = {
   meta: {
-    name: '@vlynk-studios/eslint-plugin-nodulus',
+    name: '@kerith/eslint',
     version,
   },
   rules: {
@@ -25,11 +25,11 @@ const plugin = {
 
 plugin.configs = {
   recommended: {
-    plugins: { nodulus: plugin },
+    plugins: { kerith: plugin },
     rules: defaultRules,
   },
   'recommended-ts': {
-    plugins: { nodulus: plugin },
+    plugins: { kerith: plugin },
     rules: defaultRules,
   },
 };

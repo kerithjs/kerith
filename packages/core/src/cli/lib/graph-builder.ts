@@ -10,7 +10,7 @@ import {
   extractModuleImports,
   type ImportFound,
 } from './import-scanner.js';
-import type { NodulusConfig } from '../../config/nodulus-config.types.js';
+import type { KerithConfig } from '../../config/kerith-config.types.js';
 
 export interface BaseNode {
   name: string;
@@ -46,7 +46,7 @@ export interface ModuleGraph {
   modules: ModuleNode[];
 }
 
-export async function buildModuleGraph(config: NodulusConfig, cwd: string): Promise<ModuleGraph> {
+export async function buildModuleGraph(config: KerithConfig, cwd: string): Promise<ModuleGraph> {
   const modulesGlob = config.modules || 'src/modules/*';
   const dirs = await fg(modulesGlob, { cwd, onlyDirectories: true, absolute: true });
   const nodes: ModuleNode[] = [];

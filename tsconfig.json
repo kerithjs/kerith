@@ -9,8 +9,8 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@vlynk-studios/nodulus-core": ["./packages/core/src/index.ts"],
-      "eslint-plugin-nodulus": ["./packages/eslint-plugin-nodulus/src/index.ts"]
+      "@kerith/core": ["./packages/core/src/index.ts"],
+      "@kerith/eslint-plugin": ["./packages/eslint-plugin/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "**/dist"]

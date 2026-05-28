@@ -20,7 +20,7 @@ function writeModule(
   fs.mkdirSync(moduleDir, { recursive: true });
   fs.writeFileSync(
     path.join(moduleDir, 'index.ts'),
-    `import { Module } from '@vlynk-studios/nodulus-core';\nModule('${name}', { imports: [] });`,
+    `import { Module } from '@kerith/core';\nModule('${name}', { imports: [] });`,
   );
   for (const [rel, content] of Object.entries(files)) {
     const filePath = path.join(moduleDir, rel);

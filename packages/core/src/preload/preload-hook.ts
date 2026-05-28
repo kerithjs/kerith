@@ -116,7 +116,7 @@ async function attemptResolve(specifier: string, context: ResolveHookContext, ne
           // ignore
         }
       }
-      err.message = `Cannot resolve alias '${originalAlias}' → ${displayPath} not found. Run: nodulus sync-preload\n\nOriginal error:\n${err.message}`;
+      err.message = `Cannot resolve alias '${originalAlias}' → ${displayPath} not found. Run: kerith sync-preload\n\nOriginal error:\n${err.message}`;
     }
     throw err;
   }

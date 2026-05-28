@@ -46,7 +46,7 @@ describe('P3 Alias Validation', () => {
 
   it('should throw ALIAS_RESERVED if the config defines @modules', async () => {
     await runInTmpApp(baseStructure, async (tmpDir, app) => {
-      fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { aliases: { "@modules": "./custom-modules" } };');
+      fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { aliases: { "@modules": "./custom-modules" } };');
       
       await expect(createApp(app as any)).rejects.toMatchObject({
         code: 'ALIAS_RESERVED'
@@ -58,7 +58,7 @@ describe('P3 Alias Validation', () => {
     await runInTmpApp(baseStructure, async (tmpDir, app) => {
       fs.writeFileSync(path.join(tmpDir, 'config.ts'), 'export default {}');
       
-      fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { aliases: { "@config/*": "./config.ts" }, strict: true };');
+      fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { aliases: { "@config/*": "./config.ts" }, strict: true };');
       
       await expect(createApp(app as any)).rejects.toMatchObject({
         code: 'INVALID_ALIAS_KEY'
@@ -69,7 +69,7 @@ describe('P3 Alias Validation', () => {
   it('should warn if an alias target points to a non-existent path', async () => {
     const logger = vi.fn();
     await runInTmpApp(baseStructure, async (tmpDir, app) => {
-      fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { aliases: { "@config": "./does-not-exist.ts" }, strict: false };');
+      fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { aliases: { "@config": "./does-not-exist.ts" }, strict: false };');
       
       await createApp(app as any, { logger });
 
@@ -86,11 +86,11 @@ describe('P3 Alias Validation', () => {
       const filePath = path.join(tmpDir, 'db.ts');
       fs.writeFileSync(filePath, 'export const db = {}');
       
-      fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { aliases: { "@db": "./db.ts" } };');
+      fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { aliases: { "@db": "./db.ts" } };');
       
-      const nodulusApp = await createApp(app as any);
+      const KerithApp = await createApp(app as any);
 
-      const aliases = nodulusApp.registry.getAllAliases();
+      const aliases = KerithApp.registry.getAllAliases();
       expect(aliases['@db']).toBe(path.resolve(tmpDir, 'db.ts'));
     });
   });
@@ -100,7 +100,7 @@ describe('P3 Alias Validation', () => {
     await runInTmpApp(baseStructure, async (tmpDir, app) => {
       fs.mkdirSync(path.join(tmpDir, 'common'));
       
-      fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { aliases: { "@common": "./common" }, logLevel: "debug" };');
+      fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { aliases: { "@common": "./common" }, logLevel: "debug" };');
       await createApp(app as any, { logger });
 
       expect(logger).toHaveBeenCalledWith(

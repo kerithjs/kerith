@@ -14,7 +14,7 @@ import * as configModule from '../../src/core/config.js';
 function writeModuleIndex(moduleDir: string, name: string): void {
   fs.writeFileSync(
     path.join(moduleDir, 'index.ts'),
-    `import { Module } from '@vlynk-studios/nodulus-core';\nModule('${name}', { imports: [] });`,
+    `import { Module } from '@kerith/core';\nModule('${name}', { imports: [] });`,
   );
 }
 
@@ -30,7 +30,7 @@ function createBoundaryFixture(
   writeModuleIndex(usersDir, 'users');
   writeModuleIndex(paymentsDir, 'payments');
   fs.writeFileSync(path.join(paymentsDir, 'payments.service.ts'), 'export class PaymentsService {}');
-  fs.writeFileSync(path.join(root, 'nodulus.config.js'), configContent);
+  fs.writeFileSync(path.join(root, 'kerith.config.js'), configContent);
 
   for (const [rel, content] of Object.entries(files)) {
     const filePath = path.join(usersDir, rel);

@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRegistry, registryContext } from '../../src/core/registry.js';
-import { NodulusError } from '../../src/core/errors.js';
+import { KerithError } from '../../src/core/errors.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -87,7 +87,7 @@ describe('Module()', () => {
       
       expect(() => {
         r.registerModule('duplicate', {}, modDir, idxPath, 'id_2');
-      }).toThrowError(NodulusError);
+      }).toThrowError(KerithError);
       
       try {
         r.registerModule('duplicate', {}, modDir, idxPath, 'id_3');

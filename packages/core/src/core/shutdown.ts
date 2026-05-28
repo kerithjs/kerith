@@ -80,12 +80,12 @@ export function registerShutdown(options: ShutdownManagerOptions): import('../ty
   process.once('SIGTERM', shutdown);
   
   const messageHandler = (msg: any) => {
-    if (msg === 'nodulus:shutdown') {
+    if (msg === 'kerith:shutdown') {
       shutdown();
     }
   };
 
-  // Windows-compatible IPC shutdown (used by nodulus dev watcher)
+  // Windows-compatible IPC shutdown (used by kerith dev watcher)
   process.on('message', messageHandler);
 
   const hook = shutdown as import('../types/index.js').ShutdownHook;

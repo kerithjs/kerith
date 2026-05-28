@@ -21,8 +21,8 @@ describe('Pre-loader Integration (preloader.test.ts)', () => {
       type: 'module',
     }));
 
-    // 2. nodulus.config.js
-    fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), `
+    // 2. kerith.config.js
+    fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), `
       export default {
         aliases: {
           '@lib': './src/lib'
@@ -60,7 +60,7 @@ describe('Pre-loader Integration (preloader.test.ts)', () => {
 
       // 3. Run with --import
       const result = spawnSync('node', [
-          '--import', './.nodulus/preload.js',
+          '--import', './.kerith/preload.js',
           'main.js'
       ], { cwd: tmpDir, encoding: 'utf8' });
 

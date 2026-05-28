@@ -158,7 +158,7 @@ describe('check-reporter', () => {
       printCheckReport(data as any);
       const out = getOutput();
       expect(out).toContain('jaccard');
-      expect(out).toContain('no .nodulus file');
+      expect(out).toContain('no .kerith file');
     });
 
     it('verbose: path → shows path in cyan', () => {
@@ -170,7 +170,7 @@ describe('check-reporter', () => {
       expect(out).toContain('mod_abc123');
     });
 
-    it('verbose: new (in newModules) → shows .nodulus generated hint', () => {
+    it('verbose: new (in newModules) → shows .kerith generated hint', () => {
       const mod = createMockModule('auth');
       mod.id = 'mod_abc123';
       const nitsResult = createMockNitsResult();
@@ -178,7 +178,7 @@ describe('check-reporter', () => {
       const data = { version: '1', projectName: 'p', modules: [mod], violations: [], nitsResult, options: { verbose: true, strict: false } };
       printCheckReport(data as any);
       const out = getOutput();
-      expect(out).toContain('.nodulus generated');
+      expect(out).toContain('.kerith generated');
     });
 
     it('verbose: unknown resolvedBy → muestra dim fallback', () => {
@@ -333,10 +333,10 @@ describe('check-reporter', () => {
       expect(getOutput()).toContain('all modules tracked');
     });
 
-    it('Algunos sin shadow-file → ⚠ N missing .nodulus en naranja', () => {
+    it('Algunos sin shadow-file → ⚠ N missing .kerith en naranja', () => {
       const nitsResult = createMockNitsResult();
       printSummary({ modules: [createMockModule('auth', 'jaccard')], violations: [], nitsResult } as any);
-      expect(getOutput()).toContain('1 missing .nodulus');
+      expect(getOutput()).toContain('1 missing .kerith');
     });
 
     it('NITS deshabilitado (nitsResult: null) → — disabled', () => {
@@ -402,7 +402,7 @@ describe('check-reporter', () => {
         nitsResult: null,
         options: { verbose: false, strict: false }
       });
-      expect(getOutput()).toContain('nodulus check --verbose');
+      expect(getOutput()).toContain('kerith check --verbose');
     });
 
     it('verbose + jaccard → no muestra sugerencia --verbose', () => {
@@ -413,7 +413,7 @@ describe('check-reporter', () => {
         nitsResult: null,
         options: { verbose: true, strict: false }
       });
-      expect(getOutput()).not.toContain('nodulus check --verbose');
+      expect(getOutput()).not.toContain('kerith check --verbose');
     });
 
     it('summary: okModules y newModules se muestran correctamente', () => {

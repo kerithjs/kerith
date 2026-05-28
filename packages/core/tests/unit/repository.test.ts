@@ -85,8 +85,8 @@ describe('Repository()', () => {
     });
   });
 
-  it('throws NodulusError with code DUPLICATE_REPOSITORY on duplicate name', async () => {
-    const { NodulusError } = await import('../../src/core/errors.js');
+  it('throws KerithError with code DUPLICATE_REPOSITORY on duplicate name', async () => {
+    const { KerithError } = await import('../../src/core/errors.js');
     const r = createRegistry();
     await registryContext.run(r, async () => {
       Repository('SameRepo', { module: 'payments' });
@@ -97,7 +97,7 @@ describe('Repository()', () => {
       } catch (err) {
         caught = err;
       }
-      expect(caught).toBeInstanceOf(NodulusError);
+      expect(caught).toBeInstanceOf(KerithError);
       expect(caught?.code).toBe('DUPLICATE_REPOSITORY');
     });
   });

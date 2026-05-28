@@ -4,10 +4,10 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   generateTsconfigNodulus,
-  writeTsconfigNodulus,
+  writeTsconfigKerith,
   ensureTsconfigExtends,
 } from '../../src/config/tsconfig-generator.js';
-import type { ResolvedNodulusConfig } from '../../src/config/nodulus-config.js';
+import type { ResolvedKerithConfig } from '../../src/config/kerith-config.js';
 const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-tsconfig-test-'));
 
 describe('tsconfig-generator', () => {
@@ -26,7 +26,7 @@ describe('tsconfig-generator', () => {
   const createDummyConfig = (
     resolvedAliases: Map<string, string>,
     modulesTarget = 'src/modules/*',
-  ): ResolvedNodulusConfig => ({
+  ): ResolvedKerithConfig => ({
     modules: modulesTarget,
     prefix: '',
     strict: true,
@@ -182,8 +182,8 @@ describe('tsconfig-generator', () => {
     });
   });
 
-  describe('writeTsconfigNodulus()', () => {
-    const outputPath = () => path.join(tmpDir, 'tsconfig.nodulus.json');
+  describe('writeTsconfigKerith()', () => {
+    const outputPath = () => path.join(tmpDir, 'tsconfig.kerith.json');
 
     it('if file does not exist it creates it with correct content', async () => {
       const configDir = path.join(tmpDir, 'src', 'config');
@@ -191,7 +191,7 @@ describe('tsconfig-generator', () => {
       const config = createDummyConfig(new Map([['@config', configDir]]));
 
       expect(fs.existsSync(outputPath())).toBe(false);
-      await writeTsconfigNodulus(config, tmpDir);
+      await writeTsconfigKerith(config, tmpDir);
 
       expect(fs.existsSync(outputPath())).toBe(true);
       const written = JSON.parse(fs.readFileSync(outputPath(), 'utf-8'));
@@ -202,11 +202,11 @@ describe('tsconfig-generator', () => {
 
     it('if content is identical it does not rewrite (mtime unchanged)', async () => {
       const config = createDummyConfig(new Map());
-      await writeTsconfigNodulus(config, tmpDir);
+      await writeTsconfigKerith(config, tmpDir);
 
       const statsBefore = fs.statSync(outputPath());
       await new Promise(resolve => setTimeout(resolve, 15));
-      await writeTsconfigNodulus(config, tmpDir);
+      await writeTsconfigKerith(config, tmpDir);
       const statsAfter = fs.statSync(outputPath());
 
       expect(statsAfter.mtimeMs).toBe(statsBefore.mtimeMs);
@@ -214,7 +214,7 @@ describe('tsconfig-generator', () => {
 
     it('if content differs it overwrites it', async () => {
       const config1 = createDummyConfig(new Map());
-      await writeTsconfigNodulus(config1, tmpDir);
+      await writeTsconfigKerith(config1, tmpDir);
 
       const statsBefore = fs.statSync(outputPath());
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -223,7 +223,7 @@ describe('tsconfig-generator', () => {
         new Map([['@test', path.join(tmpDir, 'test.ts')]]),
       );
       fs.writeFileSync(path.join(tmpDir, 'test.ts'), '');
-      await writeTsconfigNodulus(config2, tmpDir);
+      await writeTsconfigKerith(config2, tmpDir);
 
       const statsAfter = fs.statSync(outputPath());
       const content = fs.readFileSync(outputPath(), 'utf-8');
@@ -245,7 +245,7 @@ describe('tsconfig-generator', () => {
       });
 
       await expect(
-        writeTsconfigNodulus(createDummyConfig(new Map()), tmpDir, mockLog as never),
+        writeTsconfigKerith(createDummyConfig(new Map()), tmpDir, mockLog as never),
       ).resolves.toBeUndefined();
 
       expect(mockLog.warn).toHaveBeenCalledWith(
@@ -258,7 +258,7 @@ describe('tsconfig-generator', () => {
   });
 
   describe('ensureTsconfigExtends()', () => {
-    const hintFragment = 'Add "extends": "./tsconfig.nodulus.json"';
+    const hintFragment = 'Add "extends": "./tsconfig.kerith.json"';
 
     it('without tsconfig.json it emits log.debug and does not throw', async () => {
       const mockLog = { warn: vi.fn(), info: vi.fn(), debug: vi.fn(), error: vi.fn() };
@@ -303,11 +303,11 @@ describe('tsconfig-generator', () => {
       );
     });
 
-    it('tsconfig.json with extends to tsconfig.nodulus.json emits nothing', async () => {
+    it('tsconfig.json with extends to tsconfig.kerith.json emits nothing', async () => {
       const mockLog = { warn: vi.fn(), info: vi.fn(), debug: vi.fn(), error: vi.fn() };
       fs.writeFileSync(
         path.join(tmpDir, 'tsconfig.json'),
-        '{"extends": "./tsconfig.nodulus.json"}',
+        '{"extends": "./tsconfig.kerith.json"}',
       );
 
       await ensureTsconfigExtends(tmpDir, mockLog as never);
@@ -315,11 +315,11 @@ describe('tsconfig-generator', () => {
       expect(mockLog.info).not.toHaveBeenCalled();
     });
 
-    it('tsconfig.json with extends in array including nodulus emits nothing', async () => {
+    it('tsconfig.json with extends in array including kerith emits nothing', async () => {
       const mockLog = { warn: vi.fn(), info: vi.fn(), debug: vi.fn(), error: vi.fn() };
       fs.writeFileSync(
         path.join(tmpDir, 'tsconfig.json'),
-        '{"extends": ["./base.json", "./tsconfig.nodulus.json"]}',
+        '{"extends": ["./base.json", "./tsconfig.kerith.json"]}',
       );
 
       await ensureTsconfigExtends(tmpDir, mockLog as never);

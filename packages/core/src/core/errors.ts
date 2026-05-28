@@ -1,4 +1,4 @@
-export type NodulusErrorCode =
+export type KerithErrorCode =
   | "MODULE_NOT_FOUND"
   | "DUPLICATE_MODULE"
   | "MISSING_IMPORT"
@@ -29,18 +29,18 @@ export type NodulusErrorCode =
   /**
    * Emitted via structured log when the reconciler confirms that a stale module
    * is a real deletion (its shadow ID is absent from all discovered modules in
-   * the current cycle). Used for observability only — never passed to `new NodulusError()`.
+   * the current cycle). Used for observability only — never passed to `new KerithError()`.
    * @since v1.5.5
    */
   | "NITS_DELETE_CONFIRMED";
 
-export class NodulusError extends Error {
-  readonly code: NodulusErrorCode;
+export class KerithError extends Error {
+  readonly code: KerithErrorCode;
   readonly details?: string;
 
-  constructor(code: NodulusErrorCode, message: string, details?: string) {
+  constructor(code: KerithErrorCode, message: string, details?: string) {
     super(message);
-    this.name = "NodulusError";
+    this.name = "KerithError";
     this.code = code;
     this.details = details;
   }

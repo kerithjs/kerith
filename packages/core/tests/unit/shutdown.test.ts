@@ -107,7 +107,7 @@ describe('Shutdown Manager', () => {
     expect(exitSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should trigger shutdown on "nodulus:shutdown" IPC message', async () => {
+  it('should trigger shutdown on "kerith:shutdown" IPC message', async () => {
     registerShutdown({ logger: mockLogger });
     
     const messageCall = onSpy.mock.calls.find((call: any[]) => call[0] === 'message');
@@ -116,7 +116,7 @@ describe('Shutdown Manager', () => {
     const messageHandler = messageCall![1] as (msg: any) => void;
     
     // Call handler with target message
-    messageHandler('nodulus:shutdown');
+    messageHandler('kerith:shutdown');
     
     // Also call with a different message to ensure it ignores it
     messageHandler('other:message');

@@ -3,14 +3,14 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import fg from 'fast-glob';
 import type { Application } from 'express';
-import type { CreateAppOptions, NodulusApp } from '../types/index.js';
+import type { CreateAppOptions, KerithApp } from '../types/index.js';
 
 import { loadConfig } from '../core/config.js';
-import { NodulusError } from '../core/errors.js';
+import { KerithError } from '../core/errors.js';
 import { createRegistry, registryContext } from '../core/registry.js';
 import { activateAliasResolver } from '../aliases/resolver.js';
 import { updateAliasCache } from '../aliases/cache.js';
-import { writeTsconfigNodulus, ensureTsconfigExtends } from '../config/tsconfig-generator.js';
+import { writeTsconfigKerith, ensureTsconfigExtends } from '../config/tsconfig-generator.js';
 import { createLogger, defaultLogHandler } from '../core/logger.js';
 import { setPinoInstance, createDefaultPinoInstance } from '../core/pino-instance.js';
 import { performance } from 'node:perf_hooks';
@@ -27,10 +27,10 @@ import type { DiscoveredModule } from '../types/nits.js';
 export async function createApp(
   app: Application,
   options: CreateAppOptions = {}
-): Promise<NodulusApp> {
+): Promise<KerithApp> {
   // Step 0 — Prevent Duplicate Bootstrap
-  if ((app as any).__nodulusBootstrapped) {
-    throw new NodulusError(
+  if ((app as any).__KerithBootstrapped) {
+    throw new KerithError(
       'DUPLICATE_BOOTSTRAP',
       'createApp() was called more than once with the same Express instance.'
     );
@@ -51,9 +51,9 @@ export async function createApp(
   }
 
   if (!isEsm) {
-    throw new NodulusError(
+    throw new KerithError(
       'INVALID_ESM_ENV',
-      'Nodulus requires an ESM environment. Please ensure "type": "module" is present in your root package.json file.'
+      'Kerith requires an ESM environment. Please ensure "type": "module" is present in your root package.json file.'
     );
   }
 
@@ -64,17 +64,17 @@ export async function createApp(
     try {
 
   // Step 0.1 — Pre-loader Validation
-  const preloadConfig = globalThis.__NODULUS_PRELOAD_CONFIG__;
+  const preloadConfig = globalThis.__KERITH_PRELOAD_CONFIG__;
   const preloaderActive = preloadConfig?.preloaded === true;
 
   // Step 1 — Load configuration
   const config = await loadConfig(options);
 
   if (config.requirePreloader === true && !preloaderActive) {
-    throw new NodulusError(
+    throw new KerithError(
       'PRELOADER_REQUIRED',
-      'The application requires the Nodulus pre-loader to be active.',
-      'Run the application with "node --import ./.nodulus/preload.js" or set requirePreloader: false in nodulus.config.ts.'
+      'The application requires the Kerith pre-loader to be active.',
+      'Run the application with "node --import ./.kerith/preload.js" or set requirePreloader: false in kerith.config.ts.'
     );
   }
   if (config.logger === defaultLogHandler) {
@@ -82,14 +82,14 @@ export async function createApp(
   }
   const log = createLogger(config.logger, config.logLevel, 'boot');
 
-  // Step 1.0.5 — Generar tsconfig.nodulus.json y registrar aliases
-  await writeTsconfigNodulus(config, process.cwd(), log);
+  // Step 1.0.5 — Generar tsconfig.kerith.json y registrar aliases
+  await writeTsconfigKerith(config, process.cwd(), log);
   await ensureTsconfigExtends(process.cwd(), log);
   log.debug(`[bootstrap] Aliases registrados: ${[...config.resolvedAliases.keys()].join(', ')}`, { _module: 'alias' });
 
   // Step 1.1 — Pre-loader Warnings
   if (!preloaderActive && config.resolveAliases !== false) {
-    log.warn('Pre-loader not detected. Alias resolution might fail for top-level imports. Running in legacy mode (v1.4.0).', { suggestion: 'Run "npx nodulus sync-preload" and use "node --import ./.nodulus/preload.js"' });
+    log.warn('Pre-loader not detected. Alias resolution might fail for top-level imports. Running in legacy mode (v1.4.0).', { suggestion: 'Run "npx kerith sync-preload" and use "node --import ./.kerith/preload.js"' });
   }
 
   if (preloaderActive) {
@@ -105,7 +105,7 @@ export async function createApp(
       };
       const currentVersion = getPkg().version;
       if (preloadConfig?._version && preloadConfig._version !== currentVersion) {
-          log.warn(`Pre-loader version mismatch: preload.js was generated with v${preloadConfig._version} but nodulus-core v${currentVersion} is installed. Run: nodulus sync-preload`);
+          log.warn(`Pre-loader version mismatch: preload.js was generated with v${preloadConfig._version} but Kerith-core v${currentVersion} is installed. Run: kerith sync-preload`);
       }
   }
 
@@ -145,7 +145,7 @@ export async function createApp(
     }
 
     if (!indexPath) {
-      throw new NodulusError(
+      throw new KerithError(
         'MODULE_NOT_FOUND',
         `No index.ts or index.js found for module. A module directory must have an index file mapping its dependencies.`,
         `Directory: ${dirPath}`
@@ -164,7 +164,7 @@ export async function createApp(
     try {
       // Step 2.5a — Read/create shadow files for all discovered modules.
       // scanShadowFiles calls ensureShadowFile per module:
-      //   - First boot: writes a new .nodulus file with a fresh mod_{hex} ID.
+      //   - First boot: writes a new .kerith file with a fresh mod_{hex} ID.
       //   - Subsequent boots: reads the existing file (no-op if already valid).
       // Errors are swallowed inside shadow-file.ts — bootstrap never fails here.
       const shadowFileMap = scanShadowFiles(resolvedModules);
@@ -265,7 +265,7 @@ export async function createApp(
     let timer: NodeJS.Timeout;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timer = setTimeout(() => {
-        reject(new NodulusError(
+        reject(new KerithError(
           'MODULE_LOAD_TIMEOUT',
           `Module load timed out after ${config.moduleLoadTimeoutMs}ms. Check for unhandled promises or blocking operations in the top-level scope.`,
           `File: ${mod.indexPath}`
@@ -285,7 +285,7 @@ export async function createApp(
     const registeredMod = allRegistered.find(m => normalizePath(m.path) === normalizePath(mod.dirPath));
 
     if (!registeredMod) {
-      throw new NodulusError(
+      throw new KerithError(
         'MODULE_NOT_FOUND',
         `No index.ts found calling Module(). Add Module() to the module's index.ts.`,
         `File: ${mod.indexPath}`
@@ -305,7 +305,7 @@ export async function createApp(
 
     for (const declared of declaredExports) {
       if (!actualExports.includes(declared)) {
-        throw new NodulusError(
+        throw new KerithError(
           'EXPORT_MISMATCH',
           `A name declared in exports does not exist as a real export of index.ts.`,
           `Module: ${registeredMod.name}, Missing Export: ${declared}`
@@ -336,7 +336,7 @@ export async function createApp(
 
     for (const importName of mod.imports) {
       if (!registry.hasModule(importName)) {
-        throw new NodulusError(
+        throw new KerithError(
           'MISSING_IMPORT',
           `A module declared in imports does not exist in the registry.`,
           `Module "${mod.name}" is trying to import missing module "${importName}"`
@@ -408,7 +408,7 @@ export async function createApp(
           const details = `File: ${path.normalize(file)}:${imp.line} — Add "${targetModule}" to Module() imports array for "${registeredMod.name}".`;
 
           if (config.strict) {
-            throw new NodulusError('UNDECLARED_IMPORT', message, details);
+            throw new KerithError('UNDECLARED_IMPORT', message, details);
           } else {
             log.warn(message, {
               _module: 'module',
@@ -425,7 +425,7 @@ export async function createApp(
       if (!usedImports.has(declared)) {
         const message = `Module "${registeredMod.name}" declares import "${declared}" but never uses it.`;
         if (config.strict) {
-          throw new NodulusError('UNUSED_IMPORT', message, `Remove "${declared}" from imports[] in "${registeredMod.name}".`);
+          throw new KerithError('UNUSED_IMPORT', message, `Remove "${declared}" from imports[] in "${registeredMod.name}".`);
         } else {
           log.warn(message, { module: registeredMod.name, unusedTarget: declared, _module: 'module' });
         }
@@ -437,7 +437,7 @@ export async function createApp(
     const cycles = registry.findCircularDependencies();
     if (cycles.length > 0) {
       const cycleStrings = cycles.map(cycle => cycle.join(' -> ')).join(' | ');
-      throw new NodulusError(
+      throw new KerithError(
         'CIRCULAR_DEPENDENCY',
         `Circular dependency detected. Extract the shared dependency into a separate module.`,
         `Cycles found: ${cycleStrings}`
@@ -491,7 +491,7 @@ export async function createApp(
         let timer: NodeJS.Timeout;
         const timeoutPromise = new Promise<never>((_, reject) => {
           timer = setTimeout(() => {
-            reject(new NodulusError(
+            reject(new KerithError(
               'MODULE_LOAD_TIMEOUT',
               `Controller load timed out after ${config.moduleLoadTimeoutMs}ms. Check for unhandled promises or blocking operations.`,
               `File: ${file}`
@@ -505,8 +505,8 @@ export async function createApp(
           clearTimeout(timer!);
         }
       } catch (err: any) {
-        if (err instanceof NodulusError) throw err;
-        throw new NodulusError(
+        if (err instanceof KerithError) throw err;
+        throw new KerithError(
           'INVALID_CONTROLLER',
           `Failed to import controller file. Check for syntax errors or missing dependencies.`,
           `File: ${file} — ${err.message}`
@@ -518,7 +518,7 @@ export async function createApp(
       if (ctrlMeta) {
         const isRouter = imported.default && typeof imported.default === 'function' && typeof imported.default.use === 'function';
         if (!isRouter) {
-          throw new NodulusError(
+          throw new KerithError(
             'INVALID_CONTROLLER',
             `Controller has no default export of a Router. Add export default router.`,
             `File: ${file}`
@@ -530,7 +530,7 @@ export async function createApp(
     }
 
     // Note: modules with no controllers are valid (workers, email, listeners, etc.)
-    // REGLA-01: Nodulus does not require controllers — they are Express-specific.
+    // REGLA-01: Kerith does not require controllers — they are Express-specific.
   }
 
   // Step 7 — Mount routes
@@ -610,7 +610,7 @@ export async function createApp(
     }
   }
 
-    (app as any).__nodulusBootstrapped = true;
+    (app as any).__KerithBootstrapped = true;
 
     const safeRegisteredModules = allModules.map(m => registry.getModule(m.name)!);
     const durationMs = Math.round(performance.now() - startTime);

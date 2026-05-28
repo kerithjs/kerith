@@ -2,8 +2,8 @@ import * as fs from 'node:fs';
 import path from 'node:path';
 import * as acorn from 'acorn';
 import type { LogHandler } from '../../types/index.js';
-import type { NodulusConfig } from '../../config/nodulus-config.types.js';
-import type { NodulusRegistry } from '../../types/index.js';
+import type { KerithConfig } from '../../config/kerith-config.types.js';
+import type { KerithRegistry } from '../../types/index.js';
 import { normalizePath } from '../../core/utils/paths.js';
 
 export interface ImportFound {
@@ -36,7 +36,7 @@ function emitLog(log: LogHandler | undefined, level: 'warn' | 'debug', message: 
  * Returns bare alias keys registered in the runtime (excludes `/*` wildcard entries).
  * Falls back to `@modules` when the registry has no aliases yet.
  */
-export function getRegisteredAliases(registry: NodulusRegistry): string[] {
+export function getRegisteredAliases(registry: KerithRegistry): string[] {
   const keys = Object.keys(registry.getAllAliases()).filter(k => !k.endsWith('/*'));
   return keys.length > 0 ? keys : [...DEFAULT_ACTIVE_ALIASES];
 }
@@ -46,7 +46,7 @@ export function getRegisteredAliases(registry: NodulusRegistry): string[] {
  * `@modules` covers every `@modules/<name>` subpath via prefix matching (REGLA-22).
  */
 export function buildActiveAliasesFromConfig(
-  config: NodulusConfig,
+  config: KerithConfig,
   _moduleNames: string[] = [],
 ): string[] {
   const aliases = new Set<string>(['@modules']);

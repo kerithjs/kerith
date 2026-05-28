@@ -12,10 +12,10 @@ const defaultIgnored: (string | ((p: string) => boolean))[] = [
   "**/dist/**",
   "**/*.d.ts",
   "**/*.map",
-  "**/.nodulus",
-  "**/.nodulus/**",
+  "**/.kerith",
+  "**/.kerith/**",
   "**/coverage/**",
-  (p: string) => p.includes('.nodulus')
+  (p: string) => p.includes('.kerith')
 ];
 
 // ─── Public API ───────────────────────────────────────────────────────────────

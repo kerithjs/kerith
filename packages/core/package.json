@@ -1,7 +1,7 @@
 {
-  "name": "@vlynk-studios/nodulus-core",
+  "name": "@kerith/core",
   "version": "1.8.1",
-  "description": "Nodulus architecture core framework, for Express with native ESM hooks support.",
+  "description": "Kerith architecture core framework, for Express with native ESM hooks support.",
   "author": "Vlynk Studios & Keiver-dev",
   "license": "MIT",
   "type": "module",
@@ -9,7 +9,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "nodulus": "dist/cli/index.js"
+    "kerith": "dist/cli/index.js"
   },
   "exports": {
     ".": {
@@ -32,7 +32,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Vlynk-Studios/nodulus"
+    "url": "https://github.com/Vlynk-Studios/kerith"
   },
   "keywords": [
     "express",
@@ -40,12 +40,12 @@
     "modular",
     "architecture",
     "typescript",
-    "nodulus"
+    "kerith"
   ],
   "bugs": {
-    "url": "https://github.com/Vlynk-Studios/nodulus/issues"
+    "url": "https://github.com/Vlynk-Studios/kerith/issues"
   },
-  "homepage": "https://github.com/Vlynk-Studios/nodulus#readme",
+  "homepage": "https://kerith.dev",
   "peerDependencies": {
     "express": ">=5.0.0"
   },

@@ -16,7 +16,7 @@ function setupModuleTree(root: string): string {
     fs.mkdirSync(moduleDir, { recursive: true });
     fs.writeFileSync(
       path.join(moduleDir, 'index.ts'),
-      `import { Module } from '@vlynk-studios/nodulus-core';\nModule('${name}', { imports: [] });`,
+      `import { Module } from '@kerith/core';\nModule('${name}', { imports: [] });`,
     );
     for (const [rel, content] of Object.entries(files)) {
       const filePath = path.join(moduleDir, rel);
@@ -41,11 +41,11 @@ function setupCustomModulesDir(root: string): string {
   fs.mkdirSync(path.join(customModules, 'users'), { recursive: true });
   fs.writeFileSync(
     path.join(customModules, 'orders', 'index.ts'),
-    "import { Module } from '@vlynk-studios/nodulus-core';\nModule('orders', { imports: [] });",
+    "import { Module } from '@kerith/core';\nModule('orders', { imports: [] });",
   );
   fs.writeFileSync(
     path.join(customModules, 'users', 'index.ts'),
-    "import { Module } from '@vlynk-studios/nodulus-core';\nModule('users', { imports: [] });",
+    "import { Module } from '@kerith/core';\nModule('users', { imports: [] });",
   );
   const ordersFile = path.join(customModules, 'orders', 'orders.service.ts');
   fs.writeFileSync(ordersFile, "import { U } from '../users/users.service';");

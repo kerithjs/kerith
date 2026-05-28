@@ -35,7 +35,7 @@ describe('CLI: sync-preload', () => {
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-sync-preload-'));
     fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test-app', type: 'module' }));
-    fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default {}');
+    fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default {}');
     vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
     vi.spyOn(console, 'log').mockImplementation(() => {});
     stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
@@ -48,27 +48,27 @@ describe('CLI: sync-preload', () => {
     setPinoInstance(createDefaultPinoInstance());
   });
 
-  it('creates .nodulus/preload.js with correct content from nodulus.config.js project', async () => {
+  it('creates .kerith/preload.js with correct content from kerith.config.js project', async () => {
     vi.mocked(loadConfig).mockResolvedValue(makeBaseConfig({
       aliases: { '@shared': './src/shared' }
     }));
 
     await runCommand();
 
-    const preloadPath = path.join(tmpDir, '.nodulus', 'preload.js');
+    const preloadPath = path.join(tmpDir, '.kerith', 'preload.js');
     expect(fs.existsSync(preloadPath)).toBe(true);
 
     const content = fs.readFileSync(preloadPath, 'utf8');
     expect(content).toContain("import { register } from 'node:module'");
-    expect(content).toContain('globalThis.__NODULUS_PRELOAD_CONFIG__');
+    expect(content).toContain('globalThis.__KERITH_PRELOAD_CONFIG__');
     expect(content).toContain("preloaded: true");
     expect(content).toContain("_version:");
   });
 
-  it('creates .nodulus/ directory if it does not exist', async () => {
+  it('creates .kerith/ directory if it does not exist', async () => {
     vi.mocked(loadConfig).mockResolvedValue(makeBaseConfig());
 
-    const nodulusDir = path.join(tmpDir, '.nodulus');
+    const nodulusDir = path.join(tmpDir, '.kerith');
     expect(fs.existsSync(nodulusDir)).toBe(false);
 
     await runCommand();
@@ -77,7 +77,7 @@ describe('CLI: sync-preload', () => {
     expect(fs.existsSync(path.join(nodulusDir, 'preload.js'))).toBe(true);
   });
 
-  it('embeds user aliases from nodulus.config.ts into the generated file', async () => {
+  it('embeds user aliases from kerith.config.ts into the generated file', async () => {
     vi.mocked(loadConfig).mockResolvedValue(makeBaseConfig({
       aliases: {
         '@shared': './src/shared',
@@ -88,13 +88,13 @@ describe('CLI: sync-preload', () => {
 
     await runCommand();
 
-    const content = fs.readFileSync(path.join(tmpDir, '.nodulus', 'preload.js'), 'utf8');
+    const content = fs.readFileSync(path.join(tmpDir, '.kerith', 'preload.js'), 'utf8');
     expect(content).toContain("'@shared':");
     expect(content).toContain("'@config':");
     expect(content).toContain("'@db':");
   });
 
-  it('works the same with a JavaScript project config (nodulus.config.js)', async () => {
+  it('works the same with a JavaScript project config (kerith.config.js)', async () => {
     // loadConfig abstracts away .ts vs .js — the command behavior is identical
     vi.mocked(loadConfig).mockResolvedValue(makeBaseConfig({
       aliases: { '@utils': './src/utils' }
@@ -102,7 +102,7 @@ describe('CLI: sync-preload', () => {
 
     await runCommand();
 
-    const content = fs.readFileSync(path.join(tmpDir, '.nodulus', 'preload.js'), 'utf8');
+    const content = fs.readFileSync(path.join(tmpDir, '.kerith', 'preload.js'), 'utf8');
     expect(content).toContain("'@utils':");
     expect(content).toContain('preloaded: true');
   });
@@ -113,15 +113,15 @@ describe('CLI: sync-preload', () => {
     }));
 
     await runCommand();
-    const contentAfterFirst = fs.readFileSync(path.join(tmpDir, '.nodulus', 'preload.js'), 'utf8');
-    const mtimeAfterFirst = fs.statSync(path.join(tmpDir, '.nodulus', 'preload.js')).mtimeMs;
+    const contentAfterFirst = fs.readFileSync(path.join(tmpDir, '.kerith', 'preload.js'), 'utf8');
+    const mtimeAfterFirst = fs.statSync(path.join(tmpDir, '.kerith', 'preload.js')).mtimeMs;
 
     // Small delay to ensure mtime would differ if file was rewritten
     await new Promise(r => setTimeout(r, 20));
 
     await runCommand();
-    const contentAfterSecond = fs.readFileSync(path.join(tmpDir, '.nodulus', 'preload.js'), 'utf8');
-    const mtimeAfterSecond = fs.statSync(path.join(tmpDir, '.nodulus', 'preload.js')).mtimeMs;
+    const contentAfterSecond = fs.readFileSync(path.join(tmpDir, '.kerith', 'preload.js'), 'utf8');
+    const mtimeAfterSecond = fs.statSync(path.join(tmpDir, '.kerith', 'preload.js')).mtimeMs;
 
     expect(contentAfterFirst).toBe(contentAfterSecond);
     // File should NOT be rewritten if content is identical
@@ -133,7 +133,7 @@ describe('CLI: sync-preload', () => {
       aliases: { '@shared': './src/shared' }
     }));
     await runCommand();
-    const contentV1 = fs.readFileSync(path.join(tmpDir, '.nodulus', 'preload.js'), 'utf8');
+    const contentV1 = fs.readFileSync(path.join(tmpDir, '.kerith', 'preload.js'), 'utf8');
     expect(contentV1).toContain("'@shared':");
     expect(contentV1).not.toContain("'@newlib':");
 
@@ -145,7 +145,7 @@ describe('CLI: sync-preload', () => {
       }
     }));
     await runCommand();
-    const contentV2 = fs.readFileSync(path.join(tmpDir, '.nodulus', 'preload.js'), 'utf8');
+    const contentV2 = fs.readFileSync(path.join(tmpDir, '.kerith', 'preload.js'), 'utf8');
 
     expect(contentV2).toContain("'@shared':");
     expect(contentV2).toContain("'@newlib':");
@@ -198,7 +198,7 @@ describe('CLI: sync-preload', () => {
     ).join('');
 
     expect(written).toContain('Pre-loader sync complete');
-    expect(written).toContain('nodulus dev --watch src/app.');
+    expect(written).toContain('kerith dev --watch src/app.');
   });
 
   it('exits with code 1 when loadConfig throws (invalid config)', async () => {
@@ -212,9 +212,9 @@ describe('CLI: sync-preload', () => {
     exitSpy.mockRestore();
   });
 
-  it('exits with code 1 when nodulus.config.js/ts does not exist', async () => {
+  it('exits with code 1 when kerith.config.js/ts does not exist', async () => {
     // Delete the config file created in beforeEach
-    fs.rmSync(path.join(tmpDir, 'nodulus.config.js'));
+    fs.rmSync(path.join(tmpDir, 'kerith.config.js'));
 
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code: any) => {
       throw new Error(`process.exit(${code})`);
@@ -245,7 +245,7 @@ describe('CLI: sync-preload', () => {
   it('updates preload when modules glob changes (src/modules/* → src/api/*)', async () => {
     vi.mocked(loadConfig).mockResolvedValue(makeBaseConfig({ modules: 'src/modules/*' }));
     await runCommand();
-    const preloadPath = path.join(tmpDir, '.nodulus', 'preload.js');
+    const preloadPath = path.join(tmpDir, '.kerith', 'preload.js');
     const v1 = fs.readFileSync(preloadPath, 'utf8');
 
     vi.mocked(loadConfig).mockResolvedValue(makeBaseConfig({ modules: 'src/api/*' }));

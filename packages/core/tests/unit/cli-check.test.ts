@@ -18,7 +18,7 @@ import { NITS_REGISTRY_VERSION } from '../../src/nits/constants.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-describe('nodulus check', () => {
+describe('kerith check', () => {
   const fixturePath = path.resolve(__dirname, '../fixtures/check-app-violations');
 
   describe('detectViolations() with Fixture', () => {
@@ -29,7 +29,7 @@ describe('nodulus check', () => {
       const privateImp = violations.find(v => v.type === ViolationType.PRIVATE_IMPORT);
       expect(privateImp).toBeDefined();
       expect(privateImp?.module).toBe('payments');
-      expect(privateImp?.message).toContain('users.repository.js');
+      expect((privateImp as any)?.message).toContain('users.repository.js');
     });
 
     it('detects undeclared import in fixture (payments module)', async () => {
@@ -39,7 +39,7 @@ describe('nodulus check', () => {
       const undeclaredImp = violations.find(v => v.type === ViolationType.UNDECLARED_IMPORT);
       expect(undeclaredImp).toBeDefined();
       expect(undeclaredImp?.module).toBe('payments');
-      expect(undeclaredImp?.suggestion).toContain('Add "orders" to the imports array');
+      expect((undeclaredImp as any)?.suggestion).toContain('Add "orders" to the imports array');
     });
 
     it('detects real circular dependency in fixture (users <-> orders)', async () => {
@@ -48,8 +48,8 @@ describe('nodulus check', () => {
       
       const circular = violations.find(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
       expect(circular).toBeDefined();
-      expect(circular?.cycle).toContain('users');
-      expect(circular?.cycle).toContain('orders');
+      expect((circular as any)?.cycle).toContain('users');
+      expect((circular as any)?.cycle).toContain('orders');
     });
 
     it('detects RELATIVE_BOUNDARY_VIOLATION when a file uses ../ to reach another module', async () => {
@@ -61,11 +61,11 @@ describe('nodulus check', () => {
 
       fs.writeFileSync(
         path.join(usersDir, 'index.ts'),
-        "import { Module } from '@vlynk-studios/nodulus-core';\nModule('users', { imports: [] });",
+        "import { Module } from '@kerith/core';\nModule('users', { imports: [] });",
       );
       fs.writeFileSync(
         path.join(paymentsDir, 'index.ts'),
-        "import { Module } from '@vlynk-studios/nodulus-core';\nModule('payments', { imports: [] });",
+        "import { Module } from '@kerith/core';\nModule('payments', { imports: [] });",
       );
       fs.writeFileSync(path.join(paymentsDir, 'payments.service.ts'), 'export class PaymentsService {}');
       fs.writeFileSync(
@@ -73,7 +73,7 @@ describe('nodulus check', () => {
         "import { PaymentsService } from '../payments/payments.service';",
       );
       fs.writeFileSync(
-        path.join(tmpRoot, 'nodulus.config.js'),
+        path.join(tmpRoot, 'kerith.config.js'),
         "export default { modules: 'src/modules/*', strict: false };",
       );
 
@@ -104,7 +104,7 @@ describe('nodulus check', () => {
       const circular = violations.find(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
       
       expect(circular).toBeDefined();
-      expect(circular?.cycle).toEqual(['A', 'B', 'A']);
+      expect((circular as any)?.cycle).toEqual(['A', 'B', 'A']);
     });
 
     it('domain names in graph are treated as valid targets (no undeclared violation)', () => {
@@ -161,8 +161,8 @@ describe('nodulus check', () => {
       const violations = detectViolations({ domains: [], modules: mockNodes });
       const priv = violations.find(v => v.type === ViolationType.PRIVATE_IMPORT);
       expect(priv).toBeDefined();
-      expect(priv?.location).toBeDefined();
-      expect(priv?.location?.file).toBe('/orders/service.ts');
+      expect((priv as any)?.location).toBeDefined();
+      expect((priv as any)?.location?.file).toBe('/orders/service.ts');
     });
   });
 
@@ -243,8 +243,8 @@ describe('nodulus check', () => {
       const paymentsDir = path.join(tmpRoot, 'src', 'modules', 'payments');
       fs.mkdirSync(usersDir, { recursive: true });
       fs.mkdirSync(paymentsDir, { recursive: true });
-      fs.writeFileSync(path.join(usersDir, 'index.ts'), "import { Module } from '@vlynk-studios/nodulus-core';\nModule('users', { imports: [] });");
-      fs.writeFileSync(path.join(paymentsDir, 'index.ts'), "import { Module } from '@vlynk-studios/nodulus-core';\nModule('payments', { imports: [] });");
+      fs.writeFileSync(path.join(usersDir, 'index.ts'), "import { Module } from '@kerith/core';\nModule('users', { imports: [] });");
+      fs.writeFileSync(path.join(paymentsDir, 'index.ts'), "import { Module } from '@kerith/core';\nModule('payments', { imports: [] });");
       fs.writeFileSync(path.join(paymentsDir, 'payments.service.ts'), 'export class P {}');
       fs.writeFileSync(path.join(usersDir, 'users.service.ts'), "import { P } from '../payments/payments.service';");
 
@@ -412,7 +412,7 @@ describe('nodulus check', () => {
       });
       vi.spyOn(fs, 'readFileSync').mockImplementation((p: any) => {
         if (typeof p === 'string' && p.includes('preload.js')) return `const _version: '0.0.1';`;
-        if (p.toString().includes('package.json')) return JSON.stringify({ name: 'nodulus', version: '2.0.0' });
+        if (p.toString().includes('package.json')) return JSON.stringify({ name: 'kerith', version: '2.0.0' });
         return '{}';
       });
 

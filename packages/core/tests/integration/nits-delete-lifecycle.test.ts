@@ -12,7 +12,7 @@
  *  2. Move detected by Shadow File, NOT by Jaccard
  *  3. Aggressive move (path + name + ~80% identifiers change): ID preserved
  *  4. Accidental delete + Undo — ID purged → newModule in the next cycle
- *  5. Backward compatibility — project without .nodulus: deleted always empty
+ *  5. Backward compatibility — project without .kerith: deleted always empty
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -49,17 +49,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
 /**
- * Writes a `.nodulus` shadow file that passes `isShadowFileRecord` validation.
+ * Writes a `.kerith` shadow file that passes `isShadowFileRecord` validation.
  * Required fields: version (number), id (/^mod_[0-9a-f]{8}$/), name, createdAt (ISO).
  */
 function writeShadow(moduleDir: string, id: string, name: string): void {
   const record = { version: 1, id, name, createdAt: TS };
-  fs.writeFileSync(path.join(moduleDir, '.nodulus'), JSON.stringify(record, null, 2), 'utf8');
+  fs.writeFileSync(path.join(moduleDir, '.kerith'), JSON.stringify(record, null, 2), 'utf8');
 }
 
-/** Reads and parses a .nodulus shadow file; returns null if absent. */
+/** Reads and parses a .kerith shadow file; returns null if absent. */
 function readShadow(moduleDir: string): { id: string } | null {
-  const p = path.join(moduleDir, '.nodulus');
+  const p = path.join(moduleDir, '.kerith');
   return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null;
 }
 
@@ -85,16 +85,16 @@ function writeService(dir: string, filename: string, identifiers: string[]): voi
 
 
 
-/** Writes `registry.json` to `<cwd>/.nodulus/registry.json`. */
+/** Writes `registry.json` to `<cwd>/.kerith/registry.json`. */
 function writeRegistry(cwd: string, reg: NitsRegistry): void {
-  const dir = path.join(cwd, '.nodulus');
+  const dir = path.join(cwd, '.kerith');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'registry.json'), JSON.stringify(reg, null, 2), 'utf8');
 }
 
 /** Reads the registry.json written by writeRegistry / runCycle. */
 function readRegistry(cwd: string): NitsRegistry {
-  return JSON.parse(fs.readFileSync(path.join(cwd, '.nodulus', 'registry.json'), 'utf8'));
+  return JSON.parse(fs.readFileSync(path.join(cwd, '.kerith', 'registry.json'), 'utf8'));
 }
 
 // ─── Cycle runner ────────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ function mkmod(cwd: string, relPath: string, name: string, shadowId?: string): s
 
 describe('Ciclo completo de borrado', () => {
   it(
-    'payments con .nodulus → registry con shadowFileId → ' +
+    'payments con .kerith → registry con shadowFileId → ' +
     'desaparece 3 ciclos → deleted → purge → sin trazas',
     async () => {
       const cwd = mktmp();
@@ -215,7 +215,7 @@ describe('Ciclo completo de borrado', () => {
 
 describe('Move detectado por Shadow File (no por Jaccard)', () => {
   it(
-    'users en src/modules/users → mover a auth/users conservando .nodulus → ' +
+    'users en src/modules/users → mover a auth/users conservando .kerith → ' +
     'moved con shadowFileId preservado, no stale/deleted',
     async () => {
       const cwd = mktmp();
@@ -235,7 +235,7 @@ describe('Move detectado por Shadow File (no por Jaccard)', () => {
       fs.mkdirSync(path.dirname(usersNewDir), { recursive: true });
       fs.renameSync(usersDir, usersNewDir);
 
-      // The .nodulus file must be at the new location with the same ID
+      // The .kerith file must be at the new location with the same ID
       expect(readShadow(usersNewDir)?.id).toBe(ID_USERS);
 
       const { result: r2, registry: reg2 } = await runCycle(
@@ -297,10 +297,10 @@ describe('Move agresivo — path + nombre + identifiers cambian, Shadow File int
       writeService(financeDir, 'finance.service.ts', [
         'InvoiceService', 'LedgerService', 'AuditService', 'ComplianceService', 'ReportingService',
       ]);
-      // Copiar el .nodulus original (mismo ID)
+      // Copiar el .kerith original (mismo ID)
       fs.copyFileSync(
-        path.join(billingDir, '.nodulus'),
-        path.join(financeDir, '.nodulus')
+        path.join(billingDir, '.kerith'),
+        path.join(financeDir, '.kerith')
       );
       // Eliminar la carpeta original
       fs.rmSync(billingDir, { recursive: true });
@@ -338,12 +338,12 @@ describe('Move agresivo — path + nombre + identifiers cambian, Shadow File int
 describe('Borrado accidental + Undo', () => {
   it(
     'orders: bootstrap → 3 ciclos ausente → purgado → ' +
-    'restore with original .nodulus → newModule (no identity recovery)',
+    'restore with original .kerith → newModule (no identity recovery)',
     async () => {
       const cwd     = mktmp();
       const ordersDir = mkmod(cwd, 'src/modules/orders', 'orders', ID_ORDERS);
       // Save shadow file content to restore it later
-      const shadowBackup = fs.readFileSync(path.join(ordersDir, '.nodulus'), 'utf8');
+      const shadowBackup = fs.readFileSync(path.join(ordersDir, '.kerith'), 'utf8');
 
       // ── Ciclo 0: bootstrap inicial ─────────────────────────────────────────
       const { registry: reg0 } = await runCycle(
@@ -367,10 +367,10 @@ describe('Borrado accidental + Undo', () => {
       expect(r3.deleted[0].id).toBe(ID_ORDERS);
       expect(reg3.modules[ID_ORDERS]).toBeUndefined(); // purgado
 
-      // ── Undo: restaurar carpeta con el .nodulus original ───────────────────
+      // ── Undo: restaurar carpeta con el .kerith original ───────────────────
       fs.mkdirSync(ordersDir, { recursive: true });
       writeIndex(ordersDir, 'orders');
-      fs.writeFileSync(path.join(ordersDir, '.nodulus'), shadowBackup, 'utf8');
+      fs.writeFileSync(path.join(ordersDir, '.kerith'), shadowBackup, 'utf8');
 
       // ── Cycle 4: reg3 is empty (ID purged) → module is newModule ─────────────────
       const { result: r4, registry: reg4 } = await runCycle(
@@ -400,10 +400,10 @@ describe('Borrado accidental + Undo', () => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 5. BACKWARD COMPATIBILITY — Project with no .nodulus files
+// 5. BACKWARD COMPATIBILITY — Project with no .kerith files
 // ═════════════════════════════════════════════════════════════════════════════
 
-describe('Backward compatibility: project with no .nodulus files', () => {
+describe('Backward compatibility: project with no .kerith files', () => {
   it(
     'no shadow files → full reconciliation, deleted always empty in cycles 1-2, ' +
     'absent module goes to stale; in cycle 3 goes to deleted (standard grace period)',

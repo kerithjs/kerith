@@ -42,7 +42,7 @@ describe('createApp', () => {
   });
 
   const validAppStructure = {
-    'nodulus.config.js': `
+    'kerith.config.js': `
       export default { prefix: '/api', strict: false };
     `,
     'src/modules/users/index.ts': `
@@ -61,38 +61,38 @@ describe('createApp', () => {
     `
   };
 
-  it('should mount discovered routes and return NodulusApp shape', async () => {
+  it('should mount discovered routes and return KerithApp shape', async () => {
     await runInTmpApp(validAppStructure, async (_, app) => {
-      const nodulusApp = await createApp(app as any);
+      const KerithApp = await createApp(app as any);
 
       // Verify mounting occurred
       expect(app.use).toHaveBeenCalledTimes(1);
       
       // Verify the returned properties
-      expect(nodulusApp.modules).toHaveLength(1);
-      expect(nodulusApp.modules[0].name).toBe('users');
-      expect(nodulusApp.routes).toHaveLength(1);
-      expect(nodulusApp.routes[0]).toEqual({
+      expect(KerithApp.modules).toHaveLength(1);
+      expect(KerithApp.modules[0].name).toBe('users');
+      expect(KerithApp.routes).toHaveLength(1);
+      expect(KerithApp.routes[0]).toEqual({
         method: 'GET',
         path: '/api/users/me',
         module: 'users',
         controller: 'controller'
       });
-      expect(nodulusApp.registry).toBeDefined();
+      expect(KerithApp.registry).toBeDefined();
     });
   });
 
   it('should allow omitting options completely (v1.8.0 signature)', async () => {
     await runInTmpApp(validAppStructure, async (_, app) => {
-      const nodulusApp = await createApp(app as any);
-      expect(nodulusApp.modules).toHaveLength(1);
+      const KerithApp = await createApp(app as any);
+      expect(KerithApp.modules).toHaveLength(1);
     });
   });
 
   it('should allow passing empty options object', async () => {
     await runInTmpApp(validAppStructure, async (_, app) => {
-      const nodulusApp = await createApp(app as any, {});
-      expect(nodulusApp.modules).toHaveLength(1);
+      const KerithApp = await createApp(app as any, {});
+      expect(KerithApp.modules).toHaveLength(1);
     });
   });
 
@@ -106,8 +106,8 @@ describe('createApp', () => {
 
   it('should return a listen() method for shutdown management', async () => {
     await runInTmpApp(validAppStructure, async (_, app) => {
-      const nodulusApp = await createApp(app as any);
-      expect(typeof nodulusApp.listen).toBe('function');
+      const KerithApp = await createApp(app as any);
+      expect(typeof KerithApp.listen).toBe('function');
       
       const mockServer = {
         close: vi.fn((cb) => cb()),
@@ -116,7 +116,7 @@ describe('createApp', () => {
       };
 
       const shutdownHook = vi.fn();
-      const triggerShutdown = nodulusApp.listen(mockServer as any, { onShutdown: shutdownHook });
+      const triggerShutdown = KerithApp.listen(mockServer as any, { onShutdown: shutdownHook });
       
       expect(typeof triggerShutdown).toBe('function');
       
@@ -131,7 +131,7 @@ describe('createApp', () => {
 
   it('should allow listen() without options', async () => {
     await runInTmpApp(validAppStructure, async (_, app) => {
-      const nodulusApp = await createApp(app as any);
+      const KerithApp = await createApp(app as any);
       
       const mockServer = {
         close: vi.fn((cb) => cb()),
@@ -139,7 +139,7 @@ describe('createApp', () => {
         emit: vi.fn()
       };
 
-      const triggerShutdown = nodulusApp.listen(mockServer as any);
+      const triggerShutdown = KerithApp.listen(mockServer as any);
       
       vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
       await triggerShutdown();
@@ -189,7 +189,7 @@ describe('createApp', () => {
     it('should respect logLevel and suppress info messages when set to warn', async () => {
       const logger = vi.fn();
       await runInTmpApp(validAppStructure, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { logLevel: "warn" };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { logLevel: "warn" };');
         await createApp(app as any, { logger });
         
         // Modules, routes, and bootstrap completion are 'info' level
@@ -247,10 +247,10 @@ describe('createApp', () => {
     };
     
     await runInTmpApp(appWithAliases, async (tmpDir, app) => {
-      fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { aliases: { "@common": "./common" } };');
-      const nodulusApp = await createApp(app as any);
+      fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { aliases: { "@common": "./common" } };');
+      const KerithApp = await createApp(app as any);
       
-      const aliases = nodulusApp.registry.getAllAliases();
+      const aliases = KerithApp.registry.getAllAliases();
       expect(aliases['@common']).toBe(path.resolve(tmpDir, 'common'));
     });
   });
@@ -259,7 +259,7 @@ describe('createApp', () => {
       await runInTmpApp(validAppStructure, async (tmpDir, app) => {
       const configDir = path.join(tmpDir, 'src/config');
       fs.mkdirSync(configDir, { recursive: true });
-      fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { aliases: { "@config": "./src/config" } };');
+      fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { aliases: { "@config": "./src/config" } };');
 
       await createApp(app as any);
       
@@ -277,10 +277,10 @@ describe('createApp', () => {
     };
 
     await runInTmpApp(appWithFileAlias, async (tmpDir, app) => {
-      fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { aliases: { "@db": "./src/shared/database.ts" } };');
-      const nodulusApp = await createApp(app as any);
+      fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { aliases: { "@db": "./src/shared/database.ts" } };');
+      const KerithApp = await createApp(app as any);
 
-      const aliases = nodulusApp.registry.getAllAliases();
+      const aliases = KerithApp.registry.getAllAliases();
       expect(aliases['@db']).toBe(path.resolve(tmpDir, 'src/shared/database.ts'));
       
       const { getAliases } = await import('../../src/aliases/getAliases.js');
@@ -301,7 +301,7 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(appWithHangingModule, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { moduleLoadTimeoutMs: 100 };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 100 };');
         await expect(createApp(app as any)).rejects.toMatchObject({
           code: 'MODULE_LOAD_TIMEOUT'
         });
@@ -320,7 +320,7 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(appWithHangingController, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { moduleLoadTimeoutMs: 100 };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 100 };');
         await expect(createApp(app as any)).rejects.toMatchObject({
           code: 'MODULE_LOAD_TIMEOUT'
         });
@@ -337,10 +337,10 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(appWithSlowModule, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { moduleLoadTimeoutMs: 200, strict: false };');
-        const nodulusApp = await createApp(app as any);
-        expect(nodulusApp.modules).toHaveLength(1);
-        expect(nodulusApp.modules[0].name).toBe('slow');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 200, strict: false };');
+        const KerithApp = await createApp(app as any);
+        expect(KerithApp.modules).toHaveLength(1);
+        expect(KerithApp.modules[0].name).toBe('slow');
       });
     });
   });
@@ -348,18 +348,18 @@ describe('createApp', () => {
   // ── T-05: nits.enabled:false — registry.json must not be created ────────────
 
   describe('T-05: createApp() with nits.enabled:false', () => {
-    it('T-05: does not create .nodulus/registry.json when NITS is disabled, and bootstrap succeeds', async () => {
+    it('T-05: does not create .kerith/registry.json when NITS is disabled, and bootstrap succeeds', async () => {
       await runInTmpApp(validAppStructure, async (tmpDir, app) => {
         // Boot with NITS disabled
-        fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { nits: { enabled: false } };');
-        const nodulusApp = await createApp(app as any);
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { nits: { enabled: false } };');
+        const KerithApp = await createApp(app as any);
 
         // Bootstrap should complete normally
-        expect(nodulusApp.modules).toHaveLength(1);
-        expect(nodulusApp.modules[0].name).toBe('users');
+        expect(KerithApp.modules).toHaveLength(1);
+        expect(KerithApp.modules[0].name).toBe('users');
 
         // registry.json must NOT exist — NITS was disabled
-        const registryPath = path.join(tmpDir, '.nodulus', 'registry.json');
+        const registryPath = path.join(tmpDir, '.kerith', 'registry.json');
         expect(fs.existsSync(registryPath)).toBe(false);
       });
     });
@@ -371,7 +371,7 @@ describe('createApp', () => {
     it('§1.4-1: logs a warning if config.domains or config.shared is provided', async () => {
       const logger = vi.fn();
       await runInTmpApp(validAppStructure, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { domains: ["src/domains/*"] };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { domains: ["src/domains/*"] };');
         await createApp(app as any, { logger });
         expect(logger).toHaveBeenCalledWith(
           'warn',
@@ -389,17 +389,17 @@ describe('createApp', () => {
       };
       
       await runInTmpApp(appWithFile, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { aliases: { "@utils/*": "./src/utils.ts" } };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { aliases: { "@utils/*": "./src/utils.ts" } };');
         await expect(createApp(app as any, { logger } as any)).rejects.toMatchObject({ code: 'INVALID_ALIAS_KEY' });
       });
     });
 
     it('§1.4-3: skips Step 3 entirely if resolveAliases is false', async () => {
       await runInTmpApp(validAppStructure, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { resolveAliases: false };');
-        const nodulusApp = await createApp(app as any);
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { resolveAliases: false };');
+        const KerithApp = await createApp(app as any);
         // The registry should NOT have the @modules/users alias.
-        const aliases = nodulusApp.registry.getAllAliases();
+        const aliases = KerithApp.registry.getAllAliases();
         expect(aliases).not.toHaveProperty('@modules/users');
       });
     });
@@ -423,7 +423,7 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(circularApp, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { strict: true };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { strict: true };');
         await expect(createApp(app as any)).rejects.toMatchObject({
           code: 'CIRCULAR_DEPENDENCY'
         });
@@ -452,7 +452,7 @@ describe('createApp', () => {
     it('§1.4-6: logs a warning if the target path does not exist', async () => {
       const logger = vi.fn();
       await runInTmpApp(validAppStructure, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'nodulus.config.js'), 'export default { aliases: { "@notfound": "./does-not-exist" } };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { aliases: { "@notfound": "./does-not-exist" } };');
         await createApp(app as any, { logger } as any);
         expect(logger).toHaveBeenCalledWith(
           'warn',

@@ -92,7 +92,7 @@ export function useLogger(name: string): Logger {
  * Allows providing a custom `LogHandler` and filtering by `minLevel`.
  * 
  * @example
- * // Integration with nodulus.config.ts using a custom handler wrapping Pino:
+ * // Integration with kerith.config.ts using a custom handler wrapping Pino:
  * ```ts
  * export default {
  *   logger: (level, msg, meta) => myCustomLogger[level]({ ...meta }, msg),

@@ -110,7 +110,7 @@ describe('Pre-loader ESM Hook (preload-hook.ts)', () => {
     await expect(
       resolve('@shared/utils', { conditions: [] }, failingResolve)
     ).rejects.toMatchObject({
-      message: expect.stringContaining('Run: nodulus sync-preload'),
+      message: expect.stringContaining('Run: kerith sync-preload'),
     });
   });
 

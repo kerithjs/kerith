@@ -52,7 +52,7 @@ describe("Integration: Config From File", () => {
     it("Bootstrap OK if module load time is within moduleLoadTimeoutMs", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false, moduleLoadTimeoutMs: 500 };",
+          "kerith.config.js": "export default { strict: false, moduleLoadTimeoutMs: 500 };",
           "src/modules/slow/index.ts": `
             import { Module } from '{{SOURCE}}';
             Module('slow');
@@ -70,7 +70,7 @@ describe("Integration: Config From File", () => {
     it("throws MODULE_LOAD_TIMEOUT if module load exceeds moduleLoadTimeoutMs", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false, moduleLoadTimeoutMs: 100 };",
+          "kerith.config.js": "export default { strict: false, moduleLoadTimeoutMs: 100 };",
           "src/modules/slow/index.ts": `
             import { Module } from '{{SOURCE}}';
             Module('slow');
@@ -90,7 +90,7 @@ describe("Integration: Config From File", () => {
     it("throws UNDECLARED_IMPORT in strict: true for cross-module undeclared imports", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: true };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/mod-a/index.ts": `
             import { Module } from '{{SOURCE}}';
             Module('mod-a', { exports: ['a'] });
@@ -116,7 +116,7 @@ describe("Integration: Config From File", () => {
       const loggerSpy = vi.fn();
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/mod-a/index.ts": `
             import { Module } from '{{SOURCE}}';
             Module('mod-a', { exports: ['a'] });
@@ -148,7 +148,7 @@ describe("Integration: Config From File", () => {
     it("mounts routes with the configured prefix", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { prefix: '/api/v1' };",
+          "kerith.config.js": "export default { prefix: '/api/v1' };",
           "src/modules/api/index.ts": `
             import { Module } from '{{SOURCE}}';
             Module('api');
@@ -174,7 +174,7 @@ describe("Integration: Config From File", () => {
       const loggerSpy = vi.fn();
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { logLevel: 'error' };",
+          "kerith.config.js": "export default { logLevel: 'error' };",
           "src/modules/dummy/index.ts": `
             import { Module } from '{{SOURCE}}';
             Module('dummy');

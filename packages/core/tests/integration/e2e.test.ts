@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import path from 'node:path';
-import type { NodulusApp } from '../../src/types/index.js';
+import type { KerithApp } from '../../src/types/index.js';
 
 import { fileURLToPath } from 'node:url';
 
 describe('E2E Integration', () => {
   let appServer: any;
-  let nodulusInfo: NodulusApp;
+  let nodulusInfo: KerithApp;
 
   beforeAll(async () => {
     // Pivot CWD into the fixture to mimic a real project running locally.
@@ -71,7 +71,7 @@ describe('E2E Integration', () => {
     expect(res.status).toBe(404);
     // Response must NOT contain a Nodulus error code
     const body = typeof res.body === 'object' ? JSON.stringify(res.body) : String(res.text ?? '');
-    expect(body).not.toMatch(/NodulusError/);
+    expect(body).not.toMatch(/KerithError/);
   });
 
   it('T-03b: registry.getModule("nonExistent") returns undefined and does not throw', () => {
@@ -100,7 +100,7 @@ describe('E2E Integration', () => {
     expect(typeof firstUser.name).toBe('string');
   });
 
-  it('T-04: nodulusApp.listen() with onShutdown hook executes correctly', async () => {
+  it('T-04: KerithApp.listen() with onShutdown hook executes correctly', async () => {
     const mockServer = {
       close: vi.fn((cb) => cb()),
       on: vi.fn(),

@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { NodulusError } from '../core/errors.js';
+import { KerithError } from '../core/errors.js';
 
 /**
  * Internal utility — NOT part of the public Nodulus API.
@@ -28,13 +28,13 @@ function resolveCallerFile(identifierName: string): string {
     }
   } catch {
     // getFileName() is unavailable in this environment;
-    // the null-check below will throw a descriptive NodulusError.
+    // the null-check below will throw a descriptive KerithError.
   } finally {
     Error.prepareStackTrace = originalFunc;
   }
 
   if (!callerFile) {
-    throw new NodulusError(
+    throw new KerithError(
       'INVALID_MODULE_DECLARATION',
       `${identifierName} could not determine caller path. Stack trace unavailable.`,
       'Ensure you are using Node.js >= 20.6 with ESM and no bundler obfuscation.'

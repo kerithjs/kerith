@@ -14,7 +14,7 @@ export const ViolationType = {
 
 export type ViolationType = typeof ViolationType[keyof typeof ViolationType];
 
-/** REGLA-45 / Fase 6 — always forces exit 1 in `nodulus check`. */
+/** REGLA-45 / Fase 6 — always forces exit 1 in `kerith check`. */
 export interface RelativeBoundaryViolation {
   type: typeof ViolationType.RELATIVE_BOUNDARY_VIOLATION;
   module: string;

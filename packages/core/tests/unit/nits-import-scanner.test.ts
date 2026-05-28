@@ -451,6 +451,6 @@ describe('§1.3 [BLOCKER]: extractModuleImports — dynamic import resilience', 
     expect(result).toHaveLength(1);
     const specifiers = result.map(r => r.specifier);
     expect(specifiers).toContain('@modules/users');
-    expect(specifiers).not.toContain('@vlynk-studios/nodulus-core');
+    expect(specifiers).not.toContain('@kerith/core');
   });
 });

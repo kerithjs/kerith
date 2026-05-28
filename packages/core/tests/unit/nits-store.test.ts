@@ -101,14 +101,14 @@ describe('loadNitsRegistry', () => {
     expect(result?.modules).toEqual({});
   });
 
-  it('reads from the standardized path .nodulus/registry.json', async () => {
+  it('reads from the standardized path .kerith/registry.json', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.promises.readFile).mockResolvedValue(JSON.stringify(VALID_REGISTRY));
 
     await loadNitsRegistry('/mock/project');
 
     const calledPath = vi.mocked(fs.promises.readFile).mock.calls[0][0] as string;
-    expect(calledPath.replace(/\\/g, '/')).toContain('.nodulus/registry.json');
+    expect(calledPath.replace(/\\/g, '/')).toContain('.kerith/registry.json');
   });
 
   it('handles EACCES/permission errors by returning null', async () => {
@@ -128,7 +128,7 @@ describe('saveNitsRegistry', () => {
   beforeEach(() => { vi.resetAllMocks(); });
   afterEach(() => { vi.restoreAllMocks(); });
 
-  it('creates the .nodulus/ directory if it does not exist', async () => {
+  it('creates the .kerith/ directory if it does not exist', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
     vi.mocked(fs.promises.mkdir).mockResolvedValue(undefined);
     vi.mocked(fs.promises.writeFile).mockResolvedValue(undefined);
@@ -137,12 +137,12 @@ describe('saveNitsRegistry', () => {
     await saveNitsRegistry({ ...VALID_REGISTRY }, '/mock/project');
 
     expect(fs.promises.mkdir).toHaveBeenCalledWith(
-      expect.stringMatching(/\.nodulus/),
+      expect.stringMatching(/\.kerith/),
       { recursive: true }
     );
   });
 
-  it('does not call mkdir for the directory when .nodulus/ already exists', async () => {
+  it('does not call mkdir for the directory when .kerith/ already exists', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.promises.writeFile).mockResolvedValue(undefined);
     vi.mocked(fs.promises.rename).mockResolvedValue(undefined);

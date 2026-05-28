@@ -4,7 +4,7 @@ import { hashSimilarity } from './nits-hash.js';
 import { generateModuleId } from './nits-id.js';
 import { generateModuleId as generateShadowId, deleteShadowFile, writeShadowFile } from './shadow-file.js';
 import { SHADOW_FILE_VERSION } from './shadow-file.types.js';
-import { NodulusError } from '../core/errors.js';
+import { KerithError } from '../core/errors.js';
 import { normalizePath } from '../core/utils/paths.js';
 import type {
   NitsRegistry,
@@ -317,7 +317,7 @@ export function reconcile(
     if (activeHashes.has(disc.hash)) {
       const originalPath = activeHashes.get(disc.hash)!;
       if (clonePolicy === 'error') {
-        throw new NodulusError(
+        throw new KerithError(
           'DUPLICATE_MODULE',
           `Duplicate module content detected: "${disc.name}" has the same content as already registered module at "${originalPath}".`,
           `If this is intentional (e.g. a template or shared code), ensure they have distinct identifiers or use NITS clonePolicy='new' in dev.`

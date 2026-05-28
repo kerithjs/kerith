@@ -11,7 +11,7 @@ RuleTester.it = it;
 
 const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'eslint-undeclared-cfg-'));
 fs.writeFileSync(
-  path.join(configRoot, 'nodulus.config.js'),
+  path.join(configRoot, 'kerith.config.js'),
   "export default { aliases: { '@config': './src/config' } };",
 );
 
@@ -24,7 +24,7 @@ const usersIndex = path.join(configRoot, 'src/modules/users/index.ts');
 fs.mkdirSync(path.dirname(usersIndex), { recursive: true });
 fs.writeFileSync(
   usersIndex,
-  "import { Module } from '@vlynk-studios/nodulus-core';\nModule('users', { imports: [] });",
+  "import { Module } from '@kerith/core';\nModule('users', { imports: [] });",
 );
 const usersService = path.join(configRoot, 'src/modules/users/users.service.ts');
 fs.writeFileSync(usersService, "import { db } from '@config/database';");

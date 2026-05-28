@@ -4,11 +4,11 @@ import { stringify } from 'comment-json';
 import type { ResolvedConfig, Logger } from '../types/index.js';
 
 export async function generateTsConfigNodulus(config: ResolvedConfig, cwd: string, logger?: Logger): Promise<void> {
-  const tsconfigPath = path.join(cwd, 'tsconfig.nodulus.json');
+  const tsconfigPath = path.join(cwd, 'tsconfig.kerith.json');
   const mainTsconfigPath = path.join(cwd, 'tsconfig.json');
 
   if (!fs.existsSync(mainTsconfigPath) && logger) {
-    logger.info('No tsconfig.json found in project root. You should create one and extend "./tsconfig.nodulus.json".', { _module: 'alias' });
+    logger.info('No tsconfig.json found in project root. You should create one and extend "./tsconfig.kerith.json".', { _module: 'alias' });
   }
 
   // Built-in @modules alias
@@ -18,7 +18,7 @@ export async function generateTsConfigNodulus(config: ResolvedConfig, cwd: strin
     "@modules/*": [modulesTarget],
   };
 
-  // User-defined aliases from nodulus.config.ts
+  // User-defined aliases from kerith.config.ts
   for (const [alias, target] of Object.entries(config.aliases)) {
     // Avoid re-adding @modules just in case
     if (alias === '@modules') continue;
@@ -26,7 +26,7 @@ export async function generateTsConfigNodulus(config: ResolvedConfig, cwd: strin
     const isWildcard = target.endsWith('/*');
     const cleanTarget = isWildcard ? target.slice(0, -2) : target;
     // For tsconfig paths we usually want them relative to the baseUrl (which is usually .)
-    // Since nodulus.config.ts paths are either relative or absolute, we make sure they are relative to cwd for tsconfig
+    // Since kerith.config.ts paths are either relative or absolute, we make sure they are relative to cwd for tsconfig
     let relativeTarget = target;
     if (path.isAbsolute(cleanTarget)) {
        relativeTarget = path.relative(cwd, cleanTarget).replace(/\\/g, '/');
@@ -69,6 +69,6 @@ export async function generateTsConfigNodulus(config: ResolvedConfig, cwd: strin
 
   fs.writeFileSync(tsconfigPath, newContent, 'utf8');
   if (logger) {
-    logger.debug('Generated tsconfig.nodulus.json', { _module: 'alias' });
+    logger.debug('Generated tsconfig.kerith.json', { _module: 'alias' });
   }
 }

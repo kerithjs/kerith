@@ -70,7 +70,7 @@ export function printCheckReport(data: CheckReportData): void {
 }
 
 export function printHeader(data: CheckReportData): void {
-  console.log(`  ${AYU.dim}▸${R} ${AYU.fg}Nodulus${R} ${AYU.fg}${BOLD}v${data.version}${R}  ${AYU.dim}—  ${data.projectName}${R}`);
+  console.log(`  ${AYU.dim}▸${R} ${AYU.fg}Kerith${R} ${AYU.fg}${BOLD}v${data.version}${R}  ${AYU.dim}—  ${data.projectName}${R}`);
   blank();
 }
 
@@ -162,10 +162,10 @@ export function printArchitectureWithIdentity(data: CheckReportData): void {
     
     if (resolvedBy === 'new' || resolvedBy === 'path') {
        methodColored = `${AYU.cyan}${resolvedBy}${R}`;
-       hint = resolvedBy === 'new' ? `  ${AYU.dim}— .nodulus generated${R}` : '';
+       hint = resolvedBy === 'new' ? `  ${AYU.dim}— .kerith generated${R}` : '';
     } else if (resolvedBy === 'jaccard') {
        methodColored = `${AYU.orange}jaccard${R}`;
-       hint = `  ${AYU.dim}— no .nodulus file${R}`;
+       hint = `  ${AYU.dim}— no .kerith file${R}`;
     } else if (resolvedBy === 'shadow-file') {
        methodColored = `${AYU.green}shadow-file${R}`;
     } else {
@@ -181,7 +181,7 @@ export function printArchitectureWithIdentity(data: CheckReportData): void {
   blank();
   
   sectionHeader('Identity legend');
-  console.log(`  ${AYU.green}shadow-file${R}  ${AYU.dim}— resolved by .nodulus ID  (100% confidence)${R}`);
+  console.log(`  ${AYU.green}shadow-file${R}  ${AYU.dim}— resolved by .kerith ID  (100% confidence)${R}`);
   console.log(`  ${AYU.orange}jaccard${R}      ${AYU.dim}— resolved by similarity   (heuristic)${R}`);
   console.log(`  ${AYU.cyan}path${R}         ${AYU.dim}— resolved by path match   (new or legacy)${R}`);
   blank();
@@ -248,10 +248,10 @@ export function printIdentitySection(nitsResult: ReconciliationResult | null, _m
     console.log(`  ${AYU.green}✔${R}  ${AYU.fg}${byShadowFile.toString().padEnd(3)} modules${R}   ${AYU.green}via shadow-file${R}`);
   }
   if (byJaccard > 0) {
-    console.log(`  ${AYU.orange}⚠${R}  ${AYU.fg}${byJaccard.toString().padEnd(3)} modules${R}   ${AYU.orange}via jaccard${R}  ${AYU.dim}— run bootstrap to generate .nodulus${R}`);
+    console.log(`  ${AYU.orange}⚠${R}  ${AYU.fg}${byJaccard.toString().padEnd(3)} modules${R}   ${AYU.orange}via jaccard${R}  ${AYU.dim}— run bootstrap to generate .kerith${R}`);
   }
   if (newModules > 0) {
-    console.log(`  ${AYU.cyan}◈${R}  ${AYU.fg}${newModules.toString().padEnd(3)} modules${R}   ${AYU.cyan}new${R} ${AYU.dim}— .nodulus generated${R}`);
+    console.log(`  ${AYU.cyan}◈${R}  ${AYU.fg}${newModules.toString().padEnd(3)} modules${R}   ${AYU.cyan}new${R} ${AYU.dim}— .kerith generated${R}`);
   }
   
   blank();
@@ -292,7 +292,7 @@ export function printSummary(data: CheckReportData): void {
     
     let identityDisplay: string;
     if (missingShadow > 0) {
-      identityDisplay = `${AYU.orange}⚠   ${missingShadow} missing .nodulus${R}`;
+      identityDisplay = `${AYU.orange}⚠   ${missingShadow} missing .kerith${R}`;
     } else {
       identityDisplay = `${AYU.green}✔   all modules tracked${R}`;
     }
@@ -308,7 +308,7 @@ export function printNextStep(data: CheckReportData): void {
   const hasJaccard = data.modules.some(m => m.resolvedBy === 'jaccard');
   
   if (!data.options.verbose && hasJaccard) {
-    console.log(`  ${AYU.dim}run${R} ${AYU.lime}nodulus check --verbose${R} ${AYU.dim}to view IDs and resolution method${R}`);
+    console.log(`  ${AYU.dim}run${R} ${AYU.lime}kerith check --verbose${R} ${AYU.dim}to view IDs and resolution method${R}`);
   }
   
   if (data.violations.length > 0) {

@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
 import pc from 'picocolors';
-import { NodulusError } from '../../core/errors.js';
+import { KerithError } from '../../core/errors.js';
 import { generateModuleId, writeShadowFile } from '../../nits/shadow-file.js';
 import { SHADOW_FILE_VERSION } from '../../nits/shadow-file.types.js';
 
@@ -20,7 +20,7 @@ export function createModuleCommand() {
     .option('--ts', 'Force generate TypeScript (.ts) files')
     .action((name: string, options: { path?: string; service?: boolean; routes?: boolean; repository?: boolean; schema?: boolean; full?: boolean; js?: boolean; ts?: boolean }) => {
       if (!/^[a-z0-9-]+$/.test(name)) {
-        throw new NodulusError('CLI_ERROR', pc.red(`\nError: Invalid module name "${name}". Module names must be lowercase and contain only letters, numbers, or hyphens.\n`));
+        throw new KerithError('CLI_ERROR', pc.red(`\nError: Invalid module name "${name}". Module names must be lowercase and contain only letters, numbers, or hyphens.\n`));
       }
 
       // Detect language extension
@@ -38,7 +38,7 @@ export function createModuleCommand() {
       const modulePath = options.path ? path.resolve(process.cwd(), options.path) : path.resolve(process.cwd(), `src/modules/${name}`);
 
       if (fs.existsSync(modulePath)) {
-        throw new NodulusError('CLI_ERROR', pc.red(`\nError: The directory "${modulePath}" already exists. Cannot scaffold module here.\n`));
+        throw new KerithError('CLI_ERROR', pc.red(`\nError: The directory "${modulePath}" already exists. Cannot scaffold module here.\n`));
       }
 
       fs.mkdirSync(modulePath, { recursive: true });
@@ -66,7 +66,7 @@ export function createModuleCommand() {
         fs.writeFileSync(path.join(modulePath, filename), content.trim() + '\n', 'utf-8');
       }
 
-      // Write the .nodulus shadow file — establishes stable identity from day one.
+      // Write the .kerith shadow file — establishes stable identity from day one.
       // The ID is never shown to the user; it is a Nodulus internal detail.
       const shadowRecord = {
         version: SHADOW_FILE_VERSION,
@@ -77,8 +77,8 @@ export function createModuleCommand() {
       writeShadowFile(modulePath, shadowRecord);
 
       console.log(pc.green(`\n✔ Module '${name}' created successfully at ${path.relative(process.cwd(), modulePath)}/`));
-      // .nodulus is always listed first — it is the identity anchor of the module.
-      console.log(`  ${pc.gray('.nodulus')}`);
+      // .kerith is always listed first — it is the identity anchor of the module.
+      console.log(`  ${pc.gray('.kerith')}`);
       for (const filename of Object.keys(files)) {
         console.log(`  ${pc.cyan(filename)}`);
       }

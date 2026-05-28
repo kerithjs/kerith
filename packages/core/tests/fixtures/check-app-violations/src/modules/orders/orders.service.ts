@@ -2,7 +2,7 @@
 // @ts-ignore
 import { UserService } from '@modules/users';
 // @ts-ignore
-import { Service } from '@vlynk-studios/nodulus-core';
+import { Service } from '@kerith/core';
 
 Service('OrderService', { module: 'orders' });
 export class OrderService {}

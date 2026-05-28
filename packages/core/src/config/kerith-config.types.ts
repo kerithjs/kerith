@@ -4,7 +4,7 @@ export interface AliasMap {
   [alias: string]: string;
 }
 
-export interface NodulusConfig {
+export interface KerithConfig {
   /** Glob pointing to module folders. Default: 'src/modules/*'. */
   modules?: string;
   /** Glob pointing to domain folders (v2.0.0+). Default: undefined. */
@@ -57,7 +57,7 @@ export interface NodulusConfig {
   aliases?: AliasMap;
 }
 
-export function defineConfig(config: NodulusConfig): NodulusConfig {
+export function defineConfig(config: KerithConfig): KerithConfig {
   return config;
 }
 

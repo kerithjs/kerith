@@ -28,7 +28,7 @@ export function cleanCommand(): Command {
     .description('Removes generated Nodulus artifacts from the project')
     .option(
       '--shadow-files',
-      'Delete all .nodulus identity files from module directories. IDs will be regenerated on next bootstrap.',
+      'Delete all .kerith identity files from module directories. IDs will be regenerated on next bootstrap.',
       false
     )
     .action(async (options: { shadowFiles?: boolean }) => {
@@ -36,7 +36,7 @@ export function cleanCommand(): Command {
 
       if (!options.shadowFiles) {
         console.log(pc.yellow('\nNo clean target specified. Available options:\n'));
-        console.log(`  ${pc.cyan('--shadow-files')}   Delete all .nodulus module identity files\n`);
+        console.log(`  ${pc.cyan('--shadow-files')}   Delete all .kerith module identity files\n`);
         console.log(`Run ${pc.white('nodulus clean --help')} for usage.\n`);
         return;
       }
@@ -53,16 +53,16 @@ export function cleanCommand(): Command {
 
         const modulesGlob = (config as any).modules ?? 'src/modules/*';
 
-        // Discover all .nodulus files under the modules root
+        // Discover all .kerith files under the modules root
         const shadowPattern = modulesGlob.replace(/\/\*$/, '') + `/**/${SHADOW_FILE_NAME}`;
         const found = await fg(shadowPattern, { cwd, absolute: true, dot: true });
 
         if (found.length === 0) {
-          console.log(pc.green('\nNo .nodulus identity files found. Nothing to clean.\n'));
+          console.log(pc.green('\nNo .kerith identity files found. Nothing to clean.\n'));
           return;
         }
 
-        console.log(pc.yellow(`\nFound ${found.length} .nodulus identity file(s):\n`));
+        console.log(pc.yellow(`\nFound ${found.length} .kerith identity file(s):\n`));
         for (const f of found) {
           console.log(`  ${pc.gray(path.relative(cwd, f))}`);
         }
@@ -94,12 +94,12 @@ export function cleanCommand(): Command {
 
         console.log('');
         if (failed === 0) {
-          console.log(pc.green(`✔ Deleted ${deleted} .nodulus identity file(s).\n`));
+          console.log(pc.green(`✔ Deleted ${deleted} .kerith identity file(s).\n`));
         } else {
           console.log(pc.yellow(`Deleted ${deleted} file(s), ${failed} could not be removed.\n`));
         }
 
-        console.log(pc.gray('Run your application or `nodulus check` to regenerate identities.\n'));
+        console.log(pc.gray('Run your application or `kerith check` to regenerate identities.\n'));
       }
     });
 

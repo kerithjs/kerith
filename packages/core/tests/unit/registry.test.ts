@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createRegistry, registryContext, getActiveRegistry, getRegistry } from '../../src/core/registry.js';
-import { NodulusError } from '../../src/core/errors.js';
+import { KerithError } from '../../src/core/errors.js';
 
 describe('Registry', () => {
   it('registers and retrieves a module', async () => {
@@ -58,12 +58,12 @@ describe('Registry', () => {
       // 1. Same ID, different name/path -> Error
       expect(() => {
         getActiveRegistry().registerModule('other', options, '/src/modules/other', '/src/modules/other/index.ts', id);
-      }).toThrowError(NodulusError);
+      }).toThrowError(KerithError);
 
       // 2. Same Path, different ID/name -> Error
       expect(() => {
         getActiveRegistry().registerModule('auth2', options, dirPath, '/src/modules/auth/index.ts', 'other_id');
-      }).toThrowError(NodulusError);
+      }).toThrowError(KerithError);
       
       try {
         getActiveRegistry().registerModule('auth2', options, dirPath, '/src/modules/auth/index.ts', 'other_id');
@@ -94,7 +94,7 @@ describe('Registry', () => {
           '/src/domains/billing/modules/users/index.ts', 
           'mod_users_billing'
         );
-      }).toThrowError(NodulusError);
+      }).toThrowError(KerithError);
     });
   });
 
@@ -161,7 +161,7 @@ describe('Registry', () => {
     expect(r.getNitsIdForPath('/unknown')).toBeUndefined();
   });
 
-  it('getRegistry() exposes NodulusRegistryAdvanced interface', async () => {
+  it('getRegistry() exposes KerithRegistryAdvanced interface', async () => {
     const r = createRegistry();
     await registryContext.run(r, async () => {
       const advancedRegistry = getRegistry();
@@ -172,7 +172,7 @@ describe('Registry', () => {
   });
 
   it('getActiveRegistry() throws REGISTRY_MISSING_CONTEXT outside createApp', () => {
-    expect(() => getActiveRegistry()).toThrow(NodulusError);
+    expect(() => getActiveRegistry()).toThrow(KerithError);
     try {
       getActiveRegistry();
     } catch (e: any) {

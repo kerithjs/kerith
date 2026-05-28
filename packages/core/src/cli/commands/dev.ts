@@ -31,7 +31,7 @@ export function devCommand(): Command {
             logger.debug(`Auto-setup failed: ${err.message}`, { _module: 'dev' });
         }
 
-        const preloadPath = path.join(cwd, '.nodulus', 'preload.js');
+        const preloadPath = path.join(cwd, '.kerith', 'preload.js');
         const hasPreload = fs.existsSync(preloadPath);
 
         // ─── Build args ────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ export function devCommand(): Command {
         const args: string[] = [];
 
         if (hasPreload) {
-            args.push('--import', './.nodulus/preload.js');
+            args.push('--import', './.kerith/preload.js');
         } else {
             logger.warn('Pre-loader not found and auto-generation failed.');
         }
@@ -157,10 +157,10 @@ export function devCommand(): Command {
 
                     // ─── Shadow file awareness ───────────────────────────────────────
                     // Determine if the changed path is (or is inside) a
-                    // directory that has a .nodulus identity file.
+                    // directory that has a .kerith identity file.
                     // This lets us log a better hint to the developer:
-                    //   - Has .nodulus → module was moved (identity preserved)
-                    //   - No .nodulus  → new module or untracked file change
+                    //   - Has .kerith → module was moved (identity preserved)
+                    //   - No .kerith  → new module or untracked file change
                     // The actual reconciliation always runs in the child process
                     // on restart — this is informational only.
                     const changedStat = (() => {
@@ -186,7 +186,7 @@ export function devCommand(): Command {
                     restarting = true;
                     // Gracefully shutdown via IPC
                     if (child.send) {
-                        child.send('nodulus:shutdown');
+                        child.send('kerith:shutdown');
                     } else {
                         child.kill();
                     }
@@ -217,7 +217,7 @@ export function devCommand(): Command {
                 // 3.3 — watcher.close() returns Promise<void>; must be awaited.
                 await watcher.close();
                 if (child.send) {
-                    child.send('nodulus:shutdown');
+                    child.send('kerith:shutdown');
                 } else {
                     child.kill();
                 }

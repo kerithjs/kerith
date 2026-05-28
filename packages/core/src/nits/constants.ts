@@ -18,3 +18,8 @@ export const MINIMUM_SIMILARITY_THRESHOLD = 0.5;
  * Current version of the NITS Registry Schema
  */
 export const NITS_REGISTRY_VERSION = '1.0.0';
+
+/**
+ * Standard directory name for the Kerith/NITS shadow directory.
+ */
+export const KERITH_DIR = '.kerith';

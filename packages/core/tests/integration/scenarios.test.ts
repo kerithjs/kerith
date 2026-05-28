@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createApp } from "../../src/bootstrap/createApp.js";
-import { NodulusError } from "../../src/core/errors.js";
+import { KerithError } from "../../src/core/errors.js";
 import { loadNitsRegistry } from "../../src/nits/nits-store.js";
 import * as pinoModule from "../../src/core/pino-instance.js";
 
@@ -70,7 +70,7 @@ describe("Integration Tests", () => {
     it("throws EXPORT_MISMATCH when exports declares a name that does not exist in index.ts", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/auth/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('auth', { exports: ['NonExistentExport'] });
@@ -88,7 +88,7 @@ describe("Integration Tests", () => {
     it("EXPORT_MISMATCH details contains the missing export name", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/auth2/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('auth2', { exports: ['GhostExport'] });
@@ -97,9 +97,9 @@ describe("Integration Tests", () => {
         },
         async (_, app) => {
           const err = await createApp(app as any).catch((e) => e);
-          expect(err).toBeInstanceOf(NodulusError);
-          expect((err as NodulusError).code).toBe("EXPORT_MISMATCH");
-          expect((err as NodulusError).details).toContain("GhostExport");
+          expect(err).toBeInstanceOf(KerithError);
+          expect((err as KerithError).code).toBe("EXPORT_MISMATCH");
+          expect((err as KerithError).details).toContain("GhostExport");
         },
       );
     });
@@ -112,7 +112,7 @@ describe("Integration Tests", () => {
     it("throws MISSING_IMPORT when imports references a non-existent module", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/users/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('users', { imports: ['nonExistentModule'] });
@@ -130,7 +130,7 @@ describe("Integration Tests", () => {
     it("MISSING_IMPORT details references the missing module name", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/consumers/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('consumers', { imports: ['phantomModule'] });
@@ -138,8 +138,8 @@ describe("Integration Tests", () => {
         },
         async (_, app) => {
           const err = await createApp(app as any).catch((e) => e);
-          expect(err).toBeInstanceOf(NodulusError);
-          expect((err as NodulusError).details).toContain("phantomModule");
+          expect(err).toBeInstanceOf(KerithError);
+          expect((err as KerithError).details).toContain("phantomModule");
         },
       );
     });
@@ -147,7 +147,7 @@ describe("Integration Tests", () => {
     it("silently filters out empty strings and does not throw MISSING_IMPORT", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/clean/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('clean', { imports: ['', '  '] });
@@ -170,7 +170,7 @@ describe("Integration Tests", () => {
     it("throws CIRCULAR_DEPENDENCY in strict mode when A → B → A", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: true };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/mod-a/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('mod-a', { imports: ['mod-b'] });
@@ -199,7 +199,7 @@ describe("Integration Tests", () => {
     it("does NOT throw in non-strict mode even with circular dependencies", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/circ-a/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('circ-a', { imports: ['circ-b'] });
@@ -232,7 +232,7 @@ describe("Integration Tests", () => {
     it("throws INVALID_CONTROLLER when controller has no default export Router", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/test/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('test');
@@ -255,7 +255,7 @@ describe("Integration Tests", () => {
     it("INVALID_CONTROLLER details contains the offending file path", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/badmod/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('badmod');
@@ -268,9 +268,9 @@ describe("Integration Tests", () => {
         },
         async (_, app) => {
           const err = await createApp(app as any).catch((e) => e);
-          expect(err).toBeInstanceOf(NodulusError);
-          expect((err as NodulusError).code).toBe("INVALID_CONTROLLER");
-          expect((err as NodulusError).details).toContain("no-router");
+          expect(err).toBeInstanceOf(KerithError);
+          expect((err as KerithError).code).toBe("INVALID_CONTROLLER");
+          expect((err as KerithError).details).toContain("no-router");
         },
       );
     });
@@ -283,7 +283,7 @@ describe("Integration Tests", () => {
     it("does not mount routes for disabled controllers", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": 'export default { prefix: "/api" };',
+          "kerith.config.js": 'export default { prefix: "/api" };',
           "src/modules/users/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('users');
@@ -329,7 +329,7 @@ describe("Integration Tests", () => {
 
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: true };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/test2/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('test2', { exports: ['declaredExport'] });
@@ -357,7 +357,7 @@ describe("Integration Tests", () => {
     it("throws UNUSED_IMPORT in strict mode when a declared import is never used", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: true };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/mod-x/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('mod-x', { exports: ['x'] });
@@ -381,7 +381,7 @@ describe("Integration Tests", () => {
       const loggerHandler = vi.fn();
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/mod-x/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('mod-x', { exports: ['x'] });
@@ -411,7 +411,7 @@ describe("Integration Tests", () => {
     it("throws UNDECLARED_IMPORT in strict mode when a module re-exports a type from another module without declaring the import", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: true };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/mod-a/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('mod-a', { exports: ['RealValue'] });
@@ -442,7 +442,7 @@ describe("Integration Tests", () => {
     it("mounts routes under /api/v1 prefix", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": 'export default { prefix: "/api/v1" };',
+          "kerith.config.js": 'export default { prefix: "/api/v1" };',
           "src/modules/users/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('users');
@@ -471,7 +471,7 @@ describe("Integration Tests", () => {
     it("passes @config/database alias to the ESM resolver without error", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": `
+          "kerith.config.js": `
           export default {
             aliases: { '@config': './src/db' },
             strict: false
@@ -502,7 +502,7 @@ describe("Integration Tests", () => {
     it("correctly validates modules with declared imports and exports", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/shared/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('shared', { exports: ['SharedService'] });
@@ -540,7 +540,7 @@ describe("Integration Tests", () => {
     it("throws DUPLICATE_BOOTSTRAP when createApp() is called twice on the same Express instance", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/dup/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('dup');
@@ -558,13 +558,13 @@ describe("Integration Tests", () => {
 
 
   // -----------------------------------------------------------------------
-  // NodulusApp shape
+  // KerithApp shape
   // -----------------------------------------------------------------------
-  describe("NodulusApp return shape", () => {
+  describe("KerithApp return shape", () => {
     it("returns modules, routes and a registry reference", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": 'export default { prefix: "/api" };',
+          "kerith.config.js": 'export default { prefix: "/api" };',
           "src/modules/shape/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('shape');
@@ -600,7 +600,7 @@ describe("Integration Tests", () => {
   // NITS Bootstrap Integration
   // -----------------------------------------------------------------------
   describe('NITS Bootstrap Integration', () => {
-    it('creates .nodulus/registry.json on clean bootstrap', async () => {
+    it('creates .kerith/registry.json on clean bootstrap', async () => {
       await runInTmpApp({
         'src/modules/users/index.ts': `
           import { Module } from '{{SOURCE}}';
@@ -608,7 +608,7 @@ describe("Integration Tests", () => {
         `
       }, async (tmpDir, app) => {
         await createApp(app as any);
-        const registryPath = path.join(tmpDir, '.nodulus', 'registry.json');
+        const registryPath = path.join(tmpDir, '.kerith', 'registry.json');
         expect(fs.existsSync(registryPath)).toBe(true);
         const content = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
         expect(content.project).toBe('unknown');
@@ -616,10 +616,10 @@ describe("Integration Tests", () => {
       });
     });
 
-    it('picks up existing identities from .nodulus/registry.json', async () => {
+    it('picks up existing identities from .kerith/registry.json', async () => {
       const existingId = 'mod_a1b2c3d4'; // Valid hex pattern
       await runInTmpApp({
-        '.nodulus/registry.json': JSON.stringify({
+        '.kerith/registry.json': JSON.stringify({
           project: 'test',
           version: '1.0.0',
           lastCheck: new Date().toISOString(),
@@ -691,9 +691,9 @@ describe("Integration Tests", () => {
     it('loads registry-snapshot-moved.json when all IDs are valid hex format', async () => {
       // The fixture is named registry-snapshot-moved.json (not registry.json),
       // so we copy it into a tmp dir that loadNitsRegistry can resolve.
-      const fixtureFile = path.join(FIXTURE_DIR, '.nodulus', 'registry-snapshot-moved.json');
+      const fixtureFile = path.join(FIXTURE_DIR, '.kerith', 'registry-snapshot-moved.json');
       const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-bug2-valid-'));
-      const nodulusDir = path.join(tmpDir, '.nodulus');
+      const nodulusDir = path.join(tmpDir, '.kerith');
       fs.mkdirSync(nodulusDir, { recursive: true });
       fs.copyFileSync(fixtureFile, path.join(nodulusDir, 'registry.json'));
 
@@ -712,7 +712,7 @@ describe("Integration Tests", () => {
     it('returns null when the registry contains an invalid module ID (regression: mod_users_legacy)', async () => {
       // Write a temporary registry with the originally broken ID to a tmp dir
       const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodulus-bug2-'));
-      const nitulusDir = path.join(tmpDir, '.nodulus');
+      const nitulusDir = path.join(tmpDir, '.kerith');
       fs.mkdirSync(nitulusDir, { recursive: true });
       fs.writeFileSync(
         path.join(nitulusDir, 'registry.json'),
@@ -761,7 +761,7 @@ describe("Integration Tests", () => {
 
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/users/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('users');
@@ -797,7 +797,7 @@ describe("Integration Tests", () => {
       // and does NOT misattribute the file to 'users'.
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: true };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/users/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('users');
@@ -820,11 +820,11 @@ describe("Integration Tests", () => {
         },
         async (_, app) => {
           const err = await createApp(app as any).catch((e) => e);
-          expect(err).toBeInstanceOf(NodulusError);
-          expect((err as NodulusError).code).toBe("UNDECLARED_IMPORT");
+          expect(err).toBeInstanceOf(KerithError);
+          expect((err as KerithError).code).toBe("UNDECLARED_IMPORT");
           // The error must reference 'users-admin', not 'users'.
-          expect((err as NodulusError).message).toContain("users-admin");
-          expect((err as NodulusError).message).not.toMatch(/^Module "users" imports/);
+          expect((err as KerithError).message).toContain("users-admin");
+          expect((err as KerithError).message).not.toMatch(/^Module "users" imports/);
         },
       );
     });
@@ -846,7 +846,7 @@ describe("Integration Tests", () => {
 
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/users/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('users', { exports: ['UserService'] });
@@ -888,7 +888,7 @@ describe("Integration Tests", () => {
       // The consolidated glob must still cause createApp() to reject with UNDECLARED_IMPORT.
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: true };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/catalog/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('catalog', { exports: ['CatalogService'] });
@@ -919,7 +919,7 @@ describe("Integration Tests", () => {
 
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/users/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('users', { exports: ['UserService'] });
@@ -981,7 +981,7 @@ describe("Integration Tests", () => {
     it("verifies that bootstrap with 0 routes emits warn (not info) with alert message", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/noroutes/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('noroutes');
@@ -1020,7 +1020,7 @@ describe("Integration Tests", () => {
     it("verifies that ESM alias hook skipped emits at debug level (not visible with logLevel: info)", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false, logLevel: 'debug' };",
+          "kerith.config.js": "export default { strict: false, logLevel: 'debug' };",
           "src/modules/dummy/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('dummy');
@@ -1028,7 +1028,7 @@ describe("Integration Tests", () => {
         },
         async (_, app) => {
           // preloaded is true, so the alias hook should be skipped
-          (globalThis as any).__NODULUS_PRELOAD_CONFIG__ = { preloaded: true, aliases: {} };
+          (globalThis as any).__KERITH_PRELOAD_CONFIG__ = { preloaded: true, aliases: {} };
 
           await createApp(app as any);
 
@@ -1055,7 +1055,7 @@ describe("Integration Tests", () => {
           );
           expect(aliasSkippedInfo).toBeUndefined();
 
-          delete (globalThis as any).__NODULUS_PRELOAD_CONFIG__;
+          delete (globalThis as any).__KERITH_PRELOAD_CONFIG__;
         },
       );
     });
@@ -1067,7 +1067,7 @@ describe("Integration Tests", () => {
     it("processes SubModule() without crash if it exists (reserved for v2.0.0)", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/parent/index.ts": `
           import * as api from '{{SOURCE}}';
           api.Module('parent');
@@ -1087,7 +1087,7 @@ describe("Integration Tests", () => {
     it("throws INVALID_ESM_ENV when package.json is missing type: module", async () => {
       await runInTmpApp(
         {
-          "nodulus.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: false };",
           "src/modules/cjs/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('cjs');
@@ -1121,7 +1121,7 @@ describe("Integration Tests", () => {
     const strictAppFixturePath = path.resolve(__dirname, "../fixtures/strict-app");
 
     it("bootstrap of strict-app completes without error when everything is correctly declared", async () => {
-      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "nodulus-strict-"));
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "kerith-strict-"));
       fs.cpSync(strictAppFixturePath, tmpDir, { recursive: true });
       
       // Rewrite imports to point to local source code instead of NPM package,
@@ -1135,7 +1135,7 @@ describe("Integration Tests", () => {
             rewriteImportsSync(fullPath);
           } else if (file.name.endsWith('.ts')) {
             let content = fs.readFileSync(fullPath, 'utf8');
-            content = content.replace(/from\s+['"]@vlynk-studios\/nodulus-core['"]/g, `from '${localSrcUrl}'`);
+            content = content.replace(/from\s+['"](?:@vlynk-studios\/nodulus-core|@kerith\/core)['"]/g, `from '${localSrcUrl}'`);
             fs.writeFileSync(fullPath, content);
           }
         }
@@ -1158,7 +1158,7 @@ describe("Integration Tests", () => {
     });
 
     it("throws UNDECLARED_IMPORT when an undeclared import is introduced in users module", async () => {
-      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "nodulus-strict-err-"));
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "kerith-strict-err-"));
       fs.cpSync(strictAppFixturePath, tmpDir, { recursive: true });
       
       const localSrcUrl = await import("node:url").then(m => m.pathToFileURL(path.resolve(__dirname, "../../src/index.ts")).href);
@@ -1170,7 +1170,7 @@ describe("Integration Tests", () => {
             rewriteImportsSync(fullPath);
           } else if (file.name.endsWith('.ts')) {
             let content = fs.readFileSync(fullPath, 'utf8');
-            content = content.replace(/from\s+['"]@vlynk-studios\/nodulus-core['"]/g, `from '${localSrcUrl}'`);
+            content = content.replace(/from\s+['"](?:@vlynk-studios\/nodulus-core|@kerith\/core)['"]/g, `from '${localSrcUrl}'`);
             fs.writeFileSync(fullPath, content);
           }
         }

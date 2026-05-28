@@ -1,5 +1,5 @@
 import type { ResolvedConfig, LogHandler } from '../types/index.js';
-import { loadNodulusConfig } from '../config/nodulus-config.js';
+import { loadKerithConfig } from '../config/kerith-config.js';
 import { defaultLogHandler, resolveLogLevel } from './logger.js';
 
 const defaultStrict = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
@@ -29,7 +29,7 @@ export const loadConfig = async (
 ): Promise<BootConfig> => {
   const cwd = process.cwd();
   
-  const fileConfig = await loadNodulusConfig(cwd, options.logger);
+  const fileConfig = await loadKerithConfig(cwd, options.logger);
 
   return {
     ...fileConfig,

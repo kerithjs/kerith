@@ -1,8 +1,8 @@
 import type { Rule } from 'eslint';
 import {
-  getActiveNodulusAliases,
+  getActiveKerithAliases,
   getModuleImports,
-  isNodulusAlias,
+  isKerithAlias,
 } from '../utils/module-resolver.js';
 
 interface RuleOptions {
@@ -54,7 +54,7 @@ const rule: Rule.RuleModule = {
       return {};
     }
 
-    const activeAliases = getActiveNodulusAliases(cwd);
+    const activeAliases = getActiveKerithAliases(cwd);
 
     return {
       ImportDeclaration(node: { source?: { value?: unknown } }) {
@@ -64,7 +64,7 @@ const rule: Rule.RuleModule = {
 
         const specifier = node.source.value;
 
-        if (!isNodulusAlias(specifier, activeAliases)) {
+        if (!isKerithAlias(specifier, activeAliases)) {
           return;
         }
 

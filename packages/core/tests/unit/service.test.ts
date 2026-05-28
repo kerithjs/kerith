@@ -64,12 +64,12 @@ describe('Service()', () => {
     });
   });
 
-  it('throws NodulusError with code DUPLICATE_SERVICE on duplicate name', async () => {
-    const { NodulusError } = await import('../../src/core/errors.js');
+  it('throws KerithError with code DUPLICATE_SERVICE on duplicate name', async () => {
+    const { KerithError } = await import('../../src/core/errors.js');
     const r = createRegistry();
     await registryContext.run(r, async () => {
       Service('SameService', { module: 'payments' });
-      expect(() => Service('SameService', { module: 'payments' })).toThrow(NodulusError);
+      expect(() => Service('SameService', { module: 'payments' })).toThrow(KerithError);
 
       try {
         Service('SameService', { module: 'payments' });

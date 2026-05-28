@@ -1,7 +1,7 @@
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 /** Filename of the shadow identity file placed at each module's root. */
-export const SHADOW_FILE_NAME = '.nodulus';
+export const SHADOW_FILE_NAME = '.kerith';
 
 /**
  * Schema version for the shadow file format.
@@ -13,7 +13,7 @@ export const SHADOW_FILE_VERSION = 1;
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 /**
- * Shape of the `.nodulus` shadow file written at the root of each module directory.
+ * Shape of the `.Kerith` shadow file written at the root of each module directory.
  *
  * Schema v1 — deliberately minimal. Three fields, no more.
  *

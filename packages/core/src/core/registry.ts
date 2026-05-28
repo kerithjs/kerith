@@ -1,11 +1,11 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { NodulusError } from './errors.js';
+import { KerithError } from './errors.js';
 import { findCircularDependencies } from './utils/cycle-detector.js';
 import { normalizePath } from './utils/paths.js';
 import type { 
   ModuleEntry, 
   RegisteredModule, 
-  NodulusRegistryAdvanced,
+  KerithRegistryAdvanced,
   ModuleOptions,
   ControllerEntry,
   ServiceEntry,
@@ -30,7 +30,7 @@ const toRegisteredModule = (entry: ModuleEntry): RegisteredModule => ({
  * Extended interface for internal use (includes mutators)
  * @internal
  */
-export interface InternalRegistry extends NodulusRegistryAdvanced {
+export interface InternalRegistry extends KerithRegistryAdvanced {
   /** Seeds the registry with pre-calculated NITS IDs for specific directory paths */
   seedNitsIds(mapping: Map<string, string>): void;
   /** Retrieves a seeded NITS ID for a given absolute directory path */
@@ -164,7 +164,7 @@ export function createRegistry(): InternalRegistry {
 
     registerModule(name: string, options: ModuleOptions, dirPath: string, indexPath: string, nitsId: string): void {
       if (modules.has(nitsId)) {
-        throw new NodulusError(
+        throw new KerithError(
           'DUPLICATE_MODULE',
           `A module with this NITS ID already exists. Identity must be unique.`,
           `NITS ID: ${nitsId}, Name: ${name}, Path: ${dirPath}`
@@ -176,7 +176,7 @@ export function createRegistry(): InternalRegistry {
       if (modulesByPath.has(normalizedPath)) {
         const existingId = modulesByPath.get(normalizedPath)!;
         const existing = modules.get(existingId);
-        throw new NodulusError(
+        throw new KerithError(
           'DUPLICATE_MODULE',
           `A module is already registered for this folder. Call Module() only once per directory.`,
           `Existing: ${existing?.name}, New: ${name}, Folder: ${dirPath}`
@@ -184,7 +184,7 @@ export function createRegistry(): InternalRegistry {
       }
       
       if (modulesByName.has(name) && modulesByName.get(name) !== nitsId) {
-        throw new NodulusError(
+        throw new KerithError(
           'DUPLICATE_MODULE',
           `A module with the name "${name}" is already registered. Names must be unique unless domains are explicitly supported.`,
           `Duplicate name: ${name}, Path: ${dirPath}`
@@ -214,7 +214,7 @@ export function createRegistry(): InternalRegistry {
     registerControllerMetadata(entry: ControllerEntry): void {
       const normalizedPath = normalizePath(entry.path);
       if (controllers.has(normalizedPath)) {
-        throw new NodulusError(
+        throw new KerithError(
           'INVALID_CONTROLLER',
           `Controller() was called more than once in the same file.`,
           `File: ${entry.path}`
@@ -239,7 +239,7 @@ export function createRegistry(): InternalRegistry {
     registerFileMetadata(entry: FileEntry): void {
       if (entry.type === 'service') {
         if (services.has(entry.name)) {
-          throw new NodulusError(
+          throw new KerithError(
             'DUPLICATE_SERVICE',
             `A service named "${entry.name}" is already registered. Each Service() name must be unique within the registry.`,
             `Duplicate name: ${entry.name}`
@@ -248,7 +248,7 @@ export function createRegistry(): InternalRegistry {
         services.set(entry.name, entry);
       } else if (entry.type === 'repository') {
         if (repositories.has(entry.name)) {
-          throw new NodulusError(
+          throw new KerithError(
             'DUPLICATE_REPOSITORY',
             `A repository named "${entry.name}" is already registered. Each Repository() name must be unique within the registry.`,
             `Duplicate name: ${entry.name}`
@@ -257,7 +257,7 @@ export function createRegistry(): InternalRegistry {
         repositories.set(entry.name, entry);
       } else if (entry.type === 'schema') {
         if (schemas.has(entry.name)) {
-          throw new NodulusError(
+          throw new KerithError(
             'DUPLICATE_SCHEMA',
             `A schema named "${entry.name}" is already registered. Each Schema() name must be unique within the registry.`,
             `Duplicate name: ${entry.name}`
@@ -310,7 +310,7 @@ export const registryContext = new AsyncLocalStorage<InternalRegistry>();
 export function getActiveRegistry(): InternalRegistry {
   const store = registryContext.getStore();
   if (!store) {
-    throw new NodulusError(
+    throw new KerithError(
       'REGISTRY_MISSING_CONTEXT',
       'No active registry found in the current async context. Ensure code runs inside a createApp() execution scope.'
     );
@@ -318,4 +318,4 @@ export function getActiveRegistry(): InternalRegistry {
   return store;
 }
 
-export const getRegistry = (): NodulusRegistryAdvanced => getActiveRegistry();
+export const getRegistry = (): KerithRegistryAdvanced => getActiveRegistry();

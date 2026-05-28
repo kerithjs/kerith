@@ -14,8 +14,8 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 
 const program = new Command()
 program
-  .name('nodulus')
-  .description('Nodulus CLI')
+  .name('kerith')
+  .description('Kerith CLI')
   .version(pkg.version)
   .addCommand(createModuleCommand())
   .addCommand(syncTsconfigCommand())

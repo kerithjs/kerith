@@ -43,7 +43,7 @@ describe('loadConfig', () => {
   it('should overwrite defaults dynamically with the config file values', async () => {
     // Generate JS file because running TS dynamically requires tsx / special loaders in pure nodulus run environment
     await runInTmpDir({
-      'nodulus.config.js': 'export default { prefix: "/file-prefix", strict: false };'
+      'kerith.config.js': 'export default { prefix: "/file-prefix", strict: false };'
     }, async () => {
       const config = await loadConfig();
       expect(config.prefix).toBe('/file-prefix');
@@ -56,7 +56,7 @@ describe('loadConfig', () => {
 
   it('should successfully read domains and shared layout keys strictly for v2.0.0 upgrades', async () => {
     await runInTmpDir({
-      'nodulus.config.js': 'export default { domains: "src/domains/*", shared: "src/shared/*" };'
+      'kerith.config.js': 'export default { domains: "src/domains/*", shared: "src/shared/*" };'
     }, async () => {
       const config = await loadConfig();
       expect(config.domains).toBe("src/domains/*");
@@ -67,7 +67,7 @@ describe('loadConfig', () => {
 
   it('should return all defaults when config file is empty', async () => {
     await runInTmpDir({
-      'nodulus.config.js': 'export default {};'
+      'kerith.config.js': 'export default {};'
     }, async () => {
       const config = await loadConfig();
       expect(config.modules).toBe(DEFAULTS.modules);
@@ -84,7 +84,7 @@ describe('loadConfig', () => {
 
   it('should parse v1.8.0 config fields correctly', async () => {
     await runInTmpDir({
-      'nodulus.config.js': 'export default { logLevel: "debug", moduleLoadTimeoutMs: 5000, requirePreloader: true, resolveAliases: false };'
+      'kerith.config.js': 'export default { logLevel: "debug", moduleLoadTimeoutMs: 5000, requirePreloader: true, resolveAliases: false };'
     }, async () => {
       const config = await loadConfig();
       expect(config.logLevel).toBe('debug');
@@ -97,7 +97,7 @@ describe('loadConfig', () => {
   it('should fallback and warn on invalid numeric/enum config fields', async () => {
     const loggerSpy = vi.fn();
     await runInTmpDir({
-      'nodulus.config.js': 'export default { logLevel: "invalid", logFormat: "yaml", moduleLoadTimeoutMs: -1 };'
+      'kerith.config.js': 'export default { logLevel: "invalid", logFormat: "yaml", moduleLoadTimeoutMs: -1 };'
     }, async () => {
       const config = await loadConfig({ logger: loggerSpy });
       
@@ -114,7 +114,7 @@ describe('loadConfig', () => {
   it('should fallback and warn on moduleLoadTimeoutMs: 0', async () => {
     const loggerSpy = vi.fn();
     await runInTmpDir({
-      'nodulus.config.js': 'export default { moduleLoadTimeoutMs: 0 };'
+      'kerith.config.js': 'export default { moduleLoadTimeoutMs: 0 };'
     }, async () => {
       const config = await loadConfig({ logger: loggerSpy });
       expect(config.moduleLoadTimeoutMs).toBe(30000);
@@ -136,7 +136,7 @@ describe('loadConfig', () => {
 
   it('should throw clear error context when config file has a syntax error', async () => {
     await runInTmpDir({
-      'nodulus.config.js': 'module.exports = { prefix: "/fail", invalid-syntax here };'
+      'kerith.config.js': 'module.exports = { prefix: "/fail", invalid-syntax here };'
     }, async () => {
       await expect(loadConfig()).rejects.toThrowError(/\[System\] Failed to parse config at/);
     });

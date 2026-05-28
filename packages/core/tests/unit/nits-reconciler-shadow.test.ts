@@ -108,7 +108,7 @@ describe("NITS Reconciler - Step 0 (Shadow File Identity)", () => {
   });
 
   it("Step 0: Module has shadow file but ID not in registry -> registered as new with that ID", async () => {
-    // This happens e.g., if registry is deleted but .nodulus files remain.
+    // This happens e.g., if registry is deleted but .kerith files remain.
     const previous = createRegistry({});
 
     const discovered: DiscoveredModule[] = [
@@ -155,7 +155,7 @@ describe("NITS Reconciler - Step 0 (Shadow File Identity)", () => {
         dirPath: "/project/src/users-copy", // Copied path
         identifiers: ["User"],
         hash: "hash1",
-        shadowFile: { version: 1, id: "mod_1", name: "users", createdAt: timestamp }, // Cloned .nodulus file!
+        shadowFile: { version: 1, id: "mod_1", name: "users", createdAt: timestamp }, // Cloned .kerith file!
       },
     ];
 

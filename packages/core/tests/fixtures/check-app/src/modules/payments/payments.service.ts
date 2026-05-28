@@ -2,6 +2,6 @@
 // @ts-ignore
 import { UserRepository } from '@modules/users';
 // @ts-ignore
-import { Service } from '@vlynk-studios/nodulus-core';
+import { Service } from '@kerith/core';
 
 Service('PaymentsService', { module: 'payments' });
