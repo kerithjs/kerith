@@ -1,5 +1,5 @@
 /**
- * Kerith Integrated Tracking System (NITS) Constants
+ * Native Identity Tracking System (NITS) Constants
  */
 
 /**

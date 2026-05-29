@@ -17,8 +17,12 @@ export function devCommand(): Command {
     .description('Run the Kerith application in development mode with the pre-loader')
     .argument('<entrypoint>', 'The main entrypoint file (e.g. src/server.ts)')
     .option('--watch', 'Run in watch mode using chokidar (does not delegate to node --watch)', false)
+    .option('--clear', 'Clear the terminal on start and restart', false)
     .option('--runtime <runtime>', 'Runtime to use (node or tsx)', 'node')
     .action(async (entrypoint, options) => {
+        if (options.clear) {
+            console.clear();
+        }
         const logger = createLogger(defaultLogHandler, 'info', 'dev');
         const cwd = process.cwd();
 
@@ -151,6 +155,9 @@ export function devCommand(): Command {
                 paths: [path.join(cwd, 'src')],  // observe src/ by default
                 logger,
                 onRestart: async (changedPath) => {
+                    if (options.clear) {
+                        console.clear();
+                    }
                     // Reset the crash counter — a file change means the user
                     // is actively fixing the issue.
                     restartCount = 0;

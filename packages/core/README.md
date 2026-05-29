@@ -730,7 +730,7 @@ import { UserService }    from '@modules/users'      // ✓ correct
 
 ## NITS Identity Tracking
 
-Kerith 1.2.5+ includes **NITS (Kerith Integrated Tracking System)**, which assigns a stable, unique `mod_{hex}` ID to every module. This allows the framework to track modules across renames, moves, and git branch switches — preventing identity loss during refactors.
+Kerith 1.2.5+ includes **NITS (Native Identity Tracking System)**, which assigns a stable, unique `mod_{hex}` ID to every module. This allows the framework to track modules across renames, moves, and git branch switches — preventing identity loss during refactors.
 
 NITS maintains a state file at `.Kerith/registry.json` in your project root. **This file should be committed to version control.**
 

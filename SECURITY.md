@@ -85,7 +85,7 @@ The alias resolver hooks into the Node.js module resolution pipeline via `node:m
 
 ### 3. NITS Registry (`src/nits/nits-store.ts`)
 
-The NITS (Kerith Integrated Tracking System) assigns stable `mod_{hex8}` identities to modules and persists them to `.kerith/registry.json`.
+The NITS (Native Identity Tracking System) assigns stable `mod_{hex8}` identities to modules and persists them to `.kerith/registry.json`.
 
 **Protections in place:**
 
