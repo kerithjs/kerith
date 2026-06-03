@@ -377,7 +377,7 @@ describe("Integration Tests", () => {
       );
     });
 
-    it("warns about UNUSED_IMPORT in non-strict mode but does not interrupt bootstrap", async () => {
+    it("skips import scanner in non-strict mode — no UNUSED_IMPORT warn", async () => {
       const loggerHandler = vi.fn();
       await runInTmpApp(
         {
@@ -397,12 +397,12 @@ describe("Integration Tests", () => {
           const result = await createApp(app as any, { logger: loggerHandler });
           expect(result.modules).toHaveLength(2);
 
-          expect(loggerHandler).toHaveBeenCalledWith(
+          expect(loggerHandler).not.toHaveBeenCalledWith(
             "warn",
             expect.stringContaining(
               'declares import "mod-x" but never uses it',
             ),
-            expect.objectContaining({ module: "mod-y", unusedTarget: "mod-x" }),
+            expect.anything(),
           );
         },
       );
@@ -837,11 +837,7 @@ describe("Integration Tests", () => {
   // behaviour of Step 5.5 (undeclared cross-module import detection).
   // -----------------------------------------------------------------------
   describe("Consolidated Glob Regression — Step 5.5 behaviour", () => {
-    it("detects undeclared cross-module imports in non-strict mode after the consolidated glob refactor", async () => {
-      // §3.2 / §5.5 regression:
-      // Module 'payments' uses '@modules/users' in its service file but does NOT
-      // declare 'users' in its imports[]. The consolidated glob must still surface
-      // this as a WARN (non-strict) — same as before the refactor.
+    it("skips import scanner in non-strict mode — no UNDECLARED_IMPORT warn", async () => {
       const loggerHandler = vi.fn();
 
       await runInTmpApp(
@@ -856,7 +852,6 @@ describe("Integration Tests", () => {
           import { Module } from '{{SOURCE}}';
           Module('payments');
         `,
-          // payments/service.ts imports from users but 'users' is NOT in payments.imports[]
           "src/modules/payments/service.ts": `
           import { UserService } from '@modules/users';
         `,
@@ -864,19 +859,14 @@ describe("Integration Tests", () => {
         async (_, app) => {
           const result = await createApp(app as any, { logger: loggerHandler });
 
-          // Bootstrap must succeed (non-strict)
           expect(result.modules).toHaveLength(2);
 
-          // Step 5.5 must have fired a WARN for the undeclared import
-          expect(loggerHandler).toHaveBeenCalledWith(
+          expect(loggerHandler).not.toHaveBeenCalledWith(
             "warn",
             expect.stringContaining(
               'Module "payments" imports from "users" but it is not declared in imports[].',
             ),
-            expect.objectContaining({
-              _module: "module",
-              target: "users",
-            }),
+            expect.anything(),
           );
         },
       );

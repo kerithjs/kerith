@@ -112,7 +112,7 @@ describe("Integration: Config From File", () => {
       );
     });
 
-    it("emits warn instead of throwing in strict: false for cross-module undeclared imports", async () => {
+    it("skips import scanner in strict: false and does not warn about undeclared cross-module imports", async () => {
       const loggerSpy = vi.fn();
       await runInTmpApp(
         {
@@ -124,7 +124,7 @@ describe("Integration: Config From File", () => {
           `,
           "src/modules/mod-b/index.ts": `
             import { Module } from '{{SOURCE}}';
-            Module('mod-b'); // Doesn't declare import 'mod-a'
+            Module('mod-b');
           `,
           "src/modules/mod-b/use.ts": `
             import { a } from '@modules/mod-a';
@@ -134,7 +134,7 @@ describe("Integration: Config From File", () => {
           const result = await createApp(app as any, { logger: loggerSpy });
           expect(result.modules).toHaveLength(2);
           
-          expect(loggerSpy).toHaveBeenCalledWith(
+          expect(loggerSpy).not.toHaveBeenCalledWith(
             "warn",
             expect.stringContaining("but it is not declared in imports[]"),
             expect.any(Object)

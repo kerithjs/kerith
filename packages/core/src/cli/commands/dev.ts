@@ -52,10 +52,14 @@ export function devCommand(): Command {
 
         args.push(entrypoint);
 
-        // ─── State ─────────────────────────────────────────────────────────
+        let runtimeBin = options.runtime;
+        if (runtimeBin === 'tsx') {
+            runtimeBin = 'node';
+            args.unshift('--import', 'tsx');
+        }
 
         const isWindows = process.platform === 'win32';
-        const useShell  = isWindows && options.runtime !== 'node';
+        const useShell  = isWindows && runtimeBin !== 'node';
 
         // true while the watcher is intentionally killing the child to restart.
         // Prevents the 'close' handler from treating a planned kill as a crash.
@@ -76,13 +80,12 @@ export function devCommand(): Command {
 
             if (useShell) {
                 // Avoid DEP0190 and EINVAL on Windows when shell: true is
-                // required (e.g. tsx). Pass a single command string.
-                const commandStr = `${options.runtime} ${args.map(a => `"${a}"`).join(' ')}`;
+                // required. Pass a single command string.
+                const commandStr = `${runtimeBin} ${args.map(a => `"${a}"`).join(' ')}`;
                 proc = spawn(commandStr, { stdio: ['inherit', 'inherit', 'inherit', 'ipc'], cwd, shell: true });
             } else {
-                // 3.2 — On Windows child.kill() sends SIGKILL by default;
-                // We add IPC so we can request a graceful shutdown first.
-                proc = spawn(options.runtime, args, { stdio: ['inherit', 'inherit', 'inherit', 'ipc'], cwd, shell: false });
+                // By using node directly, IPC is fully supported and we don't leave orphans.
+                proc = spawn(runtimeBin, args, { stdio: ['inherit', 'inherit', 'inherit', 'ipc'], cwd, shell: false });
             }
 
             proc.on('close', (code) => {
