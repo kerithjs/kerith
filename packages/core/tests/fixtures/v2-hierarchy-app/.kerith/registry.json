@@ -1,7 +1,7 @@
 {
   "project": "v2-hierarchy-app-fixture",
   "version": "1.0.0",
-  "lastCheck": "2026-06-03T22:57:03.540Z",
+  "lastCheck": "2026-06-03T23:09:52.432Z",
   "modules": {
     "mod_419d3692": {
       "id": "mod_419d3692",
@@ -11,22 +11,9 @@
       "hash": "a06042b04e",
       "status": "active",
       "createdAt": "2026-06-03T22:35:26.876Z",
-      "lastSeen": "2026-06-03T22:57:03.538Z",
+      "lastSeen": "2026-06-03T23:09:52.423Z",
       "identifiers": [
         "MemberService"
-      ]
-    },
-    "mod_21670ecd": {
-      "id": "mod_21670ecd",
-      "name": "invoices",
-      "path": "src/billing/invoices",
-      "domain": "billing",
-      "hash": "b78a144238",
-      "status": "active",
-      "createdAt": "2026-06-03T22:35:26.876Z",
-      "lastSeen": "2026-06-03T22:57:03.538Z",
-      "identifiers": [
-        "InvoiceService"
       ]
     },
     "mod_f78d9677": {
@@ -37,10 +24,23 @@
       "hash": "c0ccd637f2",
       "status": "active",
       "createdAt": "2026-06-03T22:35:26.876Z",
-      "lastSeen": "2026-06-03T22:57:03.538Z",
+      "lastSeen": "2026-06-03T23:09:52.423Z",
       "identifiers": [
         "PaymentService",
         "TrialService"
+      ]
+    },
+    "mod_21670ecd": {
+      "id": "mod_21670ecd",
+      "name": "invoices",
+      "path": "src/billing/invoices",
+      "domain": "billing",
+      "hash": "b78a144238",
+      "status": "active",
+      "createdAt": "2026-06-03T22:35:26.876Z",
+      "lastSeen": "2026-06-03T23:09:52.423Z",
+      "identifiers": [
+        "InvoiceService"
       ]
     },
     "mod_fe9e89a7": {
@@ -50,7 +50,7 @@
       "hash": "71c643c1a1",
       "status": "active",
       "createdAt": "2026-06-03T22:35:26.876Z",
-      "lastSeen": "2026-06-03T22:57:03.538Z",
+      "lastSeen": "2026-06-03T23:09:52.423Z",
       "identifiers": [
         "UserService"
       ]
