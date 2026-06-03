@@ -25,7 +25,7 @@ export async function runSyncTsconfig(logger: any, tsconfigPath: string = 'tscon
         }
 
         const config = await loadConfig();
-        const pathsObj = await generatePathAliases(config, cwd);
+        const pathsObj = await generatePathAliases(config, cwd, logger);
 
         const rawContent = await fs.promises.readFile(configPath, 'utf8');
         const tsconfig = parse(rawContent) as unknown as TsConfig;

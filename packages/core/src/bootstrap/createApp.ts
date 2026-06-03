@@ -316,6 +316,17 @@ export async function createApp(
       if (config.resolveAliases !== false) {
         const pureModuleAliases: Record<string, string> = {};
 
+        for (const domain of registry.getAllDomains()) {
+          const domainAlias = `@${domain.name}`;
+          const domainIndexPath = path.join(domain.path, 'index.ts'); // Fallback o real? El path del domain es dirPath.
+          // Wait, domain has no indexPath in DomainRegistration?
+          // DomainRegistration has `path` (dirPath)
+          pureModuleAliases[domainAlias] = domain.path;
+          pureModuleAliases[`${domainAlias}/*`] = `${domain.path}/*`;
+          registry.registerAlias(domainAlias, domain.path);
+          registry.registerAlias(`${domainAlias}/*`, `${domain.path}/*`);
+        }
+
         for (const mod of resolvedModules) {
           if (mod.domain) {
             const domainAlias = `@${mod.domain}/${mod.name}`;

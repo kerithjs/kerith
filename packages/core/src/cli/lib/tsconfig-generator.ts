@@ -2,8 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import fg from 'fast-glob';
 import type { KerithConfig } from '../../config/kerith-config.types.js';
+import { scanFromConfig } from '../../bootstrap/scanner.js';
+import { KerithError } from '../../core/errors.js';
 
-export async function generatePathAliases(config: KerithConfig, cwd: string): Promise<Record<string, string[]>> {
+export async function generatePathAliases(config: KerithConfig, cwd: string, logger?: any): Promise<Record<string, string[]>> {
   const pathsObj: Record<string, string[]> = {};
 
   // 1. Register base modules generated paths
@@ -49,8 +51,52 @@ export async function generatePathAliases(config: KerithConfig, cwd: string): Pr
       pathsObj[`${aliasKey}/*`] = [`${relativeDirPath}/*`];
     }
 
+    // 2. Detect domains using scanner (Fase 7)
+    let packageJson: any = null;
+    try {
+      packageJson = JSON.parse(fs.readFileSync(path.join(cwd, 'package.json'), 'utf-8'));
+    } catch (e) {
+      // Ignorar si no hay package.json
+    }
 
+    const allDependencies = new Set([
+      ...Object.keys(packageJson?.dependencies || {}),
+      ...Object.keys(packageJson?.devDependencies || {}),
+      ...Object.keys(packageJson?.peerDependencies || {})
+    ]);
 
+    const scanResult = await scanFromConfig(config, cwd);
+    for (const domain of scanResult.domains) {
+      const aliasKey = `@${domain.name}`;
+      
+      if (allDependencies.has(aliasKey)) {
+        if (logger) {
+          logger.warn(`[Kerith] Alias "${aliasKey}" conflicts with npm package. Consider renaming your domain.`, { _module: 'alias' });
+        } else {
+          console.warn(`[Kerith] Alias "${aliasKey}" conflicts with npm package. Consider renaming your domain.`);
+        }
+      }
+
+      let indexPath = path.join(domain.dirPath, 'index.ts');
+      if (!fs.existsSync(indexPath)) {
+        indexPath = path.join(domain.dirPath, 'index.js');
+      }
+
+      let relativeDirPath = path.relative(cwd, domain.dirPath).replace(/\\/g, '/');
+      if (!relativeDirPath.startsWith('./') && !relativeDirPath.startsWith('../')) {
+        relativeDirPath = './' + relativeDirPath;
+      }
+      
+      if (fs.existsSync(indexPath)) {
+        let relativeIndexPath = path.relative(cwd, indexPath).replace(/\\/g, '/');
+        if (!relativeIndexPath.startsWith('./') && !relativeIndexPath.startsWith('../')) {
+          relativeIndexPath = './' + relativeIndexPath;
+        }
+        pathsObj[aliasKey] = [relativeIndexPath];
+      }
+      
+      pathsObj[`${aliasKey}/*`] = [`${relativeDirPath}/*`];
+    }
   // 3. Register manual custom aliases 
   if (config.aliases) {
     for (const [alias, target] of Object.entries(config.aliases)) {

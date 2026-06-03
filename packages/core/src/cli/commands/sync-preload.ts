@@ -41,7 +41,7 @@ export async function runSyncPreload(logger: any, silent: boolean = false) {
     }
 
     const preloadPath = path.join(kerithDir, 'preload.js');
-    const newContent = generatePreloadFile(config, pkg.version, cwd);
+    const newContent = await generatePreloadFile(config, pkg.version, cwd);
 
     let isIdentical = false;
     if (fs.existsSync(preloadPath)) {

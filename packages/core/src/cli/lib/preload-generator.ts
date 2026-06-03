@@ -8,7 +8,9 @@ const HOOK_URL = pathToFileURL(
 ).href;
 
 
-export function generatePreloadFile(config: KerithConfig, version: string, cwd: string): string {
+import { scanFromConfig } from '../../bootstrap/scanner.js';
+
+export async function generatePreloadFile(config: KerithConfig, version: string, cwd: string): Promise<string> {
   let modulesBase = '';
   if (config.origin) {
     modulesBase = config.origin.replace(/\\/g, '/');
@@ -44,6 +46,13 @@ export function generatePreloadFile(config: KerithConfig, version: string, cwd: 
     for (const [alias, target] of Object.entries(config.aliases)) {
       aliases[escapeStr(alias)] = `resolve(__dirname, '${escapeStr(getRelativePathStr(target))}')`;
     }
+  }
+
+  // 2. Detect domains from origin
+  const scanResult = await scanFromConfig(config, cwd);
+  for (const domain of scanResult.domains) {
+    const alias = escapeStr(`@${domain.name}`);
+    aliases[alias] = `resolve(__dirname, '${escapeStr(getRelativePathStr(domain.dirPath))}')`;
   }
 
   const aliasesEntries = Object.entries(aliases)
