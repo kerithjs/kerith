@@ -5,8 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.2] — 2026-06-03
+## [2.0.0] — 2026-06-03
 
+### Added
+- Domain hierarchy: `Domain → Module → SubModule` inferred from filesystem
+- `origin` config key: single scan root replacing separate `domains`/`modules` config
+- `Domain()` identifier: semantic marker for domain boundaries
+- `SubModule()` identifier: implementation unit within a module
+- Automatic alias generation: `@{domain}`, `@{domain}/{module}` from filesystem structure
+- `kerith create-domain <name>` command
+- `kerith create-submodule <name> --module --domain` command
+- `create-module --domain <name>` flag for creating modules within a domain
+- `kerith check` groups output by Domains / Modules / SubModules
+- New violations: `domain-boundary-violation`, `relative-boundary-violation`, `module-space-conflict`, `submodule-domain-bypass`, `submodule-direct-sibling`
+- ESLint rules: `no-domain-boundary-violations`, `no-relative-boundary-violations`
+- NITS tracks domain migration — modules moved between domains preserve their ID
+
+### Changed
+- `createApp(app?)`: Express app is now optional (REGLA-02)
+- `modulesByName` key is now `domain/name` for domain modules — enables same name in different domains
+- Scanner uses single fg() call instead of O(n) per-module globs (N-32 fix)
+- Import scanner includes only registered aliases, no hardcoded npm exclusion list (N-33 fix)
+
+### Fixed
+- Module with no controllers no longer emits warning (REGLA-01)
+- ast-parser fallback captures string and array literals from options
+
+### Migration
+- v1.x projects work without any changes — `modules:` config key still supported
+- See MIGRATION.md for incremental adoption guide
+
+---
+
+## [1.8.2] — 2026-06-03
 ### Changed
 - **Rebranding**: Project renamed from Nodulus to **Kerith** (internal rename, no public API changes).
   - NPM package: `@vlynk-studios/nodulus-core` → `@kerith/core`

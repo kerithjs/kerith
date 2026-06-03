@@ -3,7 +3,7 @@ import path from 'node:path';
 import fg from 'fast-glob';
 import type { KerithConfig } from '../config/kerith-config.types.js';
 import type { LogHandler } from '../types/index.js';
-import { extractTopLevelIdentifier } from '../cli/lib/ast-parser.js';
+import { extractIdentifierCall, extractTopLevelIdentifier } from '../cli/lib/ast-parser.js';
 import { normalizePath } from '../core/utils/paths.js';
 import { KerithError } from '../core/errors.js';
 
@@ -236,6 +236,20 @@ export async function scanOrigin(
           options: identifier.options,
         });
         break;
+    }
+  }
+
+  for (const mod of modules) {
+    const domainCall = extractIdentifierCall(mod.indexPath, 'Domain');
+    if (domainCall) {
+      if (!domains.some(d => d.name === domainCall.name && normalizePath(d.dirPath) === normalizePath(mod.dirPath))) {
+        domains.push({
+          name: domainCall.name,
+          dirPath: mod.dirPath,
+          indexPath: mod.indexPath,
+          options: domainCall.options,
+        });
+      }
     }
   }
 

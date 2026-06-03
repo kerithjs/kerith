@@ -169,20 +169,65 @@ Kerith.listen(server)
 
 ---
 
-## Project structure
+## Project Structure
 
-Kerith expects modules in a consistent layout:
+Kerith infers your architecture from the filesystem. Place your identifiers
+in `index.ts` files and Kerith builds the hierarchy automatically.
+
+### v2 — Domain hierarchy (`origin` config)
 
 ```
 src/
-├── modules/
-│   └── users/
-│       ├── index.ts            ← required — calls Module('users', ...)
-│       ├── users.routes.ts     ← controller (discovered automatically)
-│       ├── users.service.ts    ← private business logic
-│       └── users.types.ts      ← excluded from controller scan
-└── app.ts
+  billing/
+    index.ts              ← Domain('billing')
+    payments/
+      index.ts            ← Module('payments', { imports: ['invoices'] })
+      payments.service.ts
+      submodules/
+        trial/
+          index.ts        ← SubModule('trial')
+    invoices/
+      index.ts            ← Module('invoices', { exports: ['InvoiceService'] })
+  users/
+    index.ts              ← Module('users')   ← flat module, no domain
 ```
+
+Configure the scan root in `kerith.config.js`:
+
+```js
+export default { origin: 'src' }
+```
+
+Kerith automatically generates domain-scoped aliases:
+
+```ts
+import { InvoiceService } from '@billing/invoices'  // domain/module alias
+import { PaymentService } from '@billing/payments'
+import { UserService }    from '@modules/users'      // flat module alias
+```
+
+### v1 — Flat modules (`modules` glob)
+
+If you prefer a flat structure (or are migrating from v1.x), the `modules` glob key still works exactly as before:
+
+```
+src/
+  modules/
+    users/
+      index.ts            ← Module('users', ...)
+      users.routes.ts     ← controller (discovered automatically)
+      users.service.ts    ← private business logic
+      users.types.ts
+    payments/
+      index.ts            ← Module('payments', ...)
+```
+
+```js
+// kerith.config.js
+export default { modules: 'src/modules/*' }
+```
+
+Both modes are fully supported and can be adopted incrementally. See [MIGRATION.md](./MIGRATION.md) for the upgrade path from v1.x to v2.0.0.
 
 ## Module Identity
 
@@ -307,6 +352,26 @@ app.use(globalPrefix + controllerPrefix, ...middlewares, router)
 ```
 
 ---
+
+### Domain Hierarchy Identifiers _(v2.0.0+)_
+
+In v2, you can group modules into domains using `Domain()` and nest implementation units inside modules with `SubModule()`.
+
+```ts
+// src/billing/index.ts
+import { Domain } from '@kerith/core'
+Domain('billing')
+
+// src/billing/payments/index.ts
+import { Module } from '@kerith/core'
+Module('payments', { imports: ['invoices'], exports: ['PaymentService'] })
+
+// src/billing/payments/submodules/trial/index.ts
+import { SubModule } from '@kerith/core'
+SubModule('trial', { module: 'payments', exports: [] })
+```
+
+Kerith infers the domain from the filesystem — `Module()` does not accept a `domain` option. The folder hierarchy is the only source of truth.
 
 ### Domain Identifiers
 
@@ -438,7 +503,8 @@ export default defineConfig({
 
 |Campo|Tipo|Default|Descripción|
 |---|---|---|---|
-|`modules`|`string`|`'src/modules/*'`|Glob de directorios de módulos|
+|`origin`|`string`|—|Scan root para jerarquía v2 (`Domain → Module → SubModule`)|
+|`modules`|`string`|`'src/modules/*'`|Glob de directorios de módulos (modo v1.x, sigue soportado)|
 |`prefix`|`string`|`''`|Prefijo global de rutas HTTP|
 |`strict`|`boolean`|`true` en dev, `false` en prod|Modo estricto|
 |`logLevel`|`'debug'\|'info'\|'warn'\|'error'`|`'info'`|Nivel de logs|
@@ -463,26 +529,22 @@ Config file loading order (first match wins):
 
 Kerith provides a built-in CLI to enforce conventions and improve developer experience.
 
-### `Kerith create-module <name>`
+### `kerith create-module <name>`
 
-Scaffolds a perfectly structured module conforming to the framework constraints.
+Scaffolds a perfectly structured module. In v2, use `--domain` to place the module inside a domain:
 
 ```bash
-npx kerith create-module payments
+npx kerith create-module payments --domain billing
 ```
 
-```text
-✔ Module 'payments' created successfully at src/modules/payments/
-  index.ts
-  payments.routes.ts
-  payments.service.ts
-  payments.repository.ts
-  payments.schema.ts
+```bash
+npx kerith create-module users   # flat module (no domain)
 ```
 
 | Option | Description |
 |---|---|
-| `--path <path>` | Sets a custom absolute or relative destination |
+| `--domain <name>` | Place the module inside an existing domain |
+| `--path <path>` | Custom absolute or relative destination |
 | `--service` | Generates a service file |
 | `--routes` | Generates a controller/routes file |
 | `--repository` | Generates a repository file |
@@ -494,6 +556,36 @@ npx kerith create-module payments
 > Language is auto-detected from the presence of `tsconfig.json` in the project root when neither `--ts` nor `--js` is specified.
 
 ---
+
+### `kerith create-domain <name>` _(v2.0.0+)_
+
+Scaffolds a domain folder with its `index.ts`:
+
+```bash
+npx kerith create-domain billing
+npx kerith create-domain billing --modules payments,invoices --shared
+```
+
+| Option | Description |
+|---|---|
+| `--modules <names...>` | Scaffold modules inside the new domain |
+| `--shared` | Create a `_shared/` folder inside the domain |
+
+---
+
+### `kerith create-submodule <name>` _(v2.0.0+)_
+
+Scaffolds a submodule inside an existing module:
+
+```bash
+npx kerith create-submodule trial --module payments --domain billing
+```
+
+| Option | Description |
+|---|---|
+| `--module <name>` | Parent module (required) |
+| `--domain <name>` | Domain of the parent module (required for domain modules) |
+| `--path <path>` | Custom destination path |
 
 ### `Kerith sync-tsconfig`
 
@@ -561,7 +653,7 @@ If `.Kerith/preload.js` does not exist, `Kerith dev` falls back to legacy mode (
 
 ---
 
-### `Kerith check`
+### `kerith check`
 
 Performs static architecture analysis by inspecting raw ASTs across your module structure without evaluating your application code.
 
@@ -569,24 +661,41 @@ Performs static architecture analysis by inspecting raw ASTs across your module 
 npx kerith check
 ```
 
+In v2 projects with domains, output is grouped by hierarchy level:
+
 ```text
-Kerith Architecture Analysis
+Architecture
+Domains
+✔  billing     OK
+✗  workspace   1 violation(s)
 
-✔ orders — OK
-✗ payments — 2 problem(s)
-  WARN  Private import detected: module "payments" directly imports internal path from "@modules/users/users.repository.js". (payments.service.ts:3)
-       Suggestion: Import only the public index: "@modules/users".
-✔ users — OK
+Modules
+✔  billing/payments    OK
+✗  workspace/members   1 violation(s)
+  ✗ domain-boundary-violation: importing '@billing/payments' directly
+    Suggestion: Import from '@billing' instead
 
-2 problem(s) found.
+Summary: 3 OK, 1 domain violation, 0 module violations, 0 submodule violations
 ```
+
+In v1 projects (flat modules), the output is identical to v1.x — no domain sections.
 
 | Option | Description |
 |---|---|
-| `--strict` | Exit with code 1 if any violation is found. Ideal for CI gates |
+| `--strict` | Exit with code 1 on `SUBMODULE_DIRECT_SIBLING` and `SUBMODULE_DOMAIN_BYPASS` in addition to always-fatal violations |
 | `--module <name>` | Narrow the analysis to a specific module |
+| `--level <level>` | Filter output sections: `domain`, `module`, `submodule`, `flat` |
 | `--format <json\|text>` | Output format. Use `json` for external pipeline consumption |
 | `--no-circular` | Disables cycle detection (`A → B → A`) |
+
+Violation severity:
+
+| Violation | Always exit 1 | Only with `--strict` |
+|---|---|---|
+| `DOMAIN_BOUNDARY_VIOLATION` | ✓ | — |
+| `RELATIVE_BOUNDARY_VIOLATION` | ✓ | — |
+| `SUBMODULE_DIRECT_SIBLING` | — | ✓ |
+| `SUBMODULE_DOMAIN_BYPASS` | — | ✓ |
 
 ---
 
