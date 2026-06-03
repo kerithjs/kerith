@@ -245,5 +245,25 @@ export function detectViolations(
     });
   }
 
+  // 4. MODULE_SPACE_CONFLICT
+  const nameToDomains = new Map<string, Set<string | undefined>>();
+  for (const node of nodes) {
+    if (!nameToDomains.has(node.name)) {
+      nameToDomains.set(node.name, new Set());
+    }
+    nameToDomains.get(node.name)!.add(node.domain);
+  }
+
+  for (const [name, domainSet] of nameToDomains.entries()) {
+    if (domainSet.has(undefined) && domainSet.size > 1) {
+      violations.push({
+        type: ViolationType.MODULE_SPACE_CONFLICT,
+        module: name,
+        message: `Module space conflict: "${name}" exists in both flat space and domain space.`,
+        suggestion: `Rename one of the modules. Cannot exist in both flat space and domain space.`,
+      });
+    }
+  }
+
   return violations;
 }

@@ -51,7 +51,8 @@ export interface ModuleGraph {
 export async function buildModuleGraph(config: KerithConfig, cwd: string): Promise<ModuleGraph> {
   const scanResult = await scanFromConfig(config, cwd);
   const moduleNames = scanResult.modules.map(m => m.name);
-  const activeAliases = buildActiveAliasesFromConfig(config, moduleNames);
+  const domainNames = scanResult.domains.map(d => d.name);
+  const activeAliases = buildActiveAliasesFromConfig(config, moduleNames, domainNames);
 
   async function buildNodeData(dirPath: string, indexPath: string): Promise<{ actualImports: ImportFound[], internalIdentifiers: string[] }> {
     const actualImports: ImportFound[] = [];

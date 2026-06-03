@@ -111,4 +111,18 @@ describe('Domain()', () => {
       });
     });
   });
+
+  it('ModuleOptions does not accept domain property (type check)', () => {
+    // This is a type-level test to ensure `domain` cannot be passed manually in ModuleOptions
+    import('../../src/index.js').then(({ Module }) => {
+      try {
+        // @ts-expect-error - domain should not exist in ModuleOptions
+        Module('test', { domain: 'should-fail' });
+      } catch (e) {
+        // Ignore runtime error, we only care about type checking here
+      }
+    });
+    // If the compiler passes this file (since we have @ts-expect-error), the type constraint works.
+    expect(true).toBe(true);
+  });
 });

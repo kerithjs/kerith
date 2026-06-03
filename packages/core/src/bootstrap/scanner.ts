@@ -120,7 +120,10 @@ export function inferParentModule(
   modules: ModuleScanEntry[],
 ): string | undefined {
   const subModuleDir = normalizePath(path.dirname(path.resolve(filePath)));
-  const parentDir = normalizePath(path.dirname(subModuleDir));
+  let parentDir = normalizePath(path.dirname(subModuleDir));
+  if (path.basename(parentDir) === 'submodules') {
+    parentDir = normalizePath(path.dirname(parentDir));
+  }
   const sorted = [...modules].sort((a, b) => b.dirPath.length - a.dirPath.length);
   for (const mod of sorted) {
     const modDir = normalizePath(path.resolve(mod.dirPath));

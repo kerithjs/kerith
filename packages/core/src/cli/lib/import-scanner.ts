@@ -48,12 +48,16 @@ export function getRegisteredAliases(registry: KerithRegistry): string[] {
 export function buildActiveAliasesFromConfig(
   config: KerithConfig,
   _moduleNames: string[] = [],
+  domainNames: string[] = [],
 ): string[] {
   const aliases = new Set<string>(['@modules']);
   if (config.aliases) {
     for (const key of Object.keys(config.aliases)) {
       aliases.add(key);
     }
+  }
+  for (const domain of domainNames) {
+    aliases.add(`@${domain}`);
   }
   return [...aliases];
 }
