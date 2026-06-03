@@ -109,6 +109,4 @@ export function SubModule(name: string, options: SubModuleOptions = {}): void {
     domain,
     description: options.description,
   });
-
-  console.log(`[Kerith] SubModule '${name}' registered`);
 }

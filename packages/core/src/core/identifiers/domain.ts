@@ -30,6 +30,4 @@ export function Domain(name: string, options: DomainOptions = {}): void {
     description: options.description,
     registeredAt: new Date().toISOString(),
   });
-
-  console.log(`[Kerith] Domain '${name}' registered`);
 }
