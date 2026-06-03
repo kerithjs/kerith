@@ -1,4 +1,4 @@
-﻿# Kerith — Suite Changelog
+# Kerith — Suite Changelog
 
 All notable changes to the **Kerith suite** are documented here.
 This file covers both [`@kerith/core`](./packages/core) and [`@kerith/eslint-plugin`](./packages/eslint-plugin).
@@ -11,7 +11,7 @@ For full technical details, see the individual package changelogs:
 > **Note:** v1.0.0 - v1.8.1 were developed under the `Nodulus` repository
 > prior to the KerithJS rebranding. Full history is preserved below for reference.
 
-## [1.8.2] - 2026-05-28
+## [1.8.2] - 2026-06-03
 
 ### @kerith/core
 
