@@ -71,7 +71,7 @@ describe('Module()', () => {
       // This should fail during import
     }).catch(err => {
       expect(err.code).toBe('INVALID_MODULE_DECLARATION');
-      expect(err.message).toContain('must be called only from the module\'s index file');
+      expect(err.message).toContain('must be called only from the index file');
     });
   });
 

@@ -13,13 +13,23 @@ export interface ControllerEntry {
   enabled: boolean;
 }
 
+export type {
+  DomainRegistration,
+  SubModuleRegistration,
+  ModuleRegistration,
+} from '../core/types/registry.js';
+
+import type { DomainRegistration } from '../core/types/registry.js';
+
 export interface ModuleEntry {
   nitsId: string;     // NITS specific assigned ID
   name: string;
+  domain?: string;
   path: string;       // absolute path to the module directory
   indexPath: string;  // absolute path to the module's index.ts / index.js
   imports: string[];
   exports: string[];
+  shared: string[];
   controllers: ControllerEntry[];
 }
 
@@ -94,18 +104,12 @@ export interface HttpLogger {
 // Exported as part of the public surface. Stable between minor versions unless
 // documented otherwise.
 
-export interface ModuleOptions {
-  /** Modules this module depends on. */
-  imports?: string[];
-  /**
-   * Names of exports that form the public API of this module.
-   * Kerith validates that each name exists as a real export of index.ts.
-   * Error EXPORT_MISMATCH if a name is missing.
-   */
-  exports?: string[];
-  /** Description — for documentation and future tooling. */
-  description?: string;
-}
+export type {
+  HierarchyLevel,
+  DomainOptions,
+  SubModuleOptions,
+  ModuleOptions,
+} from '../core/types/hierarchy.js';
 
 export interface ControllerOptions {
   /** Middlewares applied to all routes. Mounted before the router. Default: []. */
@@ -230,6 +234,7 @@ export interface ResolvedConfig {
 export interface RegisteredModule {
   id: string;
   name: string;
+  domain?: string;
   path: string;         // absolute path to the module directory
   imports: string[];    // names of modules this module depends on
   exports: string[];    // declared and validated export names
@@ -245,9 +250,12 @@ export interface MountedRoute {
 
 /** Stable registry interface — guaranteed across minor versions. */
 export interface KerithRegistry {
-  hasModule(name: string): boolean;
-  getModule(name: string): RegisteredModule | undefined;
+  hasModule(name: string, domain?: string): boolean;
+  getModule(name: string, domain?: string): RegisteredModule | undefined;
   getAllModules(): RegisteredModule[];
+  hasDomain(name: string): boolean;
+  getDomain(name: string): DomainRegistration | undefined;
+  getAllDomains(): DomainRegistration[];
   resolveAlias(alias: string): string | undefined;
   getAllAliases(): Record<string, string>;
   /** Bare alias keys (no `/*` wildcards) used for import scanning (REGLA-22). */

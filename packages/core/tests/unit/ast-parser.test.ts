@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { extractIdentifierCall } from '../../src/cli/lib/ast-parser.js';
+import { extractIdentifierCall, extractTopLevelIdentifier } from '../../src/cli/lib/ast-parser.js';
 
 describe('ast-parser tests', () => {
   afterEach(() => {
@@ -104,6 +104,23 @@ describe('ast-parser tests', () => {
       expect(res).not.toBeNull();
       expect(res?.name).toBe('billing');
       expect(res?.options).toEqual({});
+    });
+  });
+
+  it('extractTopLevelIdentifier returns the first Kerith call in source order', () => {
+    runWithTempFile(`
+      import { Domain, Module } from '@kerith/core';
+      Domain('billing');
+      Module('payments');
+    `, (filePath) => {
+      const res = extractTopLevelIdentifier(filePath);
+      expect(res).toEqual({ type: 'Domain', name: 'billing', options: {} });
+    });
+  });
+
+  it('extractTopLevelIdentifier returns null when no Kerith identifier is present', () => {
+    runWithTempFile(`export const value = 42;`, (filePath) => {
+      expect(extractTopLevelIdentifier(filePath)).toBeNull();
     });
   });
 

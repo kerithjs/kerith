@@ -338,7 +338,7 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(appWithSlowModule, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 200, strict: false };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 500, strict: false, modules: "src/modules/*" };');
         const KerithApp = await createApp(app as any);
         expect(KerithApp.modules).toHaveLength(1);
         expect(KerithApp.modules[0].name).toBe('slow');

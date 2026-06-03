@@ -112,7 +112,7 @@ describe("Integration Tests", () => {
     it("throws MISSING_IMPORT when imports references a non-existent module", async () => {
       await runInTmpApp(
         {
-          "kerith.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/users/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('users', { imports: ['nonExistentModule'] });
@@ -130,7 +130,7 @@ describe("Integration Tests", () => {
     it("MISSING_IMPORT details references the missing module name", async () => {
       await runInTmpApp(
         {
-          "kerith.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/consumers/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('consumers', { imports: ['phantomModule'] });
@@ -147,7 +147,7 @@ describe("Integration Tests", () => {
     it("silently filters out empty strings and does not throw MISSING_IMPORT", async () => {
       await runInTmpApp(
         {
-          "kerith.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/clean/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('clean', { imports: ['', '  '] });
@@ -1054,16 +1054,17 @@ describe("Integration Tests", () => {
   // SubModule & INVALID_ESM_ENV tests
   // -----------------------------------------------------------------------
   describe("SubModule and INVALID_ESM_ENV (Blockers)", () => {
-    it("processes SubModule() without crash if it exists (reserved for v2.0.0)", async () => {
+    it("processes SubModule() without crash when discovered under origin", async () => {
       await runInTmpApp(
         {
-          "kerith.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { origin: 'src', strict: false };",
           "src/modules/parent/index.ts": `
-          import * as api from '{{SOURCE}}';
-          api.Module('parent');
-          if ('SubModule' in api) {
-            (api as any).SubModule('parent', 'child');
-          }
+          import { Module } from '{{SOURCE}}';
+          Module('parent');
+        `,
+          "src/modules/parent/child/index.ts": `
+          import { SubModule } from '{{SOURCE}}';
+          SubModule('child');
         `,
         },
         async (_, app) => {

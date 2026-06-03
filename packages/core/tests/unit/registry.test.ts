@@ -73,29 +73,88 @@ describe('Registry', () => {
     });
   });
 
-  it('throws DUPLICATE_MODULE for duplicate names if paths and NITS IDs are different', async () => {
+  it('allows billing/payments and workspace/payments to coexist with domain-scoped keys', async () => {
     const r = createRegistry();
     await registryContext.run(r, async () => {
-      // Module 1: users in root
       getActiveRegistry().registerModule(
-        'users', 
-        { imports: [] }, 
-        '/src/modules/users', 
-        '/src/modules/users/index.ts', 
-        'mod_users_original'
+        'payments',
+        { imports: [] },
+        '/src/billing/payments',
+        '/src/billing/payments/index.ts',
+        'mod_billing_payments',
+        'billing',
+      );
+      getActiveRegistry().registerModule(
+        'payments',
+        { imports: [] },
+        '/src/workspace/payments',
+        '/src/workspace/payments/index.ts',
+        'mod_workspace_payments',
+        'workspace',
       );
 
-      // Module 2: users in a domain folder (pre-preparing v2.0.0)
-      expect(() => {
-        getActiveRegistry().registerModule(
-          'users', 
-          { imports: [] }, 
-          '/src/domains/billing/modules/users', 
-          '/src/domains/billing/modules/users/index.ts', 
-          'mod_users_billing'
-        );
-      }).toThrowError(KerithError);
+      expect(getActiveRegistry().hasModule('payments', 'billing')).toBe(true);
+      expect(getActiveRegistry().hasModule('payments', 'workspace')).toBe(true);
+      expect(getActiveRegistry().hasModule('payments')).toBe(false);
+
+      expect(getActiveRegistry().getModule('payments', 'billing')?.id).toBe(
+        'mod_billing_payments',
+      );
+      expect(getActiveRegistry().getModule('payments', 'workspace')?.id).toBe(
+        'mod_workspace_payments',
+      );
     });
+  });
+
+  it('getDomainModules and getModuleSubModules filter by hierarchy', async () => {
+    const r = createRegistry();
+    const now = new Date().toISOString();
+    await registryContext.run(r, async () => {
+      getActiveRegistry().registerDomain({
+        name: 'billing',
+        path: '/src/billing',
+        registeredAt: now,
+      });
+      getActiveRegistry().registerModule(
+        'payments',
+        {},
+        '/src/billing/payments',
+        '/src/billing/payments/index.ts',
+        'id_pay',
+        'billing',
+      );
+      getActiveRegistry().registerSubModule({
+        name: 'trial',
+        path: '/src/billing/payments/trial',
+        parentModule: 'payments',
+        domain: 'billing',
+      });
+
+      expect(getActiveRegistry().getDomainModules('billing')).toHaveLength(1);
+      expect(getActiveRegistry().getModuleSubModules('payments', 'billing')).toHaveLength(1);
+      expect(getActiveRegistry().resolveHierarchyLevel('billing', '/src/billing')).toBe('domain');
+      expect(getActiveRegistry().resolveHierarchyLevel('trial', '/src/billing/payments/trial')).toBe(
+        'submodule',
+      );
+      expect(getActiveRegistry().resolveHierarchyLevel('payments', '/src/billing/payments')).toBe(
+        'module',
+      );
+    });
+  });
+
+  it('clearRegistry() removes domains and submodules for test isolation', () => {
+    const r = createRegistry();
+    const now = new Date().toISOString();
+    r.registerDomain({ name: 'billing', path: '/billing', registeredAt: now });
+    r.registerSubModule({
+      name: 'trial',
+      path: '/billing/payments/trial',
+      parentModule: 'payments',
+      domain: 'billing',
+    });
+    r.clearRegistry();
+    expect(r.getAllDomains()).toHaveLength(0);
+    expect(r.getAllSubModules()).toHaveLength(0);
   });
 
   it('registers and resolves aliases', async () => {

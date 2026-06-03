@@ -7,7 +7,7 @@ import type { CreateAppOptions, KerithApp } from "../types/index.js";
 
 import { loadConfig } from "../core/config.js";
 import { KerithError } from "../core/errors.js";
-import { createRegistry, registryContext } from "../core/registry.js";
+import { createRegistry, registryContext, buildModuleKey } from "../core/registry.js";
 import { activateAliasResolver } from "../aliases/resolver.js";
 import { updateAliasCache } from "../aliases/cache.js";
 import {
@@ -40,6 +40,12 @@ import { computeModuleHash } from "../nits/nits-hash.js";
 import { normalizePath } from "../core/utils/paths.js";
 import { registerShutdown } from "../core/shutdown.js";
 import type { DiscoveredModule } from "../types/nits.js";
+import {
+  scanFromConfig,
+  scanModulesToResolved,
+} from "./scanner.js";
+import { registerEntitiesFromScan } from "./register-from-scan.js";
+import { importIndexEntry } from "./import-index.js";
 
 export async function createApp(
   app?: Application,
@@ -147,111 +153,67 @@ export async function createApp(
         }
       }
 
-      // domains and shared were removed. We will use config.origin directly in v2.0.0
+      const cwd = process.cwd();
+
+      // Step 1 — Resolve and validate origin path
+      if (config.origin) {
+        const originAbsolutePath = path.resolve(cwd, config.origin);
+        if (!fs.existsSync(originAbsolutePath)) {
+          throw new KerithError(
+            "ORIGIN_NOT_FOUND",
+            `origin '${config.origin}' not found. Set origin in kerith.config.js`,
+          );
+        }
+      }
+
       log.info("Bootstrap started", {
+        origin: config.origin ?? "(none)",
         modules: config.modules,
         prefix: config.prefix || "(none)",
         strict: config.strict,
         nodeVersion: process.version,
       });
 
-      // Step 2 — Resolve modules
-      let moduleDirs: string[] = [];
-
-      if (config.origin) {
-        const originPath = path.resolve(process.cwd(), config.origin);
-        if (!fs.existsSync(originPath)) {
-          throw new KerithError("MODULE_NOT_FOUND", `origin '${config.origin}' not found. Set origin in kerith.config.js`);
-        }
-
-        const globPattern = `${config.origin.replace(/\\/g, "/")}/**/index.{ts,js,mts,mjs}`;
-        const indexFiles = await fg(globPattern, {
-          absolute: true,
-          cwd: process.cwd(),
-          ignore: [
-            "**/node_modules/**",
-            "**/dist/**",
-            "**/build/**",
-            "**/.git/**",
-            "**/*.d.ts",
-            "**/*.map",
-            "**/.kerith/**",
-            "**/coverage/**",
-            "**/.next/**",
-            "**/.cache/**",
-            "**/.nyc_output/**",
-            "**/__pycache__/**",
-            "**/tmp/**",
-            "**/_shared/**",
-          ],
-        });
-        moduleDirs = Array.from(new Set(indexFiles.map((f) => path.dirname(f))));
-      } else if (config.modules) {
-        const globPattern = config.modules.replace(/\\/g, "/");
-        moduleDirs = await fg(globPattern, {
-          onlyDirectories: true,
-          absolute: true,
-          cwd: process.cwd(),
-        ignore: [
-          "**/node_modules/**",
-          "**/dist/**",
-          "**/build/**",
-          "**/.git/**",
-          "**/*.d.ts",
-          "**/*.map",
-          "**/.kerith/**",
-          "**/coverage/**",
-          "**/.next/**",
-          "**/.cache/**",
-          "**/.nyc_output/**",
-          "**/__pycache__/**",
-          "**/tmp/**",
-        ],
+      // Step 2 — Filesystem scan (origin → scanOrigin, modules → legacy glob)
+      const scanResult = await scanFromConfig(config, cwd, (level, message, meta) => {
+        log[level](message, meta);
       });
-      }
-
-      moduleDirs.sort();
-
-      const resolvedModules: {
-        name: string;
-        dirPath: string;
-        indexPath: string;
-        domain?: string;
-      }[] = [];
-
       const isOriginMode = !!config.origin;
 
-      for (const dirPath of moduleDirs) {
-        log.debug(`Discovered module directory: ${dirPath}`, {
-          dirPath,
+      if (scanResult.domains.length > 0) {
+        log.debug(
+          `Domains discovered: ${scanResult.domains.map((d) => d.name).join(", ")}`,
+          { _module: "scanner", count: scanResult.domains.length },
+        );
+      }
+      if (scanResult.shared.length > 0) {
+        log.debug(
+          `Shared roots discovered: ${scanResult.shared.map((s) => s.alias).join(", ")}`,
+          { _module: "scanner", shared: scanResult.shared },
+        );
+      }
+
+      const resolvedModules = scanModulesToResolved(scanResult);
+
+      for (const mod of resolvedModules) {
+        log.debug(`Discovered module directory: ${mod.dirPath}`, {
+          dirPath: mod.dirPath,
+          domain: mod.domain,
           _module: "module",
-        });
-        const tsPath = path.join(dirPath, "index.ts");
-        const jsPath = path.join(dirPath, "index.js");
-
-        let indexPath: string | null = null;
-        if (fs.existsSync(tsPath)) {
-          indexPath = tsPath;
-        } else if (fs.existsSync(jsPath)) {
-          indexPath = jsPath;
-        }
-
-        if (!indexPath) {
-          throw new KerithError(
-            "MODULE_NOT_FOUND",
-            `No index.ts or index.js found for module. A module directory must have an index file mapping its dependencies.`,
-            `Directory: ${dirPath}`,
-          );
-        }
-
-        resolvedModules.push({
-          name: path.basename(dirPath),
-          dirPath,
-          indexPath,
         });
       }
 
-      // Step 2.5 — NITS Identity Reconciliation (Identity tracking audit layer)
+      // Step 3 — Register scan entities (domains → shared → submodules)
+      registerEntitiesFromScan(registry, scanResult);
+      log.debug("Scan entities seeded in registry", {
+        domains: scanResult.domains.length,
+        shared: scanResult.shared.length,
+        submodules: scanResult.submodules.length,
+        modules: resolvedModules.length,
+        _module: "bootstrap",
+      });
+
+      // Step 4 — NITS identity reconciliation
       if (config.nits?.enabled !== false) {
         try {
           // Step 2.5a — Read/create shadow files for all discovered modules.
@@ -274,7 +236,6 @@ export async function createApp(
             });
           }
 
-          const cwd = process.cwd();
           const oldRegistry =
             (await loadNitsRegistry(cwd)) ||
             initNitsRegistry(inferProjectName(cwd));
@@ -351,16 +312,29 @@ export async function createApp(
         }
       }
 
-      // Step 3 — Activate runtime aliases
+      // Step 5 — Activate runtime aliases (domains, modules, shared from scan)
       if (config.resolveAliases !== false) {
         const pureModuleAliases: Record<string, string> = {};
+
         for (const mod of resolvedModules) {
+          if (mod.domain) {
+            const domainAlias = `@${mod.domain}/${mod.name}`;
+            pureModuleAliases[domainAlias] = mod.indexPath;
+            pureModuleAliases[`${domainAlias}/*`] = `${mod.dirPath}/*`;
+            registry.registerAlias(domainAlias, mod.indexPath);
+            registry.registerAlias(`${domainAlias}/*`, `${mod.dirPath}/*`);
+          }
+
           const aliasKey = `@modules/${mod.name}`;
           pureModuleAliases[aliasKey] = mod.indexPath;
           pureModuleAliases[`${aliasKey}/*`] = `${mod.dirPath}/*`;
-
           registry.registerAlias(aliasKey, mod.indexPath);
           registry.registerAlias(`${aliasKey}/*`, `${mod.dirPath}/*`);
+        }
+
+        for (const sharedEntry of scanResult.shared) {
+          pureModuleAliases[sharedEntry.alias] = sharedEntry.path;
+          pureModuleAliases[`${sharedEntry.alias}/*`] = `${sharedEntry.path}/*`;
         }
 
         const normalizedConfigAliases: Record<string, string> = {};
@@ -397,28 +371,17 @@ export async function createApp(
         updateAliasCache(registry.getAllAliases());
       }
 
-      // Step 4 — Import modules
-      for (const mod of resolvedModules) {
-        const importUrl = pathToFileURL(mod.indexPath).href;
-        let timer: NodeJS.Timeout;
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          timer = setTimeout(() => {
-            reject(
-              new KerithError(
-                "MODULE_LOAD_TIMEOUT",
-                `Module load timed out after ${config.moduleLoadTimeoutMs}ms. Check for unhandled promises or blocking operations in the top-level scope.`,
-                `File: ${mod.indexPath}`,
-              ),
-            );
-          }, config.moduleLoadTimeoutMs);
-        });
+      // Step 6 — Import index entries (domains → modules → submodules) — runs identifiers
+      for (const domain of scanResult.domains) {
+        await importIndexEntry(domain.indexPath, config.moduleLoadTimeoutMs);
+        log.debug(`Domain loaded: ${domain.name}`, { _module: "domain", name: domain.name });
+      }
 
-        let imported: any;
-        try {
-          imported = await Promise.race([import(importUrl), timeoutPromise]);
-        } finally {
-          clearTimeout(timer!);
-        }
+      for (const mod of resolvedModules) {
+        const imported = await importIndexEntry(
+          mod.indexPath,
+          config.moduleLoadTimeoutMs,
+        );
 
         // Correlate the imported module with the one added to the registry based on dirPath
         const allRegistered = registry.getAllModules();
@@ -478,29 +441,44 @@ export async function createApp(
         }
       }
 
-      // Step 5 — Validate dependencies
+      for (const sub of scanResult.submodules) {
+        await importIndexEntry(sub.indexPath, config.moduleLoadTimeoutMs);
+        log.debug(`SubModule loaded: ${sub.name}`, {
+          _module: "submodule",
+          name: sub.name,
+          parentModule: sub.parentModule,
+          domain: sub.domain,
+        });
+      }
+
       const allModules = registry.getAllModules();
+
       for (const mod of allModules) {
-        const rawMod = registry.getRawModule(mod.name);
+        const rawMod = registry.getRawModule(mod.name, mod.domain);
         if (rawMod) {
           rawMod.imports = rawMod.imports.filter(
             (imp: string) => imp && imp.trim() !== "",
           );
           mod.imports = rawMod.imports;
         }
+      }
 
-        for (const importName of mod.imports) {
-          if (!registry.hasModule(importName)) {
-            throw new KerithError(
-              "MISSING_IMPORT",
-              `A module declared in imports does not exist in the registry.`,
-              `Module "${mod.name}" is trying to import missing module "${importName}"`,
-            );
+      // Step 7 — Validate dependencies (strict mode only)
+      if (config.strict) {
+        for (const mod of allModules) {
+          for (const importName of mod.imports) {
+            if (!registry.hasModule(importName, mod.domain)) {
+              throw new KerithError(
+                "MISSING_IMPORT",
+                `A module declared in imports does not exist in the registry.`,
+                `Module "${mod.name}" is trying to import missing module "${importName}"`,
+              );
+            }
           }
         }
       }
 
-      // Step 5.5 — Discover missing identifiers
+      // Step 7.5 — Undeclared / unused imports (strict)
       let modulesRoot = "";
       if (config.origin) {
         modulesRoot = config.origin;
@@ -508,12 +486,15 @@ export async function createApp(
         modulesRoot = config.modules.split("*")[0].replace(/\/$/, "");
       }
 
-      // Pre-process a Map of normalizedPath -> moduleName (also used by Step 6)
-      const modulePathMap = new Map<string, string>();
+      // Pre-process a Map of normalizedPath -> module ref (also used by Step 6)
+      const modulePathMap = new Map<string, { name: string; domain?: string }>();
       for (const mod of allModules) {
-        const rawMod = registry.getRawModule(mod.name);
+        const rawMod = registry.getRawModule(mod.name, mod.domain);
         if (rawMod) {
-          modulePathMap.set(normalizePath(rawMod.path), mod.name);
+          modulePathMap.set(normalizePath(rawMod.path), {
+            name: mod.name,
+            domain: mod.domain,
+          });
         }
       }
 
@@ -540,24 +521,25 @@ export async function createApp(
         // Build a Map of module -> source files
         const filesByModule = new Map<string, string[]>();
         for (const mod of allModules) {
-          filesByModule.set(mod.name, []);
+          filesByModule.set(buildModuleKey(mod.name, mod.domain), []);
         }
 
         for (const file of allSourceFiles) {
           for (const modPath of sortedModulePaths) {
             if (file.startsWith(modPath + "/")) {
-              const modName = modulePathMap.get(modPath)!;
-              filesByModule.get(modName)?.push(file);
+              const modRef = modulePathMap.get(modPath)!;
+              filesByModule.get(buildModuleKey(modRef.name, modRef.domain))?.push(file);
               break;
             }
           }
         }
 
         for (const registeredMod of allModules) {
-          const rawMod = registry.getRawModule(registeredMod.name);
+          const rawMod = registry.getRawModule(registeredMod.name, registeredMod.domain);
           if (!rawMod) continue;
 
-          const sourceFiles = filesByModule.get(registeredMod.name) ?? [];
+          const sourceFiles =
+            filesByModule.get(buildModuleKey(registeredMod.name, registeredMod.domain)) ?? [];
           const usedImports = new Set<string>();
 
           for (const file of sourceFiles) {
@@ -573,7 +555,7 @@ export async function createApp(
               if (!targetModule || targetModule === registeredMod.name)
                 continue;
 
-              if (!registry.hasModule(targetModule)) continue;
+              if (!registry.hasModule(targetModule, registeredMod.domain)) continue;
 
               usedImports.add(targetModule);
 
@@ -616,7 +598,7 @@ export async function createApp(
       const mountedRoutes: import("../types/index.js").MountedRoute[] = [];
 
       if (app) {
-      // Step 6 — Discover controllers
+      // Step 8 — Discover controllers and mount routes (Express only)
       // Reuse allSourceFiles but including index.* (controllers can be index files of subfolders, but not the module itself)
       const allControllerFiles = await fg(
         `${modulesRoot}/**/*.{ts,js,mts,mjs,cjs}`,
@@ -636,32 +618,35 @@ export async function createApp(
       );
       const controllerFilesByModule = new Map<string, string[]>();
       for (const mod of allModules) {
-        controllerFilesByModule.set(mod.name, []);
+        controllerFilesByModule.set(buildModuleKey(mod.name, mod.domain), []);
       }
 
       for (const file of allControllerFiles) {
         const normalizedFile = normalizePath(file);
         for (const modPath of sortedModulePaths) {
           if (normalizedFile.startsWith(modPath + "/")) {
-            const modName = modulePathMap.get(modPath)!;
-            const rawMod = registry.getRawModule(modName);
+            const modRef = modulePathMap.get(modPath)!;
+            const rawMod = registry.getRawModule(modRef.name, modRef.domain);
 
             if (rawMod && normalizedFile === normalizePath(rawMod.indexPath)) {
               // Exclude the module's main index file
               break;
             }
 
-            controllerFilesByModule.get(modName)?.push(file);
+            controllerFilesByModule
+              .get(buildModuleKey(modRef.name, modRef.domain))
+              ?.push(file);
             break;
           }
         }
       }
 
       for (const mod of allModules) {
-        const rawMod = registry.getRawModule(mod.name);
+        const rawMod = registry.getRawModule(mod.name, mod.domain);
         if (!rawMod) continue;
 
-        const files = controllerFilesByModule.get(mod.name) ?? [];
+        const files =
+          controllerFilesByModule.get(buildModuleKey(mod.name, mod.domain)) ?? [];
         files.sort();
 
         for (let file of files) {
@@ -727,9 +712,9 @@ export async function createApp(
         // REGLA-01: Kerith does not require controllers — they are Express-specific.
       }
 
-      // Step 7 — Mount routes
+      // Step 8 — Mount routes
       for (const mod of allModules) {
-        const rawMod = registry.getRawModule(mod.name);
+        const rawMod = registry.getRawModule(mod.name, mod.domain);
         if (!rawMod) continue;
 
         for (const ctrl of rawMod.controllers) {
@@ -821,7 +806,7 @@ export async function createApp(
       } // end if (app)
 
       const safeRegisteredModules = allModules.map(
-        (m) => registry.getModule(m.name)!,
+        (m) => registry.getModule(m.name, m.domain)!,
       );
       const durationMs = Math.round(performance.now() - startTime);
 
