@@ -148,12 +148,13 @@ describe('createApp', () => {
     });
   });
 
-  it('should maintain atomic failure and prevent any route mount if a module is invalid', async () => {
+  it('should maintain atomic failure and prevent any route mount if a module is invalid (legacy mode)', async () => {
     const invalidAppStructure: Record<string, string> = { ...validAppStructure };
     // This file deliberately fails validation!
     invalidAppStructure['src/modules/auth/index.ts'] = `
       // Missing Module() call!
     `;
+    invalidAppStructure['kerith.config.js'] = `export default { modules: 'src/modules/*' };`;
 
     await runInTmpApp(invalidAppStructure, async (_, app) => {
       await expect(createApp(app as any)).rejects.toMatchObject({

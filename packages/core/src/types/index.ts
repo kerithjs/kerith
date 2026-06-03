@@ -209,8 +209,8 @@ export interface CreateAppOptions {
 
 /** Resolved configuration used internally (defaults applied). */
 export interface ResolvedConfig {
-  modules: string;
-  origin: string;
+  modules?: string;
+  origin?: string;
   prefix: string;
   strict: boolean;
   resolveAliases: boolean;

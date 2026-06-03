@@ -47,8 +47,15 @@ export interface ModuleGraph {
 }
 
 export async function buildModuleGraph(config: KerithConfig, cwd: string): Promise<ModuleGraph> {
-  const modulesGlob = config.modules || 'src/modules/*';
-  const dirs = await fg(modulesGlob, { cwd, onlyDirectories: true, absolute: true });
+  let dirs: string[] = [];
+  if (config.origin) {
+    const globPattern = `${config.origin.replace(/\\/g, '/')}/**/index.{ts,js,mts,mjs}`;
+    const indexFiles = await fg(globPattern, { absolute: true, cwd });
+    dirs = Array.from(new Set(indexFiles.map((f) => path.dirname(f))));
+  } else {
+    const modulesGlob = config.modules || 'src/modules/*';
+    dirs = await fg(modulesGlob, { cwd, onlyDirectories: true, absolute: true });
+  }
   const nodes: ModuleNode[] = [];
   const moduleNames: string[] = [];
 

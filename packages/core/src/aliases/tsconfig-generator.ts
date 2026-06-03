@@ -12,11 +12,17 @@ export async function generateTsConfigKerith(config: ResolvedConfig, cwd: string
   }
 
   // Built-in @modules alias
-  const modulesTarget = config.modules; // e.g. "src/modules/*"
-  
-  const paths: Record<string, string[]> = {
-    "@modules/*": [modulesTarget],
-  };
+  let modulesTarget = '';
+  if (config.origin) {
+    modulesTarget = `${config.origin.replace(/\\/g, '/')}/*`;
+  } else if (config.modules) {
+    modulesTarget = config.modules.replace(/\\/g, '/');
+  }
+
+  const paths: Record<string, string[]> = {};
+  if (modulesTarget) {
+    paths["@modules/*"] = [modulesTarget];
+  }
 
   // User-defined aliases from kerith.config.ts
   for (const [alias, target] of Object.entries(config.aliases)) {

@@ -93,13 +93,17 @@ export function checkCommand(): Command {
 
             const oldRegistry = await loadNitsRegistry(cwd) || initNitsRegistry(inferProjectName(cwd));
 
-            // Layer 1 Filter: Purge compilation artifacts (e.g. dist/) from registry
-            const rawGlobs = Array.isArray(config.modules) ? config.modules : 
-              (typeof config.modules === 'string' && config.modules.startsWith('{') && config.modules.endsWith('}')) 
-                ? config.modules.slice(1, -1).split(',') 
-                : [config.modules];
-                
-            const modulesRoots = rawGlobs.map(g => path.resolve(cwd, g.split('*')[0]).replace(/\\/g, '/'));
+            let modulesRoots: string[] = [];
+            if (config.origin) {
+              modulesRoots = [path.resolve(cwd, config.origin).replace(/\\/g, '/')];
+            } else if (config.modules) {
+              const rawGlobs = Array.isArray(config.modules) ? config.modules : 
+                (typeof config.modules === 'string' && config.modules.startsWith('{') && config.modules.endsWith('}')) 
+                  ? config.modules.slice(1, -1).split(',') 
+                  : [config.modules];
+                  
+              modulesRoots = rawGlobs.map(g => path.resolve(cwd, g.split('*')[0]).replace(/\\/g, '/'));
+            }
             
             for (const [id, mod] of Object.entries(oldRegistry.modules)) {
               const absPath = path.resolve(cwd, mod.path).replace(/\\/g, '/');

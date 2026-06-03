@@ -7,13 +7,19 @@ export async function generatePathAliases(config: KerithConfig, cwd: string): Pr
   const pathsObj: Record<string, string[]> = {};
 
   // 1. Register base modules generated paths
-  if (config.modules) {
+  let moduleDirs: string[] = [];
+  if (config.origin) {
+    const globPattern = `${config.origin.replace(/\\/g, '/')}/**/index.{ts,js,mts,mjs}`;
+    const indexFiles = await fg(globPattern, { absolute: true, cwd });
+    moduleDirs = Array.from(new Set(indexFiles.map((f) => path.dirname(f))));
+  } else if (config.modules) {
     const globPattern = config.modules.replace(/\\/g, '/');
-    const moduleDirs = await fg(globPattern, {
+    moduleDirs = await fg(globPattern, {
       onlyDirectories: true,
       absolute: true,
       cwd
     });
+  }
 
     moduleDirs.sort();
 
@@ -42,44 +48,8 @@ export async function generatePathAliases(config: KerithConfig, cwd: string): Pr
       // Always provide directory wildcard
       pathsObj[`${aliasKey}/*`] = [`${relativeDirPath}/*`];
     }
-  }
 
-  // 2. Register domains generated paths
-  if (config.domains) {
-    const globPattern = config.domains.replace(/\\/g, '/');
-    const domainDirs = await fg(globPattern, {
-      onlyDirectories: true,
-      absolute: true,
-      cwd
-    });
-    
-    domainDirs.sort();
-    
-    for (const dirPath of domainDirs) {
-      const domainName = path.basename(dirPath);
-      
-      let indexPath = path.join(dirPath, 'index.ts');
-      if (!fs.existsSync(indexPath)) {
-        indexPath = path.join(dirPath, 'index.js');
-      }
-      
-      let relativeDirPath = path.relative(cwd, dirPath).replace(/\\/g, '/');
-      if (!relativeDirPath.startsWith('./') && !relativeDirPath.startsWith('../')) {
-        relativeDirPath = './' + relativeDirPath;
-      }
 
-      if (fs.existsSync(indexPath)) {
-        let relativeIndexPath = path.relative(cwd, indexPath).replace(/\\/g, '/');
-        if (!relativeIndexPath.startsWith('./') && !relativeIndexPath.startsWith('../')) {
-          relativeIndexPath = './' + relativeIndexPath;
-        }
-        pathsObj[`@${domainName}`] = [relativeIndexPath];
-      }
-
-      // Always provide directory wildcard
-      pathsObj[`@${domainName}/*`] = [`${relativeDirPath}/*`];
-    }
-  }
 
   // 3. Register manual custom aliases 
   if (config.aliases) {

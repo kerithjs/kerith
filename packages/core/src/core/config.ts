@@ -4,9 +4,7 @@ import { defaultLogHandler, resolveLogLevel } from './logger.js';
 
 const defaultStrict = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
-export const DEFAULTS: Omit<ResolvedConfig, 'aliases'> = {
-  modules: 'src/modules/*',
-  origin: 'src',
+export const DEFAULTS: Omit<ResolvedConfig, 'aliases' | 'modules' | 'origin'> = {
   prefix: '',
   strict: defaultStrict,
   resolveAliases: true,
@@ -30,10 +28,23 @@ export const loadConfig = async (
   
   const fileConfig = await loadKerithConfig(cwd, options.logger);
 
+  let finalOrigin = fileConfig.origin;
+  let finalModules = fileConfig.modules;
+
+  if (!finalOrigin && !finalModules) {
+    finalOrigin = 'src';
+  } else if (!finalOrigin && finalModules) {
+    // v1.x legacy mode
+    finalOrigin = undefined;
+  } else if (finalOrigin) {
+    // origin takes precedence
+    finalModules = undefined;
+  }
+
   return {
     ...fileConfig,
-    modules:             fileConfig.modules             ?? DEFAULTS.modules,
-    origin:              fileConfig.origin              ?? DEFAULTS.origin,
+    modules:             finalModules,
+    origin:              finalOrigin,
     prefix:              fileConfig.prefix              ?? DEFAULTS.prefix,
     strict:              fileConfig.strict              ?? DEFAULTS.strict,
     resolveAliases:      fileConfig.resolveAliases      ?? DEFAULTS.resolveAliases,

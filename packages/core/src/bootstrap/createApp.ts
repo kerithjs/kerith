@@ -156,11 +156,42 @@ export async function createApp(
       });
 
       // Step 2 — Resolve modules
-      const globPattern = config.modules.replace(/\\/g, "/");
-      const moduleDirs = await fg(globPattern, {
-        onlyDirectories: true,
-        absolute: true,
-        cwd: process.cwd(),
+      let moduleDirs: string[] = [];
+
+      if (config.origin) {
+        const originPath = path.resolve(process.cwd(), config.origin);
+        if (!fs.existsSync(originPath)) {
+          throw new KerithError("MODULE_NOT_FOUND", `origin '${config.origin}' not found. Set origin in kerith.config.js`);
+        }
+
+        const globPattern = `${config.origin.replace(/\\/g, "/")}/**/index.{ts,js,mts,mjs}`;
+        const indexFiles = await fg(globPattern, {
+          absolute: true,
+          cwd: process.cwd(),
+          ignore: [
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/.git/**",
+            "**/*.d.ts",
+            "**/*.map",
+            "**/.kerith/**",
+            "**/coverage/**",
+            "**/.next/**",
+            "**/.cache/**",
+            "**/.nyc_output/**",
+            "**/__pycache__/**",
+            "**/tmp/**",
+            "**/_shared/**",
+          ],
+        });
+        moduleDirs = Array.from(new Set(indexFiles.map((f) => path.dirname(f))));
+      } else if (config.modules) {
+        const globPattern = config.modules.replace(/\\/g, "/");
+        moduleDirs = await fg(globPattern, {
+          onlyDirectories: true,
+          absolute: true,
+          cwd: process.cwd(),
         ignore: [
           "**/node_modules/**",
           "**/dist/**",
@@ -177,6 +208,7 @@ export async function createApp(
           "**/tmp/**",
         ],
       });
+      }
 
       moduleDirs.sort();
 
@@ -186,6 +218,8 @@ export async function createApp(
         indexPath: string;
         domain?: string;
       }[] = [];
+
+      const isOriginMode = !!config.origin;
 
       for (const dirPath of moduleDirs) {
         log.debug(`Discovered module directory: ${dirPath}`, {
@@ -246,17 +280,21 @@ export async function createApp(
             initNitsRegistry(inferProjectName(cwd));
 
           // Layer 1 Filter: Purge compilation artifacts (e.g. dist/) from registry
-          const rawGlobs = Array.isArray(config.modules)
-            ? config.modules
-            : typeof config.modules === "string" &&
-                config.modules.startsWith("{") &&
-                config.modules.endsWith("}")
-              ? config.modules.slice(1, -1).split(",")
-              : [config.modules];
-
-          const modulesRoots = rawGlobs.map((g) =>
-            normalizePath(path.resolve(cwd, g.split("*")[0])),
-          );
+          let modulesRoots: string[] = [];
+          if (config.origin) {
+            modulesRoots = [normalizePath(path.resolve(cwd, config.origin))];
+          } else if (config.modules) {
+            const rawGlobs = Array.isArray(config.modules)
+              ? config.modules
+              : typeof config.modules === "string" &&
+                  config.modules.startsWith("{") &&
+                  config.modules.endsWith("}")
+                ? config.modules.slice(1, -1).split(",")
+                : [config.modules];
+            modulesRoots = rawGlobs.map((g) =>
+              normalizePath(path.resolve(cwd, g.split("*")[0])),
+            );
+          }
 
           for (const [id, mod] of Object.entries(oldRegistry.modules)) {
             const absPath = normalizePath(path.resolve(cwd, mod.path));
@@ -338,11 +376,18 @@ export async function createApp(
         }
 
         // Registrar @modules como alias built-in
-        const modulesDir = config.modules.replace(/\/\*$/, "");
-        registry.registerAlias(
-          "@modules",
-          path.resolve(process.cwd(), modulesDir),
-        );
+        if (config.modules) {
+          const modulesDir = config.modules.replace(/\/\*$/, "");
+          registry.registerAlias(
+            "@modules",
+            path.resolve(process.cwd(), modulesDir),
+          );
+        } else if (config.origin) {
+          registry.registerAlias(
+            "@modules",
+            path.resolve(process.cwd(), config.origin),
+          );
+        }
 
         await activateAliasResolver(
           pureModuleAliases,
@@ -382,11 +427,16 @@ export async function createApp(
         );
 
         if (!registeredMod) {
-          throw new KerithError(
-            "MODULE_NOT_FOUND",
-            `No index.ts found calling Module(). Add Module() to the module's index.ts.`,
-            `File: ${mod.indexPath}`,
-          );
+          if (isOriginMode) {
+            // Un index.ts sin identificador Kerith se ignora silenciosamente
+            continue;
+          } else {
+            throw new KerithError(
+              "MODULE_NOT_FOUND",
+              `No index.ts found calling Module(). Add Module() to the module's index.ts.`,
+              `File: ${mod.indexPath}`,
+            );
+          }
         }
 
         log.info(`Module loaded: ${pc.green(registeredMod.name)}`, {
@@ -450,8 +500,13 @@ export async function createApp(
         }
       }
 
-      // Step 5.5 — Detect undeclared cross-module imports (development-only; skipped in production)
-      const modulesRoot = config.modules.split("*")[0].replace(/\/$/, "");
+      // Step 5.5 — Discover missing identifiers
+      let modulesRoot = "";
+      if (config.origin) {
+        modulesRoot = config.origin;
+      } else if (config.modules) {
+        modulesRoot = config.modules.split("*")[0].replace(/\/$/, "");
+      }
 
       // Pre-process a Map of normalizedPath -> moduleName (also used by Step 6)
       const modulePathMap = new Map<string, string>();

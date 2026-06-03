@@ -9,13 +9,16 @@ const HOOK_URL = pathToFileURL(
 
 
 export function generatePreloadFile(config: KerithConfig, version: string, cwd: string): string {
-  let modulesBase = 'src/modules';
-  if (config.modules) {
+  let modulesBase = '';
+  if (config.origin) {
+    modulesBase = config.origin.replace(/\\/g, '/');
+  } else if (config.modules) {
     modulesBase = config.modules.replace(/\\/g, '/');
-    if (modulesBase.endsWith('/*')) {
+  }
+  
+  if (modulesBase.endsWith('/*')) {
       modulesBase = modulesBase.slice(0, -2);
     }
-  }
 
   const kerithDir = path.join(cwd, '.kerith');
 
