@@ -10,7 +10,8 @@ export function createModuleCommand() {
   return new Command('create-module')
     .description('Scaffolds a new Kerith module')
     .argument('<name>', 'Module name (lowercase, no spaces/special chars)')
-    .option('-p, --path <path>', 'Destination folder path (default: src/modules/<name>)')
+    .option('-p, --path <path>', 'Destination folder path (default: src/modules/<name> or src/<domain>/<name>)')
+    .option('--domain <domain>', 'Scaffold module inside a specific domain')
     .option('--service', 'Include a service file')
     .option('--routes', 'Include a routes file')
     .option('--repository', 'Include a repository file')
@@ -18,9 +19,16 @@ export function createModuleCommand() {
     .option('--full', 'Include all files (service, routes, repository, schema)')
     .option('--js', 'Force generate JavaScript (.js) files')
     .option('--ts', 'Force generate TypeScript (.ts) files')
-    .action((name: string, options: { path?: string; service?: boolean; routes?: boolean; repository?: boolean; schema?: boolean; full?: boolean; js?: boolean; ts?: boolean }) => {
+    .action((name: string, options: { path?: string; domain?: string; service?: boolean; routes?: boolean; repository?: boolean; schema?: boolean; full?: boolean; js?: boolean; ts?: boolean }) => {
       if (!/^[a-z0-9-]+$/.test(name)) {
         throw new KerithError('CLI_ERROR', pc.red(`\nError: Invalid module name "${name}". Module names must be lowercase and contain only letters, numbers, or hyphens.\n`));
+      }
+
+      if (options.domain) {
+        const domainPath = path.resolve(process.cwd(), `src/${options.domain}`);
+        if (!fs.existsSync(domainPath)) {
+          throw new KerithError('CLI_ERROR', pc.red(`\nError: Domain "${options.domain}" does not exist. Please create the domain first.\n`));
+        }
       }
 
       // Detect language extension
@@ -35,7 +43,12 @@ export function createModuleCommand() {
         ext = hasTsConfig ? 'ts' : 'js';
       }
 
-      const modulePath = options.path ? path.resolve(process.cwd(), options.path) : path.resolve(process.cwd(), `src/modules/${name}`);
+      let defaultPath = `src/modules/${name}`;
+      if (options.domain) {
+        defaultPath = `src/${options.domain}/${name}`;
+      }
+
+      const modulePath = options.path ? path.resolve(process.cwd(), options.path) : path.resolve(process.cwd(), defaultPath);
 
       if (fs.existsSync(modulePath)) {
         throw new KerithError('CLI_ERROR', pc.red(`\nError: The directory "${modulePath}" already exists. Cannot scaffold module here.\n`));

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
 import { createModuleCommand } from './commands/create-module.js'
+import { createDomainCommand } from './commands/create-domain.js'
+import { createSubModuleCommand } from './commands/create-submodule.js'
 import { syncTsconfigCommand } from './commands/sync-tsconfig.js'
 import { checkCommand } from './commands/check.js'
 import { devCommand } from './commands/dev.js'
@@ -18,6 +20,8 @@ program
   .description('Kerith CLI')
   .version(pkg.version)
   .addCommand(createModuleCommand())
+  .addCommand(createDomainCommand())
+  .addCommand(createSubModuleCommand())
   .addCommand(syncTsconfigCommand())
   .addCommand(checkCommand())
   .addCommand(devCommand())
