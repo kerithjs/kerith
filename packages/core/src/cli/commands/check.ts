@@ -39,6 +39,7 @@ export function checkCommand(): Command {
     .description('Analyzes the project structural integrity to detect architectural violations')
     .option('--strict', 'Exit with code 1 if any violation is found', false)
     .option('--module <moduleName>', 'Filter analysis by a specific module')
+    .option('--level <level>', 'Filter output section: domain | module | submodule | flat')
     .option('--format <format>', 'Output format: text or json', 'text')
     .option('--no-circular', 'Skip circular dependency detection')
     .option('--verbose', 'Show verbose output including internal NITS IDs')
@@ -169,11 +170,21 @@ export function checkCommand(): Command {
           violations = violations.filter(v => v.type !== ViolationType.CIRCULAR_DEPENDENCY);
         }
 
-        const hasBoundaryViolation = violations.some(
-          v => v.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION,
-        );
-        const hasBlockingViolations =
-          hasBoundaryViolation || (options.strict && violations.length > 0);
+        const alwaysExit1: ViolationType[] = [
+          ViolationType.RELATIVE_BOUNDARY_VIOLATION,
+          ViolationType.DOMAIN_BOUNDARY_VIOLATION
+        ];
+        
+        const strictExit1: ViolationType[] = [
+          ...alwaysExit1,
+          ViolationType.SUBMODULE_DIRECT_SIBLING,
+          ViolationType.SUBMODULE_DOMAIN_BYPASS,
+          ViolationType.CIRCULAR_DEPENDENCY
+        ];
+
+        const checkTypes = options.strict ? strictExit1 : alwaysExit1;
+
+        const hasBlockingViolations = violations.some(v => checkTypes.includes(v.type));
 
         if (options.format === 'json') {
           console.log(JSON.stringify({ domains: graph.domains, modules: nodes, violations }, null, 2));
@@ -186,13 +197,16 @@ export function checkCommand(): Command {
         const reportData: CheckReportData = {
           version:     resolveCorePkgVersion() ?? 'unknown',
           projectName: inferProjectName(cwd),
+          domains:     graph.domains,
           modules:     nodes,
+          submodules:  graph.submodules || [],
           violations,
           nitsResult,
           options: {
             verbose:      options.verbose ?? false,
             strict:       options.strict  ?? false,
             moduleFilter: options.module,
+            levelFilter:  options.level,
           },
         };
 
