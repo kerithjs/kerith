@@ -3,7 +3,7 @@ export type NitsStatus = 'active' | 'stale' | 'moved' | 'candidate' | 'deleted';
 export interface DiscoveredModule {
   name: string;
   dirPath: string;
-  domain?: string;         // Reserved for v2.0.0 (Domain-driven architecture). Always undefined in v1.x.
+  domain?: string;
   identifiers: string[];   // names extracted by nits-hash
   hash: string;
   /**
@@ -20,7 +20,7 @@ export interface NitsModuleRecord {
   id: string;          // "mod_8f2a9b1c" — unique persistent identifier
   name: string;        // current module name
   path: string;        // directory path (relative to cwd in registry file)
-  domain?: string;     // undefined in v1.x projects without Domain() support
+  domain?: string;
   hash: string;        // content-based signature (see nits-hash.ts)
   status: NitsStatus;
   createdAt: string;   // ISO 8601 timestamp (immutable)

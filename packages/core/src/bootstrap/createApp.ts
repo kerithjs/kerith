@@ -42,11 +42,11 @@ import { registerShutdown } from "../core/shutdown.js";
 import type { DiscoveredModule } from "../types/nits.js";
 
 export async function createApp(
-  app: Application,
+  app?: Application,
   options: CreateAppOptions = {},
 ): Promise<KerithApp> {
   // Step 0 — Prevent Duplicate Bootstrap
-  if ((app as any).__KerithBootstrapped) {
+  if (app && (app as any).__KerithBootstrapped) {
     throw new KerithError(
       "DUPLICATE_BOOTSTRAP",
       "createApp() was called more than once with the same Express instance.",
@@ -147,13 +147,7 @@ export async function createApp(
         }
       }
 
-      if (config.domains || config.shared) {
-        log.warn(
-          "Infrastructure (domains/shared) is not yet supported in v1.2.x. These keys in configuration will be ignored until v2.0.0.",
-          { _module: "config" },
-        );
-      }
-
+      // domains and shared were removed. We will use config.origin directly in v2.0.0
       log.info("Bootstrap started", {
         modules: config.modules,
         prefix: config.prefix || "(none)",
@@ -190,6 +184,7 @@ export async function createApp(
         name: string;
         dirPath: string;
         indexPath: string;
+        domain?: string;
       }[] = [];
 
       for (const dirPath of moduleDirs) {
@@ -238,7 +233,7 @@ export async function createApp(
             discovered.push({
               name: mod.name,
               dirPath: mod.dirPath,
-              domain: undefined, // Reserved for v2.0 (Domains are not supported in v1.x)
+              domain: mod.domain,
               identifiers,
               hash,
               shadowFile: shadowFileMap.get(mod.dirPath),
@@ -563,6 +558,9 @@ export async function createApp(
         }
       }
 
+      const mountedRoutes: import("../types/index.js").MountedRoute[] = [];
+
+      if (app) {
       // Step 6 — Discover controllers
       // Reuse allSourceFiles but including index.* (controllers can be index files of subfolders, but not the module itself)
       const allControllerFiles = await fg(
@@ -675,8 +673,6 @@ export async function createApp(
       }
 
       // Step 7 — Mount routes
-      const mountedRoutes: import("../types/index.js").MountedRoute[] = [];
-
       for (const mod of allModules) {
         const rawMod = registry.getRawModule(mod.name);
         if (!rawMod) continue;
@@ -767,38 +763,27 @@ export async function createApp(
       }
 
       (app as any).__KerithBootstrapped = true;
+      } // end if (app)
 
       const safeRegisteredModules = allModules.map(
         (m) => registry.getModule(m.name)!,
       );
       const durationMs = Math.round(performance.now() - startTime);
 
-      if (mountedRoutes.length === 0) {
-        log.warn(
-          "Mounted 0 route(s) — no controllers were registered. Is this expected?",
-          { _module: "router" },
-        );
-        log.warn(
-          `${pc.yellow("Bootstrap complete")} — ${pc.cyan(allModules.length)} module(s), ${pc.yellow(mountedRoutes.length)} route(s) in ${pc.yellow(`${durationMs}ms`)}`,
-          {
-            moduleCount: allModules.length,
-            routeCount: mountedRoutes.length,
-            durationMs,
-          },
-        );
-      } else {
+      if (app) {
         log.info(`Mounted ${mountedRoutes.length} route(s)`, {
           _module: "router",
         });
-        log.info(
-          `${pc.green("Bootstrap complete")} — ${pc.cyan(allModules.length)} module(s), ${pc.cyan(mountedRoutes.length)} route(s) in ${pc.yellow(`${durationMs}ms`)}`,
-          {
-            moduleCount: allModules.length,
-            routeCount: mountedRoutes.length,
-            durationMs,
-          },
-        );
       }
+
+      log.info(
+        `${pc.green("Bootstrap complete")} — ${pc.cyan(allModules.length)} module(s), ${pc.cyan(mountedRoutes.length)} route(s) in ${pc.yellow(`${durationMs}ms`)}`,
+        {
+          moduleCount: allModules.length,
+          routeCount: mountedRoutes.length,
+          durationMs,
+        },
+      );
 
       return {
         modules: safeRegisteredModules,

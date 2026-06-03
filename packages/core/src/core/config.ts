@@ -6,8 +6,7 @@ const defaultStrict = typeof process !== 'undefined' && process.env?.NODE_ENV !=
 
 export const DEFAULTS: Omit<ResolvedConfig, 'aliases'> = {
   modules: 'src/modules/*',
-  domains: undefined,
-  shared: undefined,
+  origin: 'src',
   prefix: '',
   strict: defaultStrict,
   resolveAliases: true,
@@ -34,6 +33,7 @@ export const loadConfig = async (
   return {
     ...fileConfig,
     modules:             fileConfig.modules             ?? DEFAULTS.modules,
+    origin:              fileConfig.origin              ?? DEFAULTS.origin,
     prefix:              fileConfig.prefix              ?? DEFAULTS.prefix,
     strict:              fileConfig.strict              ?? DEFAULTS.strict,
     resolveAliases:      fileConfig.resolveAliases      ?? DEFAULTS.resolveAliases,

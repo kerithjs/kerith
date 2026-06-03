@@ -16,6 +16,37 @@ export interface ModuleDeclaration {
   imports: string[];
 }
 
+export function extractOptionsFromSource(src: string): Record<string, unknown> {
+  const options: Record<string, unknown> = {};
+  if (!src) return options;
+
+  // Extract strings: module: 'subscriptions'
+  const stringRegex = /([a-zA-Z0-9_]+)\s*:\s*['"]([^'"]+)['"]/g;
+  let strMatch;
+  while ((strMatch = stringRegex.exec(src)) !== null) {
+    options[strMatch[1]] = strMatch[2];
+  }
+
+  // Extract simple arrays: imports: ['a', 'b']
+  const arrayRegex = /([a-zA-Z0-9_]+)\s*:\s*\[([^\]]+)\]/g;
+  let arrMatch;
+  while ((arrMatch = arrayRegex.exec(src)) !== null) {
+    const key = arrMatch[1];
+    const elementsStr = arrMatch[2];
+    const elements = elementsStr.split(',').map(e => {
+      const trimmed = e.trim();
+      const match = trimmed.match(/^['"]([^'"]+)['"]$/);
+      return match ? match[1] : undefined;
+    }).filter(e => e !== undefined) as string[];
+    
+    if (elements.length > 0) {
+      options[key] = elements;
+    }
+  }
+
+  return options;
+}
+
 export function extractIdentifierCall(
   filePath: string,
   calleeName: string
@@ -82,10 +113,13 @@ export function extractIdentifierCall(
   // Fallback: Acorn does not parse TypeScript natively (interfaces, types, strong typings).
   // Regex support is explicitly documented and centralized here as a fallback.
   if (!found && code) {
-    const regex = new RegExp(`${calleeName}\\s*\\(\\s*['"]([^'"]+)['"]`, "g");
+    const regex = new RegExp(`${calleeName}\\s*\\(\\s*['"]([^'"]+)['"](?:\\s*,\\s*(\\{[^}]+\\}))?`, "g");
     let match;
     while ((match = regex.exec(code)) !== null) {
-      found = { name: match[1], options: {} };
+      found = { 
+        name: match[1], 
+        options: extractOptionsFromSource(match[2] ?? '')
+      };
     }
   }
 

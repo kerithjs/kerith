@@ -92,4 +92,32 @@ describe('ast-parser tests', () => {
       expect(res?.name).toBe('TestService');
     });
   });
+
+  it('fallback regex correctly returns empty options for simple calls like Domain("billing")', () => {
+    runWithTempFile(`
+      import type { SomeType } from "./types";
+      // bad syntax that throws acorn parser Error
+      @@@
+      Domain('billing');
+    `, (filePath) => {
+      const res = extractIdentifierCall(filePath, 'Domain');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('billing');
+      expect(res?.options).toEqual({});
+    });
+  });
+
+  it('fallback regex correctly captures simple options like Module("payments", { imports: ["invoices"] })', () => {
+    runWithTempFile(`
+      import type { SomeType } from "./types";
+      // bad syntax that throws acorn parser Error
+      @@@
+      Module('payments', { imports: ['invoices'], foo: 'bar' });
+    `, (filePath) => {
+      const res = extractIdentifierCall(filePath, 'Module');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('payments');
+      expect(res?.options).toEqual({ imports: ['invoices'], foo: 'bar' });
+    });
+  });
 });

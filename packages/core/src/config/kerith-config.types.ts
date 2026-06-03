@@ -5,12 +5,10 @@ export interface AliasMap {
 }
 
 export interface KerithConfig {
-  /** Glob pointing to module folders. Default: 'src/modules/*'. */
+  /** @deprecated Replaced by \`origin\` in v2.0.0. Glob pointing to module folders. Default: 'src/modules/*'. */
   modules?: string;
-  /** Glob pointing to domain folders (v2.0.0+). Default: undefined. */
-  domains?: string;
-  /** Glob pointing to shared global folders (v2.0.0+). Default: undefined. */
-  shared?: string;
+  /** Root directory to scan for domains/modules (v2.0.0+). Default: 'src'. */
+  origin?: string;
   /** Global route prefix. Example: '/api/v1'. Default: ''. */
   prefix?: string;
   /**

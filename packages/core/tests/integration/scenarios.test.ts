@@ -968,7 +968,7 @@ describe("Integration Tests", () => {
       createDefaultPinoSpy.mockRestore();
     });
 
-    it("verifies that bootstrap with 0 routes emits warn (not info) with alert message", async () => {
+    it("verifies that bootstrap with 0 routes emits info (not warn)", async () => {
       await runInTmpApp(
         {
           "kerith.config.js": "export default { strict: false };",
@@ -980,21 +980,21 @@ describe("Integration Tests", () => {
         async (_, app) => {
           await createApp(app as any);
 
-          // Find calls to warn
-          const warnCalls = pinoMock.warn.mock.calls;
+          // Find calls to info
+          const infoCalls = pinoMock.info.mock.calls;
           
-          // Verify 0 routes warning was emitted
-          const zeroRoutesWarn = warnCalls.find((call: any[]) => 
+          // Verify 0 routes info was emitted
+          const zeroRoutesInfo = infoCalls.find((call: any[]) => 
             call[0] && 
             typeof call[0] === 'object' && 
             call[0].module === 'router' && 
             typeof call[1] === 'string' &&
             call[1].includes('Mounted 0 route(s)')
           );
-          expect(zeroRoutesWarn).toBeDefined();
+          expect(zeroRoutesInfo).toBeDefined();
           
-          // Verify Bootstrap complete summary warning
-          const bootstrapCompleteWarn = warnCalls.find((call: any[]) => 
+          // Verify Bootstrap complete summary info
+          const bootstrapCompleteInfo = infoCalls.find((call: any[]) => 
             call[0] && 
             typeof call[0] === 'object' && 
             call[0].module === 'boot' && 
@@ -1002,7 +1002,7 @@ describe("Integration Tests", () => {
             call[1].includes('Bootstrap complete') && 
             call[0] && call[0].routeCount === 0 && call[0].moduleCount === 1
           );
-          expect(bootstrapCompleteWarn).toBeDefined();
+          expect(bootstrapCompleteInfo).toBeDefined();
         },
       );
     });

@@ -368,18 +368,6 @@ describe('createApp', () => {
   // ── §1.4: createApp - missing coverage branches ────────────────────────────
 
   describe('§1.4: createApp - missing coverage branches', () => {
-    it('§1.4-1: logs a warning if config.domains or config.shared is provided', async () => {
-      const logger = vi.fn();
-      await runInTmpApp(validAppStructure, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { domains: ["src/domains/*"] };');
-        await createApp(app as any, { logger });
-        expect(logger).toHaveBeenCalledWith(
-          'warn',
-          expect.stringContaining('Infrastructure (domains/shared) is not yet supported'),
-          expect.any(Object)
-        );
-      });
-    });
 
     it('§1.4-2: throws INVALID_ALIAS_KEY if alias config key contains a wildcard', async () => {
       const logger = vi.fn();
@@ -430,7 +418,7 @@ describe('createApp', () => {
       });
     });
 
-    it('§1.4-5: logs a warning if a module mounts 0 controllers', async () => {
+    it('§1.4-5: logs an info if a module mounts 0 controllers', async () => {
       const logger = vi.fn();
       const noControllersApp = {
         'src/modules/empty/index.ts': `
@@ -442,7 +430,7 @@ describe('createApp', () => {
       await runInTmpApp(noControllersApp, async (_, app) => {
         await createApp(app as any, { logger } as any);
         expect(logger).toHaveBeenCalledWith(
-          'warn',
+          'info',
           expect.stringContaining('Mounted 0 route(s)'),
           expect.any(Object)
         );

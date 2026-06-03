@@ -210,8 +210,7 @@ export interface CreateAppOptions {
 /** Resolved configuration used internally (defaults applied). */
 export interface ResolvedConfig {
   modules: string;
-  domains?: string;
-  shared?: string;
+  origin: string;
   prefix: string;
   strict: boolean;
   resolveAliases: boolean;
