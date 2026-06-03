@@ -202,6 +202,9 @@ Ships two rules: `no-private-imports` (error) and `no-undeclared-imports` (warn)
 
 All packages follow [Semantic Versioning](https://semver.org/) and are released in lockstep from this repository. Changes are documented in the `CHANGELOG.md` of each package.
 
+> **Why does `@kerith/core` start at v1.8.2?**
+> Kerith is the direct evolution of [Nodulus](https://www.npmjs.com/package/@vlynk-studios/nodulus-core), published under Vlynk Studios. The versioning was intentionally continued from where Nodulus left off — rather than resetting to v1.0.0 — to preserve the lineage and reflect the true maturity of the framework. The v1.0.0–v1.8.1 history is fully documented in [CHANGELOG.md](./CHANGELOG.md).
+
 ---
 
 ## Contributing
