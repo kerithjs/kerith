@@ -240,6 +240,20 @@ export async function scanOrigin(
     mod.domain = inferDomain(mod.indexPath, domains);
   }
 
+  const plainModules = modules.filter(m => !m.domain);
+  const domainModules = modules.filter(m => m.domain);
+
+  for (const plain of plainModules) {
+    const conflict = domainModules.find(dm => dm.name === plain.name);
+    if (conflict) {
+      throw new KerithError(
+        'MODULE_SPACE_CONFLICT',
+        `Module name conflict: "${plain.name}" exists in both flat space ("${plain.dirPath}") and domain space ("${conflict.dirPath}").`,
+        `Rename one of the modules or move both into domains.`
+      );
+    }
+  }
+
   const resolvedSubmodules: SubModuleScanEntry[] = [];
   for (const sub of submodules) {
     const parentModule = inferParentModule(sub.indexPath, modules);

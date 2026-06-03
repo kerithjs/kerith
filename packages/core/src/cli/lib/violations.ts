@@ -10,6 +10,10 @@ export const ViolationType = {
   UNDECLARED_IMPORT: 'undeclared-import',
   CIRCULAR_DEPENDENCY: 'circular-dependency',
   RELATIVE_BOUNDARY_VIOLATION: 'relative-boundary-violation',
+  DOMAIN_BOUNDARY_VIOLATION: 'domain-boundary-violation',
+  SUBMODULE_DIRECT_SIBLING: 'submodule-direct-sibling',
+  SUBMODULE_DOMAIN_BYPASS: 'submodule-domain-bypass',
+  MODULE_SPACE_CONFLICT: 'module-space-conflict',
 } as const;
 
 export type ViolationType = typeof ViolationType[keyof typeof ViolationType];
@@ -61,7 +65,8 @@ export function getModuleFiles(moduleDirPath: string): string[] {
 export function isErrorViolation(violation: Violation): boolean {
   return (
     violation.type === ViolationType.CIRCULAR_DEPENDENCY ||
-    violation.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION
+    violation.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION ||
+    violation.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION
   );
 }
 
@@ -74,7 +79,9 @@ export function detectRelativeBoundaryViolations(
 ): RelativeBoundaryViolation[] {
   const violations: RelativeBoundaryViolation[] = [];
 
-  for (const moduleNode of graph.modules) {
+  const allNodes = [...graph.modules, ...(graph.submodules || [])];
+
+  for (const moduleNode of allNodes) {
     const files = getModuleFiles(moduleNode.dirPath);
 
     for (const file of files) {
@@ -134,6 +141,8 @@ export function detectViolations(
     ...detectRelativeBoundaryViolations(graph, cwd),
   ];
   const nodes = graph.modules;
+  const subNodes = graph.submodules || [];
+  const allNodes = [...nodes, ...subNodes];
   const moduleNames = new Set(nodes.map(n => n.name));
 
   if (graph.domains) {
@@ -142,10 +151,57 @@ export function detectViolations(
     }
   }
 
-  for (const node of nodes) {
+  for (const node of allNodes) {
     for (const imp of node.actualImports) {
       if (imp.specifier.startsWith('./') || imp.specifier.startsWith('../')) {
         continue;
+      }
+
+      // 1. DOMAIN_BOUNDARY_VIOLATION
+      if (imp.specifier.startsWith('@') && !imp.specifier.startsWith('@modules/')) {
+        const parts = imp.specifier.split('/');
+        const targetDomain = parts[0].slice(1);
+        
+        if (parts.length > 1 && graph.domains?.some(d => d.name === targetDomain)) {
+          if (node.domain !== targetDomain) {
+            violations.push({
+              type: ViolationType.DOMAIN_BOUNDARY_VIOLATION,
+              module: node.name,
+              message: `Domain boundary violation: module "${node.name}" imports from internal domain module "${imp.specifier}".`,
+              suggestion: `Import from '@${targetDomain}' instead of '${imp.specifier}'`,
+              location: { file: imp.file, line: imp.line },
+            });
+          }
+        }
+      }
+
+      // 2. SUBMODULE_DIRECT_SIBLING
+      if (imp.specifier.includes('/submodules/')) {
+        const parts = imp.specifier.split('/submodules/');
+        const sibling = parts[1];
+        if ('parentModule' in node && sibling) {
+          const parentAlias = parts[0];
+          violations.push({
+            type: ViolationType.SUBMODULE_DIRECT_SIBLING,
+            module: node.name,
+            message: `Direct sibling access: submodule "${node.name}" directly imports sibling submodule "${sibling}".`,
+            suggestion: `Access '${sibling}' through the parent module '${parentAlias}'`,
+            location: { file: imp.file, line: imp.line },
+          });
+        }
+      }
+
+      // 3. SUBMODULE_DOMAIN_BYPASS
+      if ('parentModule' in node && node.domain) {
+        if (imp.specifier === `@${node.domain}`) {
+          violations.push({
+             type: ViolationType.SUBMODULE_DOMAIN_BYPASS,
+             module: node.name,
+             message: `Domain bypass: submodule "${node.name}" directly imports its own domain "${node.domain}".`,
+             suggestion: `Access domain resources through the parent module`,
+             location: { file: imp.file, line: imp.line },
+          });
+        }
       }
 
       const { isPrivate, suggestion, target } = analyzeImport(imp.specifier);

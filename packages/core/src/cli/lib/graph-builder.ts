@@ -45,40 +45,19 @@ export interface DomainNode {
 export interface ModuleGraph {
   domains: DomainNode[];
   modules: ModuleNode[];
+  submodules: SubModuleNode[];
 }
 
 export async function buildModuleGraph(config: KerithConfig, cwd: string): Promise<ModuleGraph> {
   const scanResult = await scanFromConfig(config, cwd);
-  const dirs = scanResult.modules.map(m => m.dirPath);
-  
-  const nodes: ModuleNode[] = [];
-  const moduleNames: string[] = scanResult.modules.map(m => m.name);
-
-
-
+  const moduleNames = scanResult.modules.map(m => m.name);
   const activeAliases = buildActiveAliasesFromConfig(config, moduleNames);
 
-  for (const dirPath of dirs) {
-    let indexPath = path.join(dirPath, 'index.ts');
-    if (!fs.existsSync(indexPath)) {
-      indexPath = path.join(dirPath, 'index.js');
-      if (!fs.existsSync(indexPath)) {
-        continue;
-      }
-    }
-
-    const declaration = extractModuleDeclaration(indexPath);
-    if (!declaration) {
-      continue;
-    }
-
+  async function buildNodeData(dirPath: string, indexPath: string): Promise<{ actualImports: ImportFound[], internalIdentifiers: string[] }> {
     const actualImports: ImportFound[] = [];
     const internalIdentifiers: string[] = [];
-    // NOTE: 'Controller' excluded — its first arg is an HTTP route, not a semantic
-    // domain identifier. See BUG-1 in nits-hash.ts for full rationale.
     const targetCallees = ['Service', 'Repository', 'Schema'];
 
-    // Also check index file for identifiers
     for (const callee of targetCallees) {
       const result = extractIdentifierCall(indexPath, callee);
       if (result) internalIdentifiers.push(result.name);
@@ -99,23 +78,55 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
         if (result) internalIdentifiers.push(result.name);
       }
     }
+    return { actualImports, internalIdentifiers };
+  }
 
-    // Encontrar el modEntry de scanResult
-    const modEntry = scanResult.modules.find(m => m.dirPath === dirPath);
+  const nodes: ModuleNode[] = [];
+  for (const mod of scanResult.modules) {
+    const { actualImports, internalIdentifiers } = await buildNodeData(mod.dirPath, mod.indexPath);
+    
+    // Add submodules array directly mapped from scanResult
+    const submodules = scanResult.submodules
+      .filter(sub => sub.parentModule === mod.name && sub.domain === mod.domain)
+      .map(sub => sub.name);
 
     nodes.push({
-      name: declaration.name,
-      dirPath,
-      indexPath,
-      domain: modEntry?.domain,
-      declaredImports: modEntry?.imports ?? declaration.imports,
+      name: mod.name,
+      dirPath: mod.dirPath,
+      indexPath: mod.indexPath,
+      domain: mod.domain,
+      submodules: submodules.length > 0 ? submodules : undefined,
+      declaredImports: mod.imports,
       actualImports,
       internalIdentifiers
     });
   }
 
+  const subNodes: SubModuleNode[] = [];
+  for (const sub of scanResult.submodules) {
+    const { actualImports, internalIdentifiers } = await buildNodeData(sub.dirPath, sub.indexPath);
+    subNodes.push({
+      name: sub.name,
+      dirPath: sub.dirPath,
+      indexPath: sub.indexPath,
+      parentModule: sub.parentModule,
+      domain: sub.domain,
+      declaredImports: [], // SubModules do not declare imports
+      actualImports,
+      internalIdentifiers
+    });
+  }
+
+  const domainNodes: DomainNode[] = scanResult.domains.map(d => ({
+    name: d.name,
+    dirPath: d.dirPath,
+    indexPath: d.indexPath,
+    modules: nodes.filter(m => m.domain === d.name)
+  }));
+
   return {
-    domains: [],
-    modules: nodes
+    domains: domainNodes,
+    modules: nodes,
+    submodules: subNodes
   };
 }
