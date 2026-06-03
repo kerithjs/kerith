@@ -213,6 +213,31 @@ export async function createApp(
         _module: "bootstrap",
       });
 
+      // Pre-fetch all project files to avoid multiple glob calls later
+      let modulesRoot = "";
+      if (config.origin) {
+        modulesRoot = config.origin;
+      } else if (config.modules) {
+        modulesRoot = config.modules.split("*")[0].replace(/\/$/, "");
+      }
+      const absoluteModulesRoot = modulesRoot ? normalizePath(path.resolve(cwd, modulesRoot)) : "";
+
+      let allProjectFiles: string[] = [];
+      if (absoluteModulesRoot) {
+        allProjectFiles = await fg(`${absoluteModulesRoot}/**/*.{ts,js,mts,mjs,cjs}`, {
+          absolute: true,
+          cwd,
+          ignore: [
+            "**/*.test.*",
+            "**/*.spec.*",
+            "**/*.d.ts",
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/build/**"
+          ],
+        });
+      }
+
       // Step 4 — NITS identity reconciliation
       if (config.nits?.enabled !== false) {
         try {
@@ -223,15 +248,11 @@ export async function createApp(
           // Errors are swallowed inside shadow-file.ts — bootstrap never fails here.
           const shadowFileMap = scanShadowFiles(resolvedModules);
 
-          const originPath = config.origin
-            ? normalizePath(path.resolve(cwd, config.origin))
-            : undefined;
-
-          // Un solo glob global para todos los archivos si estamos en v2
-          const allNitsFiles = originPath
-            ? await fg(`${originPath}/**/*.{ts,js,mts,mjs}`, {
-                absolute: true,
-                ignore: ['**/*.test.*', '**/*.spec.*', '**/*.d.ts', 'index.*', '**/node_modules/**'],
+          // Un solo glob global para todos los archivos (filtrado en memoria)
+          const allNitsFiles = absoluteModulesRoot
+            ? allProjectFiles.filter((f) => {
+                const base = path.basename(f);
+                return !base.startsWith('index.') && !f.endsWith('.cjs');
               })
             : undefined;
 
@@ -521,13 +542,6 @@ export async function createApp(
       }
 
       // Step 7.5 — Undeclared / unused imports (strict)
-      let modulesRoot = "";
-      if (config.origin) {
-        modulesRoot = config.origin;
-      } else if (config.modules) {
-        modulesRoot = config.modules.split("*")[0].replace(/\/$/, "");
-      }
-
       // Pre-process a Map of normalizedPath -> module ref (also used by Step 6)
       const modulePathMap = new Map<string, { name: string; domain?: string }>();
       for (const mod of allModules) {
@@ -545,19 +559,10 @@ export async function createApp(
       );
 
       if (config.strict) {
-        // Single I/O call for all source files
-        const allSourceFiles = await fg(`${modulesRoot}/**/*.{ts,js,mts,mjs}`, {
-          absolute: true,
-          cwd: process.cwd(),
-          ignore: [
-            "**/*.test.*",
-            "**/*.spec.*",
-            "**/*.d.ts",
-            "**/index.*",
-            "**/node_modules/**",
-            "**/dist/**",
-            "**/build/**",
-          ],
+        // Reuse cached files
+        const allSourceFiles = allProjectFiles.filter((f) => {
+          const base = path.basename(f);
+          return !base.startsWith("index.") && !f.endsWith(".cjs");
         });
 
         // Build a Map of module -> source files
@@ -641,23 +646,9 @@ export async function createApp(
 
       if (app) {
       // Step 8 — Discover controllers and mount routes (Express only)
-      // Reuse allSourceFiles but including index.* (controllers can be index files of subfolders, but not the module itself)
-      const allControllerFiles = await fg(
-        `${modulesRoot}/**/*.{ts,js,mts,mjs,cjs}`,
-        {
-          absolute: true,
-          cwd: process.cwd(),
-          ignore: [
-            "**/*.types.*",
-            "**/*.d.ts",
-            "**/*.spec.*",
-            "**/*.test.*",
-            "**/node_modules/**",
-            "**/dist/**",
-            "**/build/**",
-          ],
-        },
-      );
+      // Reuse allProjectFiles but including index.* (controllers can be index files of subfolders, but not the module itself)
+      const allControllerFiles = allProjectFiles.filter((f) => !f.includes(".types."));
+
       const controllerFilesByModule = new Map<string, string[]>();
       for (const mod of allModules) {
         controllerFilesByModule.set(buildModuleKey(mod.name, mod.domain), []);
