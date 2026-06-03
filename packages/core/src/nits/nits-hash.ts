@@ -73,10 +73,13 @@ export function areIdentitiesSimilar(
  * @param dirPath Absolute path to the module directory
  * @returns Object with truncated SHA-1 hash (10 characters) and the list of identifiers
  */
-export async function computeModuleHash(dirPath: string): Promise<{ hash: string; identifiers: string[] }> {
+export async function computeModuleHash(
+  dirPath: string,
+  preloadedFiles?: string[]
+): Promise<{ hash: string; identifiers: string[] }> {
   const hash = createHash('sha1');
   
-  const files = await fg('**/*.{ts,js,mts,mjs}', {
+  const files = preloadedFiles ?? await fg('**/*.{ts,js,mts,mjs}', {
     cwd: dirPath,
     absolute: true,
     ignore: ['**/*.test.*', '**/*.spec.*', '**/*.d.ts', 'index.*']

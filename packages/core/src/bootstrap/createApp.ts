@@ -223,9 +223,40 @@ export async function createApp(
           // Errors are swallowed inside shadow-file.ts — bootstrap never fails here.
           const shadowFileMap = scanShadowFiles(resolvedModules);
 
+          const originPath = config.origin
+            ? normalizePath(path.resolve(cwd, config.origin))
+            : undefined;
+
+          // Un solo glob global para todos los archivos si estamos en v2
+          const allNitsFiles = originPath
+            ? await fg(`${originPath}/**/*.{ts,js,mts,mjs}`, {
+                absolute: true,
+                ignore: ['**/*.test.*', '**/*.spec.*', '**/*.d.ts', 'index.*', '**/node_modules/**'],
+              })
+            : undefined;
+
+          // Agrupar por módulo usando el dirPath como prefijo
+          let filesByModulePath: Map<string, string[]> | undefined;
+          if (allNitsFiles) {
+            filesByModulePath = new Map<string, string[]>();
+            for (const mod of resolvedModules) {
+              filesByModulePath.set(normalizePath(path.resolve(mod.dirPath)), []);
+            }
+            for (const file of allNitsFiles) {
+              const normalizedFile = normalizePath(file);
+              for (const [modPath, files] of filesByModulePath) {
+                if (normalizedFile.startsWith(modPath + '/')) {
+                  files.push(file);
+                  break;
+                }
+              }
+            }
+          }
+
           const discovered: DiscoveredModule[] = [];
           for (const mod of resolvedModules) {
-            const { hash, identifiers } = await computeModuleHash(mod.dirPath);
+            const modFiles = filesByModulePath ? filesByModulePath.get(normalizePath(path.resolve(mod.dirPath))) : undefined;
+            const { hash, identifiers } = await computeModuleHash(mod.dirPath, modFiles);
             discovered.push({
               name: mod.name,
               dirPath: mod.dirPath,
