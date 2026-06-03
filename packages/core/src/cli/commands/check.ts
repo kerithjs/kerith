@@ -84,7 +84,7 @@ export function checkCommand(): Command {
               discovered.push({
                 name: node.name,
                 dirPath: node.dirPath,
-                domain: undefined,
+                domain: node.domain,
                 identifiers,
                 hash,
                 shadowFile: shadowFileMap.get(node.dirPath),

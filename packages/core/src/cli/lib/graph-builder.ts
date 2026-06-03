@@ -11,6 +11,7 @@ import {
   type ImportFound,
 } from './import-scanner.js';
 import type { KerithConfig } from '../../config/kerith-config.types.js';
+import { scanFromConfig } from '../../bootstrap/scanner.js';
 
 export interface BaseNode {
   name: string;
@@ -47,27 +48,13 @@ export interface ModuleGraph {
 }
 
 export async function buildModuleGraph(config: KerithConfig, cwd: string): Promise<ModuleGraph> {
-  let dirs: string[] = [];
-  if (config.origin) {
-    const globPattern = `${config.origin.replace(/\\/g, '/')}/**/index.{ts,js,mts,mjs}`;
-    const indexFiles = await fg(globPattern, { absolute: true, cwd });
-    dirs = Array.from(new Set(indexFiles.map((f) => path.dirname(f))));
-  } else {
-    const modulesGlob = config.modules || 'src/modules/*';
-    dirs = await fg(modulesGlob, { cwd, onlyDirectories: true, absolute: true });
-  }
+  const scanResult = await scanFromConfig(config, cwd);
+  const dirs = scanResult.modules.map(m => m.dirPath);
+  
   const nodes: ModuleNode[] = [];
-  const moduleNames: string[] = [];
+  const moduleNames: string[] = scanResult.modules.map(m => m.name);
 
-  for (const dirPath of dirs) {
-    let indexPath = path.join(dirPath, 'index.ts');
-    if (!fs.existsSync(indexPath)) {
-      indexPath = path.join(dirPath, 'index.js');
-      if (!fs.existsSync(indexPath)) continue;
-    }
-    const declaration = extractModuleDeclaration(indexPath);
-    if (declaration) moduleNames.push(declaration.name);
-  }
+
 
   const activeAliases = buildActiveAliasesFromConfig(config, moduleNames);
 
@@ -113,11 +100,15 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
       }
     }
 
+    // Encontrar el modEntry de scanResult
+    const modEntry = scanResult.modules.find(m => m.dirPath === dirPath);
+
     nodes.push({
       name: declaration.name,
       dirPath,
       indexPath,
-      declaredImports: declaration.imports,
+      domain: modEntry?.domain,
+      declaredImports: modEntry?.imports ?? declaration.imports,
       actualImports,
       internalIdentifiers
     });

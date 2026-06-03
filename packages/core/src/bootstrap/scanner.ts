@@ -151,12 +151,16 @@ async function detectSharedEntries(
   }
 
   const globalShared = path.join(scanRoot, 'shared');
-  if (fs.existsSync(globalShared) && fs.statSync(globalShared).isDirectory()) {
-    shared.push({
-      type: 'global',
-      alias: '@shared',
-      path: globalShared,
-    });
+  try {
+    if (fs.existsSync(globalShared) && fs.statSync(globalShared).isDirectory()) {
+      shared.push({
+        type: 'global',
+        alias: '@shared',
+        path: globalShared,
+      });
+    }
+  } catch {
+    // Ignorar — path desapareció entre existsSync y statSync (race condition)
   }
 
   return shared;

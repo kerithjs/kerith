@@ -77,9 +77,11 @@ export function printHeader(data: CheckReportData): void {
 export function printArchitectureSection(data: CheckReportData): void {
   sectionHeader('Architecture');
   
-  const maxLen = Math.min(20, Math.max(...data.modules.map(m => m.name.length), 4));
+  const getQualifiedName = (m: ModuleGraphNode) => m.domain ? `${m.domain}/${m.name}` : m.name;
+  const maxLen = Math.min(30, Math.max(...data.modules.map(m => getQualifiedName(m).length), 4));
 
   for (const mod of data.modules) {
+    const qualifiedName = getQualifiedName(mod);
     const modViolations = data.violations.filter(v => v.module === mod.name);
     const hasCircular = modViolations.some(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
     const boundaryViolations = modViolations.filter(
@@ -108,7 +110,7 @@ export function printArchitectureSection(data: CheckReportData): void {
       status = `${AYU.green}OK${R}`;
     }
 
-    const displayName = mod.name.length > 20 ? mod.name.slice(0, 19) + '…' : mod.name;
+    const displayName = qualifiedName.length > 30 ? qualifiedName.slice(0, 29) + '…' : qualifiedName;
     const paddedName = displayName.padEnd(maxLen + 2, ' ');
     console.log(`  ${icon}  ${AYU.fg}${paddedName}${R} ${status}`);
 
@@ -128,9 +130,11 @@ export function printArchitectureSection(data: CheckReportData): void {
 export function printArchitectureWithIdentity(data: CheckReportData): void {
   sectionHeader('Architecture + Identity');
 
-  const maxLen = Math.min(20, Math.max(...data.modules.map(m => m.name.length), 4));
+  const getQualifiedName = (m: ModuleGraphNode) => m.domain ? `${m.domain}/${m.name}` : m.name;
+  const maxLen = Math.min(30, Math.max(...data.modules.map(m => getQualifiedName(m).length), 4));
 
   for (const mod of data.modules) {
+    const qualifiedName = getQualifiedName(mod);
     const modViolations = data.violations.filter(v => v.module === mod.name);
     const hasCircular = modViolations.some(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
     const hasBoundary = modViolations.some(
@@ -150,7 +154,7 @@ export function printArchitectureWithIdentity(data: CheckReportData): void {
       icon = `${AYU.green}✔${R}`;
     }
 
-    const displayName = mod.name.length > 20 ? mod.name.slice(0, 19) + '…' : mod.name;
+    const displayName = qualifiedName.length > 30 ? qualifiedName.slice(0, 29) + '…' : qualifiedName;
     const paddedName = displayName.padEnd(maxLen + 2, ' ');
     const idStr = mod.id || 'unknown';
     const resolvedBy = isNew ? 'new' : (mod.resolvedBy || 'unknown');
