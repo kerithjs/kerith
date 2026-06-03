@@ -1,9 +1,9 @@
 # Security Policy
 
 **Package:** `@kerith/core`
-**Current Version:** 1.8.1
+**Current Version:** 1.8.2
 **Maintained by:** Vlynk Studios
-**Repository:** https://github.com/KerithJS/kerith
+**Repository:** https://github.com/kerithjs/kerith
 
 ---
 
@@ -23,7 +23,7 @@ Only the latest stable release receives security patches. Older minor versions a
 
 If you discover a security vulnerability in `@kerith/core`, **do not open a public GitHub issue**. Instead, please report it responsibly through one of these channels:
 
-- **GitHub Security Advisories:** Open a private advisory at `https://github.com/Vlynk-Studios/@kerith/core/security/advisories/new`
+- **GitHub Security Advisories:** Open a private advisory at `https://github.com/kerithjs/kerith/security/advisories/new`
 - **Email:** Contact the maintainers directly via the email listed in the repository profile.
 
 Please include the following in your report:
@@ -201,4 +201,4 @@ We follow a **90-day responsible disclosure policy**. If a reported vulnerabilit
 
 ---
 
-*Last updated: 2026-05-28 — @kerith/core v1.8.1*
+*Last updated: 2026-06-03 — @kerith/core v1.8.2*

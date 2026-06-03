@@ -80,7 +80,7 @@ kerith/
 **Prerequisites:** Node.js ≥ 20.6, npm ≥ 10
 
 ```bash
-git clone https://github.com/KerithJS/kerith.git
+git clone https://github.com/kerithjs/kerith.git
 cd kerith
 npm install
 ```

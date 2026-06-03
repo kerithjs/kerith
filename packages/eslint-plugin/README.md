@@ -7,7 +7,7 @@ The official ESLint plugin for the **Kerith** framework. It provides static anal
 Ensure you have ESLint installed, then add the plugin:
 
 ```sh
-npm install --save-dev eslint @kerith/eslint
+npm install --save-dev eslint @kerith/eslint-plugin
 ```
 
 ## 🚀 Usage (Flat Config)
@@ -15,7 +15,7 @@ npm install --save-dev eslint @kerith/eslint
 Kerith fully supports ESLint's modern `Flat Config` (`eslint.config.js`). Simply import the plugin and use the pre-configured `recommended` set:
 
 ```javascript
-import KerithPlugin from '@kerith/eslint';
+import KerithPlugin from '@kerith/eslint-plugin';
 
 export default [
   // Your other configurations...
@@ -28,16 +28,16 @@ export default [
 Alternatively, you can manually cherry-pick and configure specific rules:
 
 ```javascript
-import KerithPlugin from '@kerith/eslint';
+import KerithPlugin from '@kerith/eslint-plugin';
 
 export default [
   {
     plugins: {
-      Kerith: KerithPlugin
+      kerith: KerithPlugin
     },
     rules: {
-      'Kerith/no-private-imports': 'error',
-      'Kerith/no-undeclared-imports': 'warn'
+      'kerith/no-private-imports': 'error',
+      'kerith/no-undeclared-imports': 'warn'
     }
   }
 ];

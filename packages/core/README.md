@@ -29,7 +29,7 @@ Kerith ships as two focused packages from the same repository:
 | Package | Description | npm |
 |---|---|---|
 | `@kerith/core` | Core framework — module discovery, routing, aliases, validation | [![npm](https://img.shields.io/npm/v/@kerith/core.svg)](https://www.npmjs.com/package/@kerith/core) |
-| `@kerith/eslint` | ESLint plugin — static enforcement of Kerith module boundaries in your editor and CI | [![npm](https://img.shields.io/npm/v/@kerith/eslint.svg)](https://www.npmjs.com/package/@kerith/eslint) |
+| `@kerith/eslint-plugin` | ESLint plugin — static enforcement of Kerith module boundaries in your editor and CI | [![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin.svg)](https://www.npmjs.com/package/@kerith/eslint-plugin) |
 
 Both packages are independent installs — use one or both depending on your setup. The ESLint plugin is a companion, not a dependency of the core.
 
@@ -652,19 +652,19 @@ export default {
 
 ## ESLint Plugin
 
-> **Available from v1.3.0** · Package: `@kerith/eslint`
+> **Available from v1.3.0** · Package: `@kerith/eslint-plugin`
 
-`Kerith check` validates your architecture on demand or in CI. `@kerith/eslint` brings the same rules into your editor — so you catch boundary violations the moment you write the import.
+`Kerith check` validates your architecture on demand or in CI. `@kerith/eslint-plugin` brings the same rules into your editor — so you catch boundary violations the moment you write the import.
 
 ```bash
-npm install --save-dev @kerith/eslint
+npm install --save-dev @kerith/eslint-plugin
 ```
 
 ### Setup
 
 ```js
 // eslint.config.js
-import Kerith from '@kerith/eslint'
+import kerith from '@kerith/eslint-plugin'
 
 export default [kerith.configs.recommended]
 ```
@@ -673,14 +673,14 @@ To configure rules individually:
 
 ```js
 // eslint.config.js
-import Kerith from '@kerith/eslint'
+import kerith from '@kerith/eslint-plugin'
 
 export default [
   {
-    plugins: { Kerith },
+    plugins: { kerith },
     rules: {
-      'Kerith/no-private-imports':    'error',
-      'Kerith/no-undeclared-imports': 'warn',
+      'kerith/no-private-imports':    'error',
+      'kerith/no-undeclared-imports': 'warn',
     }
   }
 ]
@@ -718,7 +718,7 @@ import { UserService }    from '@modules/users'      // ✓ correct
 
 ### Relationship to `Kerith check`
 
-| | `Kerith check` | `@kerith/eslint` |
+| | `Kerith check` | `@kerith/eslint-plugin` |
 |---|---|---|
 | When it runs | On demand / CI step | On save / pre-commit / CI lint step |
 | How it works | Full AST analysis across the whole project | Per-file ESLint rule evaluation |
@@ -971,7 +971,7 @@ Scaffold a new feature by creating a folder and an `index.ts`. Kerith handles al
 | Node.js | 20.6.0 |
 | Express | 5.x |
 | TypeScript | 5.0+ (optional) |
-| ESLint | 8.0+ (optional, for `@kerith/eslint`) |
+| ESLint | 8.0+ (optional, for `@kerith/eslint-plugin`) |
 
 > **Why 20.6?** Kerith uses the Node.js [ESM Hooks API](https://nodejs.org/api/module.html#customization-hooks) (`register`) for runtime alias resolution. Native support without `--experimental-loader` requires Node 20.6+.
 

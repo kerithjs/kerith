@@ -32,7 +32,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Vlynk-Studios/kerith"
+    "url": "https://github.com/kerithjs/kerith"
   },
   "keywords": [
     "express",
@@ -43,7 +43,7 @@
     "kerith"
   ],
   "bugs": {
-    "url": "https://github.com/Vlynk-Studios/kerith/issues"
+    "url": "https://github.com/kerithjs/kerith/issues"
   },
   "homepage": "https://kerith.dev",
   "peerDependencies": {

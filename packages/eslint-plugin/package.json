@@ -33,13 +33,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Vlynk-Studios/kerith",
+    "url": "https://github.com/kerithjs/kerith",
     "directory": "packages/eslint-plugin"
   },
   "bugs": {
-    "url": "https://github.com/Vlynk-Studios/kerith/issues"
+    "url": "https://github.com/kerithjs/kerith/issues"
   },
-  "homepage": "https://github.com/Vlynk-Studios/kerith/tree/main/packages/eslint-plugin#readme",
+  "homepage": "https://github.com/kerithjs/kerith/tree/main/packages/eslint-plugin#readme",
   "peerDependencies": {
     "eslint": ">=8.0.0"
   },
