@@ -11,6 +11,29 @@ For full technical details, see the individual package changelogs:
 > **Note:** v1.0.0 - v1.8.1 were developed under the `Nodulus` repository
 > prior to the KerithJS rebranding. Full history is preserved below for reference.
 
+## [2.0.0] - 2026-06-04
+
+### @kerith/core
+
+- **Domain Hierarchy**: Introduced `Domain → Module → SubModule` architecture inferred from filesystem
+- **New Identifiers**: `Domain()` and `SubModule()` for semantic boundary marking
+- **Automatic Aliases**: `@{domain}` and `@{domain}/{module}` generated from filesystem structure
+- **New CLI Commands**: `kerith create-domain`, `kerith create-submodule`, `create-module --domain`
+- **Enhanced Check**: `kerith check` groups output by Domains / Modules / SubModules
+- **New Violations**: Domain boundary violations, relative boundary violations, module space conflicts
+- **ESLint Rules**: `no-domain-boundary-violations`, `no-relative-boundary-violations`
+- **Config Simplification**: `origin` config key replaces separate `domains`/`modules` config
+- **Optional Express App**: `createApp(app?)` now accepts optional Express app (REGLA-02)
+- **Performance**: Single fg() call instead of O(n) per-module globs (N-32 fix)
+- **Migration**: v1.x projects work without changes — see MIGRATION.md for adoption guide
+
+### @kerith/eslint-plugin
+
+- **New Rules**: `no-domain-boundary-violations`, `no-relative-boundary-violations`
+- **Version Sync**: Synchronized with `@kerith/core@2.0.0`
+
+---
+
 ## [1.8.2] - 2026-06-03
 
 ### @kerith/core

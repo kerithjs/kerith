@@ -7,9 +7,7 @@
 **The architectural standard for Node.js and TypeScript.**
 
 [![npm](https://img.shields.io/npm/v/@kerith/core?color=e4f222&label=%40kerith%2Fcore&style=flat-square)](https://www.npmjs.com/package/@kerith/core)
-[![npm](https://img.shields.io/npm/v/@kerith/identifiers?color=e4f222&label=%40kerith%2Fidentifiers&style=flat-square)](https://www.npmjs.com/package/@kerith/identifiers)
 [![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin?color=e4f222&label=%40kerith%2Feslint-plugin&style=flat-square)](https://www.npmjs.com/package/@kerith/eslint-plugin)
-[![npm](https://img.shields.io/npm/v/create-kerith?color=e4f222&label=create-kerith&style=flat-square)](https://www.npmjs.com/package/create-kerith)
 [![License: MIT](https://img.shields.io/badge/license-MIT-e4f222?style=flat-square)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20.6-e4f222?style=flat-square)](https://nodejs.org/)
 [![kerith.dev](https://img.shields.io/badge/docs-kerith.dev-e4f222?style=flat-square)](https://docs.kerith.dev)
@@ -29,11 +27,9 @@ This repository is the monorepo for the KerithJS ecosystem. All packages are ver
 | Package                                             | Description                                                                                      | Version                                                                                                                             |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | [`@kerith/core`](./packages/core)                   | The engine — deterministic bootstrap, module discovery, NITS identity tracking, HTTP logger, CLI | [![npm](https://img.shields.io/npm/v/@kerith/core?style=flat-square)](https://www.npmjs.com/package/@kerith/core)                   |
-| [`@kerith/identifiers`](./packages/identifiers)     | Structural and logical identifiers for every backend entity type                                 | [![npm](https://img.shields.io/npm/v/@kerith/identifiers?style=flat-square)](https://www.npmjs.com/package/@kerith/identifiers)     |
-| [`@kerith/eslint-plugin`](./packages/eslint-plugin) | Architectural rules enforced at edit time — before the server runs                               | [![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin?style=flat-square)](https://www.npmjs.com/package/@kerith/eslint-plugin) |
-| [`create-kerith`](./packages/create)                | `npm create kerith@latest` — correct structure from the first commit                             | [![npm](https://img.shields.io/npm/v/create-kerith?color=e4f222&style=flat-square)](https://www.npmjs.com/package/create-kerith)    |
+| [`@kerith/eslint-plugin`](./packages/eslint-plugin) | Architectural rules enforced at edit time — before the server runs                               | [![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin?style=flat-square)](https://www.npmjs.com/package/@kerith/eslint-plugin)    |
 
-All packages are independent installs. `@kerith/eslint-plugin` and `create-kerith` are companions — not dependencies of the core.
+All packages are independent installs. `@kerith/eslint-plugin` is a companion — not a dependency of the core.
 
 ---
 
@@ -57,17 +53,9 @@ kerith/
 │   │       ├── integration/         # End-to-end bootstrap tests
 │   │       └── fixtures/            # Test application stubs
 │   │
-│   ├── identifiers/                 # @kerith/identifiers
-│   │   └── src/
-│   │       └── ...
-│   │
 │   ├── eslint-plugin/               # @kerith/eslint-plugin
 │   │   └── src/
-│   │       └── rules/               # no-private-imports, no-undeclared-imports
-│   │
-│   └── create/                      # create-kerith
-│       └── src/
-│           └── ...
+│   │       └── rules/               # no-private-imports, no-undeclared-imports, no-domain-boundary-violations, no-relative-boundary-violations
 │
 ├── package.json                     # Workspace root
 └── tsconfig.json                    # Shared TypeScript base config
@@ -113,11 +101,7 @@ npm run build -w @kerith/eslint-plugin
 
 ## Quick Start
 
-```bash
-npm create kerith@latest
-```
-
-Or install manually:
+Install manually:
 
 ```bash
 npm install @kerith/core express
@@ -194,7 +178,7 @@ import kerith from "@kerith/eslint-plugin";
 export default [kerith.configs.recommended];
 ```
 
-Ships two rules: `no-private-imports` (error) and `no-undeclared-imports` (warn). For full configuration details, see the [`@kerith/eslint-plugin` README](./packages/eslint-plugin/README.md).
+Ships four rules: `no-private-imports` (error), `no-undeclared-imports` (warn), `no-domain-boundary-violations` (error), and `no-relative-boundary-violations` (error). For full configuration details, see the [`@kerith/eslint-plugin` README](./packages/eslint-plugin/README.md).
 
 ---
 
@@ -202,8 +186,8 @@ Ships two rules: `no-private-imports` (error) and `no-undeclared-imports` (warn)
 
 All packages follow [Semantic Versioning](https://semver.org/) and are released in lockstep from this repository. Changes are documented in the `CHANGELOG.md` of each package.
 
-> **Why does `@kerith/core` start at v1.8.2?**
-> Kerith is the direct evolution of [Nodulus](https://www.npmjs.com/package/@vlynk-studios/nodulus-core), published under Vlynk Studios. The versioning was intentionally continued from where Nodulus left off — rather than resetting to v1.0.0 — to preserve the lineage and reflect the true maturity of the framework. The v1.0.0–v1.8.1 history is fully documented in [CHANGELOG.md](./CHANGELOG.md).
+> **Why does `@kerith/core` start at v2.0.0?**
+> Kerith is the direct evolution of [Nodulus](https://www.npmjs.com/package/@vlynk-studios/nodulus-core), published under Vlynk Studios. The v2.0.0 release introduces the Domain Hierarchy architecture with `Domain → Module → SubModule` structure. The v1.0.0–v1.8.2 history (under the Nodulus name) is fully documented in [CHANGELOG.md](./CHANGELOG.md).
 
 ---
 
@@ -211,7 +195,7 @@ All packages follow [Semantic Versioning](https://semver.org/) and are released 
 
 Contributions, bug reports, and feature requests are welcome. Please open an issue before submitting a pull request for non-trivial changes.
 
-Contribution guidelines, style standards, and design principles will be formally documented at the V2.0.0 release.
+Contribution guidelines, style standards, and design principles are now documented.
 
 ---
 

@@ -1,12 +1,20 @@
-# Kerith
+<div align="center">
 
-[![npm version](https://img.shields.io/npm/v/@kerith/core.svg)](https://www.npmjs.com/package/@kerith/core)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.6-brightgreen)](https://nodejs.org/)
+<img src="../../public/logo.svg" alt="Kerith" width="200" height="200" />
 
-A lightweight structural layer for Express. Kerith lets you organise your Node.js application into self-contained modules — handling discovery, route mounting, import aliases, and dependency validation at bootstrap time, with zero overhead at runtime.
+# KerithJS
+
+**The architectural standard for Node.js and TypeScript.**
+
+[![npm](https://img.shields.io/npm/v/@kerith/core?color=e4f222&label=%40kerith%2Fcore&style=flat-square)](https://www.npmjs.com/package/@kerith/core)
+[![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin?color=e4f222&label=%40kerith%2Feslint-plugin&style=flat-square)](https://www.npmjs.com/package/@kerith/eslint-plugin)
+[![License: MIT](https://img.shields.io/badge/license-MIT-e4f222?style=flat-square)](./LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20.6-e4f222?style=flat-square)](https://nodejs.org/)
+[![kerith.dev](https://img.shields.io/badge/docs-kerith.dev-e4f222?style=flat-square)](https://docs.kerith.dev)
 
 > **Node.js ≥ 20.6** · **Express 5.x** · **ESM Only** · **TypeScript included**
+
+</div>
 
 ---
 
