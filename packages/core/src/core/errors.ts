@@ -40,7 +40,33 @@ export type KerithErrorCode =
    * the current cycle). Used for observability only — never passed to `new KerithError()`.
    * @since v1.5.5
    */
-  | "NITS_DELETE_CONFIRMED";
+  | "NITS_DELETE_CONFIRMED"
+  // ─── Part 2 — Shared-scope violation codes ────────────────────────────────
+  /**
+   * A provider used inside a module was never registered in any `shared` array.
+   * @since v2.0.0 (reserved — not yet thrown)
+   */
+  | "UNDECLARED_SHARED"
+  /**
+   * A provider was declared in a `shared` array but never consumed by any module.
+   * @since v2.0.0 (reserved — not yet thrown)
+   */
+  | "UNUSED_SHARED"
+  /**
+   * A provider declared in `shared` is used outside its permitted scope.
+   * @since v2.0.0 (reserved — not yet thrown)
+   */
+  | "SHARED_SCOPE_VIOLATION"
+  /**
+   * A provider appears in both `shared` and `imports` simultaneously, which is invalid.
+   * @since v2.0.0 (reserved — not yet thrown)
+   */
+  | "SHARED_IN_IMPORTS"
+  /**
+   * A whole module reference was placed inside a `shared` array instead of `imports`.
+   * @since v2.0.0 (reserved — not yet thrown)
+   */
+  | "MODULE_IN_SHARED";
 
 export class KerithError extends Error {
   readonly code: KerithErrorCode;

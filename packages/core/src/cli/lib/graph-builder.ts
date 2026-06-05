@@ -54,39 +54,66 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
   const domainNames = scanResult.domains.map(d => d.name);
   const activeAliases = buildActiveAliasesFromConfig(config, moduleNames, domainNames);
 
-  async function buildNodeData(dirPath: string, indexPath: string): Promise<{ actualImports: ImportFound[], internalIdentifiers: string[] }> {
+  // ─── Single global glob (O(1) filesystem traversal) ──────────────────────
+  // Collect ALL source files across the whole project once, then filter
+  // in-memory per module/submodule. This avoids the O(n) glob-per-module
+  // pattern that was hurting performance on large projects.
+  const allSourceFiles = await fg('**/*.{ts,js,mts,mjs}', {
+    cwd,
+    absolute: true,
+    onlyFiles: true,
+    ignore: ['**/*.test.*', '**/*.spec.*', '**/*.d.ts', '**/node_modules/**'],
+  });
+
+  // Pre-normalise paths once so the hot-path startsWith() comparisons are cheap.
+  const allSourceFilesNorm = allSourceFiles.map(f => ({ abs: f, norm: path.normalize(f) }));
+
+  function getFilesUnderDir(dirPath: string): string[] {
+    const normDir = path.normalize(dirPath) + path.sep;
+    return allSourceFilesNorm
+      .filter(f => f.norm.startsWith(normDir))
+      .map(f => f.abs);
+  }
+
+  const targetCallees = ['Service', 'Repository', 'Schema'];
+
+  function buildNodeData(
+    dirPath: string,
+    indexPath: string,
+  ): { actualImports: ImportFound[]; internalIdentifiers: string[] } {
     const actualImports: ImportFound[] = [];
     const internalIdentifiers: string[] = [];
-    const targetCallees = ['Service', 'Repository', 'Schema'];
 
+    // Index file is scanned separately for identifier calls (not for imports).
     for (const callee of targetCallees) {
       const result = extractIdentifierCall(indexPath, callee);
       if (result) internalIdentifiers.push(result.name);
     }
 
-    const moduleFiles = await fg('**/*.{ts,js,mts,mjs}', {
-      cwd: dirPath,
-      absolute: true,
-      ignore: ['**/*.test.*', '**/*.spec.*', '**/*.d.ts', 'index.*']
+    // Filter the global file list — no extra I/O.
+    const moduleFiles = getFilesUnderDir(dirPath).filter(f => {
+      const rel = path.relative(path.normalize(dirPath), path.normalize(f));
+      // Exclude index files (same as before).
+      return !rel.match(/^index\./);
     });
 
     for (const file of moduleFiles) {
       const fileImports = extractModuleImports(file, activeAliases);
       actualImports.push(...fileImports);
-      
+
       for (const callee of targetCallees) {
         const result = extractIdentifierCall(file, callee);
         if (result) internalIdentifiers.push(result.name);
       }
     }
+
     return { actualImports, internalIdentifiers };
   }
 
   const nodes: ModuleNode[] = [];
   for (const mod of scanResult.modules) {
-    const { actualImports, internalIdentifiers } = await buildNodeData(mod.dirPath, mod.indexPath);
-    
-    // Add submodules array directly mapped from scanResult
+    const { actualImports, internalIdentifiers } = buildNodeData(mod.dirPath, mod.indexPath);
+
     const submodules = scanResult.submodules
       .filter(sub => sub.parentModule === mod.name && sub.domain === mod.domain)
       .map(sub => sub.name);
@@ -99,13 +126,13 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
       submodules: submodules.length > 0 ? submodules : undefined,
       declaredImports: mod.imports,
       actualImports,
-      internalIdentifiers
+      internalIdentifiers,
     });
   }
 
   const subNodes: SubModuleNode[] = [];
   for (const sub of scanResult.submodules) {
-    const { actualImports, internalIdentifiers } = await buildNodeData(sub.dirPath, sub.indexPath);
+    const { actualImports, internalIdentifiers } = buildNodeData(sub.dirPath, sub.indexPath);
     subNodes.push({
       name: sub.name,
       dirPath: sub.dirPath,
@@ -114,7 +141,7 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
       domain: sub.domain,
       declaredImports: [], // SubModules do not declare imports
       actualImports,
-      internalIdentifiers
+      internalIdentifiers,
     });
   }
 
@@ -122,12 +149,12 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
     name: d.name,
     dirPath: d.dirPath,
     indexPath: d.indexPath,
-    modules: nodes.filter(m => m.domain === d.name)
+    modules: nodes.filter(m => m.domain === d.name),
   }));
 
   return {
     domains: domainNodes,
     modules: nodes,
-    submodules: subNodes
+    submodules: subNodes,
   };
 }

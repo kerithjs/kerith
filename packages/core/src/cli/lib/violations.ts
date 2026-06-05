@@ -158,20 +158,37 @@ export function detectViolations(
       }
 
       // 1. DOMAIN_BOUNDARY_VIOLATION
+      // Patterns:
+      //   @domain              → public API of the domain (always allowed from outside)
+      //   @domain/module       → internal module alias  (parts.length === 2)
+      //   @domain/module/path  → deep private sub-path   (parts.length > 2, also caught by PRIVATE_IMPORT)
+      //
+      // Rule: @domain/X is a violation when the importer lives outside that domain.
+      //       Importers in the SAME domain may cross-reference sibling modules via
+      //       @domain/siblingModule — that is intentional and NOT a violation here.
       if (imp.specifier.startsWith('@') && !imp.specifier.startsWith('@modules/')) {
         const parts = imp.specifier.split('/');
-        const targetDomain = parts[0].slice(1);
-        
-        if (parts.length > 1 && graph.domains?.some(d => d.name === targetDomain)) {
-          if (node.domain !== targetDomain) {
-            violations.push({
-              type: ViolationType.DOMAIN_BOUNDARY_VIOLATION,
-              module: node.name,
-              message: `Domain boundary violation: module "${node.name}" imports from internal domain module "${imp.specifier}".`,
-              suggestion: `Import from '@${targetDomain}' instead of '${imp.specifier}'`,
-              location: { file: imp.file, line: imp.line },
-            });
-          }
+        const targetDomain = parts[0].slice(1); // strip leading '@'
+
+        // Only fire when the specifier drills into a specific module inside the domain.
+        // A bare `@domain` import is the public surface and is always valid from outside.
+        if (
+          parts.length > 1 &&
+          graph.domains?.some(d => d.name === targetDomain) &&
+          node.domain !== targetDomain
+        ) {
+          const isDeepPath = parts.length > 2;
+          const suggestion = isDeepPath
+            ? `Import only the public index '@${targetDomain}/${parts[1]}' or the domain root '@${targetDomain}'`
+            : `Import from the domain root '@${targetDomain}' instead of the internal alias '${imp.specifier}'`;
+
+          violations.push({
+            type: ViolationType.DOMAIN_BOUNDARY_VIOLATION,
+            module: node.name,
+            message: `Domain boundary violation: module "${node.name}" (domain: ${node.domain ?? 'none'}) imports from internal domain alias "${imp.specifier}" (domain: ${targetDomain}).`,
+            suggestion,
+            location: { file: imp.file, line: imp.line },
+          });
         }
       }
 
