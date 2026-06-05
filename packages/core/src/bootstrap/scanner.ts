@@ -6,6 +6,12 @@ import type { LogHandler } from '../types/index.js';
 import { extractIdentifierCall, extractTopLevelIdentifier } from '../cli/lib/ast-parser.js';
 import { normalizePath } from '../core/utils/paths.js';
 import { KerithError } from '../core/errors.js';
+import {
+  inferDomain as _inferDomain,
+  inferParentModule as _inferParentModule,
+  type DomainEntry,
+  type ModuleEntry,
+} from '../core/utils/domain-inference.js';
 
 // ─── Scan result types ─────────────────────────────────────────────────────────
 
@@ -88,50 +94,34 @@ function resolveIndexFile(dirPath: string): string | null {
   return null;
 }
 
-function isPathUnder(parentDir: string, childPath: string): boolean {
-  const parent = normalizePath(path.resolve(parentDir));
-  const child = normalizePath(path.resolve(childPath));
-  if (child === parent) return true;
-  const rel = path.relative(parent, child);
-  return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
-}
-
 function stringArrayOption(value: unknown): string[] {
   return Array.isArray(value) ? (value as string[]) : [];
 }
 
-// ─── Hierarchy inference ─────────────────────────────────────────────────────
+// ─── Hierarchy inference (re-exported from core/utils/domain-inference) ───────
 
+/**
+ * Infers which registered domain a file belongs to.
+ * Re-exported from `core/utils/domain-inference` to preserve the public
+ * contract of this module without introducing a circular dependency.
+ */
 export function inferDomain(
   filePath: string,
-  domains: DomainScanEntry[],
+  domains: DomainEntry[],
 ): string | undefined {
-  const sorted = [...domains].sort((a, b) => b.dirPath.length - a.dirPath.length);
-  for (const domain of sorted) {
-    if (isPathUnder(domain.dirPath, filePath)) {
-      return domain.name;
-    }
-  }
-  return undefined;
+  return _inferDomain(filePath, domains);
 }
 
+/**
+ * Infers the parent module of a sub-module by walking up its directory tree.
+ * Re-exported from `core/utils/domain-inference` to preserve the public
+ * contract of this module without introducing a circular dependency.
+ */
 export function inferParentModule(
   filePath: string,
-  modules: ModuleScanEntry[],
+  modules: ModuleEntry[],
 ): string | undefined {
-  const subModuleDir = normalizePath(path.dirname(path.resolve(filePath)));
-  let parentDir = normalizePath(path.dirname(subModuleDir));
-  if (path.basename(parentDir) === 'submodules') {
-    parentDir = normalizePath(path.dirname(parentDir));
-  }
-  const sorted = [...modules].sort((a, b) => b.dirPath.length - a.dirPath.length);
-  for (const mod of sorted) {
-    const modDir = normalizePath(path.resolve(mod.dirPath));
-    if (parentDir === modDir) {
-      return mod.name;
-    }
-  }
-  return undefined;
+  return _inferParentModule(filePath, modules);
 }
 
 // ─── Shared detection ────────────────────────────────────────────────────────

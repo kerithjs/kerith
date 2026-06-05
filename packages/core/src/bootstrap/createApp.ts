@@ -437,7 +437,7 @@ export async function createApp(
       // Step 6 — Import index entries (domains → modules → submodules) — runs identifiers
       for (const domain of scanResult.domains) {
         await importIndexEntry(domain.indexPath, config.moduleLoadTimeoutMs);
-        log.debug(`Domain loaded: ${domain.name}`, { _module: "domain", name: domain.name });
+        log.info(`Domain loaded: ${pc.cyan(domain.name)}`, { _module: "domain", name: domain.name });
       }
 
       for (const mod of resolvedModules) {
@@ -465,9 +465,14 @@ export async function createApp(
           }
         }
 
-        log.info(`Module loaded: ${pc.green(registeredMod.name)}`, {
+        const moduleLabel = registeredMod.domain
+          ? `${pc.dim(registeredMod.domain + '/')}${pc.green(registeredMod.name)}`
+          : pc.green(registeredMod.name);
+
+        log.info(`Module loaded: ${moduleLabel}`, {
           _module: "module",
           name: registeredMod.name,
+          domain: registeredMod.domain,
           imports: registeredMod.imports,
           exports: registeredMod.exports,
           path: registeredMod.path,
@@ -849,9 +854,11 @@ export async function createApp(
         });
       }
 
+      const domainCount = scanResult.domains.length;
       log.info(
-        `${pc.green("Bootstrap complete")} — ${pc.cyan(allModules.length)} module(s), ${pc.cyan(mountedRoutes.length)} route(s) in ${pc.yellow(`${durationMs}ms`)}`,
+        `${pc.green("Bootstrap complete")} — ${domainCount > 0 ? `${pc.magenta(domainCount)} domain(s), ` : ''}${pc.cyan(allModules.length)} module(s), ${pc.cyan(mountedRoutes.length)} route(s) in ${pc.yellow(`${durationMs}ms`)}`,
         {
+          domainCount,
           moduleCount: allModules.length,
           routeCount: mountedRoutes.length,
           durationMs,

@@ -2,18 +2,16 @@ import { getActiveRegistry } from '../registry.js';
 import { getModuleCallerInfo } from '../caller.js';
 import { generateModuleId } from '../../nits/nits-id.js';
 import { normalizePath } from '../utils/paths.js';
-import { inferDomain, type DomainScanEntry } from '../../bootstrap/scanner.js';
+import { inferDomain, type DomainEntry } from '../utils/domain-inference.js';
 import type { ModuleOptions } from '../types/hierarchy.js';
 import { assertCalledFromIndex, assertNameMatchesFolder } from './validation.js';
 
-function toDomainScanEntries(
+function toDomainEntries(
   domains: { name: string; path: string }[],
-): DomainScanEntry[] {
+): DomainEntry[] {
   return domains.map((d) => ({
     name: d.name,
     dirPath: d.path,
-    indexPath: '',
-    options: {},
   }));
 }
 
@@ -33,7 +31,7 @@ export function Module(name: string, options: ModuleOptions = {}): void {
 
   const registry = getActiveRegistry();
   const nitsId = registry.getNitsIdForPath(normalizePath(dirPath)) || generateModuleId();
-  const domain = inferDomain(indexPath, toDomainScanEntries(registry.getAllDomains()));
+  const domain = inferDomain(indexPath, toDomainEntries(registry.getAllDomains()));
 
   registry.registerModule(name, options, dirPath, indexPath, nitsId, domain);
 }

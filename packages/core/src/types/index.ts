@@ -323,14 +323,27 @@ export interface KerithApp {
    *
    * Also returns a `shutdown()` function you can call programmatically.
    *
-   * @param server  - The http.Server returned by app.listen().
+   * > **Independent of the Express `app` argument.**
+   * > `listen()` operates on the `http.Server` created by `app.listen(port)` —
+   * > not on the Express application itself. It is therefore valid to call
+   * > `createApp()` *without* an Express app (e.g. for background workers or
+   * > scheduled-job services) and still wire up graceful shutdown via
+   * > `kerith.listen(server)`.
+   *
+   * @param server  - The http.Server returned by `expressApp.listen()`.
    * @param options - Optional shutdown hook and configuration.
    * @returns A function that triggers the shutdown sequence manually.
    *
    * @example
    * ```ts
+   * // With Express:
    * const server = app.listen(3000);
-   * Kerith.listen(server, { onShutdown: async () => { await db.close(); } });
+   * kerith.listen(server, { onShutdown: async () => { await db.close(); } });
+   *
+   * // Without Express (worker mode):
+   * const kerith = await createApp();       // no app argument
+   * const server = http.createServer(...);
+   * kerith.listen(server);
    * ```
    * @since v1.5.1
    */

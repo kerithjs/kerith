@@ -1,7 +1,7 @@
 {
   "project": "unknown",
   "version": "1.0.0",
-  "lastCheck": "2026-06-03T23:39:28.896Z",
+  "lastCheck": "2026-06-05T21:03:54.891Z",
   "modules": {
     "mod_fe9e89a7": {
       "id": "mod_fe9e89a7",
@@ -10,26 +10,11 @@
       "hash": "71c643c1a1",
       "status": "active",
       "createdAt": "2026-06-03T22:35:26.876Z",
-      "lastSeen": "2026-06-03T23:39:28.895Z",
+      "lastSeen": "2026-06-05T21:03:54.886Z",
       "identifiers": [
         "UserService"
       ],
       "shadowFileId": "mod_fe9e89a7"
-    },
-    "mod_f78d9677": {
-      "id": "mod_f78d9677",
-      "name": "payments",
-      "path": "src/billing/payments",
-      "domain": "billing",
-      "hash": "c0ccd637f2",
-      "status": "active",
-      "createdAt": "2026-06-03T22:35:26.876Z",
-      "lastSeen": "2026-06-03T23:39:28.895Z",
-      "identifiers": [
-        "PaymentService",
-        "TrialService"
-      ],
-      "shadowFileId": "mod_f78d9677"
     },
     "mod_21670ecd": {
       "id": "mod_21670ecd",
@@ -39,11 +24,26 @@
       "hash": "b78a144238",
       "status": "active",
       "createdAt": "2026-06-03T22:35:26.876Z",
-      "lastSeen": "2026-06-03T23:39:28.895Z",
+      "lastSeen": "2026-06-05T21:03:54.886Z",
       "identifiers": [
         "InvoiceService"
       ],
       "shadowFileId": "mod_21670ecd"
+    },
+    "mod_f78d9677": {
+      "id": "mod_f78d9677",
+      "name": "payments",
+      "path": "src/billing/payments",
+      "domain": "billing",
+      "hash": "c0ccd637f2",
+      "status": "active",
+      "createdAt": "2026-06-03T22:35:26.876Z",
+      "lastSeen": "2026-06-05T21:03:54.886Z",
+      "identifiers": [
+        "PaymentService",
+        "TrialService"
+      ],
+      "shadowFileId": "mod_f78d9677"
     },
     "mod_419d3692": {
       "id": "mod_419d3692",
@@ -53,7 +53,7 @@
       "hash": "a06042b04e",
       "status": "active",
       "createdAt": "2026-06-03T22:35:26.876Z",
-      "lastSeen": "2026-06-03T23:39:28.895Z",
+      "lastSeen": "2026-06-05T21:03:54.886Z",
       "identifiers": [
         "MemberService"
       ],

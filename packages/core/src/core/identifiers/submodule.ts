@@ -7,35 +7,22 @@ import { buildSubModuleQualifiedName } from '../registry.js';
 import {
   inferDomain,
   inferParentModule,
-  type DomainScanEntry,
-  type ModuleScanEntry,
-} from '../../bootstrap/scanner.js';
+  type DomainEntry,
+  type ModuleEntry,
+} from '../utils/domain-inference.js';
 import type { SubModuleOptions } from '../types/hierarchy.js';
 import { assertCalledFromIndex, assertNameMatchesFolder } from './validation.js';
 
-function toDomainScanEntries(
+function toDomainEntries(
   domains: { name: string; path: string }[],
-): DomainScanEntry[] {
-  return domains.map((d) => ({
-    name: d.name,
-    dirPath: d.path,
-    indexPath: '',
-    options: {},
-  }));
+): DomainEntry[] {
+  return domains.map((d) => ({ name: d.name, dirPath: d.path }));
 }
 
-function toModuleScanEntries(
-  modules: { name: string; path: string; indexPath: string; imports: string[]; exports: string[] }[],
-): ModuleScanEntry[] {
-  return modules.map((m) => ({
-    name: m.name,
-    dirPath: m.path,
-    indexPath: m.indexPath,
-    imports: m.imports,
-    exports: m.exports,
-    shared: [],
-    options: {},
-  }));
+function toModuleEntries(
+  modules: { name: string; path: string }[],
+): ModuleEntry[] {
+  return modules.map((m) => ({ name: m.name, dirPath: m.path }));
 }
 
 /**
@@ -63,20 +50,14 @@ export function SubModule(name: string, options: SubModuleOptions = {}): void {
     );
   }
 
-  const domainEntries = toDomainScanEntries(registry.getAllDomains());
-  const moduleEntries = toModuleScanEntries(
+  const domainEntries = toDomainEntries(registry.getAllDomains());
+  const moduleEntries = toModuleEntries(
     registry
       .getAllModules()
       .map((m) => {
         const raw = registry.getRawModule(m.name, m.domain);
         if (!raw) return null;
-        return {
-          name: m.name,
-          path: raw.path,
-          indexPath: raw.indexPath,
-          imports: m.imports,
-          exports: m.exports,
-        };
+        return { name: m.name, path: raw.path };
       })
       .filter((m): m is NonNullable<typeof m> => m !== null),
   );
