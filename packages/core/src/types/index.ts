@@ -33,6 +33,17 @@ export interface ModuleEntry {
   controllers: ControllerEntry[];
 }
 
+/** Internal registry entry for a detected shared root (global or domain-scoped). */
+export interface SharedEntry {
+  type: 'global' | 'domain-scoped';
+  /** Alias resolved at runtime — e.g. `'@shared'` or `'@billing/shared'`. */
+  alias: string;
+  /** Absolute path to the shared directory. */
+  path: string;
+  /** Present only for domain-scoped shared roots. */
+  domain?: string;
+}
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 /**

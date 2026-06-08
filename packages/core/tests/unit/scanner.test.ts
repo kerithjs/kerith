@@ -94,8 +94,17 @@ describe('scanner', () => {
 
     expect(result.shared).toEqual(
       expect.arrayContaining([
-        { type: 'domain-scoped', alias: '@billing/shared', path: path.join(root, 'billing', '_shared') },
-        { type: 'global', alias: '@shared', path: path.join(root, 'shared') },
+        {
+          type: 'global',
+          alias: '@shared',
+          path: path.join(root, 'shared'),
+        },
+        {
+          type: 'domain-scoped',
+          alias: '@billing/shared',
+          path: path.join(root, 'billing', '_shared'),
+          domain: 'billing',
+        },
       ]),
     );
   });

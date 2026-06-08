@@ -1,8 +1,8 @@
 import type { InternalRegistry } from '../core/registry.js';
 import { buildSubModuleQualifiedName } from '../core/registry.js';
+import type { LogHandler } from '../types/index.js';
 import type {
   DomainScanEntry,
-  SharedScanEntry,
   SubModuleScanEntry,
   ScanResult,
 } from './scanner.js';
@@ -39,9 +39,11 @@ export function registerDomainsFromScan(
  */
 export function registerSharedFromScan(
   registry: InternalRegistry,
-  shared: SharedScanEntry[],
+  shared: ScanResult['shared'],
+  log?: LogHandler,
 ): void {
   for (const entry of shared) {
+    registry.registerShared(entry, log);
     registry.registerAlias(entry.alias, entry.path);
     registry.registerAlias(`${entry.alias}/*`, `${entry.path}/*`);
   }
@@ -79,8 +81,9 @@ export function registerSubModulesFromScan(
 export function registerEntitiesFromScan(
   registry: InternalRegistry,
   scan: ScanResult,
+  log?: LogHandler,
 ): void {
   registerDomainsFromScan(registry, scan.domains);
-  registerSharedFromScan(registry, scan.shared);
+  registerSharedFromScan(registry, scan.shared, log);
   registerSubModulesFromScan(registry, scan.submodules);
 }

@@ -204,7 +204,9 @@ export async function createApp(
       }
 
       // Step 3 — Register scan entities (domains → shared → submodules)
-      registerEntitiesFromScan(registry, scanResult);
+      registerEntitiesFromScan(registry, scanResult, (level, message, meta) => {
+        log[level](message, meta);
+      });
       log.debug("Scan entities seeded in registry", {
         domains: scanResult.domains.length,
         shared: scanResult.shared.length,

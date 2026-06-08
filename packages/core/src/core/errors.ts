@@ -41,29 +41,29 @@ export type KerithErrorCode =
    * @since v1.5.5
    */
   | "NITS_DELETE_CONFIRMED"
-  // ─── Part 2 — Shared-scope violation codes ────────────────────────────────
+  // ─── Part 2 — Shared system violation codes ───────────────────────────────
   /**
-   * A provider used inside a module was never registered in any `shared` array.
+   * Module imports `@shared` (or a subpath) without declaring it in `shared[]`.
    * @since v2.0.0 (reserved — not yet thrown)
    */
   | "UNDECLARED_SHARED"
   /**
-   * A provider was declared in a `shared` array but never consumed by any module.
+   * Module declares `@shared` in `shared[]` but no source file imports it.
    * @since v2.0.0 (reserved — not yet thrown)
    */
   | "UNUSED_SHARED"
   /**
-   * A provider declared in `shared` is used outside its permitted scope.
+   * Module from a foreign domain imports `@{domain}/shared`.
    * @since v2.0.0 (reserved — not yet thrown)
    */
   | "SHARED_SCOPE_VIOLATION"
   /**
-   * A provider appears in both `shared` and `imports` simultaneously, which is invalid.
+   * A shared alias was placed in `imports[]` instead of `shared[]`.
    * @since v2.0.0 (reserved — not yet thrown)
    */
   | "SHARED_IN_IMPORTS"
   /**
-   * A whole module reference was placed inside a `shared` array instead of `imports`.
+   * A module name was placed in `shared[]` instead of `imports[]`.
    * @since v2.0.0 (reserved — not yet thrown)
    */
   | "MODULE_IN_SHARED";

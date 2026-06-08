@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import fg from 'fast-glob';
 import type { KerithConfig } from '../config/kerith-config.types.js';
-import type { LogHandler } from '../types/index.js';
+import type { LogHandler, SharedEntry } from '../types/index.js';
 import { extractIdentifierCall, extractTopLevelIdentifier } from '../cli/lib/ast-parser.js';
 import { normalizePath } from '../core/utils/paths.js';
 import { KerithError } from '../core/errors.js';
@@ -42,17 +42,11 @@ export interface SubModuleScanEntry {
   options: Record<string, unknown>;
 }
 
-export interface SharedScanEntry {
-  type: 'domain-scoped' | 'global';
-  alias: string;
-  path: string;
-}
-
 export interface ScanResult {
   domains: DomainScanEntry[];
   modules: ModuleScanEntry[];
   submodules: SubModuleScanEntry[];
-  shared: SharedScanEntry[];
+  shared: SharedEntry[];
 }
 
 export interface ScanOptions {
@@ -126,12 +120,30 @@ export function inferParentModule(
 
 // ─── Shared detection ────────────────────────────────────────────────────────
 
+/**
+ * Detects shared roots by filesystem convention only — no Kerith identifier required.
+ * Global `shared/` is checked first; each domain's `_shared/` is checked after domains are known.
+ * Missing folders are not an error — the alias simply won't be registered.
+ */
 async function detectSharedEntries(
   scanRoot: string,
   domains: DomainScanEntry[],
   log?: LogHandler,
-): Promise<SharedScanEntry[]> {
-  const shared: SharedScanEntry[] = [];
+): Promise<SharedEntry[]> {
+  const shared: SharedEntry[] = [];
+
+  const globalSharedPath = path.join(scanRoot, 'shared');
+  try {
+    if (fs.existsSync(globalSharedPath) && fs.statSync(globalSharedPath).isDirectory()) {
+      shared.push({
+        type: 'global',
+        alias: '@shared',
+        path: globalSharedPath,
+      });
+    }
+  } catch {
+    // Ignorar — path desapareció entre existsSync y statSync (race condition)
+  }
 
   for (const domain of domains) {
     const sharedPath = path.join(domain.dirPath, '_shared');
@@ -155,21 +167,9 @@ async function detectSharedEntries(
         type: 'domain-scoped',
         alias: `@${domain.name}/shared`,
         path: sharedPath,
+        domain: domain.name,
       });
     }
-  }
-
-  const globalShared = path.join(scanRoot, 'shared');
-  try {
-    if (fs.existsSync(globalShared) && fs.statSync(globalShared).isDirectory()) {
-      shared.push({
-        type: 'global',
-        alias: '@shared',
-        path: globalShared,
-      });
-    }
-  } catch {
-    // Ignorar — path desapareció entre existsSync y statSync (race condition)
   }
 
   return shared;

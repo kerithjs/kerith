@@ -239,6 +239,64 @@ describe('Registry', () => {
     }
   });
 
+  it('registers shared entries and resolves aliases by domain', () => {
+    const r = createRegistry();
+
+    r.registerShared({
+      type: 'global',
+      alias: '@shared',
+      path: '/src/shared',
+    });
+    r.registerShared({
+      type: 'domain-scoped',
+      alias: '@billing/shared',
+      path: '/src/billing/_shared',
+      domain: 'billing',
+    });
+
+    expect(r.getShared('@shared')).toMatchObject({ type: 'global', path: '/src/shared' });
+    expect(r.getSharedForDomain('billing')).toMatchObject({
+      alias: '@billing/shared',
+      domain: 'billing',
+    });
+    expect(r.getAllShared()).toHaveLength(2);
+    expect(r.isSharedAlias('@shared')).toBe(true);
+    expect(r.isSharedAlias('@shared/utils')).toBe(true);
+    expect(r.isSharedAlias('@billing/shared')).toBe(true);
+    expect(r.isSharedAlias('@billing/shared/permissions')).toBe(true);
+    expect(r.isSharedAlias('@billing/payments')).toBe(false);
+  });
+
+  it('registerShared is idempotent and warns on duplicate alias', () => {
+    const r = createRegistry();
+    const warnLogs: string[] = [];
+    const log = (level: string, message: string) => {
+      if (level === 'warn') warnLogs.push(message);
+    };
+
+    const entry = {
+      type: 'global' as const,
+      alias: '@shared',
+      path: '/src/shared',
+    };
+
+    r.registerShared(entry, log);
+    r.registerShared(entry, log);
+
+    expect(r.getAllShared()).toHaveLength(1);
+    expect(warnLogs.some((m) => m.includes('@shared'))).toBe(true);
+  });
+
+  it('clearRegistry() clears shared entries for test isolation', () => {
+    const r = createRegistry();
+    r.registerShared({ type: 'global', alias: '@shared', path: '/src/shared' });
+    expect(r.getAllShared()).toHaveLength(1);
+
+    r.clearRegistry();
+    expect(r.getAllShared()).toHaveLength(0);
+    expect(r.getShared('@shared')).toBeUndefined();
+  });
+
   it('two concurrent registryContext.run() calls have isolated registries', async () => {
     const rA = createRegistry();
     const rB = createRegistry();

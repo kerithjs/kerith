@@ -11,6 +11,8 @@ import type {
   RepositoryEntry,
   SchemaEntry,
   FileEntry,
+  SharedEntry,
+  LogHandler,
 } from '../types/index.js';
 import type { ModuleOptions } from './types/hierarchy.js';
 import type { HierarchyLevel } from './types/hierarchy.js';
@@ -79,6 +81,11 @@ export interface InternalRegistry extends KerithRegistryAdvanced {
   getModuleById(nitsId: string): RegisteredModule | undefined;
   getModuleByPath(dirPath: string): RegisteredModule | undefined;
   registerAlias(alias: string, path: string): void;
+  registerShared(entry: SharedEntry, log?: LogHandler): void;
+  getShared(alias: string): SharedEntry | undefined;
+  getAllShared(): SharedEntry[];
+  getSharedForDomain(domainName: string): SharedEntry | undefined;
+  isSharedAlias(alias: string): boolean;
   getRegisteredAliases(): string[];
   registerControllerMetadata(entry: ControllerEntry): void;
   getAllControllersMetadata(): ControllerEntry[];
@@ -124,6 +131,7 @@ export function createRegistry(): InternalRegistry {
   const submodulesByPath = new Map<string, string>();
 
   const aliases = new Map<string, string>();
+  const shared = new Map<string, SharedEntry>();
   const controllers = new Map<string, ControllerEntry>();
   const services = new Map<string, ServiceEntry>();
   const repositories = new Map<string, RepositoryEntry>();
@@ -374,6 +382,44 @@ export function createRegistry(): InternalRegistry {
       aliases.set(alias, targetPath);
     },
 
+    registerShared(entry: SharedEntry, log?: LogHandler): void {
+      if (shared.has(entry.alias)) {
+        log?.(
+          'warn',
+          `Shared alias "${entry.alias}" is already registered — skipping.`,
+          { _module: 'registry', alias: entry.alias },
+        );
+        return;
+      }
+      shared.set(entry.alias, entry);
+    },
+
+    getShared(alias: string): SharedEntry | undefined {
+      return shared.get(alias);
+    },
+
+    getAllShared(): SharedEntry[] {
+      return Array.from(shared.values());
+    },
+
+    getSharedForDomain(domainName: string): SharedEntry | undefined {
+      return shared.get(`@${domainName}/shared`);
+    },
+
+    isSharedAlias(alias: string): boolean {
+      if (alias === '@shared' || alias.startsWith('@shared/')) {
+        return true;
+      }
+      for (const entry of shared.values()) {
+        if (entry.type === 'domain-scoped') {
+          if (alias === entry.alias || alias.startsWith(`${entry.alias}/`)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    },
+
     registerControllerMetadata(entry: ControllerEntry): void {
       const normalizedPath = normalizePath(entry.path);
       if (controllers.has(normalizedPath)) {
@@ -464,6 +510,7 @@ export function createRegistry(): InternalRegistry {
       submodules.clear();
       submodulesByPath.clear();
       aliases.clear();
+      shared.clear();
       controllers.clear();
       services.clear();
       repositories.clear();
