@@ -209,14 +209,26 @@ export function detectViolations(
       }
 
       // 3. SUBMODULE_DOMAIN_BYPASS
+      // Intentional scope: only fires for the bare domain root alias `@{domain}`.
+      //
+      // Why NOT `@{domain}/X` (e.g. `@billing/payments`)?
+      //   A submodule importing `@billing/payments` is already caught by
+      //   DOMAIN_BOUNDARY_VIOLATION (check 1 above) when `node.domain !== targetDomain`,
+      //   or by PRIVATE_IMPORT / UNDECLARED_IMPORT for deeper sub-paths.
+      //   Duplicating the logic here would create redundant violations for the same
+      //   import and confuse the developer with two different error codes.
+      //
+      // The specific case this rule catches: a submodule importing the root domain
+      // barrel (`@billing`) from *within* that domain, which bypasses the parent
+      // module abstraction entirely.
       if ('parentModule' in node && node.domain) {
         if (imp.specifier === `@${node.domain}`) {
           violations.push({
-             type: ViolationType.SUBMODULE_DOMAIN_BYPASS,
-             module: node.name,
-             message: `Domain bypass: submodule "${node.name}" directly imports its own domain "${node.domain}".`,
-             suggestion: `Access domain resources through the parent module`,
-             location: { file: imp.file, line: imp.line },
+            type: ViolationType.SUBMODULE_DOMAIN_BYPASS,
+            module: node.name,
+            message: `Domain bypass: submodule "${node.name}" directly imports its own domain root "@${node.domain}".`,
+            suggestion: `Access domain resources through the parent module "@modules/${node.parentModule}" instead of the domain root.`,
+            location: { file: imp.file, line: imp.line },
           });
         }
       }

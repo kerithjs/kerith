@@ -274,19 +274,22 @@ export async function createApp(
             }
           }
 
-          const discovered: DiscoveredModule[] = [];
-          for (const mod of resolvedModules) {
-            const modFiles = filesByModulePath ? filesByModulePath.get(normalizePath(path.resolve(mod.dirPath))) : undefined;
-            const { hash, identifiers } = await computeModuleHash(mod.dirPath, modFiles);
-            discovered.push({
-              name: mod.name,
-              dirPath: mod.dirPath,
-              domain: mod.domain,
-              identifiers,
-              hash,
-              shadowFile: shadowFileMap.get(mod.dirPath),
-            });
-          }
+          const discovered: DiscoveredModule[] = await Promise.all(
+            resolvedModules.map(async (mod) => {
+              const modFiles = filesByModulePath
+                ? filesByModulePath.get(normalizePath(path.resolve(mod.dirPath)))
+                : undefined;
+              const { hash, identifiers } = await computeModuleHash(mod.dirPath, modFiles);
+              return {
+                name: mod.name,
+                dirPath: mod.dirPath,
+                domain: mod.domain,
+                identifiers,
+                hash,
+                shadowFile: shadowFileMap.get(mod.dirPath),
+              };
+            }),
+          );
 
           const oldRegistry =
             (await loadNitsRegistry(cwd)) ||
@@ -434,19 +437,32 @@ export async function createApp(
         updateAliasCache(registry.getAllAliases());
       }
 
-      // Step 6 — Import index entries (domains → modules → submodules) — runs identifiers
-      for (const domain of scanResult.domains) {
-        await importIndexEntry(domain.indexPath, config.moduleLoadTimeoutMs);
-        log.info(`Domain loaded: ${pc.cyan(domain.name)}`, { _module: "domain", name: domain.name });
-      }
+      // Step 6 — Import index entries (paralelo por tipo) — runs identifiers
 
-      for (const mod of resolvedModules) {
-        const imported = await importIndexEntry(
-          mod.indexPath,
-          config.moduleLoadTimeoutMs,
-        );
+      // 6a — Domains en paralelo
+      await Promise.all(
+        scanResult.domains.map(async (domain) => {
+          await importIndexEntry(domain.indexPath, config.moduleLoadTimeoutMs);
+          log.info(`Domain loaded: ${pc.cyan(domain.name)}`, {
+            _module: "domain",
+            name: domain.name,
+          });
+        }),
+      );
 
-        // Correlate the imported module with the one added to the registry based on dirPath
+      // 6b — Modules en paralelo: import primero, correlación y validación después
+      const importedModules = await Promise.all(
+        resolvedModules.map(async (mod) => {
+          const imported = await importIndexEntry(
+            mod.indexPath,
+            config.moduleLoadTimeoutMs,
+          );
+          return { mod, imported };
+        }),
+      );
+
+      // Correlación y validación (CPU pura — mantiene el orden original)
+      for (const { mod, imported } of importedModules) {
         const allRegistered = registry.getAllModules();
         const registeredMod = allRegistered.find(
           (m) => normalizePath(m.path) === normalizePath(mod.dirPath),
@@ -466,7 +482,7 @@ export async function createApp(
         }
 
         const moduleLabel = registeredMod.domain
-          ? `${pc.dim(registeredMod.domain + '/')}${pc.green(registeredMod.name)}`
+          ? `${pc.dim(registeredMod.domain + "/")}${pc.green(registeredMod.name)}`
           : pc.green(registeredMod.name);
 
         log.info(`Module loaded: ${moduleLabel}`, {
@@ -509,15 +525,18 @@ export async function createApp(
         }
       }
 
-      for (const sub of scanResult.submodules) {
-        await importIndexEntry(sub.indexPath, config.moduleLoadTimeoutMs);
-        log.debug(`SubModule loaded: ${sub.name}`, {
-          _module: "submodule",
-          name: sub.name,
-          parentModule: sub.parentModule,
-          domain: sub.domain,
-        });
-      }
+      // 6c — Submodules en paralelo
+      await Promise.all(
+        scanResult.submodules.map(async (sub) => {
+          await importIndexEntry(sub.indexPath, config.moduleLoadTimeoutMs);
+          log.debug(`SubModule loaded: ${sub.name}`, {
+            _module: "submodule",
+            name: sub.name,
+            parentModule: sub.parentModule,
+            domain: sub.domain,
+          });
+        }),
+      );
 
       const allModules = registry.getAllModules();
 
@@ -855,11 +874,13 @@ export async function createApp(
       }
 
       const domainCount = scanResult.domains.length;
+      const submoduleCount = scanResult.submodules.length;
       log.info(
-        `${pc.green("Bootstrap complete")} — ${domainCount > 0 ? `${pc.magenta(domainCount)} domain(s), ` : ''}${pc.cyan(allModules.length)} module(s), ${pc.cyan(mountedRoutes.length)} route(s) in ${pc.yellow(`${durationMs}ms`)}`,
+        `${pc.green("Bootstrap complete")} — ${domainCount > 0 ? `${pc.magenta(domainCount)} domain(s), ` : ''}${pc.cyan(allModules.length)} module(s)${submoduleCount > 0 ? `, ${pc.cyan(submoduleCount)} submodule(s)` : ''}, ${pc.cyan(mountedRoutes.length)} route(s) in ${pc.yellow(`${durationMs}ms`)}`,
         {
           domainCount,
           moduleCount: allModules.length,
+          submoduleCount,
           routeCount: mountedRoutes.length,
           durationMs,
         },

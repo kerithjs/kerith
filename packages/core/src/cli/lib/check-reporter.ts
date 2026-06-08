@@ -1,7 +1,7 @@
 import type { ReconciliationResult } from '../../types/nits.js';
 import type { Violation, RelativeBoundaryViolation } from './violations.js';
 import { ViolationType, isErrorViolation } from './violations.js';
-import { type ModuleNode as ModuleGraphNode } from './graph-builder.js';
+import { type ModuleNode as ModuleGraphNode, type DomainNode, type SubModuleNode } from './graph-builder.js';
 
 const R    = '\x1b[0m';
 const BOLD = '\x1b[1m';
@@ -37,9 +37,9 @@ export function blank(): void {
 export interface CheckReportData {
   version:      string;
   projectName:  string;
-  domains:      any[]; // TODO: type this properly if possible, or just export DomainNode
+  domains:      DomainNode[];
   modules:      ModuleGraphNode[];
-  submodules:   any[];
+  submodules:   SubModuleNode[];
   violations:   Violation[];
   nitsResult:   ReconciliationResult | null;
   options: {
@@ -120,8 +120,8 @@ export function printArchitectureSection(data: CheckReportData): void {
   }
 }
 
-function printNodeGroup(nodes: any[], data: CheckReportData): void {
-  const getQualifiedName = (m: any) => {
+function printNodeGroup(nodes: (ModuleGraphNode | DomainNode | SubModuleNode)[], data: CheckReportData): void {
+  const getQualifiedName = (m: ModuleGraphNode | DomainNode | SubModuleNode) => {
     if ('parentModule' in m) return `${m.domain}/${m.parentModule}/${m.name}`; // SubModule
     if ('modules' in m) return m.name; // Domain
     return m.domain ? `${m.domain}/${m.name}` : m.name; // Module
@@ -246,8 +246,8 @@ export function printArchitectureWithIdentity(data: CheckReportData): void {
   printIdentityLegend();
 }
 
-function printNodeGroupWithIdentity(nodes: any[], data: CheckReportData): void {
-  const getQualifiedName = (m: any) => {
+function printNodeGroupWithIdentity(nodes: (ModuleGraphNode | DomainNode | SubModuleNode)[], data: CheckReportData): void {
+  const getQualifiedName = (m: ModuleGraphNode | DomainNode | SubModuleNode) => {
     if ('parentModule' in m) return `${m.domain}/${m.parentModule}/${m.name}`; // SubModule
     if ('modules' in m) return m.name; // Domain
     return m.domain ? `${m.domain}/${m.name}` : m.name; // Module
@@ -278,8 +278,9 @@ function printNodeGroupWithIdentity(nodes: any[], data: CheckReportData): void {
 
     const displayName = qualifiedName.length > 30 ? qualifiedName.slice(0, 29) + '…' : qualifiedName;
     const paddedName = displayName.padEnd(maxLen + 2, ' ');
-    const idStr = mod.id || 'unknown';
-    const resolvedBy = isNew ? 'new' : (mod.resolvedBy || 'unknown');
+    const isModuleNode = !('modules' in mod) && !('parentModule' in mod);
+    const idStr = isModuleNode ? (mod.id || 'unknown') : '—';
+    const resolvedBy = isNew ? 'new' : (isModuleNode ? (mod.resolvedBy || 'unknown') : '—');
     
     let methodColored: string;
     let hint = '';
@@ -393,7 +394,7 @@ export function printSummary(data: CheckReportData): void {
   const totalModules = modules.length + submodules.length + domains.length;
   const allNodes = [...modules, ...submodules, ...domains];
   
-  const getQualifiedName = (m: any) => m.name; // Simplified for summary matching
+  const getQualifiedName = (m: ModuleGraphNode | DomainNode | SubModuleNode) => m.name; // Simplified for summary matching
   const okNodes = allNodes.filter(n => data.violations.filter(v => v.module === n.name).length === 0).length;
 
   const domainVios = data.violations.filter(v => v.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION).length;

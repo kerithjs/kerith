@@ -129,12 +129,28 @@ export function inferParentModule(
 async function detectSharedEntries(
   scanRoot: string,
   domains: DomainScanEntry[],
+  log?: LogHandler,
 ): Promise<SharedScanEntry[]> {
   const shared: SharedScanEntry[] = [];
 
   for (const domain of domains) {
     const sharedPath = path.join(domain.dirPath, '_shared');
     if (fs.existsSync(sharedPath) && fs.statSync(sharedPath).isDirectory()) {
+      // Guard: warn if developer accidentally put a Kerith identifier inside _shared.
+      // _shared is excluded from the module scan glob, so Module() / Domain() / SubModule()
+      // declarations there will be silently ignored — emit an actionable warning instead.
+      const sharedIndex = resolveIndexFile(sharedPath);
+      if (sharedIndex) {
+        const ident = extractTopLevelIdentifier(sharedIndex);
+        if (ident && ['Domain', 'Module', 'SubModule'].includes(ident.type)) {
+          log?.(
+            'warn',
+            `[Kerith] _shared directory for domain "${domain.name}" contains a Kerith identifier (${ident.type}("${ident.name}")) in its index file. _shared is excluded from module scanning — this identifier will be silently ignored. Remove the identifier or move the file outside _shared.`,
+            { _module: 'scanner', domain: domain.name, identifierType: ident.type, path: sharedIndex },
+          );
+        }
+      }
+
       shared.push({
         type: 'domain-scoped',
         alias: `@${domain.name}/shared`,
@@ -277,7 +293,7 @@ export async function scanOrigin(
     resolvedSubmodules.push(sub);
   }
 
-  const shared = await detectSharedEntries(absoluteOrigin, domains);
+  const shared = await detectSharedEntries(absoluteOrigin, domains, log);
 
   return {
     domains,
@@ -344,7 +360,7 @@ export async function scanModulesLegacy(
 
   const modulesBase = globPattern.split('*')[0].replace(/\/$/, '');
   const scanRoot = path.resolve(cwd, path.dirname(modulesBase) || modulesBase);
-  const shared = await detectSharedEntries(scanRoot, []);
+  const shared = await detectSharedEntries(scanRoot, [], options.log);
 
   return {
     domains: [],
