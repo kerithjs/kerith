@@ -78,6 +78,10 @@ export async function checkSharedAccess(
     if (moduleShared.length === 0) continue;
 
     const files = getModuleFiles(mod.dirPath);
+    const submodules = graph.submodules.filter(s => s.parentModule === mod.name && (s.domain === mod.domain || (!s.domain && !mod.domain)));
+    for (const sub of submodules) {
+      files.push(...getModuleFiles(sub.dirPath));
+    }
     const usedShared = new Set<string>();
 
     for (const file of files) {
