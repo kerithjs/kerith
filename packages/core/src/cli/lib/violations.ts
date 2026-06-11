@@ -14,6 +14,9 @@ export const ViolationType = {
   SUBMODULE_DIRECT_SIBLING: 'submodule-direct-sibling',
   SUBMODULE_DOMAIN_BYPASS: 'submodule-domain-bypass',
   MODULE_SPACE_CONFLICT: 'module-space-conflict',
+  UNDECLARED_SHARED: 'undeclared-shared',
+  UNUSED_SHARED: 'unused-shared',
+  SHARED_SCOPE_VIOLATION: 'shared-scope-violation',
 } as const;
 
 export type ViolationType = typeof ViolationType[keyof typeof ViolationType];
@@ -66,7 +69,8 @@ export function isErrorViolation(violation: Violation): boolean {
   return (
     violation.type === ViolationType.CIRCULAR_DEPENDENCY ||
     violation.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION ||
-    violation.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION
+    violation.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION ||
+    violation.type === ViolationType.SHARED_SCOPE_VIOLATION
   );
 }
 

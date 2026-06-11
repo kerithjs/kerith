@@ -400,9 +400,18 @@ export async function createApp(
           registry.registerAlias(`${aliasKey}/*`, `${mod.dirPath}/*`);
         }
 
-        for (const sharedEntry of scanResult.shared) {
-          pureModuleAliases[sharedEntry.alias] = sharedEntry.path;
-          pureModuleAliases[`${sharedEntry.alias}/*`] = `${sharedEntry.path}/*`;
+        // Shared aliases — same priority as domain aliases (before @modules/*)
+        // @shared global
+        const globalShared = registry.getShared('@shared');
+        if (globalShared) {
+          pureModuleAliases['@shared'] = globalShared.path;
+          pureModuleAliases['@shared/*'] = `${globalShared.path}/*`;
+        }
+
+        // Domain-scoped shared
+        for (const entry of registry.getAllShared().filter(e => e.type === 'domain-scoped')) {
+          pureModuleAliases[entry.alias] = entry.path;
+          pureModuleAliases[`${entry.alias}/*`] = `${entry.path}/*`;
         }
 
         const normalizedConfigAliases: Record<string, string> = {};
@@ -563,6 +572,89 @@ export async function createApp(
                 `Module "${mod.name}" is trying to import missing module "${importName}"`,
               );
             }
+          }
+        }
+      }
+
+      // Step 7.1 — Validate shared[] declarations
+      for (const mod of allModules) {
+        const rawMod = registry.getRawModule(mod.name, mod.domain);
+        if (!rawMod || !rawMod.shared || rawMod.shared.length === 0) {
+          continue;
+        }
+
+        for (const sharedAlias of rawMod.shared) {
+          const error = (code: import("../core/errors.js").KerithErrorCode, message: string, details: string) => {
+            if (config.strict) {
+              throw new KerithError(code, message, details);
+            } else {
+              log.warn(message, { _module: "bootstrap", code, details });
+            }
+          };
+
+          // Check if it's a Nodulus module alias (should be in imports[], not shared[])
+          if (registry.hasModule(sharedAlias, mod.domain)) {
+            error(
+              "SHARED_IN_IMPORTS",
+              `Module "${mod.name}" declares "${sharedAlias}" in shared[] but it is a Nodulus module alias.`,
+              `Move "${sharedAlias}" from shared[] to imports[] in Module() for "${mod.name}".`,
+            );
+            continue;
+          }
+
+          // Check if it's '@shared' or a subpath of '@shared'
+          const isSharedOrSubpath = sharedAlias === "@shared" || sharedAlias.startsWith("@shared/");
+          if (!isSharedOrSubpath) {
+            error(
+              "UNDECLARED_SHARED",
+              `Module "${mod.name}" declares "${sharedAlias}" in shared[] but it is not a valid shared alias.`,
+              `shared[] only accepts '@shared' or subpaths of '@shared'. Remove "${sharedAlias}" from shared[] in Module() for "${mod.name}".`,
+            );
+            continue;
+          }
+
+          // Check if '@shared' is registered (folder exists)
+          if (sharedAlias === "@shared") {
+            const sharedEntry = registry.getShared("@shared");
+            if (!sharedEntry) {
+              error(
+                "UNDECLARED_SHARED",
+                `Module "${mod.name}" declares "@shared" in shared[] but @shared is not registered.`,
+                `Ensure a shared folder exists or remove "@shared" from shared[] in Module() for "${mod.name}".`,
+              );
+            }
+          }
+        }
+      }
+
+      // Step 7.2 — Validate that imports[] doesn't contain shared aliases
+      for (const mod of allModules) {
+        const rawMod = registry.getRawModule(mod.name, mod.domain);
+        if (!rawMod || !rawMod.imports || rawMod.imports.length === 0) {
+          continue;
+        }
+
+        for (const importEntry of rawMod.imports) {
+          if (importEntry.startsWith("@shared")) {
+            const error = () => {
+              if (config.strict) {
+                throw new KerithError(
+                  "SHARED_IN_IMPORTS",
+                  `Module "${mod.name}" declares "${importEntry}" in imports[] but it is a shared alias.`,
+                  `Move "${importEntry}" from imports[] to shared[] in Module() for "${mod.name}".`,
+                );
+              } else {
+                log.warn(
+                  `Module "${mod.name}" declares "${importEntry}" in imports[] but it is a shared alias.`,
+                  {
+                    _module: "bootstrap",
+                    code: "SHARED_IN_IMPORTS",
+                    details: `Move "${importEntry}" from imports[] to shared[] in Module() for "${mod.name}".`,
+                  },
+                );
+              }
+            };
+            error();
           }
         }
       }

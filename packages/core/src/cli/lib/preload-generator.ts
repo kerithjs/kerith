@@ -55,6 +55,13 @@ export async function generatePreloadFile(config: KerithConfig, version: string,
     aliases[alias] = `resolve(__dirname, '${escapeStr(getRelativePathStr(domain.dirPath))}')`;
   }
 
+  // 3. Add shared aliases from scanResult
+  for (const sharedEntry of (scanResult.shared ?? [])) {
+    const alias = escapeStr(sharedEntry.alias);
+    aliases[alias] = `resolve(__dirname, '${escapeStr(getRelativePathStr(sharedEntry.path))}')`;
+  }
+
+
   const aliasesEntries = Object.entries(aliases)
     .map(([key, val]) => `    '${key}': ${val},`)
     .join('\n');

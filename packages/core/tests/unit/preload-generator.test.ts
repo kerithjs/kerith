@@ -8,7 +8,7 @@ import { vi } from 'vitest';
 import { scanFromConfig } from '../../src/bootstrap/scanner.js';
 
 vi.mock('../../src/bootstrap/scanner.js', () => ({
-  scanFromConfig: vi.fn().mockResolvedValue({ domains: [] })
+  scanFromConfig: vi.fn().mockResolvedValue({ domains: [], shared: [] })
 }));
 
 describe('Preload Generator (preload-generator.ts)', () => {

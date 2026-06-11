@@ -68,7 +68,7 @@ export async function generatePathAliases(config: KerithConfig, cwd: string, log
     const scanResult = await scanFromConfig(config, cwd);
     for (const domain of scanResult.domains) {
       const aliasKey = `@${domain.name}`;
-      
+
       if (allDependencies.has(aliasKey)) {
         if (logger) {
           logger.warn(`[Kerith] Alias "${aliasKey}" conflicts with npm package. Consider renaming your domain.`, { _module: 'alias' });
@@ -86,7 +86,7 @@ export async function generatePathAliases(config: KerithConfig, cwd: string, log
       if (!relativeDirPath.startsWith('./') && !relativeDirPath.startsWith('../')) {
         relativeDirPath = './' + relativeDirPath;
       }
-      
+
       if (fs.existsSync(indexPath)) {
         let relativeIndexPath = path.relative(cwd, indexPath).replace(/\\/g, '/');
         if (!relativeIndexPath.startsWith('./') && !relativeIndexPath.startsWith('../')) {
@@ -94,7 +94,38 @@ export async function generatePathAliases(config: KerithConfig, cwd: string, log
         }
         pathsObj[aliasKey] = [relativeIndexPath];
       }
-      
+
+      pathsObj[`${aliasKey}/*`] = [`${relativeDirPath}/*`];
+    }
+
+    // 3. Add shared aliases from scanResult
+    // Only generate entries for folders that actually exist on disk — spec requirement.
+    for (const sharedEntry of scanResult.shared) {
+      if (!fs.existsSync(sharedEntry.path)) continue;
+
+      const aliasKey = sharedEntry.alias;
+
+      let relativeDirPath = path.relative(cwd, sharedEntry.path).replace(/\\/g, '/');
+      if (!relativeDirPath.startsWith('./') && !relativeDirPath.startsWith('../')) {
+        relativeDirPath = './' + relativeDirPath;
+      }
+
+      let indexPath = path.join(sharedEntry.path, 'index.ts');
+      if (!fs.existsSync(indexPath)) {
+        indexPath = path.join(sharedEntry.path, 'index.js');
+      }
+
+      if (fs.existsSync(indexPath)) {
+        let relativeIndexPath = path.relative(cwd, indexPath).replace(/\\/g, '/');
+        if (!relativeIndexPath.startsWith('./') && !relativeIndexPath.startsWith('../')) {
+          relativeIndexPath = './' + relativeIndexPath;
+        }
+        pathsObj[aliasKey] = [relativeIndexPath];
+      } else {
+        // Folder exists but no index file — map to the directory itself
+        pathsObj[aliasKey] = [relativeDirPath];
+      }
+
       pathsObj[`${aliasKey}/*`] = [`${relativeDirPath}/*`];
     }
   // 3. Register manual custom aliases 

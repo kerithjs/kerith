@@ -42,6 +42,11 @@ export interface CheckReportData {
   submodules:   SubModuleNode[];
   violations:   Violation[];
   nitsResult:   ReconciliationResult | null;
+  /**
+   * Map of shared alias → list of module names that declare it in shared[].
+   * Populated in check.ts from the registry after entity registration.
+   */
+  sharedInfo?:  Record<string, string[]>;
   options: {
     verbose:      boolean;
     strict:       boolean;
@@ -60,6 +65,7 @@ export function printCheckReport(data: CheckReportData): void {
     printArchitectureSection(data);
   }
   
+  printSharedSection(data);
   printViolationDetails(data.violations);
   
   if (!data.options.verbose) {
@@ -355,6 +361,100 @@ export function printViolationDetails(violations: Violation[]): void {
   }
 }
 
+export function printSharedSection(data: CheckReportData): void {
+  const sharedViolations = data.violations.filter(
+    v => v.type === ViolationType.UNDECLARED_SHARED ||
+         v.type === ViolationType.UNUSED_SHARED ||
+         v.type === ViolationType.SHARED_SCOPE_VIOLATION
+  ) as Array<{ type: ViolationType; module: string; message: string; suggestion: string; location?: { file: string; line: number } }>;
+
+  // Only show if there are violations or --verbose is used
+  if (sharedViolations.length === 0 && !data.options.verbose) {
+    return;
+  }
+
+  sectionHeader('Shared');
+
+  // Group violations by type for display
+  const undeclared = sharedViolations.filter(v => v.type === ViolationType.UNDECLARED_SHARED);
+  const unused     = sharedViolations.filter(v => v.type === ViolationType.UNUSED_SHARED);
+  const scopeVios  = sharedViolations.filter(v => v.type === ViolationType.SHARED_SCOPE_VIOLATION);
+
+  // ── @shared global ──────────────────────────────────────────────────────────
+  const globalDeclaredBy = data.sharedInfo?.['@shared'] ?? [];
+  const globalHasAnyData = globalDeclaredBy.length > 0 ||
+    undeclared.some(v => v.message.includes('@shared')) ||
+    unused.some(v => v.message.includes('@shared'));
+
+  if (globalHasAnyData || data.options.verbose) {
+    const hasUndeclared = undeclared.some(v => v.message.includes('@shared'));
+    const hasUnused     = unused.some(v => v.message.includes('@shared'));
+
+    if (hasUndeclared) {
+      const violators = new Set(undeclared.filter(v => v.message.includes('@shared')).map(v => v.module));
+      const usageInfo = violators.size > 0 ? ` ${AYU.muted}— módulos: ${[...violators].join(', ')}${R}` : '';
+      console.log(`  ${AYU.red}✗${R}  @shared          ${AYU.red}UNDECLARED_SHARED${R}${usageInfo}`);
+    } else if (hasUnused) {
+      const violators = new Set(unused.filter(v => v.message.includes('@shared')).map(v => v.module));
+      const usageInfo = violators.size > 0 ? ` ${AYU.muted}— módulos: ${[...violators].join(', ')}${R}` : '';
+      console.log(`  ${AYU.orange}⚠${R}  @shared          ${AYU.orange}UNUSED_SHARED${R}${usageInfo}`);
+    } else {
+      // ✔ — show which modules declared @shared in verbose mode
+      const usageInfo = globalDeclaredBy.length > 0
+        ? ` ${AYU.muted}— usado por: ${globalDeclaredBy.join(', ')}${R}`
+        : '';
+      console.log(`  ${AYU.green}✔${R}  @shared          ${AYU.green}OK${R}${usageInfo}`);
+    }
+  }
+
+  // ── Domain-scoped shared ─────────────────────────────────────────────────────
+  // In verbose mode show ALL registered domain-scoped entries (OK + violations).
+  // In non-verbose mode show only those with violations.
+  const knownDomainAliases = new Set<string>();
+
+  // Always include aliases that appear in violations
+  for (const v of [...undeclared, ...unused, ...scopeVios]) {
+    const m = v.message.match(/@([^/'"]+)\/shared/);
+    if (m) knownDomainAliases.add(`@${m[1]}/shared`);
+  }
+
+  // In verbose mode also include registered aliases from sharedInfo
+  if (data.options.verbose && data.sharedInfo) {
+    for (const alias of Object.keys(data.sharedInfo)) {
+      if (alias !== '@shared') knownDomainAliases.add(alias);
+    }
+  }
+
+  for (const alias of knownDomainAliases) {
+    const domainMatch = alias.match(/@([^/]+)\/shared/);
+    const domain = domainMatch?.[1];
+    if (!domain) continue;
+
+    const aliasVios  = [...undeclared, ...unused, ...scopeVios].filter(v => v.message.includes(alias));
+    const hasScopeVio = aliasVios.some(v => v.type === ViolationType.SHARED_SCOPE_VIOLATION);
+    const hasUndecl   = aliasVios.some(v => v.type === ViolationType.UNDECLARED_SHARED);
+    const hasUnused    = aliasVios.some(v => v.type === ViolationType.UNUSED_SHARED);
+    const aliasLabel   = alias.padEnd(18);
+
+    if (hasScopeVio) {
+      const violators = new Set(scopeVios.filter(v => v.message.includes(alias)).map(v => v.module));
+      const fromInfo = violators.size > 0 ? ` ${AYU.muted}— desde: ${[...violators].join(', ')}${R}` : '';
+      console.log(`  ${AYU.red}✗${R}  ${aliasLabel} ${AYU.red}SCOPE_VIOLATION${R}${fromInfo}`);
+    } else if (hasUndecl) {
+      const violators = new Set(aliasVios.filter(v => v.type === ViolationType.UNDECLARED_SHARED).map(v => v.module));
+      console.log(`  ${AYU.red}✗${R}  ${aliasLabel} ${AYU.red}UNDECLARED_SHARED${R} ${AYU.muted}— módulos: ${[...violators].join(', ')}${R}`);
+    } else if (hasUnused) {
+      const violators = new Set(aliasVios.filter(v => v.type === ViolationType.UNUSED_SHARED).map(v => v.module));
+      console.log(`  ${AYU.orange}⚠${R}  ${aliasLabel} ${AYU.orange}UNUSED_SHARED${R} ${AYU.muted}— módulos: ${[...violators].join(', ')}${R}`);
+    } else {
+      // ✔ OK — implícito para {domain}
+      console.log(`  ${AYU.green}✔${R}  ${aliasLabel} ${AYU.green}OK${R} ${AYU.muted}— implícito para ${domain}${R}`);
+    }
+  }
+
+  blank();
+}
+
 export function printIdentitySection(nitsResult: ReconciliationResult | null, _modules: ModuleGraphNode[]): void {
   if (!nitsResult) return;
 
@@ -399,12 +499,17 @@ export function printSummary(data: CheckReportData): void {
 
   const domainVios = data.violations.filter(v => v.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION).length;
   const subVios = data.violations.filter(v => submodules.some(s => s.name === v.module) && v.type !== ViolationType.DOMAIN_BOUNDARY_VIOLATION).length;
-  const modVios = data.violations.length - domainVios - subVios;
+  const sharedVios = data.violations.filter(v => 
+    v.type === ViolationType.UNDECLARED_SHARED ||
+    v.type === ViolationType.UNUSED_SHARED ||
+    v.type === ViolationType.SHARED_SCOPE_VIOLATION
+  ).length;
+  const modVios = data.violations.length - domainVios - subVios - sharedVios;
   const newModules = data.nitsResult?.newModules?.length || 0;
   
   const newText = newModules > 0 ? `, ${newModules} new` : '';
 
-  console.log(`  ${AYU.fg}Summary: ${okNodes} OK${newText}, ${domainVios} domain violation${domainVios === 1 ? '' : 's'}, ${modVios} module violation${modVios === 1 ? '' : 's'}, ${subVios} submodule violation${subVios === 1 ? '' : 's'}${R}`);
+  console.log(`  ${AYU.fg}Summary: ${okNodes} OK${newText}, ${domainVios} domain violation${domainVios === 1 ? '' : 's'}, ${modVios} module violation${modVios === 1 ? '' : 's'}, ${subVios} submodule violation${subVios === 1 ? '' : 's'}, ${sharedVios} shared violation${sharedVios === 1 ? '' : 's'}${R}`);
 
   if (data.nitsResult) {
     const missingShadow = data.modules.filter(m => {

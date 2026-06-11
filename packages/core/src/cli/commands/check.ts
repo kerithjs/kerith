@@ -11,6 +11,10 @@ import { createLogger, defaultLogHandler } from '../../core/logger.js';
 import { reconcile, buildUpdatedNitsRegistry, buildNitsIdMap } from '../../nits/nits-reconciler.js';
 import { computeModuleHash } from '../../nits/nits-hash.js';
 import type { DiscoveredModule, NitsModuleRecord } from '../../types/nits.js';
+import { checkSharedAccess } from '../lib/shared-checker.js';
+import { createRegistry, registryContext } from '../../core/registry.js';
+import { registerEntitiesFromScan } from '../../bootstrap/register-from-scan.js';
+import { scanFromConfig } from '../../bootstrap/scanner.js';
 
 function resolveCorePkgVersion(): string | null {
   const depths = [
@@ -164,7 +168,32 @@ export function checkCommand(): Command {
           }
         }
 
+        // Build registry for shared checking
+        const registry = createRegistry();
+        const scanResult = await scanFromConfig(config, cwd);
+        registryContext.run(registry, () => {
+          registerEntitiesFromScan(registry, scanResult);
+        });
+
         let violations = detectViolations(graph, cwd);
+        
+        // Add shared access violations
+        const sharedViolations = await checkSharedAccess(graph, registry, cwd);
+        violations.push(...sharedViolations);
+
+        // Build sharedInfo: alias → module names that declare it in shared[]
+        const sharedInfo: Record<string, string[]> = {};
+        for (const entry of registry.getAllShared()) {
+          sharedInfo[entry.alias] = [];
+        }
+        for (const mod of graph.modules) {
+          const rawMod = registry.getRawModule(mod.name, mod.domain);
+          for (const sharedAlias of rawMod?.shared ?? []) {
+            if (sharedInfo[sharedAlias] !== undefined) {
+              sharedInfo[sharedAlias].push(mod.name);
+            }
+          }
+        }
 
         if (options.circular === false) { 
           violations = violations.filter(v => v.type !== ViolationType.CIRCULAR_DEPENDENCY);
@@ -172,14 +201,17 @@ export function checkCommand(): Command {
 
         const alwaysExit1: ViolationType[] = [
           ViolationType.RELATIVE_BOUNDARY_VIOLATION,
-          ViolationType.DOMAIN_BOUNDARY_VIOLATION
+          ViolationType.DOMAIN_BOUNDARY_VIOLATION,
+          ViolationType.SHARED_SCOPE_VIOLATION
         ];
         
         const strictExit1: ViolationType[] = [
           ...alwaysExit1,
           ViolationType.SUBMODULE_DIRECT_SIBLING,
           ViolationType.SUBMODULE_DOMAIN_BYPASS,
-          ViolationType.CIRCULAR_DEPENDENCY
+          ViolationType.CIRCULAR_DEPENDENCY,
+          ViolationType.UNDECLARED_SHARED,
+          ViolationType.UNUSED_SHARED
         ];
 
         const checkTypes = options.strict ? strictExit1 : alwaysExit1;
@@ -202,6 +234,7 @@ export function checkCommand(): Command {
           submodules:  graph.submodules || [],
           violations,
           nitsResult,
+          sharedInfo,
           options: {
             verbose:      options.verbose ?? false,
             strict:       options.strict  ?? false,
