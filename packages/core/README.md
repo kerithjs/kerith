@@ -767,6 +767,30 @@ export default {
 
 ---
 
+## Shared Resources
+
+Kerith provides two levels of shared code:
+
+**Global shared** (`@shared`) — available to any module in any domain.
+Place code in `src/shared/` and declare access in Module():
+
+```typescript
+Module('payments', {
+  shared: ['@shared']
+})
+```
+
+**Domain shared** (`@{domain}/shared`) — available only within a domain.
+Place code in `src/{domain}/_shared/`. No declaration needed — access
+is implicit for all modules in that domain.
+
+```typescript
+// src/billing/payments/payments.service.ts
+import { db } from '@billing/shared/db'  // implicit access — no declaration needed
+```
+
+---
+
 ## ESLint Plugin
 
 > **Available from v1.3.0** · Package: `@kerith/eslint-plugin`

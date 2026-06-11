@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2026-06-04
 
 ### Added
+- **`no-undeclared-shared` rule**: Detects imports from `@shared` that are not declared in `shared: ['@shared']`
+- **`no-shared-scope-violation` rule**: Prevents accessing domain-scoped shared modules from outside the domain
 - **`no-domain-boundary-violations` rule**: Enforces that modules do not import across domain boundaries
 - **`no-relative-boundary-violations` rule**: Detects relative imports that cross module/submodule boundaries
 

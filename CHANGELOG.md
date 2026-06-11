@@ -13,6 +13,15 @@ For full technical details, see the individual package changelogs:
 
 ## [2.0.0] - 2026-06-04
 
+### Added — Shared System
+- Global shared (`@shared`): place shared code in `src/shared/`, declare with `shared: ['@shared']` in Module()
+- Domain-scoped shared (`@{domain}/shared`): place code in `src/{domain}/_shared/`, implicit access for domain modules
+- `kerith check` detects UNDECLARED_SHARED, UNUSED_SHARED, SHARED_SCOPE_VIOLATION
+- `kerith create-shared --domain <name>` scaffolds domain shared directory
+- `kerith create-shared --global` scaffolds global shared directory
+- ESLint rules: `kerith/no-undeclared-shared`, `kerith/no-shared-scope-violation`
+- `sync-tsconfig` generates aliases for @shared and @{domain}/shared automatically
+
 ### @kerith/core
 
 - **Domain Hierarchy**: Introduced `Domain → Module → SubModule` architecture inferred from filesystem

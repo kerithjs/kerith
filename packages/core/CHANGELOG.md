@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] — 2026-06-03
 
 ### Added
+- Global shared (`@shared`): place shared code in `src/shared/`, declare with `shared: ['@shared']` in Module()
+- Domain-scoped shared (`@{domain}/shared`): place code in `src/{domain}/_shared/`, implicit access for domain modules
+- `kerith check` detects UNDECLARED_SHARED, UNUSED_SHARED, SHARED_SCOPE_VIOLATION
+- `kerith create-shared --domain <name>` scaffolds domain shared directory
+- `kerith create-shared --global` scaffolds global shared directory
+- `sync-tsconfig` generates aliases for @shared and @{domain}/shared automatically
 - Domain hierarchy: `Domain → Module → SubModule` inferred from filesystem
 - `origin` config key: single scan root replacing separate `domains`/`modules` config
 - `Domain()` identifier: semantic marker for domain boundaries
