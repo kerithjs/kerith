@@ -5,7 +5,6 @@ import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
 import { vi } from 'vitest';
-import { scanFromConfig } from '../../src/bootstrap/scanner.js';
 
 vi.mock('../../src/bootstrap/scanner.js', () => ({
   scanFromConfig: vi.fn().mockResolvedValue({ domains: [], shared: [] })

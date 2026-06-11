@@ -118,7 +118,7 @@ describe('Domain()', () => {
       try {
         // @ts-expect-error - domain should not exist in ModuleOptions
         Module('test', { domain: 'should-fail' });
-      } catch (e) {
+      } catch (_e) {
         // Ignore runtime error, we only care about type checking here
       }
     });

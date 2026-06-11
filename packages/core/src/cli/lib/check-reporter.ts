@@ -85,7 +85,7 @@ export function printHeader(data: CheckReportData): void {
 export function printArchitectureSection(data: CheckReportData): void {
   sectionHeader('Architecture');
   
-  const { domains, modules, submodules, violations, nitsResult } = data;
+  const { domains, modules, submodules } = data;
   const hasDomains = domains && domains.length > 0;
 
   if (!hasDomains) {
@@ -144,7 +144,7 @@ function printNodeGroup(nodes: (ModuleGraphNode | DomainNode | SubModuleNode)[],
     const boundaryViolations = modViolations.filter(
       (v): v is RelativeBoundaryViolation => v.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION,
     );
-    const domainViolations = modViolations.filter(
+    const _domainViolations = modViolations.filter(
       v => v.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION,
     );
     const hasBoundary = boundaryViolations.length > 0;
@@ -491,10 +491,10 @@ export function printSummary(data: CheckReportData): void {
   const submodules = data.submodules || [];
   const domains = data.domains || [];
 
-  const totalModules = modules.length + submodules.length + domains.length;
+  const _totalModules = modules.length + submodules.length + domains.length;
   const allNodes = [...modules, ...submodules, ...domains];
   
-  const getQualifiedName = (m: ModuleGraphNode | DomainNode | SubModuleNode) => m.name; // Simplified for summary matching
+  const _getQualifiedName = (m: ModuleGraphNode | DomainNode | SubModuleNode) => m.name; // Simplified for summary matching
   const okNodes = allNodes.filter(n => data.violations.filter(v => v.module === n.name).length === 0).length;
 
   const domainVios = data.violations.filter(v => v.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION).length;

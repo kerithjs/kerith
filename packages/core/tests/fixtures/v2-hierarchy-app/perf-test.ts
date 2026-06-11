@@ -5,7 +5,7 @@ async function run() {
   const app = express();
   
   console.time('Bootstrap Total');
-  const kerith = await createApp(app, {
+  const _kerith = await createApp(app, {
     logger: () => {} // Silent
   });
   console.timeEnd('Bootstrap Total');

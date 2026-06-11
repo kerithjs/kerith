@@ -5,7 +5,6 @@ import type { ModuleGraph, ModuleNode, SubModuleNode } from './graph-builder.js'
 import type { Violation } from './violations.js';
 import { ViolationType } from './violations.js';
 import { extractModuleImports } from './import-scanner.js';
-import type { SharedEntry } from '../../types/index.js';
 import type { InternalRegistry } from '../../core/registry.js';
 
 /**
@@ -44,7 +43,7 @@ export async function checkSharedAccess(
 
   // ─── Step A: Detect UNDECLARED_SHARED ───────────────────────────────────────
   for (const mod of graph.modules) {
-    const declaredShared = mod.declaredImports.filter(imp => imp.startsWith('@shared'));
+    const _declaredShared = mod.declaredImports.filter(imp => imp.startsWith('@shared'));
     const files = getModuleFiles(mod.dirPath);
 
     for (const file of files) {

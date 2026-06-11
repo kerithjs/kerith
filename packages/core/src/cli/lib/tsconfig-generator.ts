@@ -3,7 +3,6 @@ import path from 'node:path';
 import fg from 'fast-glob';
 import type { KerithConfig } from '../../config/kerith-config.types.js';
 import { scanFromConfig } from '../../bootstrap/scanner.js';
-import { KerithError } from '../../core/errors.js';
 
 export async function generatePathAliases(config: KerithConfig, cwd: string, logger?: any): Promise<Record<string, string[]>> {
   const pathsObj: Record<string, string[]> = {};
@@ -55,7 +54,7 @@ export async function generatePathAliases(config: KerithConfig, cwd: string, log
     let packageJson: any = null;
     try {
       packageJson = JSON.parse(fs.readFileSync(path.join(cwd, 'package.json'), 'utf-8'));
-    } catch (e) {
+    } catch (_e) {
       // Ignorar si no hay package.json
     }
 

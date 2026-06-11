@@ -109,7 +109,7 @@ describe('SubModule()', () => {
     await registryContext.run(r, async () => {
       const dir = path.join(tmpDir, 'payments', 'trial');
       fs.mkdirSync(dir, { recursive: true });
-      const indexPath = path.join(dir, 'index.ts');
+      const _indexPath = path.join(dir, 'index.ts');
 
       r.registerSubModule({
         name: 'trial',

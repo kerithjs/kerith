@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
-import fs from 'node:fs';
 
 const cliPath = path.resolve(__dirname, '../../src/cli/index.ts');
 const fixturesDir = path.resolve(__dirname, '../fixtures');

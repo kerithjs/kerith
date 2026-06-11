@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import path from 'node:path';
-import fs from 'node:fs';
 import { detectViolations, ViolationType } from '../../src/cli/lib/violations.js';
 import { buildModuleGraph } from '../../src/cli/lib/graph-builder.js';
 import type { KerithConfig } from '../../src/config/kerith-config.types.js';

@@ -375,7 +375,7 @@ export async function createApp(
 
         for (const domain of registry.getAllDomains()) {
           const domainAlias = `@${domain.name}`;
-          const domainIndexPath = path.join(domain.path, 'index.ts'); // Fallback o real? El path del domain es dirPath.
+          const _domainIndexPath = path.join(domain.path, 'index.ts'); // Fallback o real? El path del domain es dirPath.
           // Wait, domain has no indexPath in DomainRegistration?
           // DomainRegistration has `path` (dirPath)
           pureModuleAliases[domainAlias] = domain.path;
