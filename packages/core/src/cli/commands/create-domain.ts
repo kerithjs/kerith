@@ -51,10 +51,8 @@ Domain('${name}')
         const sharedPath = path.join(domainPath, '_shared');
         fs.mkdirSync(sharedPath, { recursive: true });
         
-        const sharedIndexContent = `
-// Shared domain boundaries export
-`;
-        fs.writeFileSync(path.join(sharedPath, `index.${ext}`), sharedIndexContent.trim() + '\n', 'utf-8');
+        const sharedIndexContent = `// @${name}/shared — recursos compartidos internos del dominio ${name}\n// Exportá desde aquí todo lo que los módulos de este dominio necesiten compartir.\n`;
+        fs.writeFileSync(path.join(sharedPath, `index.${ext}`), sharedIndexContent, 'utf-8');
         console.log(`  ${pc.cyan(`_shared/index.${ext}`)}`);
       }
 
