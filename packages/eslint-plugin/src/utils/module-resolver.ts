@@ -8,6 +8,8 @@ const sharedAllowedCache = new Map<string, string[] | null>();
 const moduleImportsCache = new Map<string, string[]>();
 const moduleRootCache = new Map<string, string | null>();
 const activeAliasesCache = new Map<string, string[]>();
+const moduleSharedCache = new Map<string, string[]>();
+const moduleNameCache = new Map<string, string | null>();
 
 const CONFIG_CANDIDATES = ['kerith.config.ts', 'kerith.config.js', 'kerith.config.mjs'] as const;
 const INDEX_EXTENSIONS = ['.ts', '.js', '.mts', '.mjs'] as const;
@@ -291,6 +293,75 @@ export function getModuleImports(
   }
 }
 
+export function getModuleShared(
+  filePath: string,
+  options?: { modulesDir?: string; cwd?: string },
+): string[] | null {
+  const cwd = options?.cwd ?? process.cwd();
+  const moduleRoot = findModuleRoot(filePath, cwd, options?.modulesDir);
+  if (!moduleRoot) return null;
+
+  let indexPath: string | null = null;
+  for (const ext of INDEX_EXTENSIONS) {
+    const candidate = path.join(moduleRoot, `index${ext}`);
+    if (fs.existsSync(candidate)) {
+      indexPath = candidate;
+      break;
+    }
+  }
+  if (!indexPath) return null;
+
+  if (moduleSharedCache.has(indexPath)) {
+    return moduleSharedCache.get(indexPath)!;
+  }
+
+  try {
+    const call = extractIdentifierCall(indexPath, 'Module');
+    if (!call || !Array.isArray(call.options.shared)) {
+      moduleSharedCache.set(indexPath, []);
+      return [];
+    }
+
+    const result = call.options.shared as string[];
+    moduleSharedCache.set(indexPath, result);
+    return result;
+  } catch (_e) {
+    return null;
+  }
+}
+
+export function getModuleName(
+  filePath: string,
+  options?: { modulesDir?: string; cwd?: string },
+): string | null {
+  const cwd = options?.cwd ?? process.cwd();
+  const moduleRoot = findModuleRoot(filePath, cwd, options?.modulesDir);
+  if (!moduleRoot) return null;
+
+  let indexPath: string | null = null;
+  for (const ext of INDEX_EXTENSIONS) {
+    const candidate = path.join(moduleRoot, `index${ext}`);
+    if (fs.existsSync(candidate)) {
+      indexPath = candidate;
+      break;
+    }
+  }
+  if (!indexPath) return null;
+
+  if (moduleNameCache.has(indexPath)) {
+    return moduleNameCache.get(indexPath)!;
+  }
+
+  try {
+    const call = extractIdentifierCall(indexPath, 'Module');
+    if (!call) return null;
+    moduleNameCache.set(indexPath, call.name);
+    return call.name;
+  } catch (_e) {
+    return null;
+  }
+}
+
 export function clearDomainCache() {
   domainCache.clear();
 }
@@ -317,4 +388,6 @@ export function clearAllResolverCaches() {
   clearModuleImportsCache();
   clearModuleRootCache();
   clearActiveAliasesCache();
+  moduleSharedCache.clear();
+  moduleNameCache.clear();
 }
