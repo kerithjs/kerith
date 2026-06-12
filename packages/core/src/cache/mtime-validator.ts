@@ -34,20 +34,20 @@ export const MtimeValidator = {
     // Fallback to 0 if savedAt is somehow missing, forcing a full rescan
     const savedAtTime = cache.savedAt ? new Date(cache.savedAt).getTime() : 0;
 
-    if (!cache.data) {
-      return { toRescan: [], fromCache: [] };
-    }
-
-    for (const module of cache.data.modules) {
+    // First pass: identify all dirty domains
+    for (const module of cache.data!.modules) {
       const { maxMtime, totalSize } = getModuleSignature(module.files);
       const domainKey = module.domain || '__flat__';
 
-      if (maxMtime > savedAtTime) {
+      if (maxMtime > savedAtTime || totalSize !== module.cachedSize) {
         toRescanSet.add(domainKey);
-      } else if (totalSize !== module.cachedSize) {
-        // FAT32/NFS protection with 1-2s granularity
-        toRescanSet.add(domainKey);
-      } else {
+      }
+    }
+
+    // Second pass: modules whose domains are not dirty go to fromCache
+    for (const module of cache.data!.modules) {
+      const domainKey = module.domain || '__flat__';
+      if (!toRescanSet.has(domainKey)) {
         fromCache.push(module);
       }
     }
