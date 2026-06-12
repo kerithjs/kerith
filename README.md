@@ -169,25 +169,70 @@ For the full API reference, configuration options, and CLI documentation, see [d
 
 ## Shared Resources
 
-Kerith provides two levels of shared code:
+Kerith provides two levels of shared code that cover the vast majority of real-world use cases:
 
-**Global shared** (`@shared`) — available to any module in any domain.
-Place code in `src/shared/` and declare access in Module():
+| Type | Alias | Who can access | How to declare |
+|---|---|---|---|
+| Global | `@shared` | Any module, any domain | `shared: ['@shared']` in `Module()` |
+| Domain-scoped | `@{domain}/shared` | Only modules in that domain | Implicit — no declaration needed |
+
+### Global shared (`@shared`)
+
+Place code in `src/shared/` and declare access explicitly in `Module()`:
 
 ```typescript
+// src/billing/payments/index.ts
 Module('payments', {
-  shared: ['@shared']
+  shared: ['@shared']   // declares intent to use @shared
 })
+
+// src/billing/payments/payments.service.ts
+import { format } from '@shared/format'   // valid — declared above
 ```
 
-**Domain shared** (`@{domain}/shared`) — available only within a domain.
-Place code in `src/{domain}/_shared/`. No declaration needed — access
-is implicit for all modules in that domain.
+Scaffold the global shared folder:
+
+```bash
+kerith create-shared --global
+# → creates src/shared/index.ts
+```
+
+### Domain-scoped shared (`@{domain}/shared`)
+
+Place code in `src/{domain}/_shared/`. All modules **within that domain** can import from it without any declaration:
 
 ```typescript
 // src/billing/payments/payments.service.ts
-import { db } from '@billing/shared/db'  // implicit access — no declaration needed
+import { db } from '@billing/shared/db'  // implicit — same domain, no declaration needed
 ```
+
+Scaffold a domain shared folder:
+
+```bash
+kerith create-shared --domain billing
+# → creates src/billing/_shared/index.ts
+
+kerith create-domain billing --shared
+# → creates domain + _shared in one step
+```
+
+### Enforcement
+
+`kerith check` detects shared violations automatically:
+
+```
+Shared
+✔ @shared          — OK (used by: payments)
+✔ @billing/shared  — OK (implicit for billing)
+✗ @billing/shared  — SHARED_SCOPE_VIOLATION from 'workspace/members'
+```
+
+The `@kerith/eslint-plugin` enforces the same rules at edit time:
+
+- `kerith/no-undeclared-shared` — warns when `@shared` is imported without declaring it in `shared[]`
+- `kerith/no-shared-scope-violation` — errors when `@{domain}/shared` is accessed from another domain
+
+> **Rule:** `SHARED_SCOPE_VIOLATION` always causes exit 1, even without `--strict`. A module in `workspace` has no valid reason to access `@billing/shared`.
 
 ---
 
@@ -204,7 +249,18 @@ import kerith from "@kerith/eslint-plugin";
 export default [kerith.configs.recommended];
 ```
 
-Ships four rules: `no-private-imports` (error), `no-undeclared-imports` (warn), `no-domain-boundary-violations` (error), and `no-relative-boundary-violations` (error). For full configuration details, see the [`@kerith/eslint-plugin` README](./packages/eslint-plugin/README.md).
+Ships six rules out of the box:
+
+| Rule | Severity | Description |
+|---|---|---|
+| `no-private-imports` | error | Prevents deep internal path imports |
+| `no-undeclared-imports` | warn | Module uses another without declaring it in `imports[]` |
+| `no-domain-boundary-violations` | error | Cross-domain internal alias access |
+| `no-relative-boundary-violations` | error | Relative imports that escape the module boundary |
+| `no-undeclared-shared` | warn | `@shared` imported without declaring it in `shared[]` |
+| `no-shared-scope-violation` | error | `@{domain}/shared` accessed from another domain |
+
+For full configuration details, see the [`@kerith/eslint-plugin` README](./packages/eslint-plugin/README.md).
 
 ---
 

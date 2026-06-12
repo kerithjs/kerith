@@ -127,11 +127,44 @@ describe('Shared Checker', () => {
     });
 
     it('Módulo declara shared: ["@shared"] y al menos un archivo importa -> sin violación', async () => {
-       // Done in UNDECLARED_SHARED test 2
+      const r = setupRegistry();
+      r.registerModule('users', { imports: [], shared: ['@shared'] }, '/project/src/modules/users', '/project/src/modules/users/index.ts', 'id_1');
+
+      const graph: any = {
+        modules: [{ name: 'users', dirPath: '/project/src/modules/users', declaredImports: ['@shared'], imports: [], files: [] }],
+        submodules: [],
+        domains: []
+      };
+
+      // At least one file imports from @shared
+      vi.spyOn(importScanner, 'extractModuleImports').mockReturnValue([{ specifier: '@shared/utils', line: 1 }] as any);
+
+      const violations = await checkSharedAccess(graph, r, cwd);
+      const unused = violations.filter(v => v.type === ViolationType.UNUSED_SHARED);
+      expect(unused).toHaveLength(0);
     });
 
-    it('Módulo declara shared: ["@shared"] y SubModule importa -> sin violación', async () => {
-       // Done in UNDECLARED_SHARED test 3
+    it('Módulo declara shared: ["@shared"] y SubModule importa -> sin violación (padre usa shared via hijo)', async () => {
+      const r = setupRegistry();
+      r.registerModule('users', { imports: [], shared: ['@shared'] }, '/project/src/modules/users', '/project/src/modules/users/index.ts', 'id_1');
+      r.registerSubModule({ name: 'profile', parentModule: 'users', path: '/project/src/modules/users/profile' });
+
+      const graph: any = {
+        modules: [{ name: 'users', dirPath: '/project/src/modules/users', declaredImports: ['@shared'], imports: [], files: [] }],
+        submodules: [{ name: 'profile', dirPath: '/project/src/modules/users/profile', parentModule: 'users', files: [] }],
+        domains: []
+      };
+
+      // Only the submodule imports @shared, not the parent module itself
+      vi.spyOn(importScanner, 'extractModuleImports').mockImplementation((file: string) => {
+        if (file.includes('dummy-sub')) return [{ specifier: '@shared/utils', line: 1 }] as any;
+        return [];
+      });
+
+      const violations = await checkSharedAccess(graph, r, cwd);
+      const unused = violations.filter(v => v.type === ViolationType.UNUSED_SHARED && v.module === 'users');
+      // SubModule usage counts as parent usage — no UNUSED_SHARED on the parent
+      expect(unused).toHaveLength(0);
     });
   });
 
