@@ -11,6 +11,7 @@ export interface CachedModule {
   files: string[];      // paths of all module files
   identifiers: string[];
   aliases: string[];
+  cachedSize: number;   // total size in bytes of all module files
 }
 
 export interface BootstrapCache {
