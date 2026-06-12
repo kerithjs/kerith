@@ -32,18 +32,24 @@ export interface BootstrapCache {
 }
 
 // Note: using .kerith instead of .nodulus due to the 1.8.2 rebranding
-const CACHE_DIR = path.join(process.cwd(), '.kerith');
-const CACHE_FILE = path.join(CACHE_DIR, 'bootstrap-cache.json');
-const CACHE_TMP = path.join(CACHE_DIR, 'bootstrap-cache.tmp');
+function getCachePaths() {
+  const dir = path.join(process.cwd(), '.kerith');
+  return {
+    dir,
+    file: path.join(dir, 'bootstrap-cache.json'),
+    tmp: path.join(dir, 'bootstrap-cache.tmp'),
+  };
+}
 
 export const CacheManager = {
   read(): BootstrapCache | null {
-    if (!fs.existsSync(CACHE_FILE)) {
+    const { file } = getCachePaths();
+    if (!fs.existsSync(file)) {
       return null;
     }
 
     try {
-      const content = fs.readFileSync(CACHE_FILE, 'utf-8');
+      const content = fs.readFileSync(file, 'utf-8');
       const cache = JSON.parse(content) as BootstrapCache;
       
       if (!cache.data) {
@@ -57,39 +63,51 @@ export const CacheManager = {
   },
 
   pending(): void {
-    if (!fs.existsSync(CACHE_DIR)) {
-      fs.mkdirSync(CACHE_DIR, { recursive: true });
+    const { dir, file } = getCachePaths();
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
     
     // Write only the pending status
-    fs.writeFileSync(CACHE_FILE, JSON.stringify({ status: 'pending' }), 'utf-8');
+    fs.writeFileSync(file, JSON.stringify({ status: 'pending' }), 'utf-8');
   },
 
   write(data: NonNullable<BootstrapCache['data']>, version: string, configHash: string): void {
-    const cache: BootstrapCache = {
-      version,
-      status: 'ok',
-      savedAt: new Date().toISOString(),
-      configHash,
-      data
-    };
-
-    const content = JSON.stringify(cache, null, 2);
-    
-    fs.writeFileSync(CACHE_TMP, content, 'utf-8');
+    const { dir, file, tmp } = getCachePaths();
     
     try {
-      fs.renameSync(CACHE_TMP, CACHE_FILE);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      const cache: BootstrapCache = {
+        version,
+        status: 'ok',
+        savedAt: new Date().toISOString(),
+        configHash,
+        data
+      };
+
+      const content = JSON.stringify(cache, null, 2);
+      
+      fs.writeFileSync(tmp, content, 'utf-8');
+      
+      try {
+        fs.renameSync(tmp, file);
+      } catch (e) {
+        // Windows fallback in case rename fails
+        fs.copyFileSync(tmp, file);
+        fs.unlinkSync(tmp);
+      }
     } catch (e) {
-      // Windows fallback in case rename fails
-      fs.copyFileSync(CACHE_TMP, CACHE_FILE);
-      fs.unlinkSync(CACHE_TMP);
+      // Best effort cache write, do not crash bootstrap
     }
   },
 
   fail(error: string): void {
+    const { file } = getCachePaths();
     try {
-      fs.writeFileSync(CACHE_FILE, JSON.stringify({ status: 'failed', error }), 'utf-8');
+      fs.writeFileSync(file, JSON.stringify({ status: 'failed', error }), 'utf-8');
     } catch (e) {
       // Ignore error, the process is already failing
     }
@@ -103,11 +121,12 @@ export const CacheManager = {
   },
 
   invalidate(): void {
-    if (fs.existsSync(CACHE_FILE)) {
-      fs.rmSync(CACHE_FILE, { force: true });
+    const { file, tmp } = getCachePaths();
+    if (fs.existsSync(file)) {
+      fs.rmSync(file, { force: true });
     }
-    if (fs.existsSync(CACHE_TMP)) {
-      fs.rmSync(CACHE_TMP, { force: true });
+    if (fs.existsSync(tmp)) {
+      fs.rmSync(tmp, { force: true });
     }
   },
 

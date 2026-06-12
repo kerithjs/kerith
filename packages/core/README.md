@@ -161,6 +161,53 @@ A relative path that escapes the module directory is always an error, regardless
 
 ---
 
+## Runtime Zero
+
+Kerith charges the cost of architecture exactly once — during bootstrap.
+
+After `createApp()` returns, the framework is gone. Express handles every request exactly as it would without Kerith. There is no DI container alive in memory, no proxies wrapping your services, no automatic interceptors on any call.
+
+**The module graph is validated and wired at startup. At request time, only your code runs.**
+
+### Why this matters
+
+In frameworks with a runtime DI container (NestJS, InversifyJS), every request passes through a resolution layer even after the application is "ready." This is acceptable for long-running servers but becomes a serious constraint in serverless and edge environments, where cold start time is directly billed.
+
+| | Bootstrap | Per request |
+|---|---|---|
+| NestJS | ~2–3 s | DI container active |
+| **Kerith** | **~80–120 ms** | **Pure Express** |
+
+### Serverless and edge
+
+A cold start of 80–120 ms means Kerith is viable in AWS Lambda, Cloudflare Workers, Google Cloud Run, and similar environments where NestJS-style frameworks are often excluded by timeout constraints.
+
+> **Note:** The 80–120 ms range is for a typical project. It scales with the number of modules — more modules means a longer bootstrap — but **never** with request volume or traffic.
+
+### What scales bootstrap time
+
+| Factor | Affects bootstrap | Affects request latency |
+|---|---|---|
+| Number of modules | ✅ Yes | ❌ No |
+| Number of routes per module | ✅ Yes (mounting) | ❌ No |
+| Complexity of business logic | ❌ No | ✅ Yes |
+| Request concurrency | ❌ No | ✅ Yes |
+
+### Bootstrap cache _(v2.0.0+)_
+
+In development, Kerith writes a bootstrap cache to `.kerith/bootstrap-cache.json`. On subsequent restarts, only modules whose files changed on disk are re-scanned. Unchanged modules are hydrated from cache.
+
+```
+[bootstrap] bootstrap desde cache — 12ms (0 módulos re-escaneados)
+[bootstrap] bootstrap desde cache — 34ms (1 módulos re-escaneados)
+```
+
+The cache is automatically invalidated when `kerith.config.ts` changes. Use `kerith dev --force` to force a full re-scan.
+
+The cache is **never active in production** (`NODE_ENV=production`). Production always does a full scan to guarantee correctness.
+
+---
+
 ## Quick start
 
 ```typescript

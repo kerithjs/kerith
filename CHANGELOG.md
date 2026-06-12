@@ -22,6 +22,13 @@ For full technical details, see the individual package changelogs:
 - ESLint rules: `kerith/no-undeclared-shared`, `kerith/no-shared-scope-violation`
 - `sync-tsconfig` generates aliases for @shared and @{domain}/shared automatically
 
+### Added — Runtime Zero & Bootstrap Cache
+- Bootstrap cache (`.kerith/bootstrap-cache.json`) for near-zero startup times in development
+- Intelligent `mtime` and file-size validation for partial cache invalidation
+- Partial scanning optimizations (only invalidated domains are rescanned)
+- `kerith dev --force` flag to explicitly invalidate cache
+- Enhanced `chokidar` watcher that coordinates smoothly with caching and ignores internal state
+
 ### @kerith/core
 
 - **Domain Hierarchy**: Introduced `Domain → Module → SubModule` architecture inferred from filesystem

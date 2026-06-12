@@ -1067,9 +1067,15 @@ export async function createApp(
       const ms = Math.round(endTime - startTime);
       
       if (usedCache) {
-        log.info(`bootstrap desde cache — ${ms}ms (${numRescanned} módulos re-escaneados)`);
+        log.info(
+          `Bootstrap complete from cache — ${ms}ms (${numRescanned} modules rescanned)`,
+          { _module: "boot", durationMs: ms, moduleCount: allModules.length, routeCount: mountedRoutes.length }
+        );
       } else {
-        log.info(`bootstrap completo — ${ms}ms ${cacheLogReason || '(primer arranque)'}`.trim());
+        log.info(
+          `Bootstrap complete — ${ms}ms ${cacheLogReason || '(first boot)'}`.trim(),
+          { _module: "boot", durationMs: ms, moduleCount: allModules.length, routeCount: mountedRoutes.length }
+        );
       }
 
       if (cacheEnabled) {
