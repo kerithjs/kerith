@@ -46,6 +46,29 @@ import {
 } from "./scanner.js";
 import { registerEntitiesFromScan } from "./register-from-scan.js";
 import { importIndexEntry } from "./import-index.js";
+import { CacheManager } from "../cache/bootstrap-cache.js";
+import type { CachedModule } from "../cache/bootstrap-cache.js";
+import { MtimeValidator } from "../cache/mtime-validator.js";
+
+// Helper for extracting version from package.json
+const getKerithVersion = () => {
+  const depths = [
+    "../package.json",
+    "../../package.json",
+    "../../../package.json",
+  ];
+  for (const d of depths) {
+    try {
+      const p = new URL(d, import.meta.url);
+      return JSON.parse(fs.readFileSync(p, "utf8")).version;
+    } catch (_e) {
+      /* not a valid package.json path, try next */
+    }
+  }
+  return 'unknown';
+};
+
+export const KERITH_VERSION = getKerithVersion();
 
 export async function createApp(
   app?: Application,
@@ -84,6 +107,7 @@ export async function createApp(
 
   return registryContext.run(registry, async () => {
     const startTime = performance.now();
+    let cacheEnabled = false; // hoisted so catch{} can call CacheManager.fail() when needed
     try {
       // Step 0.1 — Pre-loader Validation
       const preloadConfig = globalThis.__KERITH_PRELOAD_CONFIG__;
@@ -126,29 +150,12 @@ export async function createApp(
       }
 
       if (preloaderActive) {
-        const getPkg = () => {
-          const depths = [
-            "../package.json",
-            "../../package.json",
-            "../../../package.json",
-          ];
-          for (const d of depths) {
-            try {
-              const p = new URL(d, import.meta.url);
-              return JSON.parse(fs.readFileSync(p, "utf8"));
-            } catch (_e) {
-              /* not a valid package.json path, try next */
-            }
-          }
-          return {};
-        };
-        const currentVersion = getPkg().version;
         if (
           preloadConfig?._version &&
-          preloadConfig._version !== currentVersion
+          preloadConfig._version !== KERITH_VERSION
         ) {
           log.warn(
-            `Pre-loader version mismatch: preload.js was generated with v${preloadConfig._version} but Kerith-core v${currentVersion} is installed. Run: kerith sync-preload`,
+            `Pre-loader version mismatch: preload.js was generated with v${preloadConfig._version} but Kerith-core v${KERITH_VERSION} is installed. Run: kerith sync-preload`,
           );
         }
       }
@@ -174,10 +181,96 @@ export async function createApp(
         nodeVersion: process.version,
       });
 
-      // Step 2 — Filesystem scan (origin → scanOrigin, modules → legacy glob)
-      const scanResult = await scanFromConfig(config, cwd, (level, message, meta) => {
-        log[level](message, meta);
-      });
+      // Cache setup
+      cacheEnabled = process.env.NODE_ENV !== 'production' &&
+                     process.env.KERITH_BOOTSTRAP_CACHE !== 'false' &&
+                     ((config as any).bootstrap?.cache ?? true);
+
+      let scanResult: import("./scanner.js").ScanResult | undefined;
+      let usedCache = false;
+      let numRescanned = 0;
+      let cacheLogReason = '';
+
+      const configCandidates = ['kerith.config.ts', 'kerith.config.js', 'kerith.config.mjs'];
+      let configPath = '';
+      for (const cand of configCandidates) {
+        const p = path.join(cwd, cand);
+        if (fs.existsSync(p)) { configPath = p; break; }
+      }
+
+      let configHash = '';
+
+      if (cacheEnabled) {
+        CacheManager.pending();
+        const rawCache = CacheManager.read();
+        configHash = CacheManager.hashConfig(configPath);
+
+        if (rawCache !== null) {
+          if (!CacheManager.valid(rawCache, KERITH_VERSION, configHash)) {
+            cacheLogReason = rawCache.version !== KERITH_VERSION 
+              ? '(cache inválido — versión mismatch)' 
+              : '(cache inválido — config modificado)';
+          } else {
+            const { toRescan, fromCache } = MtimeValidator.validate(rawCache);
+            numRescanned = toRescan.length;
+            
+            if (numRescanned === 0) {
+              // Skipped scanning entirely
+              scanResult = {
+                domains: rawCache.data!.domains,
+                modules: rawCache.data!.modules,
+                submodules: rawCache.data!.submodules,
+                shared: rawCache.data!.shared,
+              };
+              usedCache = true;
+            } else {
+              // Partial scan
+              const partialScan = await scanFromConfig(config, cwd, (level, message, meta) => {
+                log[level](message, meta);
+              }, toRescan);
+
+              const rescannedDomains = new Set(toRescan);
+
+              // Merge logic
+              const mergedDomains = rawCache.data!.domains.filter(d => !rescannedDomains.has(d.name)).concat(partialScan.domains);
+              
+              // Handle flat modules fallback explicitly (using '__flat__')
+              const cachedModules = rawCache.data!.modules.filter(m => !rescannedDomains.has(m.domain || '__flat__'));
+              const mergedModules = cachedModules.concat(partialScan.modules as any[]);
+
+              const cachedSubmodules = rawCache.data!.submodules.filter(s => !rescannedDomains.has(s.domain || '__flat__'));
+              const mergedSubmodules = cachedSubmodules.concat(partialScan.submodules);
+
+              // Global shared is rescanned every time if it exists, domain-scoped is tied to domain
+              const finalSharedMap = new Map();
+              for (const s of rawCache.data!.shared) {
+                if (s.type === 'global' || !rescannedDomains.has(s.domain!)) {
+                  finalSharedMap.set(s.alias, s);
+                }
+              }
+              for (const s of partialScan.shared) {
+                finalSharedMap.set(s.alias, s);
+              }
+
+              scanResult = {
+                domains: mergedDomains,
+                modules: mergedModules,
+                submodules: mergedSubmodules,
+                shared: Array.from(finalSharedMap.values()),
+              };
+              usedCache = true;
+            }
+          }
+        }
+      }
+
+      // Step 2 — Filesystem scan (if not fully/partially cached)
+      if (!scanResult) {
+        scanResult = await scanFromConfig(config, cwd, (level, message, meta) => {
+          log[level](message, meta);
+        });
+      }
+      
       const isOriginMode = !!config.origin;
 
       if (scanResult.domains.length > 0) {
@@ -240,6 +333,8 @@ export async function createApp(
         });
       }
 
+      let filesByModulePath: Map<string, string[]> | undefined;
+
       // Step 4 — NITS identity reconciliation
       if (config.nits?.enabled !== false) {
         try {
@@ -259,7 +354,6 @@ export async function createApp(
             : undefined;
 
           // Agrupar por módulo usando el dirPath como prefijo
-          let filesByModulePath: Map<string, string[]> | undefined;
           if (allNitsFiles) {
             filesByModulePath = new Map<string, string[]>();
             for (const mod of resolvedModules) {
@@ -969,16 +1063,58 @@ export async function createApp(
 
       const domainCount = scanResult.domains.length;
       const submoduleCount = scanResult.submodules.length;
-      log.info(
-        `${pc.green("Bootstrap complete")} — ${domainCount > 0 ? `${pc.magenta(domainCount)} domain(s), ` : ''}${pc.cyan(allModules.length)} module(s)${submoduleCount > 0 ? `, ${pc.cyan(submoduleCount)} submodule(s)` : ''}, ${pc.cyan(mountedRoutes.length)} route(s) in ${pc.yellow(`${durationMs}ms`)}`,
-        {
-          domainCount,
-          moduleCount: allModules.length,
-          submoduleCount,
-          routeCount: mountedRoutes.length,
-          durationMs,
-        },
-      );
+      const endTime = performance.now();
+      const ms = Math.round(endTime - startTime);
+      
+      if (usedCache) {
+        log.info(`bootstrap desde cache — ${ms}ms (${numRescanned} módulos re-escaneados)`);
+      } else {
+        log.info(`bootstrap completo — ${ms}ms ${cacheLogReason || '(primer arranque)'}`.trim());
+      }
+
+      if (cacheEnabled) {
+        // Build cache data payload from scan modules (source of truth for options/imports/exports/shared)
+        // combined with NITS IDs from the registry and file lists from the NITS step.
+        const modulesForCache: CachedModule[] = scanResult.modules.map(scanMod => {
+          // Retrieve NITS ID from registry (seeded in Step 4). Falls back to dirPath-based temp ID.
+          const registeredMod = registry.getModule(scanMod.name, scanMod.domain);
+          const nitsId = registeredMod?.id ?? `mod_${Buffer.from(scanMod.dirPath).toString('hex').slice(0, 8)}`;
+
+          // Retrieve files from the NITS step file map
+          let files: string[] = [];
+          if (filesByModulePath) {
+            files = filesByModulePath.get(normalizePath(path.resolve(scanMod.dirPath))) || [];
+          }
+          const cachedSize = files.reduce((acc, f) => acc + (fs.existsSync(f) ? fs.statSync(f).size : 0), 0);
+
+          return {
+            // ModuleScanEntry fields
+            name: scanMod.name,
+            dirPath: scanMod.dirPath,
+            indexPath: scanMod.indexPath,
+            domain: scanMod.domain,
+            imports: scanMod.imports,
+            exports: scanMod.exports,
+            shared: scanMod.shared,
+            options: scanMod.options,
+            // CachedModule-specific fields
+            id: nitsId,
+            files,
+            identifiers: [],
+            aliases: [],
+            cachedSize,
+          };
+        });
+
+        CacheManager.write({
+          domains: scanResult.domains,
+          modules: modulesForCache,
+          submodules: scanResult.submodules,
+          shared: scanResult.shared,
+          identifiers: [],
+          aliases: [],
+        }, KERITH_VERSION, configHash);
+      }
 
       return {
         modules: safeRegisteredModules,
@@ -997,7 +1133,10 @@ export async function createApp(
           });
         },
       };
-    } catch (err) {
+    } catch (err: any) {
+      if (cacheEnabled) {
+        CacheManager.fail(err.message);
+      }
       registry.clearRegistry();
       throw err;
     }

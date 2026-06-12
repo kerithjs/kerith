@@ -2,12 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
+import type { DomainScanEntry, SubModuleScanEntry, ModuleScanEntry } from '../bootstrap/scanner.js';
+import type { SharedEntry } from '../types/index.js';
+
 export type CacheStatus = 'pending' | 'ok' | 'failed';
 
-export interface CachedModule {
+export interface CachedModule extends ModuleScanEntry {
   id: string;           // NITS ID — mod_{hex}
-  domain?: string;
-  path: string;
   files: string[];      // paths of all module files
   identifiers: string[];
   aliases: string[];
@@ -20,7 +21,10 @@ export interface BootstrapCache {
   savedAt?: string;      // ISO 8601
   configHash?: string;   // kerith.config.ts hash
   data?: {
+    domains: DomainScanEntry[];
     modules: CachedModule[];
+    submodules: SubModuleScanEntry[];
+    shared: SharedEntry[];
     identifiers: unknown[];
     aliases: unknown[];
   };

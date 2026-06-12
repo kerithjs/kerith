@@ -19,12 +19,23 @@ export function devCommand(): Command {
     .option('--watch', 'Run in watch mode using chokidar (does not delegate to node --watch)', false)
     .option('--clear', 'Clear the terminal on start and restart', false)
     .option('--runtime <runtime>', 'Runtime to use (node or tsx)', 'node')
+    .option('--force', 'Force cache invalidation before starting', false)
     .action(async (entrypoint, options) => {
         if (options.clear) {
             console.clear();
         }
         const logger = createLogger(defaultLogHandler, 'info', 'dev');
         const cwd = process.cwd();
+
+        if (options.force) {
+            try {
+                const { CacheManager } = await import('../../cache/bootstrap-cache.js');
+                CacheManager.invalidate();
+                logger.info('Cache invalidado forzadamente (--force)', { _module: 'dev' });
+            } catch (err: any) {
+                logger.warn(`No se pudo invalidar el cache: ${err.message}`, { _module: 'dev' });
+            }
+        }
 
         try {
             const { runSyncPreload } = await import('./sync-preload.js');

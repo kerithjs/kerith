@@ -53,6 +53,7 @@ export interface ScanOptions {
   cwd?: string;
   ignore?: string[];
   log?: LogHandler;
+  domainsToScan?: string[];
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -190,11 +191,20 @@ export async function scanOrigin(
   }
 
   const ignore = options.ignore ?? [...DEFAULT_SCAN_IGNORE];
-  const globPattern = path
-    .join(absoluteOrigin, '**', 'index.{ts,js,mts,mjs}')
-    .replace(/\\/g, '/');
+  
+  let globPatterns: string[];
+  if (options.domainsToScan && options.domainsToScan.length > 0) {
+    globPatterns = options.domainsToScan.map(domain => {
+      if (domain === '__flat__') {
+        return path.join(absoluteOrigin, '*', '**', 'index.{ts,js,mts,mjs}').replace(/\\/g, '/');
+      }
+      return path.join(absoluteOrigin, domain, '**', 'index.{ts,js,mts,mjs}').replace(/\\/g, '/');
+    });
+  } else {
+    globPatterns = [path.join(absoluteOrigin, '**', 'index.{ts,js,mts,mjs}').replace(/\\/g, '/')];
+  }
 
-  const indexFiles = await fg(globPattern, {
+  const indexFiles = await fg(globPatterns, {
     absolute: true,
     cwd: options.cwd ?? process.cwd(),
     ignore,
@@ -380,8 +390,9 @@ export async function scanFromConfig(
   config: KerithConfig,
   cwd: string,
   log?: LogHandler,
+  domainsToScan?: string[]
 ): Promise<ScanResult> {
-  const options: ScanOptions = { cwd, log };
+  const options: ScanOptions = { cwd, log, domainsToScan };
 
   if (config.origin) {
     const originPath = path.resolve(cwd, config.origin);

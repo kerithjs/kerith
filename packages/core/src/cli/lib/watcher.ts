@@ -1,4 +1,5 @@
 import chokidar from "chokidar";
+import path from "node:path";
 import type { WatcherOptions } from "../../types/index.js";
 
 // ─── Default ignored patterns ─────────────────────────────────────────────────
@@ -50,6 +51,12 @@ const defaultIgnored: (string | ((p: string) => boolean))[] = [
 export function createWatcher(options: WatcherOptions): {
   close: () => Promise<void>;
 } {
+  // ─── Production guard ─────────────────────────────────────────────────────
+  // The watcher must never be initialized in production. NODE_ENV=production
+  // implies cache is disabled and restarts are managed by the process manager.
+  if (process.env.NODE_ENV === 'production') {
+    return { close: async () => { /* noop */ } };
+  }
   const { paths, debounceMs = 300, logger } = options;
 
   // ─── Merge ignored patterns ──────────────────────────────────────────────
@@ -73,13 +80,32 @@ export function createWatcher(options: WatcherOptions): {
   // (e.g. editor atomic-save: write tmp → rename), only the last one triggers
   // the restart.
 
+  // Name of config files to detect for special logging
+  const CONFIG_FILES = new Set(['kerith.config.ts', 'kerith.config.js', 'kerith.config.mjs']);
+
+  function isConfigFile(filePath: string): boolean {
+    return CONFIG_FILES.has(path.basename(filePath));
+  }
+
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  function scheduleRestart(changedPath: string): void {
+  function scheduleRestart(filePath: string): void {
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
-      options.onRestart(changedPath);
+      const filename = filePath.split(/[\\/]/).pop() ?? filePath;
+      if (isConfigFile(filePath)) {
+        logger.info(
+          `[kerith] config modified — restarting (cache will be invalidated automatically)`,
+          { _module: 'watcher', file: filename },
+        );
+      } else {
+        logger.info(
+          `[kerith] change detected — ${filename} → restarting`,
+          { _module: 'watcher', file: filename },
+        );
+      }
+      options.onRestart(filePath);
     }, debounceMs);
   }
 
