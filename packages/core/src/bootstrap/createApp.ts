@@ -190,6 +190,8 @@ export async function createApp(
       let usedCache = false;
       let numRescanned = 0;
       let cacheLogReason = '';
+      const rescannedDomains = new Set<string>();
+      let isFullCacheHit = false;
 
       const configCandidates = ['kerith.config.ts', 'kerith.config.js', 'kerith.config.mjs'];
       let configPath = '';
@@ -201,17 +203,21 @@ export async function createApp(
       let configHash = '';
 
       if (cacheEnabled) {
-        CacheManager.pending();
         const rawCache = CacheManager.read();
+        CacheManager.pending();
         configHash = CacheManager.hashConfig(configPath);
 
         if (rawCache !== null) {
           if (!CacheManager.valid(rawCache, KERITH_VERSION, configHash)) {
             cacheLogReason = rawCache.version !== KERITH_VERSION 
               ? '(cache inválido — versión mismatch)' 
-              : '(cache inválido — config modificado)';
+              : rawCache.cwd !== process.cwd()
+                ? '(cache inválido — directorio movido)'
+                : '(cache inválido — config modificado)';
           } else {
-            const { toRescan, fromCache } = MtimeValidator.validate(rawCache);
+            // toRescan: domain IDs whose modules on disk changed (by mtime or size).
+            // Domains not in toRescan will be loaded directly from rawCache.data.
+            const { toRescan } = MtimeValidator.validate(rawCache);
             numRescanned = toRescan.length;
             
             if (numRescanned === 0) {
@@ -223,13 +229,14 @@ export async function createApp(
                 shared: rawCache.data!.shared,
               };
               usedCache = true;
+              isFullCacheHit = true;
             } else {
               // Partial scan
               const partialScan = await scanFromConfig(config, cwd, (level, message, meta) => {
                 log[level](message, meta);
               }, toRescan);
 
-              const rescannedDomains = new Set(toRescan);
+              for (const d of toRescan) rescannedDomains.add(d);
 
               // Merge logic
               const mergedDomains = rawCache.data!.domains.filter(d => !rescannedDomains.has(d.name)).concat(partialScan.domains);
@@ -542,6 +549,8 @@ export async function createApp(
         updateAliasCache(registry.getAllAliases());
       }
 
+      const scanEnd = performance.now();
+
       // Step 6 — Import index entries (paralelo por tipo) — runs identifiers
 
       // 6a — Domains en paralelo
@@ -558,10 +567,14 @@ export async function createApp(
       // 6b — Modules en paralelo: import primero, correlación y validación después
       const importedModules = await Promise.all(
         resolvedModules.map(async (mod) => {
+          const modStart = performance.now();
           const imported = await importIndexEntry(
             mod.indexPath,
             config.moduleLoadTimeoutMs,
           );
+          if (process.env.KERITH_PROFILE === 'true') {
+            log.debug(`[perf] import ${mod.name} took ${Math.round(performance.now() - modStart)}ms`, { _module: 'boot' });
+          }
           return { mod, imported };
         }),
       );
@@ -586,11 +599,14 @@ export async function createApp(
           }
         }
 
+        const isModuleFromCache = isFullCacheHit || (usedCache && !rescannedDomains.has(registeredMod.domain || '__flat__'));
+        const cacheSuffix = isModuleFromCache ? ' (from cache)' : '';
+
         const moduleLabel = registeredMod.domain
           ? `${pc.dim(registeredMod.domain + "/")}${pc.green(registeredMod.name)}`
           : pc.green(registeredMod.name);
 
-        log.info(`Module loaded: ${moduleLabel}`, {
+        log.info(`Module loaded: ${moduleLabel}${cacheSuffix}`, {
           _module: "module",
           name: registeredMod.name,
           domain: registeredMod.domain,
@@ -642,6 +658,11 @@ export async function createApp(
           });
         }),
       );
+
+      const importEnd = performance.now();
+      const scanMs = Math.round(scanEnd - startTime);
+      const importMs = Math.round(importEnd - scanEnd);
+      log.debug(`[perf] scan=${scanMs}ms imports=${importMs}ms`, { _module: 'boot' });
 
       const allModules = registry.getAllModules();
 

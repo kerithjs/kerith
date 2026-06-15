@@ -15,10 +15,18 @@ export interface CachedModule extends ModuleScanEntry {
   cachedSize: number;   // total size in bytes of all module files
 }
 
+/**
+ * The cache optimizes the file-system scan and AST parsing (which are the most expensive
+ * steps of the first boot). It does NOT skip the dynamic \`import()\` of the modules.
+ * This is intentional: modules may have side-effects in their index.ts files that must
+ * run. The \`import()\` is cheap on boots 2+ because Node.js retains the compiled module
+ * in its internal memory cache, ensuring subsequent boots remain extremely fast.
+ */
 export interface BootstrapCache {
   version: string;       // installed version
   status: CacheStatus;
   savedAt?: string;      // ISO 8601
+  cwd?: string;          // origin directory to prevent cross-dir cache bleed
   configHash?: string;   // kerith.config.ts hash
   data?: {
     domains: DomainScanEntry[];
@@ -84,6 +92,7 @@ export const CacheManager = {
         version,
         status: 'ok',
         savedAt: new Date().toISOString(),
+        cwd: process.cwd(),
         configHash,
         data
       };
@@ -117,6 +126,7 @@ export const CacheManager = {
     if (cache.status !== 'ok') return false;
     if (cache.version !== currentVersion) return false;
     if (cache.configHash !== currentConfigHash) return false;
+    if (cache.cwd && cache.cwd !== process.cwd()) return false;
     return true;
   },
 

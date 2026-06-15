@@ -1,9 +1,8 @@
 import fs from 'node:fs';
-import type { BootstrapCache, CachedModule } from './bootstrap-cache.js';
+import type { BootstrapCache } from './bootstrap-cache.js';
 
 export interface MtimeValidationResult {
   toRescan: string[];        // domain IDs that need to be rescanned
-  fromCache: CachedModule[]; // modules that can be loaded directly from cache
 }
 
 function getModuleSignature(files: string[]): { maxMtime: number; totalSize: number } {
@@ -29,7 +28,6 @@ function getModuleSignature(files: string[]): { maxMtime: number; totalSize: num
 export const MtimeValidator = {
   validate(cache: BootstrapCache): MtimeValidationResult {
     const toRescanSet = new Set<string>();
-    const fromCache: CachedModule[] = [];
 
     // Fallback to 0 if savedAt is somehow missing, forcing a full rescan
     const savedAtTime = cache.savedAt ? new Date(cache.savedAt).getTime() : 0;
@@ -44,17 +42,8 @@ export const MtimeValidator = {
       }
     }
 
-    // Second pass: modules whose domains are not dirty go to fromCache
-    for (const module of cache.data!.modules) {
-      const domainKey = module.domain || '__flat__';
-      if (!toRescanSet.has(domainKey)) {
-        fromCache.push(module);
-      }
-    }
-
     return {
       toRescan: Array.from(toRescanSet),
-      fromCache,
     };
   },
 };

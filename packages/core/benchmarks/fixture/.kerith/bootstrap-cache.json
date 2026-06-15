@@ -1,11 +1,84 @@
 {
   "version": "2.0.0",
   "status": "ok",
-  "savedAt": "2026-06-12T23:23:12.113Z",
+  "savedAt": "2026-06-15T00:57:05.185Z",
+  "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\benchmarks\\fixture",
   "configHash": "10f4a3b5",
   "data": {
     "domains": [],
     "modules": [
+      {
+        "name": "api-gateway",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway/index.ts",
+        "imports": [
+          "billing",
+          "promotions",
+          "recommendations",
+          "subscriptions"
+        ],
+        "exports": [
+          "ApiGatewayService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "billing",
+            "promotions",
+            "recommendations",
+            "subscriptions"
+          ],
+          "exports": [
+            "ApiGatewayService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway/api-gateway.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway/api-gateway.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway/api-gateway.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway/api-gateway.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 892
+      },
+      {
+        "name": "admin",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin/index.ts",
+        "imports": [
+          "promotions",
+          "orders",
+          "subscriptions",
+          "cart"
+        ],
+        "exports": [
+          "AdminService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "promotions",
+            "orders",
+            "subscriptions",
+            "cart"
+          ],
+          "exports": [
+            "AdminService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin/admin.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin/admin.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin/admin.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin/admin.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 832
+      },
       {
         "name": "analytics",
         "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/analytics",
@@ -79,78 +152,6 @@
         "cachedSize": 826
       },
       {
-        "name": "admin",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin/index.ts",
-        "imports": [
-          "promotions",
-          "orders",
-          "subscriptions",
-          "cart"
-        ],
-        "exports": [
-          "AdminService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [
-            "promotions",
-            "orders",
-            "subscriptions",
-            "cart"
-          ],
-          "exports": [
-            "AdminService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin/admin.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin/admin.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin/admin.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/admin/admin.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 832
-      },
-      {
-        "name": "api-gateway",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway/index.ts",
-        "imports": [
-          "billing",
-          "promotions",
-          "recommendations",
-          "subscriptions"
-        ],
-        "exports": [
-          "ApiGatewayService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [
-            "billing",
-            "promotions",
-            "recommendations",
-            "subscriptions"
-          ],
-          "exports": [
-            "ApiGatewayService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway/api-gateway.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway/api-gateway.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway/api-gateway.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/api-gateway/api-gateway.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 892
-      },
-      {
         "name": "audit",
         "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/audit",
         "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/audit/index.ts",
@@ -175,114 +176,6 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 619
-      },
-      {
-        "name": "billing",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing/index.ts",
-        "imports": [
-          "session",
-          "storage",
-          "rate-limiter",
-          "config"
-        ],
-        "exports": [
-          "BillingService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [
-            "session",
-            "storage",
-            "rate-limiter",
-            "config"
-          ],
-          "exports": [
-            "BillingService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing/billing.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing/billing.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing/billing.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing/billing.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 843
-      },
-      {
-        "name": "cart",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart/index.ts",
-        "imports": [
-          "database",
-          "i18n",
-          "config",
-          "auth"
-        ],
-        "exports": [
-          "CartService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [
-            "database",
-            "i18n",
-            "config",
-            "auth"
-          ],
-          "exports": [
-            "CartService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart/cart.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart/cart.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart/cart.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart/cart.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 803
-      },
-      {
-        "name": "backoffice",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice/index.ts",
-        "imports": [
-          "payments",
-          "products",
-          "recommendations",
-          "tax"
-        ],
-        "exports": [
-          "BackofficeService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [
-            "payments",
-            "products",
-            "recommendations",
-            "tax"
-          ],
-          "exports": [
-            "BackofficeService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice/backoffice.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice/backoffice.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice/backoffice.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice/backoffice.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 869
       },
       {
         "name": "auth",
@@ -345,6 +238,114 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 851
+      },
+      {
+        "name": "cart",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart/index.ts",
+        "imports": [
+          "database",
+          "i18n",
+          "config",
+          "auth"
+        ],
+        "exports": [
+          "CartService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "database",
+            "i18n",
+            "config",
+            "auth"
+          ],
+          "exports": [
+            "CartService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart/cart.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart/cart.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart/cart.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/cart/cart.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 803
+      },
+      {
+        "name": "billing",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing/index.ts",
+        "imports": [
+          "session",
+          "storage",
+          "rate-limiter",
+          "config"
+        ],
+        "exports": [
+          "BillingService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "session",
+            "storage",
+            "rate-limiter",
+            "config"
+          ],
+          "exports": [
+            "BillingService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing/billing.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing/billing.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing/billing.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/billing/billing.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 843
+      },
+      {
+        "name": "backoffice",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice/index.ts",
+        "imports": [
+          "payments",
+          "products",
+          "recommendations",
+          "tax"
+        ],
+        "exports": [
+          "BackofficeService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "payments",
+            "products",
+            "recommendations",
+            "tax"
+          ],
+          "exports": [
+            "BackofficeService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice/backoffice.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice/backoffice.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice/backoffice.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/backoffice/backoffice.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 869
       },
       {
         "name": "compliance",
@@ -445,6 +446,32 @@
         "cachedSize": 826
       },
       {
+        "name": "crypto",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto/index.ts",
+        "imports": [],
+        "exports": [
+          "CryptoService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": [
+            "CryptoService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto/crypto.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto/crypto.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto/crypto.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto/crypto.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 626
+      },
+      {
         "name": "customer-portal",
         "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/customer-portal",
         "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/customer-portal/index.ts",
@@ -479,32 +506,6 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 892
-      },
-      {
-        "name": "crypto",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto/index.ts",
-        "imports": [],
-        "exports": [
-          "CryptoService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [],
-          "exports": [
-            "CryptoService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto/crypto.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto/crypto.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto/crypto.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/crypto/crypto.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 626
       },
       {
         "name": "dashboard",
@@ -807,42 +808,6 @@
         "cachedSize": 626
       },
       {
-        "name": "onboarding",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding/index.ts",
-        "imports": [
-          "subscriptions",
-          "refunds",
-          "wishlist",
-          "address"
-        ],
-        "exports": [
-          "OnboardingService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [
-            "subscriptions",
-            "refunds",
-            "wishlist",
-            "address"
-          ],
-          "exports": [
-            "OnboardingService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding/onboarding.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding/onboarding.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding/onboarding.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding/onboarding.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 871
-      },
-      {
         "name": "notifications",
         "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/notifications",
         "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/notifications/index.ts",
@@ -879,40 +844,40 @@
         "cachedSize": 874
       },
       {
-        "name": "orders",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders/index.ts",
+        "name": "onboarding",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding/index.ts",
         "imports": [
-          "storage",
-          "session",
-          "users",
-          "mailer"
+          "subscriptions",
+          "refunds",
+          "wishlist",
+          "address"
         ],
         "exports": [
-          "OrdersService"
+          "OnboardingService"
         ],
         "shared": [],
         "options": {
           "imports": [
-            "storage",
-            "session",
-            "users",
-            "mailer"
+            "subscriptions",
+            "refunds",
+            "wishlist",
+            "address"
           ],
           "exports": [
-            "OrdersService"
+            "OnboardingService"
           ]
         },
         "id": "mod_433a2f55",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders/orders.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders/orders.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders/orders.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders/orders.service.ts"
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding/onboarding.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding/onboarding.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding/onboarding.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/onboarding/onboarding.service.ts"
         ],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 823
+        "cachedSize": 871
       },
       {
         "name": "ops",
@@ -949,6 +914,42 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 822
+      },
+      {
+        "name": "orders",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders/index.ts",
+        "imports": [
+          "storage",
+          "session",
+          "users",
+          "mailer"
+        ],
+        "exports": [
+          "OrdersService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "storage",
+            "session",
+            "users",
+            "mailer"
+          ],
+          "exports": [
+            "OrdersService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders/orders.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders/orders.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders/orders.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/orders/orders.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 823
       },
       {
         "name": "payments",
@@ -1023,58 +1024,6 @@
         "cachedSize": 831
       },
       {
-        "name": "redis",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis/index.ts",
-        "imports": [],
-        "exports": [
-          "RedisService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [],
-          "exports": [
-            "RedisService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis/redis.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis/redis.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis/redis.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis/redis.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 619
-      },
-      {
-        "name": "rate-limiter",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter/index.ts",
-        "imports": [],
-        "exports": [
-          "RateLimiterService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [],
-          "exports": [
-            "RateLimiterService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter/rate-limiter.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter/rate-limiter.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter/rate-limiter.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter/rate-limiter.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 662
-      },
-      {
         "name": "promotions",
         "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/promotions",
         "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/promotions/index.ts",
@@ -1111,148 +1060,30 @@
         "cachedSize": 843
       },
       {
-        "name": "refunds",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds/index.ts",
-        "imports": [
-          "database",
-          "redis",
-          "storage",
-          "mailer"
-        ],
+        "name": "rate-limiter",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter/index.ts",
+        "imports": [],
         "exports": [
-          "RefundsService"
+          "RateLimiterService"
         ],
         "shared": [],
         "options": {
-          "imports": [
-            "database",
-            "redis",
-            "storage",
-            "mailer"
-          ],
+          "imports": [],
           "exports": [
-            "RefundsService"
+            "RateLimiterService"
           ]
         },
         "id": "mod_433a2f55",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds/refunds.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds/refunds.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds/refunds.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds/refunds.service.ts"
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter/rate-limiter.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter/rate-limiter.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter/rate-limiter.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/rate-limiter/rate-limiter.service.ts"
         ],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 832
-      },
-      {
-        "name": "reports",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports/index.ts",
-        "imports": [
-          "logger",
-          "storage",
-          "mailer",
-          "redis"
-        ],
-        "exports": [
-          "ReportsService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [
-            "logger",
-            "storage",
-            "mailer",
-            "redis"
-          ],
-          "exports": [
-            "ReportsService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports/reports.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports/reports.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports/reports.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports/reports.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 828
-      },
-      {
-        "name": "reporting",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting/index.ts",
-        "imports": [
-          "promotions",
-          "wishlist",
-          "notifications",
-          "invoices"
-        ],
-        "exports": [
-          "ReportingService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [
-            "promotions",
-            "wishlist",
-            "notifications",
-            "invoices"
-          ],
-          "exports": [
-            "ReportingService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting/reporting.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting/reporting.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting/reporting.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting/reporting.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 872
-      },
-      {
-        "name": "reviews",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews/index.ts",
-        "imports": [
-          "database",
-          "i18n",
-          "rate-limiter",
-          "audit"
-        ],
-        "exports": [
-          "ReviewsService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [
-            "database",
-            "i18n",
-            "rate-limiter",
-            "audit"
-          ],
-          "exports": [
-            "ReviewsService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews/reviews.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews/reviews.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews/reviews.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews/reviews.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 837
+        "cachedSize": 662
       },
       {
         "name": "recommendations",
@@ -1291,6 +1122,176 @@
         "cachedSize": 888
       },
       {
+        "name": "refunds",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds/index.ts",
+        "imports": [
+          "database",
+          "redis",
+          "storage",
+          "mailer"
+        ],
+        "exports": [
+          "RefundsService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "database",
+            "redis",
+            "storage",
+            "mailer"
+          ],
+          "exports": [
+            "RefundsService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds/refunds.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds/refunds.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds/refunds.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/refunds/refunds.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 832
+      },
+      {
+        "name": "redis",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis/index.ts",
+        "imports": [],
+        "exports": [
+          "RedisService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": [
+            "RedisService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis/redis.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis/redis.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis/redis.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/redis/redis.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 619
+      },
+      {
+        "name": "reporting",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting/index.ts",
+        "imports": [
+          "promotions",
+          "wishlist",
+          "notifications",
+          "invoices"
+        ],
+        "exports": [
+          "ReportingService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "promotions",
+            "wishlist",
+            "notifications",
+            "invoices"
+          ],
+          "exports": [
+            "ReportingService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting/reporting.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting/reporting.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting/reporting.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reporting/reporting.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 872
+      },
+      {
+        "name": "reports",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports/index.ts",
+        "imports": [
+          "logger",
+          "storage",
+          "mailer",
+          "redis"
+        ],
+        "exports": [
+          "ReportsService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "logger",
+            "storage",
+            "mailer",
+            "redis"
+          ],
+          "exports": [
+            "ReportsService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports/reports.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports/reports.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports/reports.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reports/reports.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 828
+      },
+      {
+        "name": "reviews",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews/index.ts",
+        "imports": [
+          "database",
+          "i18n",
+          "rate-limiter",
+          "audit"
+        ],
+        "exports": [
+          "ReviewsService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "database",
+            "i18n",
+            "rate-limiter",
+            "audit"
+          ],
+          "exports": [
+            "ReviewsService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews/reviews.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews/reviews.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews/reviews.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/reviews/reviews.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 837
+      },
+      {
         "name": "search",
         "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/search",
         "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/search/index.ts",
@@ -1325,6 +1326,32 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 823
+      },
+      {
+        "name": "session",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session/index.ts",
+        "imports": [],
+        "exports": [
+          "SessionService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": [
+            "SessionService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session/session.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session/session.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session/session.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session/session.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 633
       },
       {
         "name": "shipping",
@@ -1363,32 +1390,6 @@
         "cachedSize": 844
       },
       {
-        "name": "session",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session/index.ts",
-        "imports": [],
-        "exports": [
-          "SessionService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [],
-          "exports": [
-            "SessionService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session/session.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session/session.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session/session.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/session/session.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 633
-      },
-      {
         "name": "storage",
         "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/storage",
         "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/storage/index.ts",
@@ -1413,42 +1414,6 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 633
-      },
-      {
-        "name": "support",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support/index.ts",
-        "imports": [
-          "analytics",
-          "reviews",
-          "products",
-          "invoices"
-        ],
-        "exports": [
-          "SupportService"
-        ],
-        "shared": [],
-        "options": {
-          "imports": [
-            "analytics",
-            "reviews",
-            "products",
-            "invoices"
-          ],
-          "exports": [
-            "SupportService"
-          ]
-        },
-        "id": "mod_433a2f55",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support/support.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support/support.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support/support.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support/support.service.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 844
       },
       {
         "name": "subscriptions",
@@ -1487,30 +1452,40 @@
         "cachedSize": 866
       },
       {
-        "name": "users",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users/index.ts",
-        "imports": [],
+        "name": "support",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support/index.ts",
+        "imports": [
+          "analytics",
+          "reviews",
+          "products",
+          "invoices"
+        ],
         "exports": [
-          "UsersService"
+          "SupportService"
         ],
         "shared": [],
         "options": {
-          "imports": [],
+          "imports": [
+            "analytics",
+            "reviews",
+            "products",
+            "invoices"
+          ],
           "exports": [
-            "UsersService"
+            "SupportService"
           ]
         },
         "id": "mod_433a2f55",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users/users.repository.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users/users.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users/users.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users/users.service.ts"
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support/support.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support/support.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support/support.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/support/support.service.ts"
         ],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 619
+        "cachedSize": 844
       },
       {
         "name": "tax",
@@ -1547,6 +1522,32 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 811
+      },
+      {
+        "name": "users",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users/index.ts",
+        "imports": [],
+        "exports": [
+          "UsersService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": [
+            "UsersService"
+          ]
+        },
+        "id": "mod_433a2f55",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users/users.repository.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users/users.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users/users.schema.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/benchmarks/fixture/src/users/users.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 619
       },
       {
         "name": "webhooks",

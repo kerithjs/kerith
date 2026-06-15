@@ -1,7 +1,8 @@
 {
   "version": "2.0.0",
   "status": "ok",
-  "savedAt": "2026-06-12T23:28:52.469Z",
+  "savedAt": "2026-06-15T01:05:11.600Z",
+  "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app",
   "configHash": "79329199",
   "data": {
     "domains": [],

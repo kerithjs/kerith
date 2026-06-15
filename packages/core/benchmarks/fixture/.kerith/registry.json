@@ -1,8 +1,38 @@
 {
   "project": "unknown",
   "version": "1.0.0",
-  "lastCheck": "2026-06-12T23:23:11.619Z",
+  "lastCheck": "2026-06-15T00:57:04.797Z",
   "modules": {
+    "mod_925ad1d2": {
+      "id": "mod_925ad1d2",
+      "name": "api-gateway",
+      "path": "src/api-gateway",
+      "hash": "f7ccf0095d",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "ApiGatewayRepository",
+        "ApiGatewaySchema",
+        "ApiGatewayService"
+      ],
+      "shadowFileId": "mod_925ad1d2"
+    },
+    "mod_7b183636": {
+      "id": "mod_7b183636",
+      "name": "admin",
+      "path": "src/admin",
+      "hash": "e6e6bdecfb",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "AdminRepository",
+        "AdminSchema",
+        "AdminService"
+      ],
+      "shadowFileId": "mod_7b183636"
+    },
     "mod_72d0d41b": {
       "id": "mod_72d0d41b",
       "name": "analytics",
@@ -10,7 +40,7 @@
       "hash": "e8b993c17d",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "AnalyticsRepository",
         "AnalyticsSchema",
@@ -25,43 +55,13 @@
       "hash": "67da5de083",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "AddressRepository",
         "AddressSchema",
         "AddressService"
       ],
       "shadowFileId": "mod_c032b197"
-    },
-    "mod_7b183636": {
-      "id": "mod_7b183636",
-      "name": "admin",
-      "path": "src/admin",
-      "hash": "e6e6bdecfb",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "AdminRepository",
-        "AdminSchema",
-        "AdminService"
-      ],
-      "shadowFileId": "mod_7b183636"
-    },
-    "mod_925ad1d2": {
-      "id": "mod_925ad1d2",
-      "name": "api-gateway",
-      "path": "src/api-gateway",
-      "hash": "f7ccf0095d",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "ApiGatewayRepository",
-        "ApiGatewaySchema",
-        "ApiGatewayService"
-      ],
-      "shadowFileId": "mod_925ad1d2"
     },
     "mod_62f292dd": {
       "id": "mod_62f292dd",
@@ -70,58 +70,13 @@
       "hash": "5d49cf581b",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "AuditRepository",
         "AuditSchema",
         "AuditService"
       ],
       "shadowFileId": "mod_62f292dd"
-    },
-    "mod_c90e7777": {
-      "id": "mod_c90e7777",
-      "name": "billing",
-      "path": "src/billing",
-      "hash": "42663d6010",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "BillingRepository",
-        "BillingSchema",
-        "BillingService"
-      ],
-      "shadowFileId": "mod_c90e7777"
-    },
-    "mod_2f504e40": {
-      "id": "mod_2f504e40",
-      "name": "cart",
-      "path": "src/cart",
-      "hash": "729b999bc2",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "CartRepository",
-        "CartSchema",
-        "CartService"
-      ],
-      "shadowFileId": "mod_2f504e40"
-    },
-    "mod_06f609b6": {
-      "id": "mod_06f609b6",
-      "name": "backoffice",
-      "path": "src/backoffice",
-      "hash": "242bb774a3",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "BackofficeRepository",
-        "BackofficeSchema",
-        "BackofficeService"
-      ],
-      "shadowFileId": "mod_06f609b6"
     },
     "mod_39daa385": {
       "id": "mod_39daa385",
@@ -130,7 +85,7 @@
       "hash": "62cdd03a30",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "AuthRepository",
         "AuthSchema",
@@ -145,13 +100,58 @@
       "hash": "e294d792c6",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "CheckoutRepository",
         "CheckoutSchema",
         "CheckoutService"
       ],
       "shadowFileId": "mod_98478ed2"
+    },
+    "mod_2f504e40": {
+      "id": "mod_2f504e40",
+      "name": "cart",
+      "path": "src/cart",
+      "hash": "729b999bc2",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "CartRepository",
+        "CartSchema",
+        "CartService"
+      ],
+      "shadowFileId": "mod_2f504e40"
+    },
+    "mod_c90e7777": {
+      "id": "mod_c90e7777",
+      "name": "billing",
+      "path": "src/billing",
+      "hash": "42663d6010",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "BillingRepository",
+        "BillingSchema",
+        "BillingService"
+      ],
+      "shadowFileId": "mod_c90e7777"
+    },
+    "mod_06f609b6": {
+      "id": "mod_06f609b6",
+      "name": "backoffice",
+      "path": "src/backoffice",
+      "hash": "242bb774a3",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "BackofficeRepository",
+        "BackofficeSchema",
+        "BackofficeService"
+      ],
+      "shadowFileId": "mod_06f609b6"
     },
     "mod_fec813ec": {
       "id": "mod_fec813ec",
@@ -160,7 +160,7 @@
       "hash": "ebb744e9ed",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "ComplianceRepository",
         "ComplianceSchema",
@@ -175,7 +175,7 @@
       "hash": "6bedd2fc90",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "ConfigRepository",
         "ConfigSchema",
@@ -190,28 +190,13 @@
       "hash": "b1dedcac3f",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "CrmRepository",
         "CrmSchema",
         "CrmService"
       ],
       "shadowFileId": "mod_8b7a0cb1"
-    },
-    "mod_14b49894": {
-      "id": "mod_14b49894",
-      "name": "customer-portal",
-      "path": "src/customer-portal",
-      "hash": "0b7a1d072a",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "CustomerPortalRepository",
-        "CustomerPortalSchema",
-        "CustomerPortalService"
-      ],
-      "shadowFileId": "mod_14b49894"
     },
     "mod_3549d1fe": {
       "id": "mod_3549d1fe",
@@ -220,13 +205,28 @@
       "hash": "a1621a06d7",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "CryptoRepository",
         "CryptoSchema",
         "CryptoService"
       ],
       "shadowFileId": "mod_3549d1fe"
+    },
+    "mod_14b49894": {
+      "id": "mod_14b49894",
+      "name": "customer-portal",
+      "path": "src/customer-portal",
+      "hash": "0b7a1d072a",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "CustomerPortalRepository",
+        "CustomerPortalSchema",
+        "CustomerPortalService"
+      ],
+      "shadowFileId": "mod_14b49894"
     },
     "mod_1d207eef": {
       "id": "mod_1d207eef",
@@ -235,7 +235,7 @@
       "hash": "2eda3a366e",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "DashboardRepository",
         "DashboardSchema",
@@ -250,7 +250,7 @@
       "hash": "e196d3cbf8",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "DatabaseRepository",
         "DatabaseSchema",
@@ -265,7 +265,7 @@
       "hash": "9d1db13af2",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "HealthRepository",
         "HealthSchema",
@@ -280,7 +280,7 @@
       "hash": "761ffcc831",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "I18nRepository",
         "I18nSchema",
@@ -295,7 +295,7 @@
       "hash": "12092900cf",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "IntegrationsRepository",
         "IntegrationsSchema",
@@ -310,7 +310,7 @@
       "hash": "b2e87b13ef",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "InventoryRepository",
         "InventorySchema",
@@ -325,7 +325,7 @@
       "hash": "6b4e4fb6f2",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "InvoicesRepository",
         "InvoicesSchema",
@@ -340,7 +340,7 @@
       "hash": "b26d5e41fc",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "LoggerRepository",
         "LoggerSchema",
@@ -355,7 +355,7 @@
       "hash": "85eff3457c",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "MetricsRepository",
         "MetricsSchema",
@@ -370,28 +370,13 @@
       "hash": "e9d91eec16",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "MailerRepository",
         "MailerSchema",
         "MailerService"
       ],
       "shadowFileId": "mod_309d53c6"
-    },
-    "mod_ac2e88a4": {
-      "id": "mod_ac2e88a4",
-      "name": "onboarding",
-      "path": "src/onboarding",
-      "hash": "e373ef4bfb",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "OnboardingRepository",
-        "OnboardingSchema",
-        "OnboardingService"
-      ],
-      "shadowFileId": "mod_ac2e88a4"
     },
     "mod_fe90a044": {
       "id": "mod_fe90a044",
@@ -400,7 +385,7 @@
       "hash": "e6d33bd143",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "NotificationsRepository",
         "NotificationsSchema",
@@ -408,20 +393,20 @@
       ],
       "shadowFileId": "mod_fe90a044"
     },
-    "mod_7da24027": {
-      "id": "mod_7da24027",
-      "name": "orders",
-      "path": "src/orders",
-      "hash": "9aad2fa290",
+    "mod_ac2e88a4": {
+      "id": "mod_ac2e88a4",
+      "name": "onboarding",
+      "path": "src/onboarding",
+      "hash": "e373ef4bfb",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
-        "OrdersRepository",
-        "OrdersSchema",
-        "OrdersService"
+        "OnboardingRepository",
+        "OnboardingSchema",
+        "OnboardingService"
       ],
-      "shadowFileId": "mod_7da24027"
+      "shadowFileId": "mod_ac2e88a4"
     },
     "mod_b69ff912": {
       "id": "mod_b69ff912",
@@ -430,13 +415,28 @@
       "hash": "ff76f4ca0f",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "OpsRepository",
         "OpsSchema",
         "OpsService"
       ],
       "shadowFileId": "mod_b69ff912"
+    },
+    "mod_7da24027": {
+      "id": "mod_7da24027",
+      "name": "orders",
+      "path": "src/orders",
+      "hash": "9aad2fa290",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "OrdersRepository",
+        "OrdersSchema",
+        "OrdersService"
+      ],
+      "shadowFileId": "mod_7da24027"
     },
     "mod_213f60fd": {
       "id": "mod_213f60fd",
@@ -445,7 +445,7 @@
       "hash": "4f51234da6",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "PaymentsRepository",
         "PaymentsSchema",
@@ -460,43 +460,13 @@
       "hash": "113e4f473f",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "ProductsRepository",
         "ProductsSchema",
         "ProductsService"
       ],
       "shadowFileId": "mod_358572d1"
-    },
-    "mod_63889317": {
-      "id": "mod_63889317",
-      "name": "redis",
-      "path": "src/redis",
-      "hash": "90ca1c4881",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "RedisRepository",
-        "RedisSchema",
-        "RedisService"
-      ],
-      "shadowFileId": "mod_63889317"
-    },
-    "mod_107edac1": {
-      "id": "mod_107edac1",
-      "name": "rate-limiter",
-      "path": "src/rate-limiter",
-      "hash": "3a11c8ca49",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "RateLimiterRepository",
-        "RateLimiterSchema",
-        "RateLimiterService"
-      ],
-      "shadowFileId": "mod_107edac1"
     },
     "mod_842605b6": {
       "id": "mod_842605b6",
@@ -505,7 +475,7 @@
       "hash": "3ff747b094",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "PromotionsRepository",
         "PromotionsSchema",
@@ -513,65 +483,20 @@
       ],
       "shadowFileId": "mod_842605b6"
     },
-    "mod_ce32c465": {
-      "id": "mod_ce32c465",
-      "name": "refunds",
-      "path": "src/refunds",
-      "hash": "3810613be6",
+    "mod_107edac1": {
+      "id": "mod_107edac1",
+      "name": "rate-limiter",
+      "path": "src/rate-limiter",
+      "hash": "3a11c8ca49",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
-        "RefundsRepository",
-        "RefundsSchema",
-        "RefundsService"
+        "RateLimiterRepository",
+        "RateLimiterSchema",
+        "RateLimiterService"
       ],
-      "shadowFileId": "mod_ce32c465"
-    },
-    "mod_0923d086": {
-      "id": "mod_0923d086",
-      "name": "reports",
-      "path": "src/reports",
-      "hash": "a64c8c5c93",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "ReportsRepository",
-        "ReportsSchema",
-        "ReportsService"
-      ],
-      "shadowFileId": "mod_0923d086"
-    },
-    "mod_35e6e5ef": {
-      "id": "mod_35e6e5ef",
-      "name": "reporting",
-      "path": "src/reporting",
-      "hash": "1b89e76746",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "ReportingRepository",
-        "ReportingSchema",
-        "ReportingService"
-      ],
-      "shadowFileId": "mod_35e6e5ef"
-    },
-    "mod_ec9f1df8": {
-      "id": "mod_ec9f1df8",
-      "name": "reviews",
-      "path": "src/reviews",
-      "hash": "ba24d3f5a8",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "ReviewsRepository",
-        "ReviewsSchema",
-        "ReviewsService"
-      ],
-      "shadowFileId": "mod_ec9f1df8"
+      "shadowFileId": "mod_107edac1"
     },
     "mod_556a9cf5": {
       "id": "mod_556a9cf5",
@@ -580,13 +505,88 @@
       "hash": "160883a5c2",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "RecommendationsRepository",
         "RecommendationsSchema",
         "RecommendationsService"
       ],
       "shadowFileId": "mod_556a9cf5"
+    },
+    "mod_ce32c465": {
+      "id": "mod_ce32c465",
+      "name": "refunds",
+      "path": "src/refunds",
+      "hash": "3810613be6",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "RefundsRepository",
+        "RefundsSchema",
+        "RefundsService"
+      ],
+      "shadowFileId": "mod_ce32c465"
+    },
+    "mod_63889317": {
+      "id": "mod_63889317",
+      "name": "redis",
+      "path": "src/redis",
+      "hash": "90ca1c4881",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "RedisRepository",
+        "RedisSchema",
+        "RedisService"
+      ],
+      "shadowFileId": "mod_63889317"
+    },
+    "mod_35e6e5ef": {
+      "id": "mod_35e6e5ef",
+      "name": "reporting",
+      "path": "src/reporting",
+      "hash": "1b89e76746",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "ReportingRepository",
+        "ReportingSchema",
+        "ReportingService"
+      ],
+      "shadowFileId": "mod_35e6e5ef"
+    },
+    "mod_0923d086": {
+      "id": "mod_0923d086",
+      "name": "reports",
+      "path": "src/reports",
+      "hash": "a64c8c5c93",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "ReportsRepository",
+        "ReportsSchema",
+        "ReportsService"
+      ],
+      "shadowFileId": "mod_0923d086"
+    },
+    "mod_ec9f1df8": {
+      "id": "mod_ec9f1df8",
+      "name": "reviews",
+      "path": "src/reviews",
+      "hash": "ba24d3f5a8",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "ReviewsRepository",
+        "ReviewsSchema",
+        "ReviewsService"
+      ],
+      "shadowFileId": "mod_ec9f1df8"
     },
     "mod_ad7d03b1": {
       "id": "mod_ad7d03b1",
@@ -595,28 +595,13 @@
       "hash": "291274d8fa",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "SearchRepository",
         "SearchSchema",
         "SearchService"
       ],
       "shadowFileId": "mod_ad7d03b1"
-    },
-    "mod_92fc8826": {
-      "id": "mod_92fc8826",
-      "name": "shipping",
-      "path": "src/shipping",
-      "hash": "c74bb793d8",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "ShippingRepository",
-        "ShippingSchema",
-        "ShippingService"
-      ],
-      "shadowFileId": "mod_92fc8826"
     },
     "mod_ba536c5c": {
       "id": "mod_ba536c5c",
@@ -625,13 +610,28 @@
       "hash": "1ff72e0b8e",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "SessionRepository",
         "SessionSchema",
         "SessionService"
       ],
       "shadowFileId": "mod_ba536c5c"
+    },
+    "mod_92fc8826": {
+      "id": "mod_92fc8826",
+      "name": "shipping",
+      "path": "src/shipping",
+      "hash": "c74bb793d8",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "ShippingRepository",
+        "ShippingSchema",
+        "ShippingService"
+      ],
+      "shadowFileId": "mod_92fc8826"
     },
     "mod_7b1a27ba": {
       "id": "mod_7b1a27ba",
@@ -640,28 +640,13 @@
       "hash": "f4922574e5",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "StorageRepository",
         "StorageSchema",
         "StorageService"
       ],
       "shadowFileId": "mod_7b1a27ba"
-    },
-    "mod_f4054ebd": {
-      "id": "mod_f4054ebd",
-      "name": "support",
-      "path": "src/support",
-      "hash": "aaae0f9f1d",
-      "status": "active",
-      "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
-      "identifiers": [
-        "SupportRepository",
-        "SupportSchema",
-        "SupportService"
-      ],
-      "shadowFileId": "mod_f4054ebd"
     },
     "mod_a49a10fe": {
       "id": "mod_a49a10fe",
@@ -670,7 +655,7 @@
       "hash": "0d4b379dd2",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "SubscriptionsRepository",
         "SubscriptionsSchema",
@@ -678,20 +663,20 @@
       ],
       "shadowFileId": "mod_a49a10fe"
     },
-    "mod_c1e73b68": {
-      "id": "mod_c1e73b68",
-      "name": "users",
-      "path": "src/users",
-      "hash": "f7066a62c6",
+    "mod_f4054ebd": {
+      "id": "mod_f4054ebd",
+      "name": "support",
+      "path": "src/support",
+      "hash": "aaae0f9f1d",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
-        "UsersRepository",
-        "UsersSchema",
-        "UsersService"
+        "SupportRepository",
+        "SupportSchema",
+        "SupportService"
       ],
-      "shadowFileId": "mod_c1e73b68"
+      "shadowFileId": "mod_f4054ebd"
     },
     "mod_277bd2ef": {
       "id": "mod_277bd2ef",
@@ -700,13 +685,28 @@
       "hash": "fe24114dca",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "TaxRepository",
         "TaxSchema",
         "TaxService"
       ],
       "shadowFileId": "mod_277bd2ef"
+    },
+    "mod_c1e73b68": {
+      "id": "mod_c1e73b68",
+      "name": "users",
+      "path": "src/users",
+      "hash": "f7066a62c6",
+      "status": "active",
+      "createdAt": "2026-06-12T23:23:02.264Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
+      "identifiers": [
+        "UsersRepository",
+        "UsersSchema",
+        "UsersService"
+      ],
+      "shadowFileId": "mod_c1e73b68"
     },
     "mod_7317daec": {
       "id": "mod_7317daec",
@@ -715,7 +715,7 @@
       "hash": "f4be452d29",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "WebhooksRepository",
         "WebhooksSchema",
@@ -730,7 +730,7 @@
       "hash": "4fb586158b",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "VendorPortalRepository",
         "VendorPortalSchema",
@@ -745,7 +745,7 @@
       "hash": "38a10c7445",
       "status": "active",
       "createdAt": "2026-06-12T23:23:02.264Z",
-      "lastSeen": "2026-06-12T23:23:11.618Z",
+      "lastSeen": "2026-06-15T00:57:04.796Z",
       "identifiers": [
         "WishlistRepository",
         "WishlistSchema",
