@@ -33,6 +33,11 @@ export const MtimeValidator = {
     const savedAtTime = cache.savedAt ? new Date(cache.savedAt).getTime() : 0;
 
     // First pass: identify all dirty domains
+    // Nota (PT3-2): Los submodules no se iteran directamente aquí. Esto es intencional.
+    // Los archivos físicos de los submodules están dentro del directorio del módulo padre.
+    // En createApp.ts, el agrupador de `filesByModulePath` asigna por prefijo de ruta,
+    // por lo que los archivos del submodule quedan incluidos en `module.files` del padre.
+    // Un cambio en un submodule invalidará correctamente al padre y a su dominio.
     for (const module of cache.data!.modules) {
       const { maxMtime, totalSize } = getModuleSignature(module.files);
       const domainKey = module.domain || '__flat__';

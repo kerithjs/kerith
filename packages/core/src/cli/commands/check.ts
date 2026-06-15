@@ -54,11 +54,11 @@ export function checkCommand(): Command {
         const logger = createLogger(defaultLogHandler, 'info', 'check');
 
         // Pre-loader verification
-        try {
-            const preloadPath = path.join(cwd, '.kerith', 'preload.js');
-            if (!fs.existsSync(preloadPath)) {
-                console.log(`\n  ${AYU.orange}⚠  Pre-loader not detected. Run "npx kerith sync-preload" to optimize alias resolution.\x1b[0m\n`);
-            } else {
+        const preloadPath = path.join(cwd, '.kerith', 'preload.js');
+        if (!fs.existsSync(preloadPath)) {
+            console.log(`\n  ${AYU.orange}⚠  Pre-loader not detected. Run "npx kerith sync-preload" to optimize alias resolution.\x1b[0m\n`);
+        } else {
+            try {
                 const content = fs.readFileSync(preloadPath, 'utf8');
                 const versionMatch = content.match(/_version:\s*'([^']+)'/);
                 if (versionMatch) {
@@ -69,9 +69,9 @@ export function checkCommand(): Command {
                         console.log(`\n  ${AYU.orange}⚠  Pre-loader version mismatch (found v${preloadVersion}, core is v${currentVersion}). Run "npx kerith sync-preload" to update.\x1b[0m\n`);
                     }
                 }
+            } catch (err: any) {
+                console.log(`\n  ${AYU.orange}⚠  Failed to read pre-loader: ${err.message}\x1b[0m\n`);
             }
-        } catch (err: any) {
-            console.log(`\n  ${AYU.orange}⚠  Failed to verify pre-loader status: ${err.message}\x1b[0m\n`);
         }
         
         const graph = await buildModuleGraph(config, cwd);

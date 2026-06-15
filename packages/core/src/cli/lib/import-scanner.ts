@@ -18,6 +18,20 @@ const IMPORT_REGEX =
 const RELATIVE_IMPORT_REGEX =
   /(?:import|export)(?:\s+type\s+)?(?:\s+|\s*\()(?:[^"';]+\s+from\s+)?['"](\.\.?\/[^"';]+)['"]/g;
 
+/**
+ * Strips `//`-style line comments from source code while preserving line count.
+ * Each removed comment is replaced with the same number of characters as spaces
+ * so that match.index → line-number calculations remain accurate.
+ *
+ * Block comments (`/* ... *\/`) are intentionally left as-is: the regex requires
+ * `import`/`export` to appear at the start of a meaningful token, which virtually
+ * never occurs inside a block comment in real-world code.
+ */
+function stripLineComments(code: string): string {
+  // Replace everything from `//` to end-of-line with spaces (preserves \n).
+  return code.replace(/\/\/[^\n]*/g, (match) => ' '.repeat(match.length));
+}
+
 const DEFAULT_ACTIVE_ALIASES = ['@modules'] as const;
 
 function emitLog(log: LogHandler | undefined, level: 'warn' | 'debug', message: string): void {
@@ -99,10 +113,14 @@ function parseImportSpecifiers(
     const results: { specifier: string; line: number }[] = [];
     let match: RegExpExecArray | null;
     const regex = new RegExp(IMPORT_REGEX.source, IMPORT_REGEX.flags);
+    // Strip line comments before scanning so commented-out imports
+    // (e.g. `// import { X } from '@modules/foo'`) are not reported
+    // as real imports (N-52 false-positive fix).
+    const strippedCode = stripLineComments(code);
 
-    while ((match = regex.exec(code)) !== null) {
+    while ((match = regex.exec(strippedCode)) !== null) {
       const specifier = match[1];
-      const textBeforeMatch = code.substring(0, match.index);
+      const textBeforeMatch = strippedCode.substring(0, match.index);
       const line = textBeforeMatch.split('\n').length;
       results.push({ specifier, line });
     }

@@ -74,6 +74,97 @@ describe('cli/lib/import-scanner — REGLA-22', () => {
   });
 });
 
+// ─── N-52: Regex coverage for import type / export type / export * / dynamic ──
+// Empirically verified 2026-06-15: all patterns below are captured correctly
+// by the current IMPORT_REGEX. These tests lock the behaviour so a future
+// regex change cannot silently regress any of them.
+describe('cli/lib/import-scanner — N-52: TypeScript import syntax coverage', () => {
+  const tmpFiles: string[] = [];
+
+  afterEach(() => {
+    for (const f of tmpFiles) {
+      try { fs.unlinkSync(f); } catch { /* ignore */ }
+    }
+    tmpFiles.length = 0;
+  });
+
+  function scan(code: string, ext = '.ts'): string[] {
+    const p = path.join(os.tmpdir(), `kerith-n52-${Date.now()}-${Math.random()}${ext}`);
+    fs.writeFileSync(p, code, 'utf-8');
+    tmpFiles.push(p);
+    return extractModuleImports(p, ['@modules']).map(r => r.specifier);
+  }
+
+  it('captures standard named import', () => {
+    expect(scan(`import { UserService } from '@modules/users'`))
+      .toContain('@modules/users');
+  });
+
+  it('captures import type { ... } from (N-52 — type import)', () => {
+    expect(scan(`import type { UserService } from '@modules/users'`))
+      .toContain('@modules/users');
+  });
+
+  it('captures export type { ... } from (N-52 — type re-export)', () => {
+    expect(scan(`export type { UserType } from '@modules/users'`))
+      .toContain('@modules/users');
+  });
+
+  it('captures export type with multiple names', () => {
+    expect(scan(`export type { A, B, C } from '@modules/users'`))
+      .toContain('@modules/users');
+  });
+
+  it('captures export * from (barrel re-export)', () => {
+    expect(scan(`export * from '@modules/users'`))
+      .toContain('@modules/users');
+  });
+
+  it('captures export { ... } from (named re-export)', () => {
+    expect(scan(`export { UserService } from '@modules/users'`))
+      .toContain('@modules/users');
+  });
+
+  it('captures dynamic import() expression (N-52)', () => {
+    expect(scan(`import('@modules/users')`))
+      .toContain('@modules/users');
+  });
+
+  it('captures await import() in expression (N-52)', () => {
+    expect(scan(`const mod = await import('@modules/users')`))
+      .toContain('@modules/users');
+  });
+
+  it('captures import type across multiple lines', () => {
+    const code = `import type\n  { UserService }\n  from '@modules/users'`;
+    expect(scan(code)).toContain('@modules/users');
+  });
+
+  it('does NOT capture imports on commented-out lines (N-52 false-positive guard)', () => {
+    const code = [
+      `// import { X } from '@modules/users'`,
+      `// export type { Y } from '@modules/users'`,
+      `import { Z } from '@modules/auth'`, // real import — must appear
+    ].join('\n');
+    const result = scan(code);
+    expect(result).not.toContain('@modules/users');   // commented — must be absent
+    expect(result).toContain('@modules/auth');         // real — must be present
+  });
+
+  it('reports the correct line number for the captured import', () => {
+    const code = [
+      `import express from 'express'`,
+      `import type { UserService } from '@modules/users'`,
+    ].join('\n');
+    const p = path.join(os.tmpdir(), `kerith-n52-line-${Date.now()}.ts`);
+    fs.writeFileSync(p, code, 'utf-8');
+    tmpFiles.push(p);
+    const result = extractModuleImports(p, ['@modules']);
+    expect(result).toHaveLength(1);
+    expect(result[0].line).toBe(2);
+  });
+});
+
 describe('cli/lib/import-scanner — extractRelativeCrossModuleImports', () => {
   const tmpFiles: string[] = [];
   let tmpDir: string;

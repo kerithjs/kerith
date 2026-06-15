@@ -193,6 +193,8 @@ export async function createApp(
       const rescannedDomains = new Set<string>();
       let isFullCacheHit = false;
 
+      // Si ningún archivo de config existe, configPath queda vacío.
+      // hashConfig('') devuelve 'no-config', que es estable entre boots — no degrada.
       const configCandidates = ['kerith.config.ts', 'kerith.config.js', 'kerith.config.mjs'];
       let configPath = '';
       for (const cand of configCandidates) {
@@ -248,7 +250,11 @@ export async function createApp(
               const cachedSubmodules = rawCache.data!.submodules.filter(s => !rescannedDomains.has(s.domain || '__flat__'));
               const mergedSubmodules = cachedSubmodules.concat(partialScan.submodules);
 
-              // Global shared is rescanned every time if it exists, domain-scoped is tied to domain
+              // Global @shared se rescannea siempre (costo mínimo: una stat de directorio).
+              // La razón: @shared no pertenece a ningún dominio, por lo que no tiene un
+              // domainKey que pueda aparecer en `toRescan`. Se fuerza rescan para detectar
+              // si src/shared/ fue creado o eliminado entre boots.
+              // Domain-scoped shared is tied to domain.
               const finalSharedMap = new Map();
               for (const s of rawCache.data!.shared) {
                 if (s.type === 'global' || !rescannedDomains.has(s.domain!)) {
