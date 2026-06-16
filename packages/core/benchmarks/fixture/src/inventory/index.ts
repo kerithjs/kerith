@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { HealthService } from '@modules/health';
-import { MailerService } from '@modules/mailer';
 import { LoggerService } from '@modules/logger';
-import { MetricsService } from '@modules/metrics';
+import { RedisService } from '@modules/redis';
+import { SessionService } from '@modules/session';
+import { StorageService } from '@modules/storage';
 
 Module('inventory', {
-  imports: ["health","mailer","logger","metrics"],
+  imports: ["logger","redis","session","storage"],
   exports: ['InventoryService']
 });
 

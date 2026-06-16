@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { UsersService } from '@modules/users';
-import { AuthService } from '@modules/auth';
-import { RedisService } from '@modules/redis';
 import { StorageService } from '@modules/storage';
+import { SessionService } from '@modules/session';
+import { LoggerService } from '@modules/logger';
+import { AuditService } from '@modules/audit';
 
 Module('invoices', {
-  imports: ["users","auth","redis","storage"],
+  imports: ["storage","session","logger","audit"],
   exports: ['InvoicesService']
 });
 

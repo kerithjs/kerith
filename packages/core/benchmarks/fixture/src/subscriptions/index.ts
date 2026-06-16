@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { HealthService } from '@modules/health';
+import { RedisService } from '@modules/redis';
+import { MailerService } from '@modules/mailer';
 import { AuditService } from '@modules/audit';
-import { StorageService } from '@modules/storage';
-import { AuthService } from '@modules/auth';
+import { I18nService } from '@modules/i18n';
 
 Module('subscriptions', {
-  imports: ["health","audit","storage","auth"],
+  imports: ["redis","mailer","audit","i18n"],
   exports: ['SubscriptionsService']
 });
 

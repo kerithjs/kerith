@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { PromotionsService } from '@modules/promotions';
+import { InventoryService } from '@modules/inventory';
+import { SearchService } from '@modules/search';
 import { WishlistService } from '@modules/wishlist';
-import { NotificationsService } from '@modules/notifications';
-import { InvoicesService } from '@modules/invoices';
+import { AnalyticsService } from '@modules/analytics';
 
 Module('reporting', {
-  imports: ["promotions","wishlist","notifications","invoices"],
+  imports: ["inventory","search","wishlist","analytics"],
   exports: ['ReportingService']
 });
 

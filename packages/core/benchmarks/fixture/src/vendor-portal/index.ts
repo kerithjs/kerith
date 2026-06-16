@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { RefundsService } from '@modules/refunds';
+import { InvoicesService } from '@modules/invoices';
+import { AnalyticsService } from '@modules/analytics';
+import { SearchService } from '@modules/search';
 import { ReportsService } from '@modules/reports';
-import { SubscriptionsService } from '@modules/subscriptions';
-import { CartService } from '@modules/cart';
 
 Module('vendor-portal', {
-  imports: ["refunds","reports","subscriptions","cart"],
+  imports: ["invoices","analytics","search","reports"],
   exports: ['VendorPortalService']
 });
 

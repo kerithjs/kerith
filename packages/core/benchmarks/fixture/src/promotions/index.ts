@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { MetricsService } from '@modules/metrics';
+import { SessionService } from '@modules/session';
 import { I18nService } from '@modules/i18n';
-import { ConfigService } from '@modules/config';
-import { AuthService } from '@modules/auth';
+import { RateLimiterService } from '@modules/rate-limiter';
+import { RedisService } from '@modules/redis';
 
 Module('promotions', {
-  imports: ["metrics","i18n","config","auth"],
+  imports: ["session","i18n","rate-limiter","redis"],
   exports: ['PromotionsService']
 });
 

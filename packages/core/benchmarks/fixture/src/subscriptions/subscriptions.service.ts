@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
-import { HealthService } from '@modules/health';
+import { RedisService } from '@modules/redis';
+import { MailerService } from '@modules/mailer';
 import { AuditService } from '@modules/audit';
-import { StorageService } from '@modules/storage';
-import { AuthService } from '@modules/auth';
+import { I18nService } from '@modules/i18n';
 
 Service('SubscriptionsService');
 export class SubscriptionsService {

@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { StorageService } from '@modules/storage';
-import { RateLimiterService } from '@modules/rate-limiter';
-import { CryptoService } from '@modules/crypto';
-import { AuditService } from '@modules/audit';
+import { UsersService } from '@modules/users';
+import { HealthService } from '@modules/health';
+import { I18nService } from '@modules/i18n';
+import { MailerService } from '@modules/mailer';
 
 Module('tax', {
-  imports: ["storage","rate-limiter","crypto","audit"],
+  imports: ["users","health","i18n","mailer"],
   exports: ['TaxService']
 });
 

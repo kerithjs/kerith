@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { DatabaseService } from '@modules/database';
-import { StorageService } from '@modules/storage';
-import { AuditService } from '@modules/audit';
+import { CryptoService } from '@modules/crypto';
+import { SessionService } from '@modules/session';
 import { HealthService } from '@modules/health';
+import { I18nService } from '@modules/i18n';
 
 Module('recommendations', {
-  imports: ["database","storage","audit","health"],
+  imports: ["crypto","session","health","i18n"],
   exports: ['RecommendationsService']
 });
 

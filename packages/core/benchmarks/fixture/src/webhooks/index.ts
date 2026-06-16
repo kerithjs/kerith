@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { PromotionsService } from '@modules/promotions';
-import { ReportsService } from '@modules/reports';
-import { AnalyticsService } from '@modules/analytics';
+import { InventoryService } from '@modules/inventory';
+import { OrdersService } from '@modules/orders';
+import { ProductsService } from '@modules/products';
 import { NotificationsService } from '@modules/notifications';
 
 Module('webhooks', {
-  imports: ["promotions","reports","analytics","notifications"],
+  imports: ["inventory","orders","products","notifications"],
   exports: ['WebhooksService']
 });
 

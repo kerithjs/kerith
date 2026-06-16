@@ -1,23 +1,380 @@
 {
-  "date": "2026-06-15T00:57:05.188Z",
-  "scenarios": {
-    "fullBootstrap": {
-      "min": 408,
-      "max": 1917,
-      "p50": 494,
-      "p95": 1634
+  "history": [
+    {
+      "date": "2026-06-15T23:10:55.666Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {
+        "unknown": {
+          "avg": 0,
+          "min": 0,
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      }
     },
-    "validCache": {
-      "min": 350,
-      "max": 416,
-      "p50": 379,
-      "p95": 412
+    {
+      "date": "2026-06-15T23:17:19.112Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {
+        "unknown": {
+          "avg": 0,
+          "min": 0,
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      }
     },
-    "partialCache": {
-      "min": 406,
-      "max": 473,
-      "p50": 410,
-      "p95": 467
+    {
+      "date": "2026-06-15T23:27:15.264Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {}
+    },
+    {
+      "date": "2026-06-15T23:33:22.945Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {}
+    },
+    {
+      "date": "2026-06-15T23:38:18.116Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {}
+    },
+    {
+      "date": "2026-06-16T00:02:49.116Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {}
+    },
+    {
+      "date": "2026-06-16T00:11:45.402Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {}
+    },
+    {
+      "date": "2026-06-16T00:17:11.904Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {}
+    },
+    {
+      "date": "2026-06-16T00:29:17.613Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {
+        "unknown": {
+          "avg": 0,
+          "min": 0,
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      }
+    },
+    {
+      "date": "2026-06-16T00:39:45.340Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {
+        "unknown": {
+          "avg": 0,
+          "min": 0,
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      }
+    },
+    {
+      "date": "2026-06-16T00:46:57.296Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {
+        "unknown": {
+          "avg": 0,
+          "min": 0,
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      }
+    },
+    {
+      "date": "2026-06-16T00:52:28.055Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {
+        "Cold Start — Sin cache": {
+          "avg": 2858877166.6666665,
+          "min": 2470398000,
+          "max": 3914998700,
+          "p50": 2793555300,
+          "p95": 0,
+          "p99": 3204961000
+        },
+        "Cold Start — Sin Express (solo registry)": {
+          "avg": 1425592350,
+          "min": 1260407300,
+          "max": 1788193100,
+          "p50": 1381720800,
+          "p95": 0,
+          "p99": 1495846900
+        },
+        "Cold Start — NITS deshabilitado": {
+          "avg": 2532379891.6666665,
+          "min": 2316063800,
+          "max": 3085986200,
+          "p50": 2447801400,
+          "p95": 0,
+          "p99": 2896770000
+        },
+        "Cache Hit — 0 módulos rescaneados": {
+          "avg": 2548311125,
+          "min": 2347021800,
+          "max": 2701066700,
+          "p50": 2546127700,
+          "p95": 0,
+          "p99": 2684424800
+        },
+        "Cache Miss — Versión mismatch": {
+          "avg": 2545389533.3333306,
+          "min": 2418373600,
+          "max": 2679605100,
+          "p50": 2524159999.9999695,
+          "p95": 0,
+          "p99": 2668798000
+        },
+        "Cache Parcial — 5 módulos rescaneados": {
+          "avg": 523674125,
+          "min": 456832100,
+          "max": 572051500,
+          "p50": 513873300,
+          "p95": 0,
+          "p99": 556877200
+        },
+        "Cache Parcial — 1 módulo rescanado": {
+          "avg": 640325200,
+          "min": 602774000,
+          "max": 699396300,
+          "p50": 631934000,
+          "p95": 0,
+          "p99": 689628300
+        },
+        "Cache Parcial — 10 módulos rescanados": {
+          "avg": 801844783.3333334,
+          "min": 727437400,
+          "max": 862551800,
+          "p50": 799454100,
+          "p95": 0,
+          "p99": 847718100
+        },
+        "Cache Parcial — 25 módulos rescanados": {
+          "avg": 937201675,
+          "min": 895262800,
+          "max": 969070100,
+          "p50": 932323400,
+          "p95": 0,
+          "p99": 963347200
+        }
+      }
+    },
+    {
+      "date": "2026-06-16T00:58:02.430Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {
+        "Cold Start — Sin cache": {
+          "avg": 2637.7178000000004,
+          "min": 2219.417,
+          "max": 3255.6876,
+          "p50": 2474.1402,
+          "p95": 0,
+          "p99": 3172.6785
+        },
+        "Cold Start — Sin Express (solo registry)": {
+          "avg": 1248.9603416666666,
+          "min": 1135.3068,
+          "max": 1381.7846,
+          "p50": 1235.6517,
+          "p95": 0,
+          "p99": 1364.6568
+        },
+        "Cold Start — NITS deshabilitado": {
+          "avg": 2337.076166666666,
+          "min": 2120.4855,
+          "max": 2578.1336,
+          "p50": 2326.1573,
+          "p95": 0,
+          "p99": 2433.2969
+        },
+        "Cache Hit — 0 módulos rescaneados": {
+          "avg": 2446.05315,
+          "min": 2291.269,
+          "max": 2668.9205,
+          "p50": 2409.5948,
+          "p95": 0,
+          "p99": 2556.1077
+        },
+        "Cache Miss — Versión mismatch": {
+          "avg": 2495.0057,
+          "min": 2332.9266,
+          "max": 2643.5441,
+          "p50": 2481.0536,
+          "p95": 0,
+          "p99": 2641.0391
+        },
+        "Cache Parcial — 5 módulos rescaneados": {
+          "avg": 516.028325,
+          "min": 454.7248,
+          "max": 689.5349,
+          "p50": 508.0128,
+          "p95": 0,
+          "p99": 551.8901
+        },
+        "Cache Parcial — 1 módulo rescanado": {
+          "avg": 611.5551166666667,
+          "min": 567.7142,
+          "max": 731.0093,
+          "p50": 591.8893,
+          "p95": 0,
+          "p99": 701.217
+        },
+        "Cache Parcial — 10 módulos rescanados": {
+          "avg": 770.7466916666666,
+          "min": 702.3668,
+          "max": 837.6087,
+          "p50": 788.5783,
+          "p95": 0,
+          "p99": 804.9764
+        },
+        "Cache Parcial — 25 módulos rescanados": {
+          "avg": 919.414125,
+          "min": 847.0614,
+          "max": 1012.3647,
+          "p50": 909.1213,
+          "p95": 0,
+          "p99": 959.0356
+        }
+      }
+    },
+    {
+      "date": "2026-06-16T01:04:19.952Z",
+      "gitHash": "9109c88",
+      "nodeVersion": "v24.14.1",
+      "platform": "win32-x64",
+      "fixtureSize": "small",
+      "scenarios": {
+        "Cold Start — Sin cache": {
+          "avg": 2259.636758333333,
+          "min": 2062.588,
+          "max": 2679.3421,
+          "p50": 2156.0981,
+          "p95": 0,
+          "p99": 2593.5079
+        },
+        "Cold Start — Sin Express (solo registry)": {
+          "avg": 1077.786875,
+          "min": 1045.1133,
+          "max": 1127.0123,
+          "p50": 1065.2744,
+          "p95": 0,
+          "p99": 1125.78
+        },
+        "Cold Start — NITS deshabilitado": {
+          "avg": 1949.1776000000007,
+          "min": 1879.5457,
+          "max": 2066.4549,
+          "p50": 1942.4342,
+          "p95": 0,
+          "p99": 1991.4061
+        },
+        "Cache Hit — 0 módulos rescaneados": {
+          "avg": 2059.954858333333,
+          "min": 1989.1088,
+          "max": 2159.1997,
+          "p50": 2033.9307,
+          "p95": 0,
+          "p99": 2147.3432
+        },
+        "Cache Miss — Versión mismatch": {
+          "avg": 2067.8358916666666,
+          "min": 2022.1439,
+          "max": 2116.412,
+          "p50": 2072.5179,
+          "p95": 0,
+          "p99": 2112.0295
+        },
+        "Cache Parcial — 5 módulos rescaneados": {
+          "avg": 456.24689166666286,
+          "min": 409.8189,
+          "max": 491.64440000001525,
+          "p50": 451.29939999998476,
+          "p95": 0,
+          "p99": 486.0755999999847
+        },
+        "Cache Parcial — 1 módulo rescanado": {
+          "avg": 557.6782416666655,
+          "min": 500.5708,
+          "max": 597.685,
+          "p50": 560.1573,
+          "p95": 0,
+          "p99": 590.8788
+        },
+        "Cache Parcial — 10 módulos rescanados": {
+          "avg": 709.810075,
+          "min": 653.2397,
+          "max": 810.6698,
+          "p50": 692.7596,
+          "p95": 0,
+          "p99": 754.3364
+        },
+        "Cache Parcial — 25 módulos rescanados": {
+          "avg": 858.9082083333334,
+          "min": 792.7415,
+          "max": 912.6732,
+          "p50": 848.3064,
+          "p95": 0,
+          "p99": 898.6093
+        }
+      }
     }
-  }
+  ]
 }

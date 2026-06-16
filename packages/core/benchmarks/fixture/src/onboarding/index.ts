@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { SubscriptionsService } from '@modules/subscriptions';
-import { RefundsService } from '@modules/refunds';
-import { WishlistService } from '@modules/wishlist';
-import { AddressService } from '@modules/address';
+import { SearchService } from '@modules/search';
+import { InventoryService } from '@modules/inventory';
+import { PromotionsService } from '@modules/promotions';
+import { CartService } from '@modules/cart';
 
 Module('onboarding', {
-  imports: ["subscriptions","refunds","wishlist","address"],
+  imports: ["search","inventory","promotions","cart"],
   exports: ['OnboardingService']
 });
 

@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { StorageService } from '@modules/storage';
-import { I18nService } from '@modules/i18n';
-import { HealthService } from '@modules/health';
-import { ConfigService } from '@modules/config';
+import { LoggerService } from '@modules/logger';
+import { AuthService } from '@modules/auth';
+import { MailerService } from '@modules/mailer';
+import { RedisService } from '@modules/redis';
 
 Module('address', {
-  imports: ["storage","i18n","health","config"],
+  imports: ["logger","auth","mailer","redis"],
   exports: ['AddressService']
 });
 

@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { DatabaseService } from '@modules/database';
-import { RedisService } from '@modules/redis';
-import { StorageService } from '@modules/storage';
 import { MailerService } from '@modules/mailer';
+import { RedisService } from '@modules/redis';
+import { CryptoService } from '@modules/crypto';
+import { UsersService } from '@modules/users';
 
 Module('refunds', {
-  imports: ["database","redis","storage","mailer"],
+  imports: ["mailer","redis","crypto","users"],
   exports: ['RefundsService']
 });
 

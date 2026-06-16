@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { DatabaseService } from '@modules/database';
-import { I18nService } from '@modules/i18n';
+import { UsersService } from '@modules/users';
 import { RateLimiterService } from '@modules/rate-limiter';
-import { AuditService } from '@modules/audit';
+import { HealthService } from '@modules/health';
+import { I18nService } from '@modules/i18n';
 
 Module('reviews', {
-  imports: ["database","i18n","rate-limiter","audit"],
+  imports: ["users","rate-limiter","health","i18n"],
   exports: ['ReviewsService']
 });
 

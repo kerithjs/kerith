@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { UsersService } from '@modules/users';
-import { StorageService } from '@modules/storage';
 import { MetricsService } from '@modules/metrics';
-import { HealthService } from '@modules/health';
+import { I18nService } from '@modules/i18n';
+import { CryptoService } from '@modules/crypto';
+import { AuthService } from '@modules/auth';
 
 Module('search', {
-  imports: ["users","storage","metrics","health"],
+  imports: ["metrics","i18n","crypto","auth"],
   exports: ['SearchService']
 });
 

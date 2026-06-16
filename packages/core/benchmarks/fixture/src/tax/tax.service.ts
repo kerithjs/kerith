@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
-import { StorageService } from '@modules/storage';
-import { RateLimiterService } from '@modules/rate-limiter';
-import { CryptoService } from '@modules/crypto';
-import { AuditService } from '@modules/audit';
+import { UsersService } from '@modules/users';
+import { HealthService } from '@modules/health';
+import { I18nService } from '@modules/i18n';
+import { MailerService } from '@modules/mailer';
 
 Service('TaxService');
 export class TaxService {

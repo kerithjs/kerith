@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { AnalyticsService } from '@modules/analytics';
-import { ReviewsService } from '@modules/reviews';
-import { ProductsService } from '@modules/products';
+import { RefundsService } from '@modules/refunds';
+import { PaymentsService } from '@modules/payments';
+import { AddressService } from '@modules/address';
 import { InvoicesService } from '@modules/invoices';
 
 Module('support', {
-  imports: ["analytics","reviews","products","invoices"],
+  imports: ["refunds","payments","address","invoices"],
   exports: ['SupportService']
 });
 

@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
-import { DatabaseService } from '@modules/database';
-import { I18nService } from '@modules/i18n';
-import { ConfigService } from '@modules/config';
-import { AuthService } from '@modules/auth';
+import { UsersService } from '@modules/users';
+import { HealthService } from '@modules/health';
+import { SessionService } from '@modules/session';
+import { StorageService } from '@modules/storage';
 
 Service('CartService');
 export class CartService {

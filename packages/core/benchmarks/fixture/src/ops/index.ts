@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
+import { CartService } from '@modules/cart';
+import { RecommendationsService } from '@modules/recommendations';
 import { OrdersService } from '@modules/orders';
-import { PaymentsService } from '@modules/payments';
-import { NotificationsService } from '@modules/notifications';
-import { ProductsService } from '@modules/products';
+import { BillingService } from '@modules/billing';
 
 Module('ops', {
-  imports: ["orders","payments","notifications","products"],
+  imports: ["cart","recommendations","orders","billing"],
   exports: ['OpsService']
 });
 

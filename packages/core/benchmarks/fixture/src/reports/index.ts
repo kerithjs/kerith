@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { LoggerService } from '@modules/logger';
 import { StorageService } from '@modules/storage';
-import { MailerService } from '@modules/mailer';
+import { CryptoService } from '@modules/crypto';
 import { RedisService } from '@modules/redis';
+import { RateLimiterService } from '@modules/rate-limiter';
 
 Module('reports', {
-  imports: ["logger","storage","mailer","redis"],
+  imports: ["storage","crypto","redis","rate-limiter"],
   exports: ['ReportsService']
 });
 

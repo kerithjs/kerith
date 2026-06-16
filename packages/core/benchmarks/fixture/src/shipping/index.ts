@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { AuthService } from '@modules/auth';
+import { MailerService } from '@modules/mailer';
 import { RateLimiterService } from '@modules/rate-limiter';
-import { LoggerService } from '@modules/logger';
-import { MetricsService } from '@modules/metrics';
+import { SessionService } from '@modules/session';
+import { CryptoService } from '@modules/crypto';
 
 Module('shipping', {
-  imports: ["auth","rate-limiter","logger","metrics"],
+  imports: ["mailer","rate-limiter","session","crypto"],
   exports: ['ShippingService']
 });
 

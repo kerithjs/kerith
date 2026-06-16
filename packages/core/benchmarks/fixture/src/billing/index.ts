@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { SessionService } from '@modules/session';
-import { StorageService } from '@modules/storage';
-import { RateLimiterService } from '@modules/rate-limiter';
+import { MetricsService } from '@modules/metrics';
 import { ConfigService } from '@modules/config';
+import { CryptoService } from '@modules/crypto';
+import { StorageService } from '@modules/storage';
 
 Module('billing', {
-  imports: ["session","storage","rate-limiter","config"],
+  imports: ["metrics","config","crypto","storage"],
   exports: ['BillingService']
 });
 

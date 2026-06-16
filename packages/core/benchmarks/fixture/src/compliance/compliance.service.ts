@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
+import { ProductsService } from '@modules/products';
+import { SearchService } from '@modules/search';
 import { AddressService } from '@modules/address';
-import { RefundsService } from '@modules/refunds';
-import { ShippingService } from '@modules/shipping';
-import { NotificationsService } from '@modules/notifications';
+import { InvoicesService } from '@modules/invoices';
 
 Service('ComplianceService');
 export class ComplianceService {

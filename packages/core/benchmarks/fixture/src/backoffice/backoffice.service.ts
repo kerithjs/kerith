@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
-import { PaymentsService } from '@modules/payments';
-import { ProductsService } from '@modules/products';
-import { RecommendationsService } from '@modules/recommendations';
-import { TaxService } from '@modules/tax';
+import { BillingService } from '@modules/billing';
+import { InvoicesService } from '@modules/invoices';
+import { NotificationsService } from '@modules/notifications';
+import { InventoryService } from '@modules/inventory';
 
 Service('BackofficeService');
 export class BackofficeService {

@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
-import { SubscriptionsService } from '@modules/subscriptions';
-import { RefundsService } from '@modules/refunds';
-import { WishlistService } from '@modules/wishlist';
-import { AddressService } from '@modules/address';
+import { SearchService } from '@modules/search';
+import { InventoryService } from '@modules/inventory';
+import { PromotionsService } from '@modules/promotions';
+import { CartService } from '@modules/cart';
 
 Service('OnboardingService');
 export class OnboardingService {

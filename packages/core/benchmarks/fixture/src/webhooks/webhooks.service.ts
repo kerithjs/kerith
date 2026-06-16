@@ -1,7 +1,7 @@
 import { Service } from '../../../../src/index.js';
-import { PromotionsService } from '@modules/promotions';
-import { ReportsService } from '@modules/reports';
-import { AnalyticsService } from '@modules/analytics';
+import { InventoryService } from '@modules/inventory';
+import { OrdersService } from '@modules/orders';
+import { ProductsService } from '@modules/products';
 import { NotificationsService } from '@modules/notifications';
 
 Service('WebhooksService');

@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { ShippingService } from '@modules/shipping';
-import { ReviewsService } from '@modules/reviews';
-import { BillingService } from '@modules/billing';
+import { CartService } from '@modules/cart';
+import { WishlistService } from '@modules/wishlist';
 import { TaxService } from '@modules/tax';
+import { ShippingService } from '@modules/shipping';
 
 Module('integrations', {
-  imports: ["shipping","reviews","billing","tax"],
+  imports: ["cart","wishlist","tax","shipping"],
   exports: ['IntegrationsService']
 });
 

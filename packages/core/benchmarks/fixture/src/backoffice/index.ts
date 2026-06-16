@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { PaymentsService } from '@modules/payments';
-import { ProductsService } from '@modules/products';
-import { RecommendationsService } from '@modules/recommendations';
-import { TaxService } from '@modules/tax';
+import { BillingService } from '@modules/billing';
+import { InvoicesService } from '@modules/invoices';
+import { NotificationsService } from '@modules/notifications';
+import { InventoryService } from '@modules/inventory';
 
 Module('backoffice', {
-  imports: ["payments","products","recommendations","tax"],
+  imports: ["billing","invoices","notifications","inventory"],
   exports: ['BackofficeService']
 });
 

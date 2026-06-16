@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { BillingService } from '@modules/billing';
-import { PromotionsService } from '@modules/promotions';
-import { RecommendationsService } from '@modules/recommendations';
 import { SubscriptionsService } from '@modules/subscriptions';
+import { BillingService } from '@modules/billing';
+import { RefundsService } from '@modules/refunds';
+import { InventoryService } from '@modules/inventory';
 
 Module('api-gateway', {
-  imports: ["billing","promotions","recommendations","subscriptions"],
+  imports: ["subscriptions","billing","refunds","inventory"],
   exports: ['ApiGatewayService']
 });
 

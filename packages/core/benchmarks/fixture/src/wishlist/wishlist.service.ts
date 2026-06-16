@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
+import { StorageService } from '@modules/storage';
+import { MetricsService } from '@modules/metrics';
 import { RedisService } from '@modules/redis';
-import { RateLimiterService } from '@modules/rate-limiter';
-import { ConfigService } from '@modules/config';
-import { SessionService } from '@modules/session';
+import { CryptoService } from '@modules/crypto';
 
 Service('WishlistService');
 export class WishlistService {
