@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFile, execSync } from 'node:child_process';
+import { execFile, execSync, type ChildProcess } from 'node:child_process';
 import { promisify } from 'node:util';
 import { run, bench, group } from 'mitata';
 import { createApp } from '../src/index.js';
@@ -9,6 +9,35 @@ import { generateFixture } from './generate-fixture.js';
 import express from 'express';
 
 const execFileAsync = promisify(execFile);
+
+// Track all spawned child processes so we can kill them on Ctrl+C.
+// On Windows, killing the parent tsx process does NOT kill its children,
+// which leaves orphaned node.exe processes locking the fixture directory.
+const activeChildren = new Set<ChildProcess>();
+
+function spawnBench(
+  execPath: string,
+  args: string[],
+  options: Parameters<typeof execFile>[2]
+): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = execFile(execPath, args, { ...(options ?? {}), encoding: 'utf-8' }, (err, stdout, stderr) => {
+      activeChildren.delete(child);
+      if (err) reject(err); else resolve({ stdout, stderr });
+    });
+    activeChildren.add(child);
+  });
+}
+
+function cleanupChildren() {
+  for (const child of activeChildren) {
+    try { child.kill('SIGKILL'); } catch { /* ignore */ }
+  }
+  activeChildren.clear();
+}
+
+process.on('SIGINT', () => { cleanupChildren(); process.exit(130); });
+process.on('SIGTERM', () => { cleanupChildren(); process.exit(143); });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -168,7 +197,15 @@ async function main() {
   // Clean fixture cache automatically at start
   const cacheDir = path.join(FIXTURE_DIR, '.kerith');
   if (fs.existsSync(cacheDir)) {
-    fs.rmSync(cacheDir, { recursive: true, force: true });
+    try {
+      fs.rmSync(cacheDir, { recursive: true, force: true });
+    } catch (err: any) {
+      if (process.platform === 'win32' && (err.code === 'EPERM' || err.code === 'EBUSY')) {
+        execSync(`rd /s /q "${cacheDir}"`, { stdio: 'ignore' });
+      } else {
+        throw err;
+      }
+    }
     console.log('[setup] Cleaned fixture cache');
   }
 
@@ -265,16 +302,18 @@ async function main() {
     // 1. Full bootstrap (Cold start with process isolation)
     if (options.scenario === 'cold' || options.scenario === 'all') {
       bench('Cold Start — Sin cache', async () => {
-        await execFileAsync(process.execPath, spawnArgs, {
+        await spawnBench(process.execPath, spawnArgs, {
           cwd: FIXTURE_DIR,
+          timeout: 60_000,
           env: { ...process.env, KERITH_BOOTSTRAP_CACHE: 'false', NODE_ENV: 'development' }
         });
       });
 
       // 5. Cold Start without Express (solo registry)
       bench('Cold Start — Sin Express (solo registry)', async () => {
-        await execFileAsync(process.execPath, spawnArgsNoExpress, {
+        await spawnBench(process.execPath, spawnArgsNoExpress, {
           cwd: FIXTURE_DIR,
+          timeout: 60_000,
           env: { ...process.env, KERITH_BOOTSTRAP_CACHE: 'false', NODE_ENV: 'development' }
         });
       });

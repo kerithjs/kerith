@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -188,9 +189,88 @@ function generateShared() {
   }
 }
 
+/**
+ * Robustly removes a directory on Windows.
+ *
+ * On Windows, rmSync can throw EPERM when:
+ *  - A previous benchmark run was interrupted and left node.exe child processes
+ *    with the fixture dir as their CWD (parent kill doesn't kill children on Windows)
+ *  - Windows Defender is scanning the directory
+ *  - Windows Search Indexer has a file handle open
+ *
+ * Strategy:
+ *  1. Standard rmSync (fast path)
+ *  2. Kill lingering node.exe processes whose command-line references the fixture path
+ *  3. Robocopy /MIR trick: mirror an empty dir over fixture, then delete the empty shell
+ *  4. cmd.exe rmdir /s /q
+ *  5. Throw a clear, actionable error
+ */
+function forceRemoveDir(dirPath: string): void {
+  // Helper: synchronous sleep via Atomics (avoids async)
+  const sleep = (ms: number) =>
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+  // Strategy 1: standard rmSync
+  try {
+    fs.rmSync(dirPath, { recursive: true, force: true });
+    return;
+  } catch (e1: any) {
+    if (e1.code !== 'EPERM' && e1.code !== 'EBUSY' && e1.code !== 'ENOTEMPTY') throw e1;
+  }
+
+  if (process.platform === 'win32') {
+    // Strategy 2: kill node.exe processes whose CommandLine references this fixture
+    try {
+      const escaped = dirPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      execSync(
+        `powershell -NoProfile -Command "` +
+          `Get-CimInstance Win32_Process -Filter \\"Name = 'node.exe'\\" | ` +
+          `Where-Object { $_.CommandLine -like '*benchmarks*fixture*' } | ` +
+          `ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`,
+        { stdio: 'ignore', timeout: 5000 }
+      );
+      sleep(400); // give Windows time to release handles
+    } catch { /* ignore */ }
+
+    // Retry rmSync after killing lockers
+    try {
+      fs.rmSync(dirPath, { recursive: true, force: true });
+      return;
+    } catch { /* ignore */ }
+
+    // Strategy 3: robocopy /MIR trick — mirror an empty dir into fixture (clears all files),
+    // then remove the now-empty fixture dir
+    try {
+      const emptyDir = path.join(path.dirname(dirPath), '.kerith-bench-empty');
+      fs.mkdirSync(emptyDir, { recursive: true });
+      execSync(`robocopy "${emptyDir}" "${dirPath}" /MIR /NFL /NDL /NJH /NJS`, {
+        stdio: 'ignore',
+        timeout: 10_000
+      });
+      fs.rmSync(emptyDir, { recursive: true, force: true });
+      fs.rmSync(dirPath, { recursive: true, force: true });
+      return;
+    } catch { /* ignore */ }
+
+    // Strategy 4: cmd.exe rmdir
+    try {
+      execSync(`cmd /c rmdir /s /q "${dirPath}"`, { stdio: 'ignore', timeout: 10_000 });
+      if (!fs.existsSync(dirPath)) return;
+    } catch { /* ignore */ }
+  }
+
+  throw new Error(
+    `[fixture] EPERM: Cannot delete '${dirPath}'.\n` +
+    `A previous benchmark run may have left orphaned Node.js processes.\n` +
+    `Fix: Run this in PowerShell then retry:\n` +
+    `  Stop-Process -Name node -Force\n` +
+    `Or manually delete the fixture directory.`
+  );
+}
+
 export function generateFixture(size: 'small' | 'large' = 'small') {
   if (fs.existsSync(FIXTURE_DIR)) {
-    fs.rmSync(FIXTURE_DIR, { recursive: true, force: true });
+    forceRemoveDir(FIXTURE_DIR);
   }
   fs.mkdirSync(SRC_DIR, { recursive: true });
 
