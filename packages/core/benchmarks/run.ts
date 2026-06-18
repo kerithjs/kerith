@@ -71,7 +71,7 @@ interface BenchmarkResult {
     min: number;
     max: number;
     p50: number;
-    p95: number;
+    p75: number;
     p99: number;
     scanMs?: number;
     importMs?: number;
@@ -485,7 +485,7 @@ async function main() {
         min: nsToMs(stats.min || 0),
         max: nsToMs(stats.max || 0),
         p50: nsToMs(stats.p50 || 0),
-        p95: nsToMs(stats.p95 || 0),
+        p75: nsToMs(stats.p75 || 0),
         p99: nsToMs(stats.p99 || 0)
       };
     }
@@ -565,16 +565,16 @@ async function main() {
       if (!baselineMetrics) continue;
 
       const avgDelta = ((currentMetrics.avg - baselineMetrics.avg) / baselineMetrics.avg) * 100;
-      const p95Delta = ((currentMetrics.p95 - baselineMetrics.p95) / baselineMetrics.p95) * 100;
+      const p75Delta = ((currentMetrics.p75 - baselineMetrics.p75) / baselineMetrics.p75) * 100;
       
       const avgSign = avgDelta >= 0 ? '+' : '';
-      const p95Sign = p95Delta >= 0 ? '+' : '';
+      const p75Sign = p75Delta >= 0 ? '+' : '';
       const avgColor = avgDelta > 10 ? '🔴' : avgDelta < -10 ? '🟢' : '⚪';
-      const p95Color = p95Delta > 10 ? '🔴' : p95Delta < -10 ? '🟢' : '⚪';
+      const p75Color = p75Delta > 10 ? '🔴' : p75Delta < -10 ? '🟢' : '⚪';
 
       console.log(`\n${scenarioName}:`);
       console.log(`  Avg: ${currentMetrics.avg.toFixed(2)}ms vs ${baselineMetrics.avg.toFixed(2)}ms (${avgColor} ${avgSign}${avgDelta.toFixed(1)}%)`);
-      console.log(`  P95: ${currentMetrics.p95.toFixed(2)}ms vs ${baselineMetrics.p95.toFixed(2)}ms (${p95Color} ${p95Sign}${p95Delta.toFixed(1)}%)`);
+      console.log(`  P75: ${currentMetrics.p75.toFixed(2)}ms vs ${baselineMetrics.p75.toFixed(2)}ms (${p75Color} ${p75Sign}${p75Delta.toFixed(1)}%)`);
     }
 
     console.log('\n' + '='.repeat(60));
@@ -605,7 +605,7 @@ async function main() {
     console.log('\nCold Start Scenarios:');
     for (const [name, metrics] of coldScenarios) {
       console.log(`  ${name}:`);
-      console.log(`    Avg: ${metrics.avg.toFixed(2)}ms (p50: ${metrics.p50.toFixed(2)}ms, p95: ${metrics.p95.toFixed(2)}ms, p99: ${metrics.p99.toFixed(2)}ms)`);
+      console.log(`    Avg: ${metrics.avg.toFixed(2)}ms (p50: ${metrics.p50.toFixed(2)}ms, p75: ${metrics.p75.toFixed(2)}ms, p99: ${metrics.p99.toFixed(2)}ms)`);
     }
   }
 
@@ -613,7 +613,7 @@ async function main() {
     console.log('\nCache Scenarios:');
     for (const [name, metrics] of cacheScenarios) {
       console.log(`  ${name}:`);
-      console.log(`    Avg: ${metrics.avg.toFixed(2)}ms (p50: ${metrics.p50.toFixed(2)}ms, p95: ${metrics.p95.toFixed(2)}ms, p99: ${metrics.p99.toFixed(2)}ms)`);
+      console.log(`    Avg: ${metrics.avg.toFixed(2)}ms (p50: ${metrics.p50.toFixed(2)}ms, p75: ${metrics.p75.toFixed(2)}ms, p99: ${metrics.p99.toFixed(2)}ms)`);
     }
   }
 
@@ -621,7 +621,7 @@ async function main() {
     console.log('\nPartial Cache Scenarios:');
     for (const [name, metrics] of partialScenarios) {
       console.log(`  ${name}:`);
-      console.log(`    Avg: ${metrics.avg.toFixed(2)}ms (p50: ${metrics.p50.toFixed(2)}ms, p95: ${metrics.p95.toFixed(2)}ms, p99: ${metrics.p99.toFixed(2)}ms)`);
+      console.log(`    Avg: ${metrics.avg.toFixed(2)}ms (p50: ${metrics.p50.toFixed(2)}ms, p75: ${metrics.p75.toFixed(2)}ms, p99: ${metrics.p99.toFixed(2)}ms)`);
     }
   }
 

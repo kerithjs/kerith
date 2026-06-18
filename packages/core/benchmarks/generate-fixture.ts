@@ -9,7 +9,7 @@ const FIXTURE_DIR = path.join(__dirname, 'fixture');
 const SRC_DIR = path.join(FIXTURE_DIR, 'src');
 
 // Simple LCG (Linear Congruential Generator) for deterministic random numbers
-class SeededRandom {
+export class SeededRandom {
   private seed: number;
 
   constructor(seed: string) {
