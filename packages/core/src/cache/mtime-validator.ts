@@ -29,9 +29,6 @@ export const MtimeValidator = {
   validate(cache: BootstrapCache): MtimeValidationResult {
     const toRescanSet = new Set<string>();
 
-    // Fallback to 0 if savedAt is somehow missing, forcing a full rescan
-    const savedAtTime = cache.savedAt ? new Date(cache.savedAt).getTime() : 0;
-
     // First pass: identify all dirty domains
     // Nota (PT3-2): Los submodules no se iteran directamente aquí. Esto es intencional.
     // Los archivos físicos de los submodules están dentro del directorio del módulo padre.
@@ -42,7 +39,7 @@ export const MtimeValidator = {
       const { maxMtime, totalSize } = getModuleSignature(module.files);
       const domainKey = module.domain || '__flat__';
 
-      if (maxMtime > savedAtTime || totalSize !== module.cachedSize) {
+      if (maxMtime !== module.cachedMtime || totalSize !== module.cachedSize) {
         toRescanSet.add(domainKey);
       }
     }

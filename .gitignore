@@ -16,5 +16,8 @@ tsconfig.nodulus.json
 .kerith/bootstrap-cache.json
 .kerith/nits-registry.json
 
-# Benchmark fixture cache - regenerated locally
-packages/core/benchmarks/fixture/.kerith/
+# Benchmark artifacts - regenerated locally and historical data
+packages/core/benchmarks/fixture/
+packages/core/benchmarks/results.json
+packages/core/benchmarks/results-temp.json
+packages/core/scratch-mitata.ts

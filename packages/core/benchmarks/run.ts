@@ -217,20 +217,30 @@ async function main() {
 
   // Prime the cache before running the benchmarks (only if needed for cache scenarios)
   if (options.scenario === 'cache' || options.scenario === 'partial' || options.scenario === 'all') {
+    const savedEnvCache = process.env.KERITH_BOOTSTRAP_CACHE;
+    const savedEnvNodeEnv = process.env.NODE_ENV;
+    
     process.env.KERITH_BOOTSTRAP_CACHE = 'true';
     process.env.NODE_ENV = 'development';
     const primeApp = express();
     await createApp(primeApp, { logger: () => {} });
+    
+    if (savedEnvCache !== undefined) process.env.KERITH_BOOTSTRAP_CACHE = savedEnvCache;
+    else delete process.env.KERITH_BOOTSTRAP_CACHE;
+    
+    if (savedEnvNodeEnv !== undefined) process.env.NODE_ENV = savedEnvNodeEnv;
+    else delete process.env.NODE_ENV;
   }
 
-  // Helper function to get random module files
-  function getRandomModuleFiles(count: number): string[] {
+  // Helper function to get deterministic module files
+  function getDeterministicModuleFiles(count: number): string[] {
     const modulesDir = path.join(FIXTURE_DIR, 'src');
     const allModules = fs.readdirSync(modulesDir).filter(f => 
       fs.statSync(path.join(modulesDir, f)).isDirectory()
     );
-    const shuffled = allModules.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count).map(m => path.join(modulesDir, m, `${m}.service.ts`));
+    // Sort alphabetically to ensure reproducible module selection across runs
+    allModules.sort();
+    return allModules.slice(0, count).map(m => path.join(modulesDir, m, `${m}.service.ts`));
   }
 
   // Helper function to touch files to invalidate cache
@@ -358,19 +368,10 @@ async function main() {
 
     // 3. Partial cache (5 rescanned)
     if (options.scenario === 'partial' || options.scenario === 'all') {
-      // Note: Warm process benchmarks intentionally measure the hot path where
-      // the Node.js process is already warm and modules are cached in memory.
-      // This represents the realistic scenario of a development server restart
-      // where the OS and Node.js have already warmed up.
-      bench('Cache Parcial — 5 módulos rescaneados', async () => {
-        // Touch 5 files to invalidate their cache
-        const usersMod = path.join(FIXTURE_DIR, 'src', 'users', 'users.service.ts');
-        const authMod = path.join(FIXTURE_DIR, 'src', 'auth', 'auth.service.ts');
-        const configMod = path.join(FIXTURE_DIR, 'src', 'config', 'config.service.ts');
-        const dbMod = path.join(FIXTURE_DIR, 'src', 'database', 'database.service.ts');
-        const loggerMod = path.join(FIXTURE_DIR, 'src', 'logger', 'logger.service.ts');
 
-        const stats = [usersMod, authMod, configMod, dbMod, loggerMod].map(f => {
+      bench('Cache Parcial — 5 módulos rescaneados', async () => {
+        const files = getDeterministicModuleFiles(5);
+        const stats = files.map(f => {
           if (fs.existsSync(f)) return { f, stat: fs.statSync(f) };
           return null;
         }).filter(Boolean);
@@ -378,54 +379,49 @@ async function main() {
         const now = new Date();
         stats.forEach(s => fs.utimesSync(s!.f, now, now));
 
-        benchmarkLogger.clear();
-        const memoryBefore = process.memoryUsage().heapUsed;
-        const testApp = express();
-        await createApp(testApp, { logger: benchmarkLogger.handler });
-        const memoryAfter = process.memoryUsage().heapUsed;
-        const metrics = benchmarkLogger.getMetrics();
+        await execFileAsync(process.execPath, spawnArgs, {
+          cwd: FIXTURE_DIR,
+          env: { ...process.env, KERITH_BOOTSTRAP_CACHE: 'true', NODE_ENV: 'development' }
+        });
 
         stats.forEach(s => fs.utimesSync(s!.f, s!.stat.atime, s!.stat.mtime));
       });
 
       // 6. Partial Cache with variable N - 1 module
       bench('Cache Parcial — 1 módulo rescanado', async () => {
-        const files = getRandomModuleFiles(1);
+        const files = getDeterministicModuleFiles(1);
         const stats = touchFiles(files);
 
-        benchmarkLogger.clear();
-        const memoryBefore = process.memoryUsage().heapUsed;
-        const testApp = express();
-        await createApp(testApp, { logger: benchmarkLogger.handler });
-        const memoryAfter = process.memoryUsage().heapUsed;
+        await execFileAsync(process.execPath, spawnArgs, {
+          cwd: FIXTURE_DIR,
+          env: { ...process.env, KERITH_BOOTSTRAP_CACHE: 'true', NODE_ENV: 'development' }
+        });
 
         restoreFileTimestamps(stats);
       });
 
       // 7. Partial Cache with variable N - 10 modules
       bench('Cache Parcial — 10 módulos rescanados', async () => {
-        const files = getRandomModuleFiles(10);
+        const files = getDeterministicModuleFiles(10);
         const stats = touchFiles(files);
 
-        benchmarkLogger.clear();
-        const memoryBefore = process.memoryUsage().heapUsed;
-        const testApp = express();
-        await createApp(testApp, { logger: benchmarkLogger.handler });
-        const memoryAfter = process.memoryUsage().heapUsed;
+        await execFileAsync(process.execPath, spawnArgs, {
+          cwd: FIXTURE_DIR,
+          env: { ...process.env, KERITH_BOOTSTRAP_CACHE: 'true', NODE_ENV: 'development' }
+        });
 
         restoreFileTimestamps(stats);
       });
 
       // 8. Partial Cache with variable N - 25 modules
       bench('Cache Parcial — 25 módulos rescanados', async () => {
-        const files = getRandomModuleFiles(25);
+        const files = getDeterministicModuleFiles(25);
         const stats = touchFiles(files);
 
-        benchmarkLogger.clear();
-        const memoryBefore = process.memoryUsage().heapUsed;
-        const testApp = express();
-        await createApp(testApp, { logger: benchmarkLogger.handler });
-        const memoryAfter = process.memoryUsage().heapUsed;
+        await execFileAsync(process.execPath, spawnArgs, {
+          cwd: FIXTURE_DIR,
+          env: { ...process.env, KERITH_BOOTSTRAP_CACHE: 'true', NODE_ENV: 'development' }
+        });
 
         restoreFileTimestamps(stats);
       });
@@ -615,6 +611,10 @@ async function main() {
       console.log(`  ${name}:`);
       console.log(`    Avg: ${metrics.avg.toFixed(2)}ms (p50: ${metrics.p50.toFixed(2)}ms, p75: ${metrics.p75.toFixed(2)}ms, p99: ${metrics.p99.toFixed(2)}ms)`);
     }
+    console.log('\n    * Nota: En un proceso frío, "Cache Hit" solo ahorra el tiempo de filesystem scan y AST parsing (~80-100ms).');
+    console.log('      Los import() dinámicos se deben ejecutar siempre por diseño para disparar side-effects.');
+    console.log('      El verdadero beneficio del caché se observa en procesos calientes (dev server warm boot),');
+    console.log('      donde V8 ya tiene los módulos cacheados en memoria.');
   }
 
   if (partialScenarios.length > 0) {

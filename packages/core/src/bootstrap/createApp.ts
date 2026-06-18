@@ -1118,7 +1118,17 @@ export async function createApp(
           if (filesByModulePath) {
             files = filesByModulePath.get(normalizePath(path.resolve(scanMod.dirPath))) || [];
           }
-          const cachedSize = files.reduce((acc, f) => acc + (fs.existsSync(f) ? fs.statSync(f).size : 0), 0);
+          let cachedSize = 0;
+          let cachedMtime = 0;
+          for (const f of files) {
+            if (fs.existsSync(f)) {
+              const stat = fs.statSync(f);
+              cachedSize += stat.size;
+              if (stat.mtimeMs > cachedMtime) {
+                cachedMtime = stat.mtimeMs;
+              }
+            }
+          }
 
           return {
             // ModuleScanEntry fields
@@ -1136,6 +1146,7 @@ export async function createApp(
             identifiers: [],
             aliases: [],
             cachedSize,
+            cachedMtime,
           };
         });
 

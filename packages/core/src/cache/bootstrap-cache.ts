@@ -13,6 +13,7 @@ export interface CachedModule extends ModuleScanEntry {
   identifiers: string[];
   aliases: string[];
   cachedSize: number;   // total size in bytes of all module files
+  cachedMtime: number;  // max mtime across all module files
 }
 
 /**
