@@ -32,7 +32,30 @@ function cleanupChildren() {
 process.on('SIGINT', () => { cleanupChildren(); process.exit(130); });
 process.on('SIGTERM', () => { cleanupChildren(); process.exit(143); });
 
-async function runOnce(scenario: keyof typeof scriptFor): Promise<void> {
+// ------------------------------------------------------------------ //
+// Types
+// ------------------------------------------------------------------ //
+
+interface Step8Timing {
+  discover: number;
+  mount: number;
+  log: number;
+  total: number; // mount + log (does not include discover)
+}
+
+interface ScenarioStats extends ReturnType<typeof computeStats> {
+  step8?: {
+    discover: ReturnType<typeof computeStats>;
+    mount: ReturnType<typeof computeStats>;
+    log: ReturnType<typeof computeStats>;
+  };
+}
+
+// ------------------------------------------------------------------ //
+// runOnce — returns Step8Timing when the perf line is present in stderr
+// ------------------------------------------------------------------ //
+
+async function runOnce(scenario: keyof typeof scriptFor): Promise<Step8Timing | null> {
   const execPath = process.execPath;
   const args = [...process.execArgv, scriptFor[scenario]];
   const options = {
@@ -40,30 +63,40 @@ async function runOnce(scenario: keyof typeof scriptFor): Promise<void> {
     env: {
       ...process.env,
       KERITH_BOOTSTRAP_CACHE: 'false',
-      NODE_ENV: 'development'
+      NODE_ENV: 'development',
+      KERITH_PROFILE: 'true',  // enables direct stderr write of step8 perf line
     }
   };
 
   return new Promise((resolve, reject) => {
-    const child = execFile(execPath, args, options, (err, stdout) => {
+    const child = execFile(execPath, args, options, (err, _stdout, stderr) => {
       activeChildren.delete(child);
       if (err) {
         reject(err);
-      } else {
-        // Extraer logs de rendimiento para la fase 8
-        const match = stdout.match(/\[perf\] step8_mount=([\d.]+)ms step8_log=([\d.]+)ms step8_total=([\d.]+)ms/);
-        if (match) {
-          (runOnce as any).lastPerfLog = `      -> Mount: ${match[1]}ms | Log: ${match[2]}ms | Total Paso 8: ${match[3]}ms`;
-        }
-        resolve();
+        return;
       }
+      // The perf line is emitted to stderr via process.stderr.write when KERITH_PROFILE=true,
+      // bypassing the logger's logLevel gate so it is always capturable here.
+      const match = stderr.match(
+        /\[perf\] step8_discover=([\d.]+)ms step8_mount=([\d.]+)ms step8_log=([\d.]+)ms step8_total=([\d.]+)ms/
+      );
+      resolve(
+        match
+          ? {
+              discover: parseFloat(match[1]),
+              mount: parseFloat(match[2]),
+              log: parseFloat(match[3]),
+              total: parseFloat(match[4]),
+            }
+          : null // baseline/registry never emit this line — expected, not an error
+      );
     });
     activeChildren.add(child);
   });
 }
 
 function cleanCacheDir() {
-  const cacheDir = path.join(FIXTURE_DIR, '.kerith');
+  const cacheDir = path.join(FIXTURE_DIR, '.kerith'); // wipe bootstrap cache between sizes
   if (fs.existsSync(cacheDir)) {
     try {
       fs.rmSync(cacheDir, { recursive: true, force: true });
@@ -129,7 +162,7 @@ async function main() {
     }
   }
 
-  const resultsData: Record<number, Record<string, ReturnType<typeof computeStats>>> = {};
+  const resultsData: Record<number, Record<string, ScenarioStats>> = {};
 
   console.log(`Starting scaling benchmark...`);
   console.log(`Sizes: ${SIZES.join(', ')}`);
@@ -139,14 +172,14 @@ async function main() {
   for (const size of SIZES) {
     console.log(`\n=== Size: ${size} modules ===`);
     
-    // IMPORTANTE: Cambiar de directorio antes de recrear el fixture.
-    // Si estamos dentro de FIXTURE_DIR, Windows no nos dejará borrarla.
+    // IMPORTANT: Switch CWD away before recreating the fixture directory.
+    // If we are inside FIXTURE_DIR, Windows will refuse to delete it.
     process.chdir(__dirname);
     
     generateFixture(size);
     process.chdir(FIXTURE_DIR);
     
-    cleanCacheDir(); // clean before each size as requested
+    cleanCacheDir(); // wipe cache before each size
     
     resultsData[size] = {};
 
@@ -159,20 +192,41 @@ async function main() {
       process.stdout.write(`Done.\n`);
 
       const timings: number[] = [];
+      const step8Discover: number[] = [];
+      const step8Mount: number[] = [];
+      const step8Log: number[] = [];
+
       process.stdout.write(`    Measuring (${SAMPLES} samples)... `);
       for (let i = 0; i < SAMPLES; i++) {
         const t0 = performance.now();
-        await runOnce(scenario);
+        const step8Result = await runOnce(scenario);
         timings.push(performance.now() - t0);
+
+        if (step8Result) {
+          step8Discover.push(step8Result.discover);
+          step8Mount.push(step8Result.mount);
+          step8Log.push(step8Result.log);
+        }
       }
       process.stdout.write(`Done.\n`);
 
       const stats = computeStats(timings);
-      resultsData[size][scenario] = stats;
+      const scenarioStats: ScenarioStats = { ...stats };
+
+      if (step8Discover.length > 0) {
+        scenarioStats.step8 = {
+          discover: computeStats(step8Discover),
+          mount: computeStats(step8Mount),
+          log: computeStats(step8Log),
+        };
+      }
+
+      resultsData[size][scenario] = scenarioStats;
       console.log(`    Result: avg=${stats.avg.toFixed(2)}ms (min=${stats.min.toFixed(2)}ms, max=${stats.max.toFixed(2)}ms)`);
-      if ((runOnce as any).lastPerfLog) {
-        console.log((runOnce as any).lastPerfLog);
-        (runOnce as any).lastPerfLog = undefined; // reset
+
+      if (scenarioStats.step8) {
+        const s8 = scenarioStats.step8;
+        console.log(`      -> Discover: ${s8.discover.avg.toFixed(2)}ms | Mount: ${s8.mount.avg.toFixed(2)}ms | Log: ${s8.log.avg.toFixed(2)}ms`);
       }
     }
   }
@@ -182,7 +236,7 @@ function printInterpretation(resultsData: Record<number, Record<string, any>>, S
   console.log('INTERPRETATION & ANALYSIS');
   console.log('='.repeat(60) + '\n');
 
-  // 1. Table
+  // 1. Summary table
   const sizeHeaders = SIZES.map(s => String(s).padStart(6, ' ')).join(' |');
   console.log(`Scenario   |${sizeHeaders}`);
   console.log('-'.repeat(12 + SIZES.length * 9));
@@ -195,8 +249,8 @@ function printInterpretation(resultsData: Record<number, Record<string, any>>, S
     console.log(`${scenario.padEnd(10, ' ')} |${row}`);
   }
 
-  // 2. Marginal Cost
-  console.log('\n--- Costo Marginal por Módulo (ms/módulo) ---');
+  // 2. Marginal cost per module
+  console.log('\n--- Marginal Cost per Module (ms/module) ---');
   for (const scenario of ['registry', 'full']) {
     if (!SCENARIOS.includes(scenario as any)) continue;
     console.log(`${scenario}:`);
@@ -207,33 +261,35 @@ function printInterpretation(resultsData: Record<number, Record<string, any>>, S
       const t2 = resultsData[n2]?.[scenario]?.avg;
       if (t1 !== undefined && t2 !== undefined) {
         const marginal = (t2 - t1) / (n2 - n1);
-        console.log(`  ${n1} -> ${n2} módulos: ${marginal.toFixed(2)} ms/módulo`);
+        console.log(`  ${n1} -> ${n2} modules: ${marginal.toFixed(2)} ms/module`);
       }
     }
   }
 
-  // 3. Express Cost (full - registry)
+  // 3. Express overhead (full - registry)
+  // If constant, Express has a fixed cost. If it grows, the route-binding loop is O(n).
   if (SCENARIOS.includes('full') && SCENARIOS.includes('registry')) {
-    console.log('\n--- Sobrecarga de Express (full - registry) ---');
-    console.log('  Si esto es constante, Express tiene costo fijo. Si crece, Kerith satura el binding.');
+    console.log('\n--- Express Overhead (full - registry) ---');
+    console.log('  Constant = fixed Express cost. Growing = O(n) route-binding bottleneck.');
     for (const size of SIZES) {
       const full = resultsData[size]?.['full']?.avg;
       const reg = resultsData[size]?.['registry']?.avg;
       if (full !== undefined && reg !== undefined) {
-        console.log(`  ${String(size).padStart(3, ' ')} módulos: ${(full - reg).toFixed(2)} ms`);
+        console.log(`  ${String(size).padStart(3, ' ')} modules: ${(full - reg).toFixed(2)} ms`);
       }
     }
   }
 
-  // 4. Pure Kerith Cost (registry - baseline)
+  // 4. Pure Kerith cost (registry - baseline)
+  // Linear growth = genuine work (scan/NITS). Flat = fixed startup overhead.
   if (SCENARIOS.includes('registry') && SCENARIOS.includes('baseline')) {
-    console.log('\n--- Costo Puro de Kerith (registry - baseline) ---');
-    console.log('  Si crece linealmente, es trabajo genuino (scan/NITS). Si es plano, es overhead fijo.');
+    console.log('\n--- Pure Kerith Cost (registry - baseline) ---');
+    console.log('  Linear growth = genuine work (scan/NITS). Flat = fixed startup overhead.');
     for (const size of SIZES) {
       const reg = resultsData[size]?.['registry']?.avg;
       const base = resultsData[size]?.['baseline']?.avg;
       if (reg !== undefined && base !== undefined) {
-        console.log(`  ${String(size).padStart(3, ' ')} módulos: ${(reg - base).toFixed(2)} ms`);
+        console.log(`  ${String(size).padStart(3, ' ')} modules: ${(reg - base).toFixed(2)} ms`);
       }
     }
   }

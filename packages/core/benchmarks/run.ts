@@ -311,7 +311,7 @@ async function main() {
 
     // 1. Full bootstrap (Cold start with process isolation)
     if (options.scenario === 'cold' || options.scenario === 'all') {
-      bench('Cold Start — Sin cache', async () => {
+      bench('Cold Start — No cache', async () => {
         await spawnBench(process.execPath, spawnArgs, {
           cwd: FIXTURE_DIR,
           timeout: 60_000,
@@ -320,7 +320,7 @@ async function main() {
       });
 
       // 5. Cold Start without Express (solo registry)
-      bench('Cold Start — Sin Express (solo registry)', async () => {
+      bench('Cold Start — No Express (registry only)', async () => {
         await spawnBench(process.execPath, spawnArgsNoExpress, {
           cwd: FIXTURE_DIR,
           timeout: 60_000,
@@ -329,7 +329,7 @@ async function main() {
       });
 
       // 9. NITS Off vs NITS On - NITS Disabled
-      bench('Cold Start — NITS deshabilitado', async () => {
+      bench('Cold Start — NITS disabled', async () => {
         disableNitsInConfig();
         await execFileAsync(process.execPath, spawnArgs, {
           cwd: FIXTURE_DIR,
@@ -345,7 +345,7 @@ async function main() {
 
     // 2. Valid cache (0 rescanned)
     if (options.scenario === 'cache' || options.scenario === 'all') {
-      bench('Cache Hit — 0 módulos rescaneados', async () => {
+      bench('Cache Hit — 0 modules rescanned', async () => {
         await execFileAsync(process.execPath, spawnArgs, {
           cwd: FIXTURE_DIR,
           env: { ...process.env, KERITH_BOOTSTRAP_CACHE: 'true', NODE_ENV: 'development' }
@@ -353,7 +353,7 @@ async function main() {
       });
 
       // 4. Cache Miss (cache exists but version mismatch)
-      bench('Cache Miss — Versión mismatch', async () => {
+      bench('Cache Miss — Version mismatch', async () => {
         const originalVersion = fs.existsSync(CACHE_FILE) 
           ? JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8')).version 
           : 'unknown';
@@ -369,7 +369,7 @@ async function main() {
     // 3. Partial cache (5 rescanned)
     if (options.scenario === 'partial' || options.scenario === 'all') {
 
-      bench('Cache Parcial — 5 módulos rescaneados', async () => {
+      bench('Partial Cache — 5 modules rescanned', async () => {
         const files = getDeterministicModuleFiles(5);
         const stats = files.map(f => {
           if (fs.existsSync(f)) return { f, stat: fs.statSync(f) };
@@ -388,7 +388,7 @@ async function main() {
       });
 
       // 6. Partial Cache with variable N - 1 module
-      bench('Cache Parcial — 1 módulo rescanado', async () => {
+      bench('Partial Cache — 1 module rescanned', async () => {
         const files = getDeterministicModuleFiles(1);
         const stats = touchFiles(files);
 
@@ -401,7 +401,7 @@ async function main() {
       });
 
       // 7. Partial Cache with variable N - 10 modules
-      bench('Cache Parcial — 10 módulos rescanados', async () => {
+      bench('Partial Cache — 10 modules rescanned', async () => {
         const files = getDeterministicModuleFiles(10);
         const stats = touchFiles(files);
 
@@ -414,7 +414,7 @@ async function main() {
       });
 
       // 8. Partial Cache with variable N - 25 modules
-      bench('Cache Parcial — 25 módulos rescanados', async () => {
+      bench('Partial Cache — 25 modules rescanned', async () => {
         const files = getDeterministicModuleFiles(25);
         const stats = touchFiles(files);
 
@@ -611,10 +611,10 @@ async function main() {
       console.log(`  ${name}:`);
       console.log(`    Avg: ${metrics.avg.toFixed(2)}ms (p50: ${metrics.p50.toFixed(2)}ms, p75: ${metrics.p75.toFixed(2)}ms, p99: ${metrics.p99.toFixed(2)}ms)`);
     }
-    console.log('\n    * Nota: En un proceso frío, "Cache Hit" solo ahorra el tiempo de filesystem scan y AST parsing (~80-100ms).');
-    console.log('      Los import() dinámicos se deben ejecutar siempre por diseño para disparar side-effects.');
-    console.log('      El verdadero beneficio del caché se observa en procesos calientes (dev server warm boot),');
-    console.log('      donde V8 ya tiene los módulos cacheados en memoria.');
+    console.log('\n    * Note: In a cold process, "Cache Hit" only saves filesystem scan and AST parsing time (~80-100ms).');
+    console.log('      Dynamic import() calls must always run by design to trigger side-effects.');
+    console.log('      The real cache benefit is visible in warm dev-server re-boots,');
+    console.log('      where V8 already has the modules cached in memory.');
   }
 
   if (partialScenarios.length > 0) {

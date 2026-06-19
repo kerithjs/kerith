@@ -884,6 +884,7 @@ export async function createApp(
       const mountedRoutes: import("../types/index.js").MountedRoute[] = [];
 
       if (app) {
+      const step8DiscoverStart = performance.now();
       // Step 8 — Discover controllers and mount routes (Express only)
       // Reuse allProjectFiles but including index.* (controllers can be index files of subfolders, but not the module itself)
       const allControllerFiles = allProjectFiles.filter((f) => !f.includes(".types."));
@@ -983,6 +984,8 @@ export async function createApp(
         // Note: modules with no controllers are valid (workers, email, listeners, etc.)
         // REGLA-01: Kerith does not require controllers — they are Express-specific.
       }
+
+      const step8DiscoverMs = performance.now() - step8DiscoverStart;
 
       // Step 8 — Mount routes
       const step8Start = performance.now();
@@ -1091,14 +1094,24 @@ export async function createApp(
 
         if (loggedRouteCount > LOG_ROUTE_LIMIT) {
           log.info(
-            `  ... y ${loggedRouteCount - LOG_ROUTE_LIMIT} ruta(s) más montada(s) (total: ${loggedRouteCount})`,
+            `  ... and ${loggedRouteCount - LOG_ROUTE_LIMIT} more route(s) mounted (total: ${loggedRouteCount})`,
             { _module: "router", module: mod.name }
           );
         }
       }
 
       const step8Ms = performance.now() - step8Start;
-      log.debug(`[perf] step8_mount=${mountMs.toFixed(2)}ms step8_log=${logMs.toFixed(2)}ms step8_total=${step8Ms.toFixed(2)}ms`, { _module: "boot" });
+      log.debug(
+        `[perf] step8_discover=${step8DiscoverMs.toFixed(2)}ms step8_mount=${mountMs.toFixed(2)}ms step8_log=${logMs.toFixed(2)}ms step8_total=${step8Ms.toFixed(2)}ms step8_full=${(step8DiscoverMs + step8Ms).toFixed(2)}ms`,
+        { _module: "boot" }
+      );
+      // When KERITH_PROFILE=true, also write directly to stderr so benchmarks
+      // can capture it regardless of the configured logLevel.
+      if (process.env.KERITH_PROFILE === 'true') {
+        process.stderr.write(
+          `[perf] step8_discover=${step8DiscoverMs.toFixed(2)}ms step8_mount=${mountMs.toFixed(2)}ms step8_log=${logMs.toFixed(2)}ms step8_total=${step8Ms.toFixed(2)}ms step8_full=${(step8DiscoverMs + step8Ms).toFixed(2)}ms\n`
+        );
+      }
 
       (app as any).__KerithBootstrapped = true;
       } // end if (app)
