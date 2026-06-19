@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { SessionService } from '@modules/session';
-import { StorageService } from '@modules/storage';
 import { ConfigService } from '@modules/config';
-import { RateLimiterService } from '@modules/rate-limiter';
+import { RedisService } from '@modules/redis';
+import { SessionService } from '@modules/session';
+import { I18nService } from '@modules/i18n';
 
 Module('orders', {
-  imports: ["session","storage","config","rate-limiter"],
+  imports: ["config","redis","session","i18n"],
   exports: ['OrdersService']
 });
 

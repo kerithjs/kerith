@@ -1,7 +1,7 @@
 import { Service } from '../../../../src/index.js';
-import { BillingService } from '@modules/billing';
+import { WishlistService } from '@modules/wishlist';
 import { InvoicesService } from '@modules/invoices';
-import { AnalyticsService } from '@modules/analytics';
+import { ReviewsService } from '@modules/reviews';
 import { AddressService } from '@modules/address';
 
 Service('AdminService');
