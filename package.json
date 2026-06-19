@@ -14,7 +14,8 @@
     "lint": "eslint \"packages/**/src/**/*.ts\" \"packages/**/tests/**/*.ts\"",
     "lint:fix": "eslint \"packages/**/src/**/*.ts\" \"packages/**/tests/**/*.ts\" --fix",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "bench": "npm run bench -w @kerith/core"
+    "bench": "npm run bench -w @kerith/core",
+    "bench:scaling": "npm run bench:scaling -w @kerith/core"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

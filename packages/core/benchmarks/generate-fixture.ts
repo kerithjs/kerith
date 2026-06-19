@@ -268,14 +268,33 @@ function forceRemoveDir(dirPath: string): void {
   );
 }
 
-export function generateFixture(size: 'small' | 'large' = 'small') {
+function resolveTotalModules(size: 'small' | 'large' | number): number {
+  if (typeof size === 'number') {
+    if (size < 1 || !Number.isInteger(size)) {
+      throw new Error(`Size must be a positive integer, got: ${size}`);
+    }
+    return size;
+  }
+  return size === 'large' ? 100 : 50;
+}
+
+function splitLayers(total: number) {
+  const baseCount = Math.max(1, Math.round(total * 0.30));
+  const midCount  = Math.max(1, Math.round(total * 0.40));
+  const topCount  = Math.max(0, total - baseCount - midCount);
+  return { baseCount, midCount, topCount };
+}
+
+export function generateFixture(size: 'small' | 'large' | number = 'small') {
   if (fs.existsSync(FIXTURE_DIR)) {
     forceRemoveDir(FIXTURE_DIR);
   }
   fs.mkdirSync(SRC_DIR, { recursive: true });
 
+  const totalRequested = resolveTotalModules(size);
+
   // Use deterministic seed based on fixture size
-  const rng = new SeededRandom(`kerith-bench-${size}`);
+  const rng = new SeededRandom(`kerith-bench-n${totalRequested}`);
 
   // Add kerith.config.ts
   fs.writeFileSync(path.join(FIXTURE_DIR, 'kerith.config.ts'), `
@@ -293,9 +312,7 @@ export default {
   generateShared();
 
   // Determine module count based on size
-  const baseCount = size === 'large' ? 30 : 15;
-  const midCount = size === 'large' ? 40 : 20;
-  const topCount = size === 'large' ? 30 : 15;
+  const { baseCount, midCount, topCount } = splitLayers(totalRequested);
 
   // Generate Base Layer
   for (let i = 0; i < baseCount; i++) {
@@ -318,10 +335,16 @@ export default {
   }
 
   const totalModules = baseCount + midCount + topCount;
-  console.log(`[generator] Fixture created with ${totalModules} modules (${size}).`);
+  console.log(`[generator] Fixture created with ${totalModules} modules (n${totalRequested}).`);
 }
 
 if (process.argv[1] === __filename) {
-  const size = process.argv[2] === 'large' ? 'large' : 'small';
+  const arg = process.argv[2];
+  let size: 'small' | 'large' | number = 'small';
+  if (arg === 'large') {
+    size = 'large';
+  } else if (arg && !isNaN(Number(arg))) {
+    size = Number(arg);
+  }
   generateFixture(size);
 }

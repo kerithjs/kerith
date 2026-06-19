@@ -53,6 +53,11 @@ export interface KerithConfig {
    * Alias configuration.
    */
   aliases?: AliasMap;
+  /** Logging behavior configuration */
+  logging?: {
+    /** Maximum number of routes to log per module during bootstrap. Default: 5 */
+    maxRouteLines?: number;
+  };
 }
 
 export function defineConfig(config: KerithConfig): KerithConfig {

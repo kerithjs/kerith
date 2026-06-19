@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { DatabaseService } from '@modules/database';
-import { AuthService } from '@modules/auth';
+import { ConfigService } from '@modules/config';
+import { LoggerService } from '@modules/logger';
+import { SessionService } from '@modules/session';
 import { RateLimiterService } from '@modules/rate-limiter';
-import { HealthService } from '@modules/health';
 
 Module('products', {
-  imports: ["database","auth","rate-limiter","health"],
+  imports: ["config","logger","session","rate-limiter"],
   exports: ['ProductsService']
 });
 

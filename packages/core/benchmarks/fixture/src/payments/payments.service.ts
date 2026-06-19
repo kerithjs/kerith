@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
-import { CryptoService } from '@modules/crypto';
-import { RedisService } from '@modules/redis';
-import { MailerService } from '@modules/mailer';
-import { ConfigService } from '@modules/config';
+import { I18nService } from '@modules/i18n';
+import { MetricsService } from '@modules/metrics';
+import { StorageService } from '@modules/storage';
+import { SessionService } from '@modules/session';
 
 Service('PaymentsService');
 export class PaymentsService {

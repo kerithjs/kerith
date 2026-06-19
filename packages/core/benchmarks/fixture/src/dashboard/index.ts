@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { AnalyticsService } from '@modules/analytics';
-import { AddressService } from '@modules/address';
-import { WishlistService } from '@modules/wishlist';
-import { CartService } from '@modules/cart';
+import { SubscriptionsService } from '@modules/subscriptions';
+import { ShippingService } from '@modules/shipping';
+import { InvoicesService } from '@modules/invoices';
+import { OrdersService } from '@modules/orders';
 
 Module('dashboard', {
-  imports: ["analytics","address","wishlist","cart"],
+  imports: ["subscriptions","shipping","invoices","orders"],
   exports: ['DashboardService']
 });
 

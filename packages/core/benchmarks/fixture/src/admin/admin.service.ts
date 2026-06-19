@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
+import { BillingService } from '@modules/billing';
 import { InvoicesService } from '@modules/invoices';
-import { ReportsService } from '@modules/reports';
-import { PromotionsService } from '@modules/promotions';
-import { ReviewsService } from '@modules/reviews';
+import { AnalyticsService } from '@modules/analytics';
+import { AddressService } from '@modules/address';
 
 Service('AdminService');
 export class AdminService {

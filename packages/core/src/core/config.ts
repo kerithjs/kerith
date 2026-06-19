@@ -15,6 +15,9 @@ export const DEFAULTS: Omit<ResolvedConfig, 'aliases' | 'modules' | 'origin'> = 
     enabled: true,
     similarityThreshold: undefined, // Use dynamic by default
   },
+  logging: {
+    maxRouteLines: 5,
+  },
   requirePreloader: false,
   moduleLoadTimeoutMs: 30_000
 };
@@ -55,6 +58,9 @@ export const loadConfig = async (
     nits: {
       enabled:             fileConfig.nits?.enabled             ?? DEFAULTS.nits.enabled,
       similarityThreshold: fileConfig.nits?.similarityThreshold ?? DEFAULTS.nits.similarityThreshold,
+    },
+    logging: {
+      maxRouteLines:       fileConfig.logging?.maxRouteLines    ?? DEFAULTS.logging.maxRouteLines,
     },
     requirePreloader:    fileConfig.requirePreloader    ?? DEFAULTS.requirePreloader,
     moduleLoadTimeoutMs: fileConfig.moduleLoadTimeoutMs ?? DEFAULTS.moduleLoadTimeoutMs,

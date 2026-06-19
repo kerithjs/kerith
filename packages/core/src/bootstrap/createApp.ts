@@ -985,9 +985,16 @@ export async function createApp(
       }
 
       // Step 8 — Mount routes
+      const step8Start = performance.now();
+      let mountMs = 0;
+      let logMs = 0;
+
       for (const mod of allModules) {
         const rawMod = registry.getRawModule(mod.name, mod.domain);
         if (!rawMod) continue;
+
+        let loggedRouteCount = 0;
+        const LOG_ROUTE_LIMIT = config.logging.maxRouteLines;
 
         for (const ctrl of rawMod.controllers) {
           if (!ctrl.enabled) {
@@ -1004,11 +1011,13 @@ export async function createApp(
               .replace(/\/+/g, "/")
               .replace(/\/$/, "") || "/";
           if (ctrl.router) {
+            const tMount = performance.now();
             if (ctrl.middlewares && ctrl.middlewares.length > 0) {
               app.use(fullPath, ...ctrl.middlewares, ctrl.router);
             } else {
               app.use(fullPath, ctrl.router);
             }
+            mountMs += performance.now() - tMount;
 
             let foundRoutes = false;
             const extractedRoutes: { method: string; path: string }[] = [];
@@ -1058,21 +1067,38 @@ export async function createApp(
               USE: pc.gray,
             };
 
+            const tLog = performance.now();
+
             for (const route of extractedRoutes) {
-              const colorFn = methodColors[route.method] || pc.white;
-              log.info(
-                `  ${colorFn(route.method.padEnd(6))} ${pc.white(route.path)}  ${pc.gray(`(${ctrl.name})`)}`,
-                {
-                  _module: "router",
-                  path: route.path,
-                  module: mod.name,
-                  controller: ctrl.name,
-                },
-              );
+              if (loggedRouteCount < LOG_ROUTE_LIMIT) {
+                const colorFn = methodColors[route.method] || pc.white;
+                log.info(
+                  `  ${colorFn(route.method.padEnd(6))} ${pc.white(route.path)}  ${pc.gray(`(${ctrl.name})`)}`,
+                  {
+                    _module: "router",
+                    path: route.path,
+                    module: mod.name,
+                    controller: ctrl.name,
+                  },
+                );
+              }
+              loggedRouteCount++;
             }
+
+            logMs += performance.now() - tLog;
           }
         }
+
+        if (loggedRouteCount > LOG_ROUTE_LIMIT) {
+          log.info(
+            `  ... y ${loggedRouteCount - LOG_ROUTE_LIMIT} ruta(s) más montada(s) (total: ${loggedRouteCount})`,
+            { _module: "router", module: mod.name }
+          );
+        }
       }
+
+      const step8Ms = performance.now() - step8Start;
+      log.debug(`[perf] step8_mount=${mountMs.toFixed(2)}ms step8_log=${logMs.toFixed(2)}ms step8_total=${step8Ms.toFixed(2)}ms`, { _module: "boot" });
 
       (app as any).__KerithBootstrapped = true;
       } // end if (app)

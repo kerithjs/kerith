@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
-import { SearchService } from '@modules/search';
-import { RecommendationsService } from '@modules/recommendations';
-import { SubscriptionsService } from '@modules/subscriptions';
-import { ReviewsService } from '@modules/reviews';
+import { CartService } from '@modules/cart';
+import { InvoicesService } from '@modules/invoices';
+import { AddressService } from '@modules/address';
+import { BillingService } from '@modules/billing';
 
 Service('CheckoutService');
 export class CheckoutService {

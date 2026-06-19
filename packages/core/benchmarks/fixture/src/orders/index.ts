@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { RedisService } from '@modules/redis';
-import { CryptoService } from '@modules/crypto';
-import { HealthService } from '@modules/health';
-import { AuthService } from '@modules/auth';
+import { SessionService } from '@modules/session';
+import { StorageService } from '@modules/storage';
+import { ConfigService } from '@modules/config';
+import { RateLimiterService } from '@modules/rate-limiter';
 
 Module('orders', {
-  imports: ["redis","crypto","health","auth"],
+  imports: ["session","storage","config","rate-limiter"],
   exports: ['OrdersService']
 });
 

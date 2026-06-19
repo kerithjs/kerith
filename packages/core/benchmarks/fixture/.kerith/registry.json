@@ -1,757 +1,157 @@
 {
   "project": "unknown",
   "version": "1.0.0",
-  "lastCheck": "2026-06-18T21:47:14.632Z",
+  "lastCheck": "2026-06-19T20:36:49.747Z",
   "modules": {
-    "mod_2061e785": {
-      "id": "mod_2061e785",
-      "name": "address",
-      "path": "src/address",
-      "hash": "67da5de083",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "AddressRepository",
-        "AddressSchema",
-        "AddressService"
-      ],
-      "shadowFileId": "mod_2061e785"
-    },
-    "mod_5774618f": {
-      "id": "mod_5774618f",
+    "mod_c0aaea76": {
+      "id": "mod_c0aaea76",
       "name": "admin",
       "path": "src/admin",
       "hash": "e6e6bdecfb",
       "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
+      "createdAt": "2026-06-19T20:36:46.206Z",
+      "lastSeen": "2026-06-19T20:36:49.745Z",
       "identifiers": [
         "AdminRepository",
         "AdminSchema",
         "AdminService"
       ],
-      "shadowFileId": "mod_5774618f"
+      "shadowFileId": "mod_c0aaea76"
     },
-    "mod_bb18aa88": {
-      "id": "mod_bb18aa88",
-      "name": "audit",
-      "path": "src/audit",
-      "hash": "5d49cf581b",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "AuditRepository",
-        "AuditSchema",
-        "AuditService"
-      ],
-      "shadowFileId": "mod_bb18aa88"
-    },
-    "mod_9c1ac559": {
-      "id": "mod_9c1ac559",
-      "name": "backoffice",
-      "path": "src/backoffice",
-      "hash": "242bb774a3",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "BackofficeRepository",
-        "BackofficeSchema",
-        "BackofficeService"
-      ],
-      "shadowFileId": "mod_9c1ac559"
-    },
-    "mod_70bf95cf": {
-      "id": "mod_70bf95cf",
-      "name": "api-gateway",
-      "path": "src/api-gateway",
-      "hash": "f7ccf0095d",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "ApiGatewayRepository",
-        "ApiGatewaySchema",
-        "ApiGatewayService"
-      ],
-      "shadowFileId": "mod_70bf95cf"
-    },
-    "mod_31126c38": {
-      "id": "mod_31126c38",
-      "name": "analytics",
-      "path": "src/analytics",
-      "hash": "e8b993c17d",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "AnalyticsRepository",
-        "AnalyticsSchema",
-        "AnalyticsService"
-      ],
-      "shadowFileId": "mod_31126c38"
-    },
-    "mod_c2293032": {
-      "id": "mod_c2293032",
-      "name": "billing",
-      "path": "src/billing",
-      "hash": "42663d6010",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "BillingRepository",
-        "BillingSchema",
-        "BillingService"
-      ],
-      "shadowFileId": "mod_c2293032"
-    },
-    "mod_d1591281": {
-      "id": "mod_d1591281",
+    "mod_45f8f5fd": {
+      "id": "mod_45f8f5fd",
       "name": "auth",
       "path": "src/auth",
       "hash": "62cdd03a30",
       "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
+      "createdAt": "2026-06-19T20:36:46.206Z",
+      "lastSeen": "2026-06-19T20:36:49.745Z",
       "identifiers": [
         "AuthRepository",
         "AuthSchema",
         "AuthService"
       ],
-      "shadowFileId": "mod_d1591281"
+      "shadowFileId": "mod_45f8f5fd"
     },
-    "mod_776f8796": {
-      "id": "mod_776f8796",
-      "name": "cart",
-      "path": "src/cart",
-      "hash": "729b999bc2",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "CartRepository",
-        "CartSchema",
-        "CartService"
-      ],
-      "shadowFileId": "mod_776f8796"
-    },
-    "mod_81737624": {
-      "id": "mod_81737624",
-      "name": "compliance",
-      "path": "src/compliance",
-      "hash": "ebb744e9ed",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "ComplianceRepository",
-        "ComplianceSchema",
-        "ComplianceService"
-      ],
-      "shadowFileId": "mod_81737624"
-    },
-    "mod_e8922015": {
-      "id": "mod_e8922015",
-      "name": "checkout",
-      "path": "src/checkout",
-      "hash": "e294d792c6",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "CheckoutRepository",
-        "CheckoutSchema",
-        "CheckoutService"
-      ],
-      "shadowFileId": "mod_e8922015"
-    },
-    "mod_9679a564": {
-      "id": "mod_9679a564",
-      "name": "config",
-      "path": "src/config",
-      "hash": "6bedd2fc90",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "ConfigRepository",
-        "ConfigSchema",
-        "ConfigService"
-      ],
-      "shadowFileId": "mod_9679a564"
-    },
-    "mod_a5a06657": {
-      "id": "mod_a5a06657",
-      "name": "crm",
-      "path": "src/crm",
-      "hash": "b1dedcac3f",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "CrmRepository",
-        "CrmSchema",
-        "CrmService"
-      ],
-      "shadowFileId": "mod_a5a06657"
-    },
-    "mod_f84c2ddc": {
-      "id": "mod_f84c2ddc",
-      "name": "crypto",
-      "path": "src/crypto",
-      "hash": "a1621a06d7",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "CryptoRepository",
-        "CryptoSchema",
-        "CryptoService"
-      ],
-      "shadowFileId": "mod_f84c2ddc"
-    },
-    "mod_8f256052": {
-      "id": "mod_8f256052",
-      "name": "customer-portal",
-      "path": "src/customer-portal",
-      "hash": "0b7a1d072a",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "CustomerPortalRepository",
-        "CustomerPortalSchema",
-        "CustomerPortalService"
-      ],
-      "shadowFileId": "mod_8f256052"
-    },
-    "mod_b69aec6e": {
-      "id": "mod_b69aec6e",
-      "name": "dashboard",
-      "path": "src/dashboard",
-      "hash": "2eda3a366e",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "DashboardRepository",
-        "DashboardSchema",
-        "DashboardService"
-      ],
-      "shadowFileId": "mod_b69aec6e"
-    },
-    "mod_8441c5e3": {
-      "id": "mod_8441c5e3",
-      "name": "database",
-      "path": "src/database",
-      "hash": "e196d3cbf8",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "DatabaseRepository",
-        "DatabaseSchema",
-        "DatabaseService"
-      ],
-      "shadowFileId": "mod_8441c5e3"
-    },
-    "mod_a7dbf310": {
-      "id": "mod_a7dbf310",
-      "name": "health",
-      "path": "src/health",
-      "hash": "9d1db13af2",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "HealthRepository",
-        "HealthSchema",
-        "HealthService"
-      ],
-      "shadowFileId": "mod_a7dbf310"
-    },
-    "mod_f8e08389": {
-      "id": "mod_f8e08389",
-      "name": "i18n",
-      "path": "src/i18n",
-      "hash": "761ffcc831",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "I18nRepository",
-        "I18nSchema",
-        "I18nService"
-      ],
-      "shadowFileId": "mod_f8e08389"
-    },
-    "mod_26c2f937": {
-      "id": "mod_26c2f937",
-      "name": "integrations",
-      "path": "src/integrations",
-      "hash": "12092900cf",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "IntegrationsRepository",
-        "IntegrationsSchema",
-        "IntegrationsService"
-      ],
-      "shadowFileId": "mod_26c2f937"
-    },
-    "mod_1c6996ad": {
-      "id": "mod_1c6996ad",
-      "name": "inventory",
-      "path": "src/inventory",
-      "hash": "b2e87b13ef",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "InventoryRepository",
-        "InventorySchema",
-        "InventoryService"
-      ],
-      "shadowFileId": "mod_1c6996ad"
-    },
-    "mod_6c3cf421": {
-      "id": "mod_6c3cf421",
-      "name": "invoices",
-      "path": "src/invoices",
-      "hash": "6b4e4fb6f2",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "InvoicesRepository",
-        "InvoicesSchema",
-        "InvoicesService"
-      ],
-      "shadowFileId": "mod_6c3cf421"
-    },
-    "mod_90c18255": {
-      "id": "mod_90c18255",
-      "name": "logger",
-      "path": "src/logger",
-      "hash": "b26d5e41fc",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "LoggerRepository",
-        "LoggerSchema",
-        "LoggerService"
-      ],
-      "shadowFileId": "mod_90c18255"
-    },
-    "mod_155c78c7": {
-      "id": "mod_155c78c7",
-      "name": "mailer",
-      "path": "src/mailer",
-      "hash": "e9d91eec16",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "MailerRepository",
-        "MailerSchema",
-        "MailerService"
-      ],
-      "shadowFileId": "mod_155c78c7"
-    },
-    "mod_80354faa": {
-      "id": "mod_80354faa",
-      "name": "metrics",
-      "path": "src/metrics",
-      "hash": "85eff3457c",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "MetricsRepository",
-        "MetricsSchema",
-        "MetricsService"
-      ],
-      "shadowFileId": "mod_80354faa"
-    },
-    "mod_2b5f1475": {
-      "id": "mod_2b5f1475",
+    "mod_a9e14914": {
+      "id": "mod_a9e14914",
       "name": "notifications",
       "path": "src/notifications",
       "hash": "e6d33bd143",
       "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
+      "createdAt": "2026-06-19T20:36:46.206Z",
+      "lastSeen": "2026-06-19T20:36:49.745Z",
       "identifiers": [
         "NotificationsRepository",
         "NotificationsSchema",
         "NotificationsService"
       ],
-      "shadowFileId": "mod_2b5f1475"
+      "shadowFileId": "mod_a9e14914"
     },
-    "mod_679f3642": {
-      "id": "mod_679f3642",
-      "name": "onboarding",
-      "path": "src/onboarding",
-      "hash": "e373ef4bfb",
+    "mod_ec954130": {
+      "id": "mod_ec954130",
+      "name": "config",
+      "path": "src/config",
+      "hash": "6bedd2fc90",
       "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
+      "createdAt": "2026-06-19T20:36:46.206Z",
+      "lastSeen": "2026-06-19T20:36:49.745Z",
       "identifiers": [
-        "OnboardingRepository",
-        "OnboardingSchema",
-        "OnboardingService"
+        "ConfigRepository",
+        "ConfigSchema",
+        "ConfigService"
       ],
-      "shadowFileId": "mod_679f3642"
+      "shadowFileId": "mod_ec954130"
     },
-    "mod_520e0db8": {
-      "id": "mod_520e0db8",
-      "name": "ops",
-      "path": "src/ops",
-      "hash": "ff76f4ca0f",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "OpsRepository",
-        "OpsSchema",
-        "OpsService"
-      ],
-      "shadowFileId": "mod_520e0db8"
-    },
-    "mod_77c21524": {
-      "id": "mod_77c21524",
+    "mod_080591c7": {
+      "id": "mod_080591c7",
       "name": "orders",
       "path": "src/orders",
       "hash": "9aad2fa290",
       "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
+      "createdAt": "2026-06-19T20:36:46.206Z",
+      "lastSeen": "2026-06-19T20:36:49.745Z",
       "identifiers": [
         "OrdersRepository",
         "OrdersSchema",
         "OrdersService"
       ],
-      "shadowFileId": "mod_77c21524"
+      "shadowFileId": "mod_080591c7"
     },
-    "mod_925cffbb": {
-      "id": "mod_925cffbb",
-      "name": "payments",
-      "path": "src/payments",
-      "hash": "4f51234da6",
+    "mod_90fe9d42": {
+      "id": "mod_90fe9d42",
+      "name": "checkout",
+      "path": "src/checkout",
+      "hash": "e294d792c6",
       "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
+      "createdAt": "2026-06-19T20:36:46.206Z",
+      "lastSeen": "2026-06-19T20:36:49.745Z",
       "identifiers": [
-        "PaymentsRepository",
-        "PaymentsSchema",
-        "PaymentsService"
+        "CheckoutRepository",
+        "CheckoutSchema",
+        "CheckoutService"
       ],
-      "shadowFileId": "mod_925cffbb"
+      "shadowFileId": "mod_90fe9d42"
     },
-    "mod_029a504e": {
-      "id": "mod_029a504e",
+    "mod_8a7c3f5b": {
+      "id": "mod_8a7c3f5b",
       "name": "products",
       "path": "src/products",
       "hash": "113e4f473f",
       "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
+      "createdAt": "2026-06-19T20:36:46.206Z",
+      "lastSeen": "2026-06-19T20:36:49.745Z",
       "identifiers": [
         "ProductsRepository",
         "ProductsSchema",
         "ProductsService"
       ],
-      "shadowFileId": "mod_029a504e"
+      "shadowFileId": "mod_8a7c3f5b"
     },
-    "mod_9f2c5857": {
-      "id": "mod_9f2c5857",
-      "name": "promotions",
-      "path": "src/promotions",
-      "hash": "3ff747b094",
+    "mod_807388b9": {
+      "id": "mod_807388b9",
+      "name": "dashboard",
+      "path": "src/dashboard",
+      "hash": "2eda3a366e",
       "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
+      "createdAt": "2026-06-19T20:36:46.206Z",
+      "lastSeen": "2026-06-19T20:36:49.745Z",
       "identifiers": [
-        "PromotionsRepository",
-        "PromotionsSchema",
-        "PromotionsService"
+        "DashboardRepository",
+        "DashboardSchema",
+        "DashboardService"
       ],
-      "shadowFileId": "mod_9f2c5857"
+      "shadowFileId": "mod_807388b9"
     },
-    "mod_15fa2530": {
-      "id": "mod_15fa2530",
-      "name": "rate-limiter",
-      "path": "src/rate-limiter",
-      "hash": "3a11c8ca49",
+    "mod_1b6fddff": {
+      "id": "mod_1b6fddff",
+      "name": "payments",
+      "path": "src/payments",
+      "hash": "4f51234da6",
       "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
+      "createdAt": "2026-06-19T20:36:46.206Z",
+      "lastSeen": "2026-06-19T20:36:49.745Z",
       "identifiers": [
-        "RateLimiterRepository",
-        "RateLimiterSchema",
-        "RateLimiterService"
+        "PaymentsRepository",
+        "PaymentsSchema",
+        "PaymentsService"
       ],
-      "shadowFileId": "mod_15fa2530"
+      "shadowFileId": "mod_1b6fddff"
     },
-    "mod_15545815": {
-      "id": "mod_15545815",
-      "name": "redis",
-      "path": "src/redis",
-      "hash": "90ca1c4881",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "RedisRepository",
-        "RedisSchema",
-        "RedisService"
-      ],
-      "shadowFileId": "mod_15545815"
-    },
-    "mod_6eb1d4b9": {
-      "id": "mod_6eb1d4b9",
-      "name": "recommendations",
-      "path": "src/recommendations",
-      "hash": "160883a5c2",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "RecommendationsRepository",
-        "RecommendationsSchema",
-        "RecommendationsService"
-      ],
-      "shadowFileId": "mod_6eb1d4b9"
-    },
-    "mod_69ff5408": {
-      "id": "mod_69ff5408",
-      "name": "refunds",
-      "path": "src/refunds",
-      "hash": "3810613be6",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "RefundsRepository",
-        "RefundsSchema",
-        "RefundsService"
-      ],
-      "shadowFileId": "mod_69ff5408"
-    },
-    "mod_a2a94f44": {
-      "id": "mod_a2a94f44",
-      "name": "reporting",
-      "path": "src/reporting",
-      "hash": "1b89e76746",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "ReportingRepository",
-        "ReportingSchema",
-        "ReportingService"
-      ],
-      "shadowFileId": "mod_a2a94f44"
-    },
-    "mod_5b8234f7": {
-      "id": "mod_5b8234f7",
-      "name": "reports",
-      "path": "src/reports",
-      "hash": "a64c8c5c93",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "ReportsRepository",
-        "ReportsSchema",
-        "ReportsService"
-      ],
-      "shadowFileId": "mod_5b8234f7"
-    },
-    "mod_a9257ebe": {
-      "id": "mod_a9257ebe",
-      "name": "reviews",
-      "path": "src/reviews",
-      "hash": "ba24d3f5a8",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "ReviewsRepository",
-        "ReviewsSchema",
-        "ReviewsService"
-      ],
-      "shadowFileId": "mod_a9257ebe"
-    },
-    "mod_9e69e83c": {
-      "id": "mod_9e69e83c",
-      "name": "search",
-      "path": "src/search",
-      "hash": "291274d8fa",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "SearchRepository",
-        "SearchSchema",
-        "SearchService"
-      ],
-      "shadowFileId": "mod_9e69e83c"
-    },
-    "mod_bf73abbb": {
-      "id": "mod_bf73abbb",
-      "name": "session",
-      "path": "src/session",
-      "hash": "1ff72e0b8e",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "SessionRepository",
-        "SessionSchema",
-        "SessionService"
-      ],
-      "shadowFileId": "mod_bf73abbb"
-    },
-    "mod_d1ce2614": {
-      "id": "mod_d1ce2614",
-      "name": "shipping",
-      "path": "src/shipping",
-      "hash": "c74bb793d8",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "ShippingRepository",
-        "ShippingSchema",
-        "ShippingService"
-      ],
-      "shadowFileId": "mod_d1ce2614"
-    },
-    "mod_ef2d85bc": {
-      "id": "mod_ef2d85bc",
-      "name": "storage",
-      "path": "src/storage",
-      "hash": "f4922574e5",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "StorageRepository",
-        "StorageSchema",
-        "StorageService"
-      ],
-      "shadowFileId": "mod_ef2d85bc"
-    },
-    "mod_a4141573": {
-      "id": "mod_a4141573",
-      "name": "subscriptions",
-      "path": "src/subscriptions",
-      "hash": "0d4b379dd2",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "SubscriptionsRepository",
-        "SubscriptionsSchema",
-        "SubscriptionsService"
-      ],
-      "shadowFileId": "mod_a4141573"
-    },
-    "mod_7cffe196": {
-      "id": "mod_7cffe196",
-      "name": "support",
-      "path": "src/support",
-      "hash": "aaae0f9f1d",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "SupportRepository",
-        "SupportSchema",
-        "SupportService"
-      ],
-      "shadowFileId": "mod_7cffe196"
-    },
-    "mod_08ae86b6": {
-      "id": "mod_08ae86b6",
-      "name": "tax",
-      "path": "src/tax",
-      "hash": "fe24114dca",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "TaxRepository",
-        "TaxSchema",
-        "TaxService"
-      ],
-      "shadowFileId": "mod_08ae86b6"
-    },
-    "mod_66fd5165": {
-      "id": "mod_66fd5165",
+    "mod_8472d509": {
+      "id": "mod_8472d509",
       "name": "users",
       "path": "src/users",
       "hash": "f7066a62c6",
       "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
+      "createdAt": "2026-06-19T20:36:46.206Z",
+      "lastSeen": "2026-06-19T20:36:49.745Z",
       "identifiers": [
         "UsersRepository",
         "UsersSchema",
         "UsersService"
       ],
-      "shadowFileId": "mod_66fd5165"
-    },
-    "mod_2928d2c6": {
-      "id": "mod_2928d2c6",
-      "name": "vendor-portal",
-      "path": "src/vendor-portal",
-      "hash": "4fb586158b",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "VendorPortalRepository",
-        "VendorPortalSchema",
-        "VendorPortalService"
-      ],
-      "shadowFileId": "mod_2928d2c6"
-    },
-    "mod_6919a7e6": {
-      "id": "mod_6919a7e6",
-      "name": "webhooks",
-      "path": "src/webhooks",
-      "hash": "f4be452d29",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "WebhooksRepository",
-        "WebhooksSchema",
-        "WebhooksService"
-      ],
-      "shadowFileId": "mod_6919a7e6"
-    },
-    "mod_8ab590f9": {
-      "id": "mod_8ab590f9",
-      "name": "wishlist",
-      "path": "src/wishlist",
-      "hash": "38a10c7445",
-      "status": "active",
-      "createdAt": "2026-06-18T21:42:11.842Z",
-      "lastSeen": "2026-06-18T21:47:14.628Z",
-      "identifiers": [
-        "WishlistRepository",
-        "WishlistSchema",
-        "WishlistService"
-      ],
-      "shadowFileId": "mod_8ab590f9"
+      "shadowFileId": "mod_8472d509"
     }
   },
   "_note": "This file is generated by Kerith NITS. Include it in Git."
