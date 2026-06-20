@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
+import { LoggerService } from '@modules/logger';
+import { UsersService } from '@modules/users';
+import { SessionService } from '@modules/session';
 import { AuditService } from '@modules/audit';
-import { DatabaseService } from '@modules/database';
-import { StorageService } from '@modules/storage';
-import { ConfigService } from '@modules/config';
 
 Module('notifications', {
-  imports: ["audit","database","storage","config"],
+  imports: ["logger","users","session","audit"],
   exports: ['NotificationsService']
 });
 

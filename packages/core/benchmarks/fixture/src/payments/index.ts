@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { SessionService } from '@modules/session';
-import { ConfigService } from '@modules/config';
-import { MetricsService } from '@modules/metrics';
-import { MailerService } from '@modules/mailer';
+import { HealthService } from '@modules/health';
+import { LoggerService } from '@modules/logger';
+import { DatabaseService } from '@modules/database';
+import { UsersService } from '@modules/users';
 
 Module('payments', {
-  imports: ["session","config","metrics","mailer"],
+  imports: ["health","logger","database","users"],
   exports: ['PaymentsService']
 });
 

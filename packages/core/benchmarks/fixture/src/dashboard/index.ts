@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
+import { CartService } from '@modules/cart';
 import { OrdersService } from '@modules/orders';
-import { RefundsService } from '@modules/refunds';
-import { NotificationsService } from '@modules/notifications';
-import { PromotionsService } from '@modules/promotions';
+import { ReviewsService } from '@modules/reviews';
+import { AddressService } from '@modules/address';
 
 Module('dashboard', {
-  imports: ["orders","refunds","notifications","promotions"],
+  imports: ["cart","orders","reviews","address"],
   exports: ['DashboardService']
 });
 
