@@ -9,6 +9,7 @@ import type { CallExpression, Literal, ObjectExpression, ArrayExpression } from 
 export interface IdentifierCall {
   name: string;
   options: Record<string, unknown>;
+  type?: string;
 }
 
 export interface ModuleDeclaration {
@@ -134,6 +135,91 @@ export function extractIdentifierCall(
         name: match[1], 
         options: extractOptionsFromSource(match[2] ?? '')
       };
+    }
+  }
+
+  return found;
+}
+
+export function extractMultipleIdentifierCalls(
+  filePath: string,
+  calleeNames: string[]
+): IdentifierCall[] {
+  const found: IdentifierCall[] = [];
+  let code = "";
+
+  try {
+    code = fs.readFileSync(filePath, "utf-8");
+    const ast = acorn.parse(code, {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      locations: true,
+    });
+
+    walk.simple(ast, {
+      CallExpression(node) {
+        const call = node as unknown as CallExpression;
+        if (call.callee.type === 'Identifier' && calleeNames.includes(call.callee.name)) {
+          const nameArg = call.arguments[0] as Literal;
+          if (nameArg && nameArg.type === "Literal") {
+            const name = nameArg.value as string;
+            const options: Record<string, unknown> = {};
+
+            const optionsArg = call.arguments[1] as ObjectExpression;
+            if (optionsArg && optionsArg.type === "ObjectExpression") {
+              for (const prop of optionsArg.properties) {
+                if (prop.type !== 'Property') continue;
+                
+                let keyName = '';
+                if (prop.key.type === "Identifier") {
+                  keyName = prop.key.name;
+                } else if (prop.key.type === "Literal") {
+                  keyName = String(prop.key.value);
+                }
+
+                if (keyName && prop.value.type === "ArrayExpression") {
+                  const arr: string[] = [];
+                  const arrayVal = prop.value as ArrayExpression;
+                  for (const elem of arrayVal.elements) {
+                    if (elem && elem.type === "Literal") {
+                      arr.push(String(elem.value));
+                    }
+                  }
+                  options[keyName] = arr;
+                } else if (keyName && prop.value.type === "Literal") {
+                  options[keyName] = prop.value.value;
+                }
+              }
+            }
+
+            found.push({ name, options, type: call.callee.name });
+          }
+        }
+      },
+    });
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      return [];
+    }
+    // Ignore acorn parse errors for now to allow fallback to operate
+  }
+
+  // Fallback: Acorn does not parse TypeScript natively.
+  // Run regex for any callee that wasn't found by the AST traversal
+  if (code) {
+    const foundCallees = new Set(found.map(f => f.type));
+    for (const calleeName of calleeNames) {
+      if (foundCallees.has(calleeName)) continue;
+
+      const regex = new RegExp(`${calleeName}\\s*\\(\\s*['"]([^'"]+)['"](?:\\s*,\\s*(\\{[^}]+\\}))?`, "g");
+      let match;
+      while ((match = regex.exec(code)) !== null) {
+        found.push({ 
+          name: match[1], 
+          options: extractOptionsFromSource(match[2] ?? ''),
+          type: calleeName
+        });
+      }
     }
   }
 

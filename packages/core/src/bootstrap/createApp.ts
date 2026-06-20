@@ -7,7 +7,11 @@ import type { CreateAppOptions, KerithApp } from "../types/index.js";
 
 import { loadConfig } from "../core/config.js";
 import { KerithError } from "../core/errors.js";
-import { createRegistry, registryContext, buildModuleKey } from "../core/registry.js";
+import {
+  createRegistry,
+  registryContext,
+  buildModuleKey,
+} from "../core/registry.js";
 import { activateAliasResolver } from "../aliases/resolver.js";
 import { updateAliasCache } from "../aliases/cache.js";
 import {
@@ -37,13 +41,10 @@ import {
 } from "../nits/nits-reconciler.js";
 import { reportReconciliation } from "../nits/nits-reporter.js";
 import { computeModuleHash } from "../nits/nits-hash.js";
-import { normalizePath } from "../core/utils/paths.js";
+import { normalizePath, groupFilesByModulePath } from "../core/utils/paths.js";
 import { registerShutdown } from "../core/shutdown.js";
 import type { DiscoveredModule } from "../types/nits.js";
-import {
-  scanFromConfig,
-  scanModulesToResolved,
-} from "./scanner.js";
+import { scanFromConfig, scanModulesToResolved } from "./scanner.js";
 import { registerEntitiesFromScan } from "./register-from-scan.js";
 import { importIndexEntry } from "./import-index.js";
 import { CacheManager } from "../cache/bootstrap-cache.js";
@@ -65,7 +66,7 @@ const getKerithVersion = () => {
       /* not a valid package.json path, try next */
     }
   }
-  return 'unknown';
+  return "unknown";
 };
 
 export const KERITH_VERSION = getKerithVersion();
@@ -182,27 +183,35 @@ export async function createApp(
       });
 
       // Cache setup
-      cacheEnabled = process.env.NODE_ENV !== 'production' &&
-                     process.env.KERITH_BOOTSTRAP_CACHE !== 'false' &&
-                     ((config as any).bootstrap?.cache ?? true);
+      cacheEnabled =
+        process.env.NODE_ENV !== "production" &&
+        process.env.KERITH_BOOTSTRAP_CACHE !== "false" &&
+        ((config as any).bootstrap?.cache ?? true);
 
       let scanResult: import("./scanner.js").ScanResult | undefined;
       let usedCache = false;
       let numRescanned = 0;
-      let cacheLogReason = '';
+      let cacheLogReason = "";
       const rescannedDomains = new Set<string>();
       let isFullCacheHit = false;
 
       // Si ningún archivo de config existe, configPath queda vacío.
       // hashConfig('') devuelve 'no-config', que es estable entre boots — no degrada.
-      const configCandidates = ['kerith.config.ts', 'kerith.config.js', 'kerith.config.mjs'];
-      let configPath = '';
+      const configCandidates = [
+        "kerith.config.ts",
+        "kerith.config.js",
+        "kerith.config.mjs",
+      ];
+      let configPath = "";
       for (const cand of configCandidates) {
         const p = path.join(cwd, cand);
-        if (fs.existsSync(p)) { configPath = p; break; }
+        if (fs.existsSync(p)) {
+          configPath = p;
+          break;
+        }
       }
 
-      let configHash = '';
+      let configHash = "";
 
       if (cacheEnabled) {
         const rawCache = CacheManager.read();
@@ -211,17 +220,18 @@ export async function createApp(
 
         if (rawCache !== null) {
           if (!CacheManager.valid(rawCache, KERITH_VERSION, configHash)) {
-            cacheLogReason = rawCache.version !== KERITH_VERSION 
-              ? '(cache inválido — versión mismatch)' 
-              : rawCache.cwd !== process.cwd()
-                ? '(cache inválido — directorio movido)'
-                : '(cache inválido — config modificado)';
+            cacheLogReason =
+              rawCache.version !== KERITH_VERSION
+                ? "(cache inválido — versión mismatch)"
+                : rawCache.cwd !== process.cwd()
+                  ? "(cache inválido — directorio movido)"
+                  : "(cache inválido — config modificado)";
           } else {
             // toRescan: domain IDs whose modules on disk changed (by mtime or size).
             // Domains not in toRescan will be loaded directly from rawCache.data.
             const { toRescan } = MtimeValidator.validate(rawCache);
             numRescanned = toRescan.length;
-            
+
             if (numRescanned === 0) {
               // Skipped scanning entirely
               scanResult = {
@@ -234,21 +244,36 @@ export async function createApp(
               isFullCacheHit = true;
             } else {
               // Partial scan
-              const partialScan = await scanFromConfig(config, cwd, (level, message, meta) => {
-                log[level](message, meta);
-              }, toRescan);
+              const partialScan = await scanFromConfig(
+                config,
+                cwd,
+                (level, message, meta) => {
+                  log[level](message, meta);
+                },
+                toRescan,
+              );
 
               for (const d of toRescan) rescannedDomains.add(d);
 
               // Merge logic
-              const mergedDomains = rawCache.data!.domains.filter(d => !rescannedDomains.has(d.name)).concat(partialScan.domains);
-              
-              // Handle flat modules fallback explicitly (using '__flat__')
-              const cachedModules = rawCache.data!.modules.filter(m => !rescannedDomains.has(m.domain || '__flat__'));
-              const mergedModules = cachedModules.concat(partialScan.modules as any[]);
+              const mergedDomains = rawCache
+                .data!.domains.filter((d) => !rescannedDomains.has(d.name))
+                .concat(partialScan.domains);
 
-              const cachedSubmodules = rawCache.data!.submodules.filter(s => !rescannedDomains.has(s.domain || '__flat__'));
-              const mergedSubmodules = cachedSubmodules.concat(partialScan.submodules);
+              // Handle flat modules fallback explicitly (using '__flat__')
+              const cachedModules = rawCache.data!.modules.filter(
+                (m) => !rescannedDomains.has(m.domain || "__flat__"),
+              );
+              const mergedModules = cachedModules.concat(
+                partialScan.modules as any[],
+              );
+
+              const cachedSubmodules = rawCache.data!.submodules.filter(
+                (s) => !rescannedDomains.has(s.domain || "__flat__"),
+              );
+              const mergedSubmodules = cachedSubmodules.concat(
+                partialScan.submodules,
+              );
 
               // Global @shared se rescannea siempre (costo mínimo: una stat de directorio).
               // La razón: @shared no pertenece a ningún dominio, por lo que no tiene un
@@ -257,7 +282,7 @@ export async function createApp(
               // Domain-scoped shared is tied to domain.
               const finalSharedMap = new Map();
               for (const s of rawCache.data!.shared) {
-                if (s.type === 'global' || !rescannedDomains.has(s.domain!)) {
+                if (s.type === "global" || !rescannedDomains.has(s.domain!)) {
                   finalSharedMap.set(s.alias, s);
                 }
               }
@@ -279,11 +304,15 @@ export async function createApp(
 
       // Step 2 — Filesystem scan (if not fully/partially cached)
       if (!scanResult) {
-        scanResult = await scanFromConfig(config, cwd, (level, message, meta) => {
-          log[level](message, meta);
-        });
+        scanResult = await scanFromConfig(
+          config,
+          cwd,
+          (level, message, meta) => {
+            log[level](message, meta);
+          },
+        );
       }
-      
+
       const isOriginMode = !!config.origin;
 
       if (scanResult.domains.length > 0) {
@@ -328,22 +357,27 @@ export async function createApp(
       } else if (config.modules) {
         modulesRoot = config.modules.split("*")[0].replace(/\/$/, "");
       }
-      const absoluteModulesRoot = modulesRoot ? normalizePath(path.resolve(cwd, modulesRoot)) : "";
+      const absoluteModulesRoot = modulesRoot
+        ? normalizePath(path.resolve(cwd, modulesRoot))
+        : "";
 
       let allProjectFiles: string[] = [];
       if (absoluteModulesRoot) {
-        allProjectFiles = await fg(`${absoluteModulesRoot}/**/*.{ts,js,mts,mjs,cjs}`, {
-          absolute: true,
-          cwd,
-          ignore: [
-            "**/*.test.*",
-            "**/*.spec.*",
-            "**/*.d.ts",
-            "**/node_modules/**",
-            "**/dist/**",
-            "**/build/**"
-          ],
-        });
+        allProjectFiles = await fg(
+          `${absoluteModulesRoot}/**/*.{ts,js,mts,mjs,cjs}`,
+          {
+            absolute: true,
+            cwd,
+            ignore: [
+              "**/*.test.*",
+              "**/*.spec.*",
+              "**/*.d.ts",
+              "**/node_modules/**",
+              "**/dist/**",
+              "**/build/**",
+            ],
+          },
+        );
       }
 
       let filesByModulePath: Map<string, string[]> | undefined;
@@ -362,33 +396,27 @@ export async function createApp(
           const allNitsFiles = absoluteModulesRoot
             ? allProjectFiles.filter((f) => {
                 const base = path.basename(f);
-                return !base.startsWith('index.') && !f.endsWith('.cjs');
+                return !base.startsWith("index.") && !f.endsWith(".cjs");
               })
             : undefined;
 
-          // Agrupar por módulo usando el dirPath como prefijo
+          // Agrupar por módulo usando el dirPath como prefijo (ordenados por longitud desc)
           if (allNitsFiles) {
-            filesByModulePath = new Map<string, string[]>();
-            for (const mod of resolvedModules) {
-              filesByModulePath.set(normalizePath(path.resolve(mod.dirPath)), []);
-            }
-            for (const file of allNitsFiles) {
-              const normalizedFile = normalizePath(file);
-              for (const [modPath, files] of filesByModulePath) {
-                if (normalizedFile.startsWith(modPath + '/')) {
-                  files.push(file);
-                  break;
-                }
-              }
-            }
+            const modPaths = resolvedModules.map(mod => path.resolve(mod.dirPath));
+            filesByModulePath = groupFilesByModulePath(allNitsFiles, modPaths);
           }
 
           const discovered: DiscoveredModule[] = await Promise.all(
             resolvedModules.map(async (mod) => {
               const modFiles = filesByModulePath
-                ? filesByModulePath.get(normalizePath(path.resolve(mod.dirPath)))
+                ? filesByModulePath.get(
+                    normalizePath(path.resolve(mod.dirPath)),
+                  )
                 : undefined;
-              const { hash, identifiers } = await computeModuleHash(mod.dirPath, modFiles);
+              const { hash, identifiers } = await computeModuleHash(
+                mod.dirPath,
+                modFiles,
+              );
               return {
                 name: mod.name,
                 dirPath: mod.dirPath,
@@ -482,7 +510,7 @@ export async function createApp(
 
         for (const domain of registry.getAllDomains()) {
           const domainAlias = `@${domain.name}`;
-          const _domainIndexPath = path.join(domain.path, 'index.ts'); // Fallback o real? El path del domain es dirPath.
+          const _domainIndexPath = path.join(domain.path, "index.ts"); // Fallback o real? El path del domain es dirPath.
           // Wait, domain has no indexPath in DomainRegistration?
           // DomainRegistration has `path` (dirPath)
           pureModuleAliases[domainAlias] = domain.path;
@@ -509,14 +537,16 @@ export async function createApp(
 
         // Shared aliases — same priority as domain aliases (before @modules/*)
         // @shared global
-        const globalShared = registry.getShared('@shared');
+        const globalShared = registry.getShared("@shared");
         if (globalShared) {
-          pureModuleAliases['@shared'] = globalShared.path;
-          pureModuleAliases['@shared/*'] = `${globalShared.path}/*`;
+          pureModuleAliases["@shared"] = globalShared.path;
+          pureModuleAliases["@shared/*"] = `${globalShared.path}/*`;
         }
 
         // Domain-scoped shared
-        for (const entry of registry.getAllShared().filter(e => e.type === 'domain-scoped')) {
+        for (const entry of registry
+          .getAllShared()
+          .filter((e) => e.type === "domain-scoped")) {
           pureModuleAliases[entry.alias] = entry.path;
           pureModuleAliases[`${entry.alias}/*`] = `${entry.path}/*`;
         }
@@ -578,19 +608,26 @@ export async function createApp(
             mod.indexPath,
             config.moduleLoadTimeoutMs,
           );
-          if (process.env.KERITH_PROFILE === 'true') {
-            log.debug(`[perf] import ${mod.name} took ${Math.round(performance.now() - modStart)}ms`, { _module: 'boot' });
+          if (process.env.KERITH_PROFILE === "true") {
+            log.debug(
+              `[perf] import ${mod.name} took ${Math.round(performance.now() - modStart)}ms`,
+              { _module: "boot" },
+            );
           }
           return { mod, imported };
         }),
       );
 
       // Correlación y validación (CPU pura — mantiene el orden original)
+      // Build lookup Map once — O(n) — instead of calling getAllModules() inside the loop
+      // which was O(n²): n iterations × (Array.from + map + find) per iteration.
+      const allRegisteredOnce = registry.getAllModules();
+      const registeredByPath = new Map(
+        allRegisteredOnce.map((m) => [normalizePath(m.path), m]),
+      );
+
       for (const { mod, imported } of importedModules) {
-        const allRegistered = registry.getAllModules();
-        const registeredMod = allRegistered.find(
-          (m) => normalizePath(m.path) === normalizePath(mod.dirPath),
-        );
+        const registeredMod = registeredByPath.get(normalizePath(mod.dirPath));
 
         if (!registeredMod) {
           if (isOriginMode) {
@@ -605,8 +642,11 @@ export async function createApp(
           }
         }
 
-        const isModuleFromCache = isFullCacheHit || (usedCache && !rescannedDomains.has(registeredMod.domain || '__flat__'));
-        const cacheSuffix = isModuleFromCache ? ' (from cache)' : '';
+        const isModuleFromCache =
+          isFullCacheHit ||
+          (usedCache &&
+            !rescannedDomains.has(registeredMod.domain || "__flat__"));
+        const cacheSuffix = isModuleFromCache ? " (from cache)" : "";
 
         const moduleLabel = registeredMod.domain
           ? `${pc.dim(registeredMod.domain + "/")}${pc.green(registeredMod.name)}`
@@ -668,7 +708,9 @@ export async function createApp(
       const importEnd = performance.now();
       const scanMs = Math.round(scanEnd - startTime);
       const importMs = Math.round(importEnd - scanEnd);
-      log.debug(`[perf] scan=${scanMs}ms imports=${importMs}ms`, { _module: 'boot' });
+      log.debug(`[perf] scan=${scanMs}ms imports=${importMs}ms`, {
+        _module: "boot",
+      });
 
       const allModules = registry.getAllModules();
 
@@ -705,7 +747,11 @@ export async function createApp(
         }
 
         for (const sharedAlias of rawMod.shared) {
-          const error = (code: import("../core/errors.js").KerithErrorCode, message: string, details: string) => {
+          const error = (
+            code: import("../core/errors.js").KerithErrorCode,
+            message: string,
+            details: string,
+          ) => {
             if (config.strict) {
               throw new KerithError(code, message, details);
             } else {
@@ -724,7 +770,8 @@ export async function createApp(
           }
 
           // Check if it's '@shared' or a subpath of '@shared'
-          const isSharedOrSubpath = sharedAlias === "@shared" || sharedAlias.startsWith("@shared/");
+          const isSharedOrSubpath =
+            sharedAlias === "@shared" || sharedAlias.startsWith("@shared/");
           if (!isSharedOrSubpath) {
             error(
               "UNDECLARED_SHARED",
@@ -782,7 +829,10 @@ export async function createApp(
 
       // Step 7.5 — Undeclared / unused imports (strict)
       // Pre-process a Map of normalizedPath -> module ref (also used by Step 6)
-      const modulePathMap = new Map<string, { name: string; domain?: string }>();
+      const modulePathMap = new Map<
+        string,
+        { name: string; domain?: string }
+      >();
       for (const mod of allModules) {
         const rawMod = registry.getRawModule(mod.name, mod.domain);
         if (rawMod) {
@@ -810,22 +860,26 @@ export async function createApp(
           filesByModule.set(buildModuleKey(mod.name, mod.domain), []);
         }
 
-        for (const file of allSourceFiles) {
-          for (const modPath of sortedModulePaths) {
-            if (file.startsWith(modPath + "/")) {
-              const modRef = modulePathMap.get(modPath)!;
-              filesByModule.get(buildModuleKey(modRef.name, modRef.domain))?.push(file);
-              break;
-            }
+        const groupedSourceFiles = groupFilesByModulePath(allSourceFiles, sortedModulePaths);
+        for (const [modPath, files] of groupedSourceFiles) {
+          const modRef = modulePathMap.get(modPath);
+          if (modRef) {
+            const key = buildModuleKey(modRef.name, modRef.domain);
+            filesByModule.get(key)?.push(...files);
           }
         }
 
         for (const registeredMod of allModules) {
-          const rawMod = registry.getRawModule(registeredMod.name, registeredMod.domain);
+          const rawMod = registry.getRawModule(
+            registeredMod.name,
+            registeredMod.domain,
+          );
           if (!rawMod) continue;
 
           const sourceFiles =
-            filesByModule.get(buildModuleKey(registeredMod.name, registeredMod.domain)) ?? [];
+            filesByModule.get(
+              buildModuleKey(registeredMod.name, registeredMod.domain),
+            ) ?? [];
           const usedImports = new Set<string>();
 
           for (const file of sourceFiles) {
@@ -841,7 +895,8 @@ export async function createApp(
               if (!targetModule || targetModule === registeredMod.name)
                 continue;
 
-              if (!registry.hasModule(targetModule, registeredMod.domain)) continue;
+              if (!registry.hasModule(targetModule, registeredMod.domain))
+                continue;
 
               usedImports.add(targetModule);
 
@@ -884,54 +939,86 @@ export async function createApp(
       const mountedRoutes: import("../types/index.js").MountedRoute[] = [];
 
       if (app) {
-      const step8DiscoverStart = performance.now();
-      // Step 8 — Discover controllers and mount routes (Express only)
-      // Reuse allProjectFiles but including index.* (controllers can be index files of subfolders, but not the module itself)
-      const allControllerFiles = allProjectFiles.filter((f) => !f.includes(".types."));
+        const step8DiscoverStart = performance.now();
+        // Step 8 — Discover controllers and mount routes (Express only)
+        // Kerith contract: any file inside a module can be a controller if it calls Controller()
+        // and exports a default Router. We use a fast text heuristic to avoid dynamically
+        // importing every file in the project (which is O(n) slow).
+        const allControllerFiles = allProjectFiles.filter((f) => {
+          const base = path.basename(f);
+          if (base.startsWith("index.") || !/\.[cm]?[tj]s$/.test(base) || f.endsWith(".cjs")) {
+            return false;
+          }
+          try {
+            // Fast heuristic: it must contain the Controller decorator/identifier
+            return fs.readFileSync(f, "utf8").includes("Controller");
+          } catch {
+            return false;
+          }
+        });
 
-      const controllerFilesByModule = new Map<string, string[]>();
-      for (const mod of allModules) {
-        controllerFilesByModule.set(buildModuleKey(mod.name, mod.domain), []);
-      }
+        const controllerFilesByModule = new Map<string, string[]>();
+        for (const mod of allModules) {
+          controllerFilesByModule.set(buildModuleKey(mod.name, mod.domain), []);
+        }
 
-      for (const file of allControllerFiles) {
-        const normalizedFile = normalizePath(file);
-        for (const modPath of sortedModulePaths) {
-          if (normalizedFile.startsWith(modPath + "/")) {
-            const modRef = modulePathMap.get(modPath)!;
+        const groupedControllers = groupFilesByModulePath(allControllerFiles, sortedModulePaths);
+        for (const [modPath, files] of groupedControllers) {
+          const modRef = modulePathMap.get(modPath);
+          if (modRef) {
+            const key = buildModuleKey(modRef.name, modRef.domain);
             const rawMod = registry.getRawModule(modRef.name, modRef.domain);
+            const indexPathNorm = rawMod ? normalizePath(rawMod.indexPath) : null;
 
-            if (rawMod && normalizedFile === normalizePath(rawMod.indexPath)) {
-              // Exclude the module's main index file
-              break;
+            for (const file of files) {
+              if (normalizePath(file) !== indexPathNorm) {
+                controllerFilesByModule.get(key)?.push(file);
+              }
             }
-
-            controllerFilesByModule
-              .get(buildModuleKey(modRef.name, modRef.domain))
-              ?.push(file);
-            break;
           }
         }
-      }
 
-      for (const mod of allModules) {
-        const rawMod = registry.getRawModule(mod.name, mod.domain);
-        if (!rawMod) continue;
+        // Step 8a — Flatten all (mod, file) pairs and import ALL controller files in parallel.
+        // Pattern mirrors Step 6b: import in parallel → validate in original order.
+        // This eliminates the O(n) sequential await chain that was the primary bottleneck
+        // confirmed by bench: step8_discover scaled linearly (~17ms/module at n=40).
 
-        const files =
-          controllerFilesByModule.get(buildModuleKey(mod.name, mod.domain)) ?? [];
-        files.sort();
+        // 1. Build the flat work list (preserve mod + sorted file order for determinism)
+        interface ControllerImportTask {
+          mod: (typeof allModules)[number];
+          rawMod: NonNullable<ReturnType<typeof registry.getRawModule>>;
+          file: string; // normalized
+          importUrl: string;
+        }
 
-        for (let file of files) {
-          log.debug(`Scanning controller file: ${file}`, {
-            filePath: file,
-            module: mod.name,
-            _module: "router",
-          });
-          file = path.normalize(file);
-          let imported: any;
-          try {
-            const importUrl = pathToFileURL(file).href;
+        const controllerTasks: ControllerImportTask[] = [];
+        for (const mod of allModules) {
+          const rawMod = registry.getRawModule(mod.name, mod.domain);
+          if (!rawMod) continue;
+
+          const files =
+            controllerFilesByModule.get(buildModuleKey(mod.name, mod.domain)) ??
+            [];
+          files.sort();
+
+          for (const file of files) {
+            log.debug(`Scanning controller file: ${file}`, {
+              filePath: file,
+              module: mod.name,
+              _module: "router",
+            });
+            controllerTasks.push({
+              mod,
+              rawMod,
+              file: path.normalize(file),
+              importUrl: pathToFileURL(path.normalize(file)).href,
+            });
+          }
+        }
+
+        // 2. Import all controller files in parallel with per-file timeout
+        const importResults = await Promise.all(
+          controllerTasks.map(async (task) => {
             let timer: NodeJS.Timeout;
             const timeoutPromise = new Promise<never>((_, reject) => {
               timer = setTimeout(() => {
@@ -939,29 +1026,36 @@ export async function createApp(
                   new KerithError(
                     "MODULE_LOAD_TIMEOUT",
                     `Controller load timed out after ${config.moduleLoadTimeoutMs}ms. Check for unhandled promises or blocking operations.`,
-                    `File: ${file}`,
+                    `File: ${task.file}`,
                   ),
                 );
               }, config.moduleLoadTimeoutMs);
             });
 
+            let imported: any;
             try {
               imported = await Promise.race([
-                import(importUrl),
+                import(task.importUrl),
                 timeoutPromise,
               ]);
+            } catch (err: any) {
+              if (err instanceof KerithError) throw err;
+              throw new KerithError(
+                "INVALID_CONTROLLER",
+                `Failed to import controller file. Check for syntax errors or missing dependencies.`,
+                `File: ${task.file} — ${err.message}`,
+              );
             } finally {
               clearTimeout(timer!);
             }
-          } catch (err: any) {
-            if (err instanceof KerithError) throw err;
-            throw new KerithError(
-              "INVALID_CONTROLLER",
-              `Failed to import controller file. Check for syntax errors or missing dependencies.`,
-              `File: ${file} — ${err.message}`,
-            );
-          }
 
+            return { task, imported };
+          }),
+        );
+
+        // 3. Validate and register in original order (pure CPU — no I/O)
+        for (const { task, imported } of importResults) {
+          const { mod, rawMod, file } = task;
           const resolvedFile = normalizePath(file);
           const ctrlMeta = registry.getControllerMetadata(resolvedFile);
           if (ctrlMeta) {
@@ -983,137 +1077,139 @@ export async function createApp(
 
         // Note: modules with no controllers are valid (workers, email, listeners, etc.)
         // REGLA-01: Kerith does not require controllers — they are Express-specific.
-      }
 
-      const step8DiscoverMs = performance.now() - step8DiscoverStart;
+        const step8DiscoverMs = performance.now() - step8DiscoverStart;
 
-      // Step 8 — Mount routes
-      const step8Start = performance.now();
-      let mountMs = 0;
-      let logMs = 0;
+        // Step 8 — Mount routes
+        const step8Start = performance.now();
+        let mountMs = 0;
+        let logMs = 0;
 
-      for (const mod of allModules) {
-        const rawMod = registry.getRawModule(mod.name, mod.domain);
-        if (!rawMod) continue;
+        for (const mod of allModules) {
+          const rawMod = registry.getRawModule(mod.name, mod.domain);
+          if (!rawMod) continue;
 
-        let loggedRouteCount = 0;
-        const LOG_ROUTE_LIMIT = config.logging.maxRouteLines;
+          let loggedRouteCount = 0;
+          const LOG_ROUTE_LIMIT = config.logging.maxRouteLines;
 
-        for (const ctrl of rawMod.controllers) {
-          if (!ctrl.enabled) {
-            log.info(`Controller "${ctrl.name}" is disabled — skipping mount`, {
-              _module: "router",
-              module: mod.name,
-              prefix: ctrl.prefix,
-            });
-            continue;
-          }
-
-          const fullPath =
-            (config.prefix + ctrl.prefix)
-              .replace(/\/+/g, "/")
-              .replace(/\/$/, "") || "/";
-          if (ctrl.router) {
-            const tMount = performance.now();
-            if (ctrl.middlewares && ctrl.middlewares.length > 0) {
-              app.use(fullPath, ...ctrl.middlewares, ctrl.router);
-            } else {
-              app.use(fullPath, ctrl.router);
+          for (const ctrl of rawMod.controllers) {
+            if (!ctrl.enabled) {
+              log.info(
+                `Controller "${ctrl.name}" is disabled — skipping mount`,
+                {
+                  _module: "router",
+                  module: mod.name,
+                  prefix: ctrl.prefix,
+                },
+              );
+              continue;
             }
-            mountMs += performance.now() - tMount;
 
-            let foundRoutes = false;
-            const extractedRoutes: { method: string; path: string }[] = [];
+            const fullPath =
+              (config.prefix + ctrl.prefix)
+                .replace(/\/+/g, "/")
+                .replace(/\/$/, "") || "/";
+            if (ctrl.router) {
+              const tMount = performance.now();
+              if (ctrl.middlewares && ctrl.middlewares.length > 0) {
+                app.use(fullPath, ...ctrl.middlewares, ctrl.router);
+              } else {
+                app.use(fullPath, ctrl.router);
+              }
+              mountMs += performance.now() - tMount;
 
-            if (ctrl.router.stack && Array.isArray(ctrl.router.stack)) {
-              for (const layer of ctrl.router.stack) {
-                const routeObj = (layer as any).route;
-                if (routeObj && routeObj.methods) {
-                  foundRoutes = true;
-                  const routePath = routeObj.path;
-                  const methods = Object.keys(routeObj.methods)
-                    .filter((m) => routeObj.methods[m])
-                    .map((m) => m.toUpperCase());
+              let foundRoutes = false;
+              const extractedRoutes: { method: string; path: string }[] = [];
 
-                  for (const method of methods) {
-                    const fullRoutePath = (
-                      fullPath + (routePath === "/" ? "" : routePath)
-                    ).replace(/\/+/g, "/");
-                    extractedRoutes.push({ method, path: fullRoutePath });
-                    mountedRoutes.push({
-                      method: method as any,
-                      path: fullRoutePath,
-                      module: mod.name,
-                      controller: ctrl.name,
-                    });
+              if (ctrl.router.stack && Array.isArray(ctrl.router.stack)) {
+                for (const layer of ctrl.router.stack) {
+                  const routeObj = (layer as any).route;
+                  if (routeObj && routeObj.methods) {
+                    foundRoutes = true;
+                    const routePath = routeObj.path;
+                    const methods = Object.keys(routeObj.methods)
+                      .filter((m) => routeObj.methods[m])
+                      .map((m) => m.toUpperCase());
+
+                    for (const method of methods) {
+                      const fullRoutePath = (
+                        fullPath + (routePath === "/" ? "" : routePath)
+                      ).replace(/\/+/g, "/");
+                      extractedRoutes.push({ method, path: fullRoutePath });
+                      mountedRoutes.push({
+                        method: method as any,
+                        path: fullRoutePath,
+                        module: mod.name,
+                        controller: ctrl.name,
+                      });
+                    }
                   }
                 }
               }
-            }
 
-            if (!foundRoutes) {
-              extractedRoutes.push({ method: "USE", path: fullPath });
-              mountedRoutes.push({
-                method: "USE",
-                path: fullPath,
-                module: mod.name,
-                controller: ctrl.name,
-              });
-            }
-
-            const methodColors: Record<string, (msg: string) => string> = {
-              GET: pc.green,
-              POST: pc.yellow,
-              PUT: pc.cyan,
-              PATCH: pc.magenta,
-              DELETE: pc.red,
-              USE: pc.gray,
-            };
-
-            const tLog = performance.now();
-
-            for (const route of extractedRoutes) {
-              if (loggedRouteCount < LOG_ROUTE_LIMIT) {
-                const colorFn = methodColors[route.method] || pc.white;
-                log.info(
-                  `  ${colorFn(route.method.padEnd(6))} ${pc.white(route.path)}  ${pc.gray(`(${ctrl.name})`)}`,
-                  {
-                    _module: "router",
-                    path: route.path,
-                    module: mod.name,
-                    controller: ctrl.name,
-                  },
-                );
+              if (!foundRoutes) {
+                extractedRoutes.push({ method: "USE", path: fullPath });
+                mountedRoutes.push({
+                  method: "USE",
+                  path: fullPath,
+                  module: mod.name,
+                  controller: ctrl.name,
+                });
               }
-              loggedRouteCount++;
-            }
 
-            logMs += performance.now() - tLog;
+              const methodColors: Record<string, (msg: string) => string> = {
+                GET: pc.green,
+                POST: pc.yellow,
+                PUT: pc.cyan,
+                PATCH: pc.magenta,
+                DELETE: pc.red,
+                USE: pc.gray,
+              };
+
+              const tLog = performance.now();
+
+              for (const route of extractedRoutes) {
+                if (loggedRouteCount < LOG_ROUTE_LIMIT) {
+                  const colorFn = methodColors[route.method] || pc.white;
+                  log.info(
+                    `  ${colorFn(route.method.padEnd(6))} ${pc.white(route.path)}  ${pc.gray(`(${ctrl.name})`)}`,
+                    {
+                      _module: "router",
+                      path: route.path,
+                      module: mod.name,
+                      controller: ctrl.name,
+                    },
+                  );
+                }
+                loggedRouteCount++;
+              }
+
+              logMs += performance.now() - tLog;
+            }
+          }
+
+          if (loggedRouteCount > LOG_ROUTE_LIMIT) {
+            log.info(
+              `  ... and ${loggedRouteCount - LOG_ROUTE_LIMIT} more route(s) mounted (total: ${loggedRouteCount})`,
+              { _module: "router", module: mod.name },
+            );
           }
         }
 
-        if (loggedRouteCount > LOG_ROUTE_LIMIT) {
-          log.info(
-            `  ... and ${loggedRouteCount - LOG_ROUTE_LIMIT} more route(s) mounted (total: ${loggedRouteCount})`,
-            { _module: "router", module: mod.name }
+        const step8Ms = performance.now() - step8Start;
+        log.debug(
+          `[perf] step8_discover=${step8DiscoverMs.toFixed(2)}ms step8_mount=${mountMs.toFixed(2)}ms step8_log=${logMs.toFixed(2)}ms step8_total=${step8Ms.toFixed(2)}ms step8_full=${(step8DiscoverMs + step8Ms).toFixed(2)}ms`,
+          { _module: "boot" },
+        );
+        // When KERITH_PROFILE=true, also write directly to stderr so benchmarks
+        // can capture it regardless of the configured logLevel.
+        if (process.env.KERITH_PROFILE === "true") {
+          process.stderr.write(
+            `[perf] step8_discover=${step8DiscoverMs.toFixed(2)}ms step8_mount=${mountMs.toFixed(2)}ms step8_log=${logMs.toFixed(2)}ms step8_total=${step8Ms.toFixed(2)}ms step8_full=${(step8DiscoverMs + step8Ms).toFixed(2)}ms\n`,
           );
         }
-      }
 
-      const step8Ms = performance.now() - step8Start;
-      log.debug(
-        `[perf] step8_discover=${step8DiscoverMs.toFixed(2)}ms step8_mount=${mountMs.toFixed(2)}ms step8_log=${logMs.toFixed(2)}ms step8_total=${step8Ms.toFixed(2)}ms step8_full=${(step8DiscoverMs + step8Ms).toFixed(2)}ms`,
-        { _module: "boot" }
-      );
-      // When KERITH_PROFILE=true, also write directly to stderr so benchmarks
-      // can capture it regardless of the configured logLevel.
-      if (process.env.KERITH_PROFILE === 'true') {
-        process.stderr.write(
-          `[perf] step8_discover=${step8DiscoverMs.toFixed(2)}ms step8_mount=${mountMs.toFixed(2)}ms step8_log=${logMs.toFixed(2)}ms step8_total=${step8Ms.toFixed(2)}ms step8_full=${(step8DiscoverMs + step8Ms).toFixed(2)}ms\n`
-        );
-      }
-
-      (app as any).__KerithBootstrapped = true;
+        (app as any).__KerithBootstrapped = true;
       } // end if (app)
 
       const safeRegisteredModules = allModules.map(
@@ -1131,72 +1227,96 @@ export async function createApp(
       const submoduleCount = scanResult.submodules.length;
       const endTime = performance.now();
       const ms = Math.round(endTime - startTime);
-      
+
       if (usedCache) {
         log.info(
           `Bootstrap complete from cache — ${ms}ms (${numRescanned} modules rescanned)`,
-          { _module: "boot", durationMs: ms, moduleCount: allModules.length, routeCount: mountedRoutes.length }
+          {
+            _module: "boot",
+            durationMs: ms,
+            moduleCount: allModules.length,
+            routeCount: mountedRoutes.length,
+          },
         );
       } else {
         log.info(
-          `Bootstrap complete — ${ms}ms ${cacheLogReason || '(first boot)'}`.trim(),
-          { _module: "boot", durationMs: ms, moduleCount: allModules.length, routeCount: mountedRoutes.length }
+          `Bootstrap complete — ${ms}ms ${cacheLogReason || "(first boot)"}`.trim(),
+          {
+            _module: "boot",
+            durationMs: ms,
+            moduleCount: allModules.length,
+            routeCount: mountedRoutes.length,
+          },
         );
       }
 
       if (cacheEnabled) {
         // Build cache data payload from scan modules (source of truth for options/imports/exports/shared)
         // combined with NITS IDs from the registry and file lists from the NITS step.
-        const modulesForCache: CachedModule[] = scanResult.modules.map(scanMod => {
-          // Retrieve NITS ID from registry (seeded in Step 4). Falls back to dirPath-based temp ID.
-          const registeredMod = registry.getModule(scanMod.name, scanMod.domain);
-          const nitsId = registeredMod?.id ?? `mod_${Buffer.from(scanMod.dirPath).toString('hex').slice(0, 8)}`;
+        const modulesForCache: CachedModule[] = scanResult.modules.map(
+          (scanMod) => {
+            // Retrieve NITS ID from registry (seeded in Step 4). Falls back to dirPath-based temp ID.
+            const registeredMod = registry.getModule(
+              scanMod.name,
+              scanMod.domain,
+            );
+            const nitsId =
+              registeredMod?.id ??
+              `mod_${Buffer.from(scanMod.dirPath).toString("hex").slice(0, 8)}`;
 
-          // Retrieve files from the NITS step file map
-          let files: string[] = [];
-          if (filesByModulePath) {
-            files = filesByModulePath.get(normalizePath(path.resolve(scanMod.dirPath))) || [];
-          }
-          let cachedSize = 0;
-          let cachedMtime = 0;
-          for (const f of files) {
-            if (fs.existsSync(f)) {
-              const stat = fs.statSync(f);
-              cachedSize += stat.size;
-              if (stat.mtimeMs > cachedMtime) {
-                cachedMtime = stat.mtimeMs;
+            // Retrieve files from the NITS step file map
+            let files: string[] = [];
+            if (filesByModulePath) {
+              files =
+                filesByModulePath.get(
+                  normalizePath(path.resolve(scanMod.dirPath)),
+                ) || [];
+            }
+            let cachedSize = 0;
+            let cachedMtime = 0;
+            for (const f of files) {
+              if (fs.existsSync(f)) {
+                const stat = fs.statSync(f);
+                cachedSize += stat.size;
+                if (stat.mtimeMs > cachedMtime) {
+                  cachedMtime = stat.mtimeMs;
+                }
               }
             }
-          }
 
-          return {
-            // ModuleScanEntry fields
-            name: scanMod.name,
-            dirPath: scanMod.dirPath,
-            indexPath: scanMod.indexPath,
-            domain: scanMod.domain,
-            imports: scanMod.imports,
-            exports: scanMod.exports,
-            shared: scanMod.shared,
-            options: scanMod.options,
-            // CachedModule-specific fields
-            id: nitsId,
-            files,
+            return {
+              // ModuleScanEntry fields
+              name: scanMod.name,
+              dirPath: scanMod.dirPath,
+              indexPath: scanMod.indexPath,
+              domain: scanMod.domain,
+              imports: scanMod.imports,
+              exports: scanMod.exports,
+              shared: scanMod.shared,
+              options: scanMod.options,
+              // CachedModule-specific fields
+              id: nitsId,
+              files,
+              identifiers: [],
+              aliases: [],
+              cachedSize,
+              cachedMtime,
+            };
+          },
+        );
+
+        CacheManager.write(
+          {
+            domains: scanResult.domains,
+            modules: modulesForCache,
+            submodules: scanResult.submodules,
+            shared: scanResult.shared,
             identifiers: [],
             aliases: [],
-            cachedSize,
-            cachedMtime,
-          };
-        });
-
-        CacheManager.write({
-          domains: scanResult.domains,
-          modules: modulesForCache,
-          submodules: scanResult.submodules,
-          shared: scanResult.shared,
-          identifiers: [],
-          aliases: [],
-        }, KERITH_VERSION, configHash);
+          },
+          KERITH_VERSION,
+          configHash,
+        );
       }
 
       return {

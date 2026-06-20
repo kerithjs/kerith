@@ -168,6 +168,10 @@ async function main() {
   console.log(`Sizes: ${SIZES.join(', ')}`);
   console.log(`Samples per scenario: ${SAMPLES}`);
   console.log(`Scenarios: ${SCENARIOS.join(', ')}\n`);
+  console.log(`⚠️  NOTE: This benchmark runs via \`tsx\`, so child processes inherit the tsx loader.`);
+  console.log(`   The "baseline" times include tsx JIT transpilaton overhead and Node.js warmup,`);
+  console.log(`   which can introduce ±60ms of variance depending on system load.`);
+  console.log(`   For pure Node.js production numbers, run against compiled dist/ JS.\n`);
 
   for (const size of SIZES) {
     console.log(`\n=== Size: ${size} modules ===`);

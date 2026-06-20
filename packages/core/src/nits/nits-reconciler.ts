@@ -243,14 +243,17 @@ export function reconcile(
   }
 
   // ── STEP 2: Match by Hash (High Confidence, Similarity >= 0.9) ─────────────
+  const prevIdSets = unmatchedPrev.map((p) => new Set(p.identifiers));
+
   for (let i = unmatchedDiscovered.length - 1; i >= 0; i--) {
     const disc = unmatchedDiscovered[i];
+    const discSet = new Set(disc.identifiers);
 
-    const matchesForThisDisc: { sim: number, idx: number }[] = [];
+    const matchesForThisDisc: { sim: number; idx: number }[] = [];
 
     for (let j = 0; j < unmatchedPrev.length; j++) {
       const prev = unmatchedPrev[j];
-      const sim = hashSimilarity(prev.identifiers, disc.identifiers);
+      const sim = hashSimilarity(prevIdSets[j], discSet);
 
       const threshold = options.similarityThreshold ?? 0.9;
       if (sim >= threshold) {
@@ -277,6 +280,7 @@ export function reconcile(
 
       unmatchedDiscovered.splice(i, 1);
       unmatchedPrev.splice(bestMatchIdx, 1);
+      prevIdSets.splice(bestMatchIdx, 1);
     }
   }
 

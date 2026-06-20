@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import fg from 'fast-glob';
 import { DEFAULT_SIMILARITY_THRESHOLD, MINIMUM_SIMILARITY_THRESHOLD } from './constants.js';
-import { extractIdentifierCall } from '../cli/lib/ast-parser.js';
+import { extractIdentifierCall, extractMultipleIdentifierCalls } from '../cli/lib/ast-parser.js';
 
 /**
  * Calculates the Jaccard Similarity between two sets of strings.
@@ -10,19 +10,33 @@ import { extractIdentifierCall } from '../cli/lib/ast-parser.js';
  */
 export function calculateJaccardSimilarity(setA: Set<string>, setB: Set<string>): number {
   if (setA.size === 0 && setB.size === 0) return 1;
+  if (setA.size === 0 || setB.size === 0) return 0;
   
-  const intersectionSize = [...setA].filter(x => setB.has(x)).length;
-  const unionSize = new Set([...setA, ...setB]).size;
+  // O(min(N,M)) allocation-free intersection
+  let intersectionSize = 0;
+  const [smaller, larger] = setA.size < setB.size ? [setA, setB] : [setB, setA];
   
+  for (const item of smaller) {
+    if (larger.has(item)) {
+      intersectionSize++;
+    }
+  }
+  
+  const unionSize = setA.size + setB.size - intersectionSize;
   return intersectionSize / unionSize;
 }
 
 /**
- * Computes the similarity between two sets of identifiers.
+ * Computes the similarity between two arrays (or precomputed Sets) of identifiers.
  * returns a number between 0 and 1.
  */
-export function hashSimilarity(idsA: string[], idsB: string[]): number {
-  return calculateJaccardSimilarity(new Set(idsA), new Set(idsB));
+export function hashSimilarity(
+  idsA: string[] | Set<string>,
+  idsB: string[] | Set<string>
+): number {
+  const setA = idsA instanceof Set ? idsA : new Set(idsA);
+  const setB = idsB instanceof Set ? idsB : new Set(idsB);
+  return calculateJaccardSimilarity(setA, setB);
 }
 
 /**
@@ -93,11 +107,9 @@ export async function computeModuleHash(
   const allIdentifiers: string[] = [];
   
   for (const file of files) {
-    for (const callee of targetCallees) {
-      const result = extractIdentifierCall(file, callee);
-      if (result) {
-        allIdentifiers.push(result.name);
-      }
+    const results = extractMultipleIdentifierCalls(file, targetCallees);
+    for (const result of results) {
+      allIdentifiers.push(result.name);
     }
   }
   
