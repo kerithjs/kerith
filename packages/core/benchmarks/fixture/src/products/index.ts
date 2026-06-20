@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { SessionService } from '@modules/session';
-import { UsersService } from '@modules/users';
-import { MailerService } from '@modules/mailer';
-import { HealthService } from '@modules/health';
+import { LoggerService } from '@modules/logger';
+import { ConfigService } from '@modules/config';
+import { StorageService } from '@modules/storage';
+import { AuthService } from '@modules/auth';
 
 Module('products', {
-  imports: ["session","users","mailer","health"],
+  imports: ["logger","config","storage","auth"],
   exports: ['ProductsService']
 });
 
