@@ -1,6 +1,6 @@
 import type { ReconciliationResult } from '../../types/nits.js';
 import type { Violation, RelativeBoundaryViolation } from './violations.js';
-import { ViolationType, isErrorViolation } from './violations.js';
+import { ViolationType, isHardViolation } from './violations.js';
 import { type ModuleNode as ModuleGraphNode, type DomainNode, type SubModuleNode } from './graph-builder.js';
 
 const R    = '\x1b[0m';
@@ -342,7 +342,7 @@ export function printViolationDetails(violations: Violation[]): void {
         continue;
       }
 
-      const isError = isErrorViolation(v);
+      const isError = isHardViolation(v);
       const icon = isError ? `${AYU.red}✗${R}` : `${AYU.orange}⚠${R}`;
       
       console.log(`    ${icon}  ${AYU.fg}${v.message}${R}`);

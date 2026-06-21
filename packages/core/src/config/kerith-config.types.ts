@@ -42,13 +42,23 @@ export interface KerithConfig {
    */
   requirePreloader?: boolean;
   /**
-   * Maximum time (in milliseconds) allowed for a module to load via dynamic import().
-   * If the module exceeds this limit, a MODULE_LOAD_TIMEOUT error is thrown.
-   * Helps prevent silent deadlocks from top-level await tasks (e.g. infinite DB connections).
-   * @default 30000 (30 seconds)
-   * @since v1.6.0
+   * Architectural and quality rules.
    */
-  moduleLoadTimeoutMs?: number;
+  rules?: {
+    /**
+     * Maximum time (in milliseconds) allowed for a module to load via dynamic import().
+     * If the module exceeds this limit, a MODULE_LOAD_TIMEOUT error is thrown.
+     * Helps prevent silent deadlocks from top-level await tasks (e.g. infinite DB connections).
+     * @default 30000 (30 seconds)
+     */
+    moduleLoadTimeout?: number;
+    /**
+     * Determines how many reconciliation cycles a missing module is retained in the NITS
+     * registry before it is permanently purged.
+     * @default 5
+     */
+    stalePurgeCycles?: number;
+  };
   /**
    * Alias configuration.
    */

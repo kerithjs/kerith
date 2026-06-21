@@ -24,6 +24,7 @@ export type ViolationType = typeof ViolationType[keyof typeof ViolationType];
 /** REGLA-45 / Fase 6 — always forces exit 1 in `kerith check`. */
 export interface RelativeBoundaryViolation {
   type: typeof ViolationType.RELATIVE_BOUNDARY_VIOLATION;
+  severity: 'error' | 'warn';
   module: string;
   file: string;
   line?: number;
@@ -36,6 +37,7 @@ export interface StandardViolation {
     ViolationType,
     typeof ViolationType.RELATIVE_BOUNDARY_VIOLATION
   >;
+  severity: 'error' | 'warn';
   module: string;
   message: string;
   suggestion: string;
@@ -65,13 +67,15 @@ export function getModuleFiles(moduleDirPath: string): string[] {
   }
 }
 
+/**
+ * @deprecated Use isHardViolation(v) instead.
+ */
 export function isErrorViolation(violation: Violation): boolean {
-  return (
-    violation.type === ViolationType.CIRCULAR_DEPENDENCY ||
-    violation.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION ||
-    violation.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION ||
-    violation.type === ViolationType.SHARED_SCOPE_VIOLATION
-  );
+  return isHardViolation(violation);
+}
+
+export function isHardViolation(violation: Violation): boolean {
+  return violation.severity === 'error';
 }
 
 /**
@@ -97,6 +101,7 @@ export function detectRelativeBoundaryViolations(
       for (const { specifier, line } of crossModuleImports) {
         violations.push({
           type: ViolationType.RELATIVE_BOUNDARY_VIOLATION,
+          severity: 'error',
           module: moduleNode.name,
           file: path.relative(cwd, file).replace(/\\/g, '/'),
           line,
@@ -188,6 +193,7 @@ export function detectViolations(
 
           violations.push({
             type: ViolationType.DOMAIN_BOUNDARY_VIOLATION,
+            severity: 'error',
             module: node.name,
             message: `Domain boundary violation: module "${node.name}" (domain: ${node.domain ?? 'none'}) imports from internal domain alias "${imp.specifier}" (domain: ${targetDomain}).`,
             suggestion,
@@ -204,6 +210,7 @@ export function detectViolations(
           const parentAlias = parts[0];
           violations.push({
             type: ViolationType.SUBMODULE_DIRECT_SIBLING,
+            severity: 'warn',
             module: node.name,
             message: `Direct sibling access: submodule "${node.name}" directly imports sibling submodule "${sibling}".`,
             suggestion: `Access '${sibling}' through the parent module '${parentAlias}'`,
@@ -229,6 +236,7 @@ export function detectViolations(
         if (imp.specifier === `@${node.domain}`) {
           violations.push({
             type: ViolationType.SUBMODULE_DOMAIN_BYPASS,
+            severity: 'warn',
             module: node.name,
             message: `Domain bypass: submodule "${node.name}" directly imports its own domain root "@${node.domain}".`,
             suggestion: `Access domain resources through the parent module "@modules/${node.parentModule}" instead of the domain root.`,
@@ -242,6 +250,7 @@ export function detectViolations(
       if (isPrivate) {
         violations.push({
           type: ViolationType.PRIVATE_IMPORT,
+          severity: 'warn',
           module: node.name,
           message: `Private import detected: module "${node.name}" directly imports internal path from "${imp.specifier}".`,
           suggestion: `Import only the public index: "${suggestion}".`,
@@ -251,6 +260,7 @@ export function detectViolations(
         if (!node.declaredImports.includes(target)) {
           violations.push({
             type: ViolationType.UNDECLARED_IMPORT,
+            severity: 'warn',
             module: node.name,
             message: `Undeclared import: module "${node.name}" imports from "${target}" but it is not declared.`,
             suggestion: `Add "${target}" to the imports array in the Module() declaration of "${node.name}".`,
@@ -271,6 +281,7 @@ export function detectViolations(
     const cycleStr = cycle.join(' -> ');
     violations.push({
       type: ViolationType.CIRCULAR_DEPENDENCY,
+      severity: 'error',
       module: cycle[0],
       message: `Circular dependency detected: ${cycleStr}`,
       suggestion: 'Extract shared logic into a separate module to break the cycle.',
@@ -291,6 +302,7 @@ export function detectViolations(
     if (domainSet.has(undefined) && domainSet.size > 1) {
       violations.push({
         type: ViolationType.MODULE_SPACE_CONFLICT,
+        severity: 'warn',
         module: name,
         message: `Module space conflict: "${name}" exists in both flat space and domain space.`,
         suggestion: `Rename one of the modules. Cannot exist in both flat space and domain space.`,
