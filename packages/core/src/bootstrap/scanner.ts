@@ -154,7 +154,7 @@ async function detectSharedEntries(
       // declarations there will be silently ignored — emit an actionable warning instead.
       const sharedIndex = resolveIndexFile(sharedPath);
       if (sharedIndex) {
-        const ident = extractTopLevelIdentifier(sharedIndex);
+        const ident = await extractTopLevelIdentifier(sharedIndex);
         if (ident && ['Domain', 'Module', 'SubModule'].includes(ident.type)) {
           log?.(
             'warn',
@@ -216,7 +216,7 @@ export async function scanOrigin(
   const log = options.log;
 
   for (const indexPath of indexFiles) {
-    const calls = extractMultipleIdentifierCalls(indexPath, ['Domain', 'Module', 'SubModule']);
+    const calls = await extractMultipleIdentifierCalls(indexPath, ['Domain', 'Module', 'SubModule']);
     if (calls.length === 0) {
       continue;
     }
@@ -344,7 +344,7 @@ export async function scanModulesLegacy(
       );
     }
 
-    const identifier = extractTopLevelIdentifier(indexPath);
+    const identifier = await extractTopLevelIdentifier(indexPath);
     if (identifier?.type === 'Module') {
       modules.push({
         name: identifier.name,

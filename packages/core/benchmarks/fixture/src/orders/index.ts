@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { ConfigService } from '@modules/config';
+import { DatabaseService } from '@modules/database';
 import { RedisService } from '@modules/redis';
-import { SessionService } from '@modules/session';
-import { I18nService } from '@modules/i18n';
+import { MailerService } from '@modules/mailer';
+import { AuditService } from '@modules/audit';
 
 Module('orders', {
-  imports: ["config","redis","session","i18n"],
+  imports: ["database","redis","mailer","audit"],
   exports: ['OrdersService']
 });
 

@@ -2,7 +2,8 @@ import fg from 'fast-glob';
 import path from 'node:path';
 
 import { 
-  extractIdentifierCall
+  extractIdentifierCall,
+  extractMultipleIdentifierCalls
 } from './ast-parser.js';
 import {
   buildActiveAliasesFromConfig,
@@ -76,17 +77,17 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
 
   const targetCallees = ['Service', 'Repository', 'Schema'];
 
-  function buildNodeData(
+  async function buildNodeData(
     dirPath: string,
     indexPath: string,
-  ): { actualImports: ImportFound[]; internalIdentifiers: string[] } {
+  ): Promise<{ actualImports: ImportFound[]; internalIdentifiers: string[] }> {
     const actualImports: ImportFound[] = [];
     const internalIdentifiers: string[] = [];
 
     // Index file is scanned separately for identifier calls (not for imports).
-    for (const callee of targetCallees) {
-      const result = extractIdentifierCall(indexPath, callee);
-      if (result) internalIdentifiers.push(result.name);
+    const indexResults = await extractMultipleIdentifierCalls(indexPath, targetCallees);
+    for (const result of indexResults) {
+      internalIdentifiers.push(result.name);
     }
 
     // Filter the global file list — no extra I/O.
@@ -96,13 +97,16 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
       return !rel.match(/^index\./);
     });
 
-    for (const file of moduleFiles) {
+    const fileResults = await Promise.all(moduleFiles.map(async file => {
       const fileImports = extractModuleImports(file, activeAliases);
-      actualImports.push(...fileImports);
+      const fileIdentifiers = await extractMultipleIdentifierCalls(file, targetCallees);
+      return { fileImports, fileIdentifiers };
+    }));
 
-      for (const callee of targetCallees) {
-        const result = extractIdentifierCall(file, callee);
-        if (result) internalIdentifiers.push(result.name);
+    for (const { fileImports, fileIdentifiers } of fileResults) {
+      actualImports.push(...fileImports);
+      for (const result of fileIdentifiers) {
+        internalIdentifiers.push(result.name);
       }
     }
 
@@ -110,8 +114,10 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
   }
 
   const nodes: ModuleNode[] = [];
-  for (const mod of scanResult.modules) {
-    const { actualImports, internalIdentifiers } = buildNodeData(mod.dirPath, mod.indexPath);
+  const nodeDataResults = await Promise.all(scanResult.modules.map(mod => buildNodeData(mod.dirPath, mod.indexPath)));
+  for (let i = 0; i < scanResult.modules.length; i++) {
+    const mod = scanResult.modules[i];
+    const { actualImports, internalIdentifiers } = nodeDataResults[i];
 
     const submodules = scanResult.submodules
       .filter(sub => sub.parentModule === mod.name && sub.domain === mod.domain)
@@ -130,8 +136,10 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
   }
 
   const subNodes: SubModuleNode[] = [];
-  for (const sub of scanResult.submodules) {
-    const { actualImports, internalIdentifiers } = buildNodeData(sub.dirPath, sub.indexPath);
+  const subNodeDataResults = await Promise.all(scanResult.submodules.map(sub => buildNodeData(sub.dirPath, sub.indexPath)));
+  for (let i = 0; i < scanResult.submodules.length; i++) {
+    const sub = scanResult.submodules[i];
+    const { actualImports, internalIdentifiers } = subNodeDataResults[i];
     subNodes.push({
       name: sub.name,
       dirPath: sub.dirPath,

@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { WishlistService } from '@modules/wishlist';
-import { InvoicesService } from '@modules/invoices';
-import { ReviewsService } from '@modules/reviews';
+import { InventoryService } from '@modules/inventory';
 import { AddressService } from '@modules/address';
+import { SearchService } from '@modules/search';
+import { NotificationsService } from '@modules/notifications';
 
 Module('admin', {
-  imports: ["wishlist","invoices","reviews","address"],
+  imports: ["inventory","address","search","notifications"],
   exports: ['AdminService']
 });
 

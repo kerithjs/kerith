@@ -62,15 +62,15 @@ export function extractOptionsFromSource(src: string): Record<string, unknown> {
   return options;
 }
 
-export function extractIdentifierCall(
+export async function extractIdentifierCall(
   filePath: string,
   calleeName: string
-): IdentifierCall | null {
+): Promise<IdentifierCall | null> {
   let found: IdentifierCall | null = null;
   let code = "";
 
   try {
-    code = fs.readFileSync(filePath, "utf-8");
+    code = await fs.promises.readFile(filePath, "utf-8");
     const ast = acorn.parse(code, {
       ecmaVersion: "latest",
       sourceType: "module",
@@ -141,15 +141,15 @@ export function extractIdentifierCall(
   return found;
 }
 
-export function extractMultipleIdentifierCalls(
+export async function extractMultipleIdentifierCalls(
   filePath: string,
   calleeNames: string[]
-): IdentifierCall[] {
+): Promise<IdentifierCall[]> {
   const found: IdentifierCall[] = [];
   let code = "";
 
   try {
-    code = fs.readFileSync(filePath, "utf-8");
+    code = await fs.promises.readFile(filePath, "utf-8");
     const ast = acorn.parse(code, {
       ecmaVersion: "latest",
       sourceType: "module",
@@ -226,10 +226,10 @@ export function extractMultipleIdentifierCalls(
   return found;
 }
 
-export function extractModuleDeclaration(
+export async function extractModuleDeclaration(
   indexPath: string,
-): ModuleDeclaration | null {
-  const result = extractIdentifierCall(indexPath, 'Module');
+): Promise<ModuleDeclaration | null> {
+  const result = await extractIdentifierCall(indexPath, 'Module');
   if (!result) return null;
 
   return {
@@ -242,14 +242,14 @@ export function extractModuleDeclaration(
  * Returns the first top-level Kerith identifier call in an index file (source order).
  * `null` when the file has no Domain / Module / SubModule call.
  */
-export function extractTopLevelIdentifier(
+export async function extractTopLevelIdentifier(
   filePath: string,
-): TopLevelIdentifier | null {
+): Promise<TopLevelIdentifier | null> {
   let found: TopLevelIdentifier | null = null;
   let code = '';
 
   try {
-    code = fs.readFileSync(filePath, 'utf-8');
+    code = await fs.promises.readFile(filePath, 'utf-8');
     const ast = acorn.parse(code, {
       ecmaVersion: 'latest',
       sourceType: 'module',

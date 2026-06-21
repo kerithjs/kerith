@@ -1,11 +1,11 @@
 import { Module } from '../../../../src/index.js';
-import { CartService } from '@modules/cart';
-import { AddressService } from '@modules/address';
-import { SearchService } from '@modules/search';
 import { ReportsService } from '@modules/reports';
+import { InvoicesService } from '@modules/invoices';
+import { PaymentsService } from '@modules/payments';
+import { AnalyticsService } from '@modules/analytics';
 
 Module('checkout', {
-  imports: ["cart","address","search","reports"],
+  imports: ["reports","invoices","payments","analytics"],
   exports: ['CheckoutService']
 });
 
