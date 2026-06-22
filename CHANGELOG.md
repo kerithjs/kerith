@@ -13,7 +13,14 @@ For full technical details, see the individual package changelogs:
 
 ## [2.0.0] - 2026-06-04
 
+### Bootstrap
+
+- **Bootstrap Pipeline**: Refactored `createApp()` into an explicit step-based pipeline (`step-00` → `step-09`) with isolated bootstrap stages.
+- **Bootstrap Context**: Introduced shared `BootstrapContext` passed across all bootstrap steps, replacing the previous monolithic bootstrap state.
+- **Architecture**: Bootstrap internals reorganized into dedicated step modules, significantly improving maintainability and future extensibility without changing runtime behavior.
+
 ### Added — Shared System
+
 - Global shared (`@shared`): place shared code in `src/shared/`, declare with `shared: ['@shared']` in Module()
 - Domain-scoped shared (`@{domain}/shared`): place code in `src/{domain}/_shared/`, implicit access for domain modules
 - `kerith check` detects UNDECLARED_SHARED, UNUSED_SHARED, SHARED_SCOPE_VIOLATION
@@ -23,6 +30,7 @@ For full technical details, see the individual package changelogs:
 - `sync-tsconfig` generates aliases for @shared and @{domain}/shared automatically
 
 ### Added — Runtime Zero & Bootstrap Cache
+
 - Bootstrap cache (`.kerith/bootstrap-cache.json`) for near-zero startup times in development
 - Intelligent `mtime` and file-size validation for partial cache invalidation
 - Partial scanning optimizations (only invalidated domains are rescanned)

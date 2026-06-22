@@ -158,6 +158,72 @@ export function extractModuleImports(
   return imports;
 }
 
+async function parseImportSpecifiersAsync(
+  filePath: string,
+  log?: LogHandler,
+): Promise<{ specifier: string; line: number }[] | null> {
+  try {
+    const code = await fs.promises.readFile(filePath, 'utf-8');
+    const isJs =
+      filePath.endsWith('.js') ||
+      filePath.endsWith('.mjs') ||
+      filePath.endsWith('.cjs');
+
+    if (isJs) {
+      try {
+        acorn.parse(code, {
+          ecmaVersion: 'latest',
+          sourceType: 'module',
+        });
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        emitLog(log, 'warn', `[System] [NITS Parser] Warning: Failed to parse imports in "${filePath}".`);
+        emitLog(log, 'debug', `  Detail: ${message}`);
+        return null;
+      }
+    }
+
+    const results: { specifier: string; line: number }[] = [];
+    let match: RegExpExecArray | null;
+    const regex = new RegExp(IMPORT_REGEX.source, IMPORT_REGEX.flags);
+    const strippedCode = stripLineComments(code);
+
+    while ((match = regex.exec(strippedCode)) !== null) {
+      const specifier = match[1];
+      const textBeforeMatch = strippedCode.substring(0, match.index);
+      const line = textBeforeMatch.split('\n').length;
+      results.push({ specifier, line });
+    }
+
+    return results;
+  } catch (error: unknown) {
+    const err = error as NodeJS.ErrnoException;
+    if (err.code === 'ENOENT') {
+      return null;
+    }
+    const message = err instanceof Error ? err.message : String(err);
+    emitLog(log, 'warn', `[System] [NITS Parser] Warning: Failed to parse imports in "${filePath}".`);
+    emitLog(log, 'debug', `  Detail: ${message}`);
+    return null;
+  }
+}
+
+export async function extractModuleImportsAsync(
+  filePath: string,
+  activeAliases: readonly string[] = DEFAULT_ACTIVE_ALIASES,
+  log?: LogHandler,
+): Promise<ImportFound[]> {
+  const parsed = await parseImportSpecifiersAsync(filePath, log);
+  if (!parsed) return [];
+
+  const imports: ImportFound[] = [];
+  for (const { specifier, line } of parsed) {
+    if (!isKerithAlias(specifier, activeAliases)) continue;
+    imports.push({ specifier, line, file: filePath });
+  }
+  return imports;
+}
+
 /**
  * Scans a file for relative imports whose resolved target lies outside `moduleDirPath`.
  * Never throws — resolution errors yield an empty array and a debug log.

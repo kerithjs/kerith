@@ -5,7 +5,7 @@ export interface MtimeValidationResult {
   toRescan: string[];        // domain IDs that need to be rescanned
 }
 
-function getModuleSignature(files: string[]): { maxMtime: number; totalSize: number } {
+export function getModuleSignature(files: string[]): { maxMtime: number; totalSize: number } {
   let maxMtime = 0;
   let totalSize = 0;
 
