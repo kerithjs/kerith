@@ -215,8 +215,16 @@ export async function scanOrigin(
   const submodules: SubModuleScanEntry[] = [];
   const log = options.log;
 
-  for (const indexPath of indexFiles) {
-    const calls = await extractMultipleIdentifierCalls(indexPath, ['Domain', 'Module', 'SubModule']);
+  // 1. Parallel I/O
+  const parsedFiles = await Promise.all(
+    indexFiles.map(async (indexPath) => {
+      const calls = await extractMultipleIdentifierCalls(indexPath, ['Domain', 'Module', 'SubModule']);
+      return { indexPath, calls };
+    })
+  );
+
+  // 2. Sequential mutation
+  for (const { indexPath, calls } of parsedFiles) {
     if (calls.length === 0) {
       continue;
     }

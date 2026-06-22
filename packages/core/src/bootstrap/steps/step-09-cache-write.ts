@@ -25,6 +25,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { CacheManager } from "../../cache/bootstrap-cache.js";
 import type { CachedModule } from "../../cache/bootstrap-cache.js";
+import { getModuleSignature } from "../../cache/mtime-validator.js";
 import { normalizePath } from "../../core/utils/paths.js";
 import type { BootstrapContext } from "../context.js";
 import { KERITH_VERSION } from "../createApp.js";
@@ -61,16 +62,13 @@ export function runCacheWrite(ctx: BootstrapContext): void {
             normalizePath(path.resolve(scanMod.dirPath)),
           ) || [];
       }
-      let cachedSize = 0;
-      let cachedMtime = 0;
-      for (const f of files) {
-        if (fs.existsSync(f)) {
-          const stat = fs.statSync(f);
-          cachedSize += stat.size;
-          if (stat.mtimeMs > cachedMtime) {
-            cachedMtime = stat.mtimeMs;
-          }
-        }
+      let cachedSize = (scanMod as any).cachedSize;
+      let cachedMtime = (scanMod as any).cachedMtime;
+
+      if (cachedSize === undefined || cachedMtime === undefined) {
+        const signature = getModuleSignature(files);
+        cachedSize = signature.totalSize;
+        cachedMtime = signature.maxMtime;
       }
 
       return {

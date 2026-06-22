@@ -17,12 +17,12 @@
 
 import path from "node:path";
 import { KerithError } from "../../core/errors.js";
-import { extractModuleImports } from "../../nits/import-scanner.js";
+import { extractModuleImportsAsync } from "../../nits/import-scanner.js";
 import { normalizePath, groupFilesByModulePath } from "../../core/utils/paths.js";
 import { buildModuleKey } from "../../core/registry.js";
 import type { BootstrapContext } from "../context.js";
 
-export function runValidations(ctx: BootstrapContext): void {
+export async function runValidations(ctx: BootstrapContext): Promise<void> {
   const { config, log, registry, allModules, allProjectFiles } = ctx;
 
   if (!config || !log || !allModules || !allProjectFiles) {
@@ -186,12 +186,19 @@ export function runValidations(ctx: BootstrapContext): void {
           buildModuleKey(registeredMod.name, registeredMod.domain),
         ) ?? [];
       const usedImports = new Set<string>();
+      const registeredAliases = registry.getRegisteredAliases();
 
-      for (const file of sourceFiles) {
-        const actualImports = extractModuleImports(
-          file,
-          registry.getRegisteredAliases(),
-        );
+      const allActualImports = await Promise.all(
+        sourceFiles.map(async (file) => {
+          const actualImports = await extractModuleImportsAsync(
+            file,
+            registeredAliases,
+          );
+          return { file, actualImports };
+        })
+      );
+
+      for (const { file, actualImports } of allActualImports) {
         for (const imp of actualImports) {
           const parts = imp.specifier.split("/");
           const targetModule = imp.specifier.startsWith("@modules/")
