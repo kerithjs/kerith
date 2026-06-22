@@ -54,12 +54,7 @@ export async function createApp(
         usedCache,
         numRescanned,
         cacheLogReason,
-        isFullCacheHit,
-        cacheEnabled,
-        configHash,
       } = ctx;
-      const rescannedDomains = ctx.rescannedDomains ?? new Set<string>();
-      const isOriginMode = !!config.origin;
       if (!scanResult || !resolvedModules) throw new Error("Scanner failed");
 
       // Step 03 — Entity Registration & File Prefetch
@@ -67,9 +62,6 @@ export async function createApp(
 
       // Step 04 — NITS identity reconciliation
       await runNitsReconciliation(ctx);
-
-      const allProjectFiles = ctx.allProjectFiles ?? [];
-      const filesByModulePath = ctx.filesByModulePath;
 
       // Step 05 — Activate runtime aliases (domains, modules, shared from scan)
       await runAliasActivation(ctx);
@@ -81,8 +73,6 @@ export async function createApp(
       await runValidations(ctx);
 
       const allModules = ctx.allModules ?? [];
-      const modulePathMap = ctx.modulePathMap!;
-      const sortedModulePaths = ctx.sortedModulePaths ?? [];
 
       // Step 08 — Discover controllers and mount routes (Express only)
       await runControllersAndMount(ctx, app);
@@ -91,7 +81,6 @@ export async function createApp(
       const safeRegisteredModules = allModules.map(
         (m) => registry.getModule(m.name, m.domain)!,
       );
-      const durationMs = Math.round(performance.now() - startTime);
 
       if (app) {
         log.info(`Mounted ${mountedRoutes.length} route(s)`, {
