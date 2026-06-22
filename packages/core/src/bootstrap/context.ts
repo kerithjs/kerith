@@ -38,7 +38,7 @@ import type {
   RegisteredModule,
 } from "../types/index.js";
 import type { Logger } from "../types/index.js";
-import type { KerithConfig } from "../config/kerith-config.types.js";
+import type { BootConfig } from "../core/config.js";
 import type { PreloadConfig } from "../preload/index.js";
 import type { InternalRegistry } from "../core/registry.js";
 import type { ScanResult } from "./scanner.js";
@@ -76,7 +76,7 @@ export interface BootstrapContext {
   // ── Populated by step-01-config ──────────────────────────────────────────
 
   /** Fully resolved Kerith configuration (defaults applied). */
-  config?: KerithConfig;
+  config?: BootConfig;
 
   /**
    * Structured logger for use in all subsequent steps.

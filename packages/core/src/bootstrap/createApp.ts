@@ -5,24 +5,15 @@ import fg from "fast-glob";
 import type { Application } from "express";
 import type { CreateAppOptions, KerithApp } from "../types/index.js";
 
-import { loadConfig } from "../core/config.js";
+import { runConfigLoad } from "./steps/step-01-config.js";
+import { runSetupPhase } from "./steps/step-01b-setup.js";
 import { KerithError } from "../core/errors.js";
 import {
   createRegistry,
   registryContext,
   buildModuleKey,
 } from "../core/registry.js";
-import { activateAliasResolver } from "../aliases/resolver.js";
-import { updateAliasCache } from "../aliases/cache.js";
-import {
-  writeTsconfigKerith,
-  ensureTsconfigExtends,
-} from "../config/tsconfig-generator.js";
-import { createLogger, defaultLogHandler } from "../core/logger.js";
-import {
-  setPinoInstance,
-  createDefaultPinoInstance,
-} from "../core/pino-instance.js";
+import { runAliasActivation } from "./steps/step-05-aliases.js";
 import { performance } from "node:perf_hooks";
 import pc from "picocolors";
 import { extractModuleImports } from "../nits/import-scanner.js";
@@ -86,77 +77,17 @@ export async function createApp(
     const startTime = performance.now();
     let cacheEnabled = false; // hoisted so catch{} can call CacheManager.fail() when needed
     try {
-      // Step 0.1 — Pre-loader Validation
-      const preloadConfig = globalThis.__KERITH_PRELOAD_CONFIG__;
-      const preloaderActive = preloadConfig?.preloaded === true;
-
-      // Step 1 — Load configuration
-      const config = await loadConfig(options);
-
-      if (config.requirePreloader === true && !preloaderActive) {
-        throw new KerithError(
-          "PRELOADER_REQUIRED",
-          "The application requires the Kerith pre-loader to be active.",
-          'Run the application with "node --import ./.kerith/preload.js" or set requirePreloader: false in kerith.config.ts.',
-        );
-      }
-      if (config.logger === defaultLogHandler) {
-        setPinoInstance(
-          createDefaultPinoInstance(config.logFormat, config.logLevel),
-        );
-      }
-      const log = createLogger(config.logger, config.logLevel, "boot");
-
-      // Step 1.0.5 — Generar tsconfig.kerith.json y registrar aliases
-      await writeTsconfigKerith(config, process.cwd(), log);
-      await ensureTsconfigExtends(process.cwd(), log);
-      log.debug(
-        `[bootstrap] Aliases registrados: ${[...config.resolvedAliases.keys()].join(", ")}`,
-        { _module: "alias" },
-      );
-
-      // Step 1.1 — Pre-loader Warnings
-      if (!preloaderActive && config.resolveAliases !== false) {
-        log.warn(
-          "Pre-loader not detected. Alias resolution might fail for top-level imports. Running in legacy mode (v1.4.0).",
-          {
-            suggestion:
-              'Run "npx kerith sync-preload" and use "node --import ./.kerith/preload.js"',
-          },
-        );
-      }
-
-      if (preloaderActive) {
-        if (
-          preloadConfig?._version &&
-          preloadConfig._version !== KERITH_VERSION
-        ) {
-          log.warn(
-            `Pre-loader version mismatch: preload.js was generated with v${preloadConfig._version} but Kerith-core v${KERITH_VERSION} is installed. Run: kerith sync-preload`,
-          );
-        }
-      }
-
       const cwd = process.cwd();
+      const ctx: BootstrapContext = { cwd, options, registry };
 
-      // Step 1 — Resolve and validate origin path
-      if (config.origin) {
-        const originAbsolutePath = path.resolve(cwd, config.origin);
-        if (!fs.existsSync(originAbsolutePath)) {
-          throw new KerithError(
-            "ORIGIN_NOT_FOUND",
-            `origin '${config.origin}' not found. Set origin in kerith.config.js`,
-          );
-        }
-      }
+      // Step 01 — Load configuration
+      await runConfigLoad(ctx);
 
-      log.info("Bootstrap started", {
-        origin: config.origin ?? "(none)",
-        modules: config.modules,
-        prefix: config.prefix || "(none)",
-        strict: config.strict,
-        nodeVersion: process.version,
-      });
+      // Step 01b — Setup & Pre-validation
+      await runSetupPhase(ctx);
+
+      const { config, log, preloaderActive, preloadConfig } = ctx;
+      if (!config || !log) throw new Error("Config load failed");
 
       // Cache setup
       cacheEnabled =
@@ -480,86 +411,15 @@ export async function createApp(
         }
       }
 
-      // Step 5 — Activate runtime aliases (domains, modules, shared from scan)
-      if (config.resolveAliases !== false) {
-        const pureModuleAliases: Record<string, string> = {};
-
-        for (const domain of registry.getAllDomains()) {
-          const domainAlias = `@${domain.name}`;
-          const _domainIndexPath = path.join(domain.path, "index.ts"); // Fallback o real? El path del domain es dirPath.
-          // Wait, domain has no indexPath in DomainRegistration?
-          // DomainRegistration has `path` (dirPath)
-          pureModuleAliases[domainAlias] = domain.path;
-          pureModuleAliases[`${domainAlias}/*`] = `${domain.path}/*`;
-          registry.registerAlias(domainAlias, domain.path);
-          registry.registerAlias(`${domainAlias}/*`, `${domain.path}/*`);
-        }
-
-        for (const mod of resolvedModules) {
-          if (mod.domain) {
-            const domainAlias = `@${mod.domain}/${mod.name}`;
-            pureModuleAliases[domainAlias] = mod.indexPath;
-            pureModuleAliases[`${domainAlias}/*`] = `${mod.dirPath}/*`;
-            registry.registerAlias(domainAlias, mod.indexPath);
-            registry.registerAlias(`${domainAlias}/*`, `${mod.dirPath}/*`);
-          }
-
-          const aliasKey = `@modules/${mod.name}`;
-          pureModuleAliases[aliasKey] = mod.indexPath;
-          pureModuleAliases[`${aliasKey}/*`] = `${mod.dirPath}/*`;
-          registry.registerAlias(aliasKey, mod.indexPath);
-          registry.registerAlias(`${aliasKey}/*`, `${mod.dirPath}/*`);
-        }
-
-        // Shared aliases — same priority as domain aliases (before @modules/*)
-        // @shared global
-        const globalShared = registry.getShared("@shared");
-        if (globalShared) {
-          pureModuleAliases["@shared"] = globalShared.path;
-          pureModuleAliases["@shared/*"] = `${globalShared.path}/*`;
-        }
-
-        // Domain-scoped shared
-        for (const entry of registry
-          .getAllShared()
-          .filter((e) => e.type === "domain-scoped")) {
-          pureModuleAliases[entry.alias] = entry.path;
-          pureModuleAliases[`${entry.alias}/*`] = `${entry.path}/*`;
-        }
-
-        const normalizedConfigAliases: Record<string, string> = {};
-        for (const [alias, absPath] of config.resolvedAliases) {
-          registry.registerAlias(alias, absPath);
-          normalizedConfigAliases[alias] = absPath;
-          log.debug(`Alias registered: ${alias} → ${absPath}`, {
-            alias,
-            finalTargetPath: absPath,
-            source: "config",
-            _module: "alias",
-          });
-        }
-
-        // Registrar @modules como alias built-in
-        if (config.modules) {
-          const modulesDir = config.modules.replace(/\/\*$/, "");
-          registry.registerAlias(
-            "@modules",
-            path.resolve(process.cwd(), modulesDir),
-          );
-        } else if (config.origin) {
-          registry.registerAlias(
-            "@modules",
-            path.resolve(process.cwd(), config.origin),
-          );
-        }
-
-        await activateAliasResolver(
-          pureModuleAliases,
-          normalizedConfigAliases,
-          log,
-        );
-        updateAliasCache(registry.getAllAliases());
-      }
+      // Step 05 — Activate runtime aliases (domains, modules, shared from scan)
+      await runAliasActivation({
+        options,
+        config,
+        log,
+        registry,
+        resolvedModules,
+        cwd,
+      } as BootstrapContext);
 
       const scanEnd = performance.now();
 
@@ -1242,7 +1102,7 @@ export async function createApp(
         routes: mountedRoutes,
         registry,
         runtime: {
-          preloaderActive,
+          preloaderActive: preloaderActive ?? false,
           preloaderVersion: preloadConfig?._version ?? null,
           aliasesAtBoot: preloadConfig?.aliases ?? {},
         },
