@@ -1,12 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
-import fg from "fast-glob";
 import type { Application } from "express";
 import type { CreateAppOptions, KerithApp } from "../types/index.js";
-
+import { pathToFileURL } from "node:url";
+import fg from "fast-glob";
 import { runConfigLoad } from "./steps/step-01-config.js";
 import { runSetupPhase } from "./steps/step-01b-setup.js";
+import { runCacheAndScan } from "./steps/step-02-cache-scan.js";
+import { runEntityRegistration } from "./steps/step-03-register.js";
+import { runNitsReconciliation } from "./steps/step-04-nits.js";
+import { runDynamicImports } from "./steps/step-06-imports.js";
+import { runValidations } from "./steps/step-07-validations.js";
 import { KerithError } from "../core/errors.js";
 import {
   createRegistry,
@@ -16,27 +20,9 @@ import {
 import { runAliasActivation } from "./steps/step-05-aliases.js";
 import { performance } from "node:perf_hooks";
 import pc from "picocolors";
-import { extractModuleImports } from "../nits/import-scanner.js";
-import {
-  loadNitsRegistry,
-  saveNitsRegistry,
-  initNitsRegistry,
-  inferProjectName,
-  scanShadowFiles,
-  postReconcileEnsureShadowFiles,
-} from "../nits/nits-store.js";
-import {
-  reconcile,
-  buildUpdatedNitsRegistry,
-  buildNitsIdMap,
-} from "../nits/nits-reconciler.js";
-import { reportReconciliation } from "../nits/nits-reporter.js";
-import { computeModuleHash } from "../nits/nits-hash.js";
 import { normalizePath, groupFilesByModulePath } from "../core/utils/paths.js";
 import { registerShutdown } from "../core/shutdown.js";
-import type { DiscoveredModule } from "../types/nits.js";
 import { scanFromConfig, scanModulesToResolved } from "./scanner.js";
-import { registerEntitiesFromScan } from "./register-from-scan.js";
 import { importIndexEntry } from "./import-index.js";
 import { CacheManager } from "../cache/bootstrap-cache.js";
 import { MtimeValidator } from "../cache/mtime-validator.js";
@@ -75,10 +61,10 @@ export async function createApp(
 
   return registryContext.run(registry, async () => {
     const startTime = performance.now();
-    let cacheEnabled = false; // hoisted so catch{} can call CacheManager.fail() when needed
+    let ctx: BootstrapContext | undefined;
     try {
       const cwd = process.cwd();
-      const ctx: BootstrapContext = { cwd, options, registry };
+      ctx = { cwd, options, registry };
 
       // Step 01 — Load configuration
       await runConfigLoad(ctx);
@@ -89,327 +75,22 @@ export async function createApp(
       const { config, log, preloaderActive, preloadConfig } = ctx;
       if (!config || !log) throw new Error("Config load failed");
 
-      // Cache setup
-      cacheEnabled =
-        process.env.NODE_ENV !== "production" &&
-        process.env.KERITH_BOOTSTRAP_CACHE !== "false" &&
-        ((config as any).bootstrap?.cache ?? true);
+      // Step 02 — Cache Decision & Scanner
+      await runCacheAndScan(ctx);
 
-      let scanResult: import("./scanner.js").ScanResult | undefined;
-      let usedCache = false;
-      let numRescanned = 0;
-      let cacheLogReason = "";
-      const rescannedDomains = new Set<string>();
-      let isFullCacheHit = false;
-
-      // Si ningún archivo de config existe, configPath queda vacío.
-      // hashConfig('') devuelve 'no-config', que es estable entre boots — no degrada.
-      const configCandidates = [
-        "kerith.config.ts",
-        "kerith.config.js",
-        "kerith.config.mjs",
-      ];
-      let configPath = "";
-      for (const cand of configCandidates) {
-        const p = path.join(cwd, cand);
-        if (fs.existsSync(p)) {
-          configPath = p;
-          break;
-        }
-      }
-
-      let configHash = "";
-
-      if (cacheEnabled) {
-        const rawCache = CacheManager.read();
-        CacheManager.pending();
-        configHash = CacheManager.hashConfig(configPath);
-
-        if (rawCache !== null) {
-          if (!CacheManager.valid(rawCache, KERITH_VERSION, configHash)) {
-            cacheLogReason =
-              rawCache.version !== KERITH_VERSION
-                ? "(cache inválido — versión mismatch)"
-                : rawCache.cwd !== process.cwd()
-                  ? "(cache inválido — directorio movido)"
-                  : "(cache inválido — config modificado)";
-          } else {
-            // toRescan: domain IDs whose modules on disk changed (by mtime or size).
-            // Domains not in toRescan will be loaded directly from rawCache.data.
-            const { toRescan } = MtimeValidator.validate(rawCache);
-            numRescanned = toRescan.length;
-
-            if (numRescanned === 0) {
-              // Skipped scanning entirely
-              scanResult = {
-                domains: rawCache.data!.domains,
-                modules: rawCache.data!.modules,
-                submodules: rawCache.data!.submodules,
-                shared: rawCache.data!.shared,
-              };
-              usedCache = true;
-              isFullCacheHit = true;
-            } else {
-              // Partial scan
-              const partialScan = await scanFromConfig(
-                config,
-                cwd,
-                (level, message, meta) => {
-                  log[level](message, meta);
-                },
-                toRescan,
-              );
-
-              for (const d of toRescan) rescannedDomains.add(d);
-
-              // Merge logic
-              const mergedDomains = rawCache
-                .data!.domains.filter((d) => !rescannedDomains.has(d.name))
-                .concat(partialScan.domains);
-
-              // Handle flat modules fallback explicitly (using '__flat__')
-              const cachedModules = rawCache.data!.modules.filter(
-                (m) => !rescannedDomains.has(m.domain || "__flat__"),
-              );
-              const mergedModules = cachedModules.concat(
-                partialScan.modules as any[],
-              );
-
-              const cachedSubmodules = rawCache.data!.submodules.filter(
-                (s) => !rescannedDomains.has(s.domain || "__flat__"),
-              );
-              const mergedSubmodules = cachedSubmodules.concat(
-                partialScan.submodules,
-              );
-
-              // Global @shared se rescannea siempre (costo mínimo: una stat de directorio).
-              // La razón: @shared no pertenece a ningún dominio, por lo que no tiene un
-              // domainKey que pueda aparecer en `toRescan`. Se fuerza rescan para detectar
-              // si src/shared/ fue creado o eliminado entre boots.
-              // Domain-scoped shared is tied to domain.
-              const finalSharedMap = new Map();
-              for (const s of rawCache.data!.shared) {
-                if (s.type === "global" || !rescannedDomains.has(s.domain!)) {
-                  finalSharedMap.set(s.alias, s);
-                }
-              }
-              for (const s of partialScan.shared) {
-                finalSharedMap.set(s.alias, s);
-              }
-
-              scanResult = {
-                domains: mergedDomains,
-                modules: mergedModules,
-                submodules: mergedSubmodules,
-                shared: Array.from(finalSharedMap.values()),
-              };
-              usedCache = true;
-            }
-          }
-        }
-      }
-
-      // Step 2 — Filesystem scan (if not fully/partially cached)
-      if (!scanResult) {
-        scanResult = await scanFromConfig(
-          config,
-          cwd,
-          (level, message, meta) => {
-            log[level](message, meta);
-          },
-        );
-      }
-
+      const { scanResult, resolvedModules, usedCache, numRescanned, cacheLogReason, isFullCacheHit, cacheEnabled, configHash } = ctx;
+      const rescannedDomains = ctx.rescannedDomains ?? new Set<string>();
       const isOriginMode = !!config.origin;
+      if (!scanResult || !resolvedModules) throw new Error("Scanner failed");
 
-      if (scanResult.domains.length > 0) {
-        log.debug(
-          `Domains discovered: ${scanResult.domains.map((d) => d.name).join(", ")}`,
-          { _module: "scanner", count: scanResult.domains.length },
-        );
-      }
-      if (scanResult.shared.length > 0) {
-        log.debug(
-          `Shared roots discovered: ${scanResult.shared.map((s) => s.alias).join(", ")}`,
-          { _module: "scanner", shared: scanResult.shared },
-        );
-      }
+      // Step 03 — Entity Registration & File Prefetch
+      await runEntityRegistration(ctx);
 
-      const resolvedModules = scanModulesToResolved(scanResult);
+      // Step 04 — NITS identity reconciliation
+      await runNitsReconciliation(ctx);
 
-      for (const mod of resolvedModules) {
-        log.debug(`Discovered module directory: ${mod.dirPath}`, {
-          dirPath: mod.dirPath,
-          domain: mod.domain,
-          _module: "module",
-        });
-      }
-
-      // Step 3 — Register scan entities (domains → shared → submodules)
-      registerEntitiesFromScan(registry, scanResult, (level, message, meta) => {
-        log[level](message, meta);
-      });
-      log.debug("Scan entities seeded in registry", {
-        domains: scanResult.domains.length,
-        shared: scanResult.shared.length,
-        submodules: scanResult.submodules.length,
-        modules: resolvedModules.length,
-        _module: "bootstrap",
-      });
-
-      // Pre-fetch all project files to avoid multiple glob calls later
-      let modulesRoot = "";
-      if (config.origin) {
-        modulesRoot = config.origin;
-      } else if (config.modules) {
-        modulesRoot = config.modules.split("*")[0].replace(/\/$/, "");
-      }
-      const absoluteModulesRoot = modulesRoot
-        ? normalizePath(path.resolve(cwd, modulesRoot))
-        : "";
-
-      let allProjectFiles: string[] = [];
-      if (absoluteModulesRoot) {
-        allProjectFiles = await fg(
-          `${absoluteModulesRoot}/**/*.{ts,js,mts,mjs,cjs}`,
-          {
-            absolute: true,
-            cwd,
-            ignore: [
-              "**/*.test.*",
-              "**/*.spec.*",
-              "**/*.d.ts",
-              "**/node_modules/**",
-              "**/dist/**",
-              "**/build/**",
-            ],
-          },
-        );
-      }
-
-      let filesByModulePath: Map<string, string[]> | undefined;
-
-      // Step 4 — NITS identity reconciliation
-      if (config.nits?.enabled !== false) {
-        try {
-          // Step 2.5a — Read/create shadow files for all discovered modules.
-          // scanShadowFiles calls ensureShadowFile per module:
-          //   - First boot: writes a new .kerith file with a fresh mod_{hex} ID.
-          //   - Subsequent boots: reads the existing file (no-op if already valid).
-          // Errors are swallowed inside shadow-file.ts — bootstrap never fails here.
-          const shadowFileMap = scanShadowFiles(resolvedModules);
-
-          // Un solo glob global para todos los archivos (filtrado en memoria)
-          const allNitsFiles = absoluteModulesRoot
-            ? allProjectFiles.filter((f) => {
-                const base = path.basename(f);
-                return !base.startsWith("index.") && !f.endsWith(".cjs");
-              })
-            : undefined;
-
-          // Agrupar por módulo usando el dirPath como prefijo (ordenados por longitud desc)
-          if (allNitsFiles) {
-            const modPaths = resolvedModules.map(mod => path.resolve(mod.dirPath));
-            filesByModulePath = groupFilesByModulePath(allNitsFiles, modPaths);
-          }
-
-          const discovered: DiscoveredModule[] = await Promise.all(
-            resolvedModules.map(async (mod) => {
-              const modFiles = filesByModulePath
-                ? filesByModulePath.get(
-                    normalizePath(path.resolve(mod.dirPath)),
-                  )
-                : undefined;
-              const { hash, identifiers } = await computeModuleHash(
-                mod.dirPath,
-                modFiles,
-              );
-              return {
-                name: mod.name,
-                dirPath: mod.dirPath,
-                domain: mod.domain,
-                identifiers,
-                hash,
-                shadowFile: shadowFileMap.get(mod.dirPath),
-              };
-            }),
-          );
-
-          const oldRegistry =
-            (await loadNitsRegistry(cwd)) ||
-            initNitsRegistry(inferProjectName(cwd));
-
-          // Layer 1 Filter: Purge compilation artifacts (e.g. dist/) from registry
-          let modulesRoots: string[] = [];
-          if (config.origin) {
-            modulesRoots = [normalizePath(path.resolve(cwd, config.origin))];
-          } else if (config.modules) {
-            const rawGlobs = Array.isArray(config.modules)
-              ? config.modules
-              : typeof config.modules === "string" &&
-                  config.modules.startsWith("{") &&
-                  config.modules.endsWith("}")
-                ? config.modules.slice(1, -1).split(",")
-                : [config.modules];
-            modulesRoots = rawGlobs.map((g) =>
-              normalizePath(path.resolve(cwd, g.split("*")[0])),
-            );
-          }
-
-          for (const [id, mod] of Object.entries(oldRegistry.modules)) {
-            const absPath = normalizePath(path.resolve(cwd, mod.path));
-            const isWithinRoots = modulesRoots.some((root) =>
-              absPath.startsWith(root),
-            );
-            if (!isWithinRoots) {
-              log.warn(`[NITS] Purging artifact from registry: ${mod.path}`, {
-                _module: "nits",
-              });
-              delete oldRegistry.modules[id];
-            }
-          }
-
-          const nitsResult = reconcile(discovered, oldRegistry, cwd, {
-            similarityThreshold: config.nits?.similarityThreshold,
-          });
-
-          reportReconciliation(nitsResult, log);
-
-          const updatedNits = buildUpdatedNitsRegistry(
-            nitsResult,
-            oldRegistry.project,
-          );
-          await saveNitsRegistry(updatedNits, cwd);
-
-          // Step 2.5c — Write shadow files for modules resolved by path/Jaccard (migration path).
-          // Modules that arrived without a shadow file (legacy, pre-v1.5.5) now get one
-          // written with the ID assigned during reconciliation. On the next boot they will
-          // use the shadow-file path (Step 0) and bypass Jaccard entirely.
-          const resolvedDirs = new Map<string, string>(
-            resolvedModules.map((m) => [m.dirPath, m.name]),
-          );
-          // Pass all valid roots for shadow file creation guard
-          postReconcileEnsureShadowFiles(
-            nitsResult,
-            resolvedDirs,
-            modulesRoots,
-          );
-
-          // Seed the registry with the reconciled IDs
-          const nitsIdMap = buildNitsIdMap(nitsResult, cwd);
-          registry.seedNitsIds(nitsIdMap);
-
-          log.debug("NITS identity reconciliation complete.", {
-            _module: "nits",
-          });
-        } catch (err: any) {
-          log.warn(
-            `NITS reconciliation failed: ${err.message}. Bootstrap will continue with temporary identities.`,
-            { _module: "nits" },
-          );
-          log.debug("NITS Error detail:", { error: err, _module: "nits" });
-        }
-      }
+      const allProjectFiles = ctx.allProjectFiles ?? [];
+      const filesByModulePath = ctx.filesByModulePath;
 
       // Step 05 — Activate runtime aliases (domains, modules, shared from scan)
       await runAliasActivation({
@@ -421,356 +102,17 @@ export async function createApp(
         cwd,
       } as BootstrapContext);
 
-      const scanEnd = performance.now();
+      // Step 06 — Dynamic Imports
+      await runDynamicImports(ctx);
 
-      // Step 6 — Import index entries (paralelo por tipo) — runs identifiers
+      // Step 07 — Validate dependencies (strict mode only)
+      runValidations(ctx);
 
-      // 6a — Domains en paralelo
-      await Promise.all(
-        scanResult.domains.map(async (domain) => {
-          await importIndexEntry(domain.indexPath, config.rules.moduleLoadTimeout);
-          log.info(`Domain loaded: ${pc.cyan(domain.name)}`, {
-            _module: "domain",
-            name: domain.name,
-          });
-        }),
-      );
+      const allModules = ctx.allModules ?? [];
+      const modulePathMap = ctx.modulePathMap!;
+      const sortedModulePaths = ctx.sortedModulePaths ?? [];
 
-      // 6b — Modules en paralelo: import primero, correlación y validación después
-      const importedModules = await Promise.all(
-        resolvedModules.map(async (mod) => {
-          const modStart = performance.now();
-          const imported = await importIndexEntry(
-            mod.indexPath,
-            config.rules.moduleLoadTimeout,
-          );
-          if (process.env.KERITH_PROFILE === "true") {
-            log.debug(
-              `[perf] import ${mod.name} took ${Math.round(performance.now() - modStart)}ms`,
-              { _module: "boot" },
-            );
-          }
-          return { mod, imported };
-        }),
-      );
 
-      // Correlación y validación (CPU pura — mantiene el orden original)
-      // Build lookup Map once — O(n) — instead of calling getAllModules() inside the loop
-      // which was O(n²): n iterations × (Array.from + map + find) per iteration.
-      const allRegisteredOnce = registry.getAllModules();
-      const registeredByPath = new Map(
-        allRegisteredOnce.map((m) => [normalizePath(m.path), m]),
-      );
-
-      for (const { mod, imported } of importedModules) {
-        const registeredMod = registeredByPath.get(normalizePath(mod.dirPath));
-
-        if (!registeredMod) {
-          if (isOriginMode) {
-            // Un index.ts sin identificador Kerith se ignora silenciosamente
-            continue;
-          } else {
-            throw new KerithError(
-              "MODULE_NOT_FOUND",
-              `No index.ts found calling Module(). Add Module() to the module's index.ts.`,
-              `File: ${mod.indexPath}`,
-            );
-          }
-        }
-
-        const isModuleFromCache =
-          isFullCacheHit ||
-          (usedCache &&
-            !rescannedDomains.has(registeredMod.domain || "__flat__"));
-        const cacheSuffix = isModuleFromCache ? " (from cache)" : "";
-
-        const moduleLabel = registeredMod.domain
-          ? `${pc.dim(registeredMod.domain + "/")}${pc.green(registeredMod.name)}`
-          : pc.green(registeredMod.name);
-
-        log.info(`Module loaded: ${moduleLabel}${cacheSuffix}`, {
-          _module: "module",
-          name: registeredMod.name,
-          domain: registeredMod.domain,
-          imports: registeredMod.imports,
-          exports: registeredMod.exports,
-          path: registeredMod.path,
-        });
-
-        const actualExports = Object.keys(imported).filter(
-          (key) => key !== "default",
-        );
-        const declaredExports = registeredMod.exports || [];
-
-        for (const declared of declaredExports) {
-          if (!actualExports.includes(declared)) {
-            throw new KerithError(
-              "EXPORT_MISMATCH",
-              `A name declared in exports does not exist as a real export of index.ts.`,
-              `Module: ${registeredMod.name}, Missing Export: ${declared}`,
-            );
-          }
-        }
-
-        if (config.strict) {
-          for (const actual of actualExports) {
-            if (!declaredExports.includes(actual)) {
-              log.warn(
-                `Module "${registeredMod.name}" exports "${actual}" but it is not declared in Module() options "exports" array.`,
-                {
-                  name: registeredMod.name,
-                  exportName: actual,
-                  _module: "module",
-                },
-              );
-            }
-          }
-        }
-      }
-
-      // 6c — Submodules en paralelo
-      await Promise.all(
-        scanResult.submodules.map(async (sub) => {
-          await importIndexEntry(sub.indexPath, config.rules.moduleLoadTimeout);
-          log.debug(`SubModule loaded: ${sub.name}`, {
-            _module: "submodule",
-            name: sub.name,
-            parentModule: sub.parentModule,
-            domain: sub.domain,
-          });
-        }),
-      );
-
-      const importEnd = performance.now();
-      const scanMs = Math.round(scanEnd - startTime);
-      const importMs = Math.round(importEnd - scanEnd);
-      log.debug(`[perf] scan=${scanMs}ms imports=${importMs}ms`, {
-        _module: "boot",
-      });
-
-      const allModules = registry.getAllModules();
-
-      for (const mod of allModules) {
-        const rawMod = registry.getRawModule(mod.name, mod.domain);
-        if (rawMod) {
-          rawMod.imports = rawMod.imports.filter(
-            (imp: string) => imp && imp.trim() !== "",
-          );
-          mod.imports = rawMod.imports;
-        }
-      }
-
-      // Step 7 — Validate dependencies (strict mode only)
-      if (config.strict) {
-        for (const mod of allModules) {
-          for (const importName of mod.imports) {
-            if (!registry.hasModule(importName, mod.domain)) {
-              throw new KerithError(
-                "MISSING_IMPORT",
-                `A module declared in imports does not exist in the registry.`,
-                `Module "${mod.name}" is trying to import missing module "${importName}"`,
-              );
-            }
-          }
-        }
-      }
-
-      // Step 7.1 — Validate shared[] declarations
-      for (const mod of allModules) {
-        const rawMod = registry.getRawModule(mod.name, mod.domain);
-        if (!rawMod || !rawMod.shared || rawMod.shared.length === 0) {
-          continue;
-        }
-
-        for (const sharedAlias of rawMod.shared) {
-          const error = (
-            code: import("../core/errors.js").KerithErrorCode,
-            message: string,
-            details: string,
-          ) => {
-            if (config.strict) {
-              throw new KerithError(code, message, details);
-            } else {
-              log.warn(message, { _module: "bootstrap", code, details });
-            }
-          };
-
-          // Check if it's a Nodulus module alias (should be in imports[], not shared[])
-          if (registry.hasModule(sharedAlias, mod.domain)) {
-            error(
-              "SHARED_IN_IMPORTS",
-              `Module "${mod.name}" declares "${sharedAlias}" in shared[] but it is a Nodulus module alias.`,
-              `Move "${sharedAlias}" from shared[] to imports[] in Module() for "${mod.name}".`,
-            );
-            continue;
-          }
-
-          // Check if it's '@shared' or a subpath of '@shared'
-          const isSharedOrSubpath =
-            sharedAlias === "@shared" || sharedAlias.startsWith("@shared/");
-          if (!isSharedOrSubpath) {
-            error(
-              "UNDECLARED_SHARED",
-              `Module "${mod.name}" declares "${sharedAlias}" in shared[] but it is not a valid shared alias.`,
-              `shared[] only accepts '@shared' or subpaths of '@shared'. Remove "${sharedAlias}" from shared[] in Module() for "${mod.name}".`,
-            );
-            continue;
-          }
-
-          // Check if '@shared' is registered (folder exists)
-          if (sharedAlias === "@shared") {
-            const sharedEntry = registry.getShared("@shared");
-            if (!sharedEntry) {
-              error(
-                "UNDECLARED_SHARED",
-                `Module "${mod.name}" declares "@shared" in shared[] but @shared is not registered.`,
-                `Ensure a shared folder exists or remove "@shared" from shared[] in Module() for "${mod.name}".`,
-              );
-            }
-          }
-        }
-      }
-
-      // Step 7.2 — Validate that imports[] doesn't contain shared aliases
-      for (const mod of allModules) {
-        const rawMod = registry.getRawModule(mod.name, mod.domain);
-        if (!rawMod || !rawMod.imports || rawMod.imports.length === 0) {
-          continue;
-        }
-
-        for (const importEntry of rawMod.imports) {
-          if (importEntry.startsWith("@shared")) {
-            const error = () => {
-              if (config.strict) {
-                throw new KerithError(
-                  "SHARED_IN_IMPORTS",
-                  `Module "${mod.name}" declares "${importEntry}" in imports[] but it is a shared alias.`,
-                  `Move "${importEntry}" from imports[] to shared[] in Module() for "${mod.name}".`,
-                );
-              } else {
-                log.warn(
-                  `Module "${mod.name}" declares "${importEntry}" in imports[] but it is a shared alias.`,
-                  {
-                    _module: "bootstrap",
-                    code: "SHARED_IN_IMPORTS",
-                    details: `Move "${importEntry}" from imports[] to shared[] in Module() for "${mod.name}".`,
-                  },
-                );
-              }
-            };
-            error();
-          }
-        }
-      }
-
-      // Step 7.5 — Undeclared / unused imports (strict)
-      // Pre-process a Map of normalizedPath -> module ref (also used by Step 6)
-      const modulePathMap = new Map<
-        string,
-        { name: string; domain?: string }
-      >();
-      for (const mod of allModules) {
-        const rawMod = registry.getRawModule(mod.name, mod.domain);
-        if (rawMod) {
-          modulePathMap.set(normalizePath(rawMod.path), {
-            name: mod.name,
-            domain: mod.domain,
-          });
-        }
-      }
-
-      const sortedModulePaths = Array.from(modulePathMap.keys()).sort(
-        (a, b) => b.length - a.length,
-      );
-
-      if (config.strict) {
-        // Reuse cached files
-        const allSourceFiles = allProjectFiles.filter((f) => {
-          const base = path.basename(f);
-          return !base.startsWith("index.") && !f.endsWith(".cjs");
-        });
-
-        // Build a Map of module -> source files
-        const filesByModule = new Map<string, string[]>();
-        for (const mod of allModules) {
-          filesByModule.set(buildModuleKey(mod.name, mod.domain), []);
-        }
-
-        const groupedSourceFiles = groupFilesByModulePath(allSourceFiles, sortedModulePaths);
-        for (const [modPath, files] of groupedSourceFiles) {
-          const modRef = modulePathMap.get(modPath);
-          if (modRef) {
-            const key = buildModuleKey(modRef.name, modRef.domain);
-            filesByModule.get(key)?.push(...files);
-          }
-        }
-
-        for (const registeredMod of allModules) {
-          const rawMod = registry.getRawModule(
-            registeredMod.name,
-            registeredMod.domain,
-          );
-          if (!rawMod) continue;
-
-          const sourceFiles =
-            filesByModule.get(
-              buildModuleKey(registeredMod.name, registeredMod.domain),
-            ) ?? [];
-          const usedImports = new Set<string>();
-
-          for (const file of sourceFiles) {
-            const actualImports = extractModuleImports(
-              file,
-              registry.getRegisteredAliases(),
-            );
-            for (const imp of actualImports) {
-              const parts = imp.specifier.split("/");
-              const targetModule = imp.specifier.startsWith("@modules/")
-                ? parts[1]
-                : (parts[1] || parts[0]).replace(/^@/, "");
-              if (!targetModule || targetModule === registeredMod.name)
-                continue;
-
-              if (!registry.hasModule(targetModule, registeredMod.domain))
-                continue;
-
-              usedImports.add(targetModule);
-
-              if (!registeredMod.imports.includes(targetModule)) {
-                const message = `Module "${registeredMod.name}" imports from "${targetModule}" but it is not declared in imports[].`;
-                const details = `File: ${path.normalize(file)}:${imp.line} — Add "${targetModule}" to Module() imports array for "${registeredMod.name}".`;
-
-                throw new KerithError("UNDECLARED_IMPORT", message, details);
-              }
-            }
-          }
-
-          for (const declared of registeredMod.imports) {
-            if (!usedImports.has(declared)) {
-              const message = `Module "${registeredMod.name}" declares import "${declared}" but never uses it.`;
-              throw new KerithError(
-                "UNUSED_IMPORT",
-                message,
-                `Remove "${declared}" from imports[] in "${registeredMod.name}".`,
-              );
-            }
-          }
-        }
-      }
-
-      if (config.strict) {
-        const cycles = registry.findCircularDependencies();
-        if (cycles.length > 0) {
-          const cycleStrings = cycles
-            .map((cycle) => cycle.join(" -> "))
-            .join(" | ");
-          throw new KerithError(
-            "CIRCULAR_DEPENDENCY",
-            `Circular dependency detected. Extract the shared dependency into a separate module.`,
-            `Cycles found: ${cycleStrings}`,
-          );
-        }
-      }
 
       const mountedRoutes: import("../types/index.js").MountedRoute[] = [];
 
@@ -1115,7 +457,7 @@ export async function createApp(
         },
       };
     } catch (err: any) {
-      if (cacheEnabled) {
+      if (ctx?.cacheEnabled) {
         CacheManager.fail(err.message);
       }
       registry.clearRegistry();

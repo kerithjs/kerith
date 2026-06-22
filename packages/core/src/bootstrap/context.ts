@@ -135,6 +135,11 @@ export interface BootstrapContext {
    */
   allProjectFiles?: string[];
 
+  /**
+   * Computed absolute path to the root directory where modules are located.
+   */
+  absoluteModulesRoot?: string;
+
   // ── Populated by step-04 (NITS reconciliation) ───────────────────────────
 
   /**
