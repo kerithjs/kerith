@@ -1,8 +1,8 @@
 import { Service } from '../../../../src/index.js';
-import { LoggerService } from '@modules/logger';
-import { UsersService } from '@modules/users';
-import { SessionService } from '@modules/session';
+import { MailerService } from '@modules/mailer';
 import { AuditService } from '@modules/audit';
+import { LoggerService } from '@modules/logger';
+import { I18nService } from '@modules/i18n';
 
 Service('NotificationsService');
 export class NotificationsService {

@@ -592,7 +592,7 @@ export async function createApp(
       // 6a — Domains en paralelo
       await Promise.all(
         scanResult.domains.map(async (domain) => {
-          await importIndexEntry(domain.indexPath, config.moduleLoadTimeoutMs);
+          await importIndexEntry(domain.indexPath, config.rules.moduleLoadTimeout);
           log.info(`Domain loaded: ${pc.cyan(domain.name)}`, {
             _module: "domain",
             name: domain.name,
@@ -606,7 +606,7 @@ export async function createApp(
           const modStart = performance.now();
           const imported = await importIndexEntry(
             mod.indexPath,
-            config.moduleLoadTimeoutMs,
+            config.rules.moduleLoadTimeout,
           );
           if (process.env.KERITH_PROFILE === "true") {
             log.debug(
@@ -695,7 +695,7 @@ export async function createApp(
       // 6c — Submodules en paralelo
       await Promise.all(
         scanResult.submodules.map(async (sub) => {
-          await importIndexEntry(sub.indexPath, config.moduleLoadTimeoutMs);
+          await importIndexEntry(sub.indexPath, config.rules.moduleLoadTimeout);
           log.debug(`SubModule loaded: ${sub.name}`, {
             _module: "submodule",
             name: sub.name,
@@ -981,7 +981,7 @@ export async function createApp(
         // Step 8a — Flatten all (mod, file) pairs and import ALL controller files in parallel.
         // Pattern mirrors Step 6b: import in parallel → validate in original order.
         // This eliminates the O(n) sequential await chain that was the primary bottleneck
-        // confirmed by bench: step8_discover scaled linearly (~17ms/module at n=40).
+        // confirmed by bench: step8_discover scaled linearly (~8ms/module at n=50).
 
         // 1. Build the flat work list (preserve mod + sorted file order for determinism)
         interface ControllerImportTask {
@@ -1025,11 +1025,11 @@ export async function createApp(
                 reject(
                   new KerithError(
                     "MODULE_LOAD_TIMEOUT",
-                    `Controller load timed out after ${config.moduleLoadTimeoutMs}ms. Check for unhandled promises or blocking operations.`,
+                    `Controller load timed out after ${config.rules.moduleLoadTimeout}ms. Check for unhandled promises or blocking operations.`,
                     `File: ${task.file}`,
                   ),
                 );
-              }, config.moduleLoadTimeoutMs);
+              }, config.rules.moduleLoadTimeout);
             });
 
             let imported: any;

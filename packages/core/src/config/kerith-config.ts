@@ -86,10 +86,10 @@ export async function loadKerithConfig(
   }
 
   // ── 2.5 Validations ────────────────────────────────────────────────────────
-  if (fileConfig.moduleLoadTimeoutMs !== undefined) {
-    if (typeof fileConfig.moduleLoadTimeoutMs !== 'number' || fileConfig.moduleLoadTimeoutMs <= 0) {
-      logger('warn', `[kerith] moduleLoadTimeoutMs must be a positive number. Using default: 30000ms.`, { _module: 'config' });
-      fileConfig.moduleLoadTimeoutMs = 30000;
+  if (fileConfig.rules?.moduleLoadTimeout !== undefined) {
+    if (typeof fileConfig.rules.moduleLoadTimeout !== 'number' || fileConfig.rules.moduleLoadTimeout <= 0) {
+      logger('warn', `[kerith] rules.moduleLoadTimeout must be a positive number. Using default: 30000ms.`, { _module: 'config' });
+      fileConfig.rules.moduleLoadTimeout = 30000;
     }
   }
 

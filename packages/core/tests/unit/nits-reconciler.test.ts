@@ -993,8 +993,10 @@ describe("§1.1: reconciler — completitud y edge cases", () => {
 
     // Each module uniquely matches its own prev record (1.0 for exact, 0 for cross)
     vi.mocked(nitsHash.hashSimilarity).mockImplementation((prevIds, discIds) => {
-      if (prevIds.includes("ServiceA") && discIds.includes("ServiceA")) return 1.0;
-      if (prevIds.includes("ServiceB") && discIds.includes("ServiceB")) return 1.0;
+      const p = prevIds as Set<string>;
+      const d = discIds as Set<string>;
+      if (p.has("ServiceA") && d.has("ServiceA")) return 1.0;
+      if (p.has("ServiceB") && d.has("ServiceB")) return 1.0;
       return 0;
     });
 

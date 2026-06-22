@@ -227,9 +227,9 @@ describe('Shared Checker', () => {
 
   describe('Severidad', () => {
     it('isErrorViolation determina si causa exit 1', () => {
-      expect(isErrorViolation({ type: ViolationType.SHARED_SCOPE_VIOLATION } as any)).toBe(true);
-      expect(isErrorViolation({ type: ViolationType.UNDECLARED_SHARED } as any)).toBe(false);
-      expect(isErrorViolation({ type: ViolationType.UNUSED_SHARED } as any)).toBe(false);
+      expect(isErrorViolation({ type: ViolationType.SHARED_SCOPE_VIOLATION, severity: 'error' } as any)).toBe(true);
+      expect(isErrorViolation({ type: ViolationType.UNDECLARED_SHARED, severity: 'warn' } as any)).toBe(false);
+      expect(isErrorViolation({ type: ViolationType.UNUSED_SHARED, severity: 'warn' } as any)).toBe(false);
     });
   });
 });

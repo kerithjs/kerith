@@ -241,7 +241,10 @@ export interface ResolvedConfig {
     maxRouteLines: number;
   };
   requirePreloader: boolean;
-  moduleLoadTimeoutMs: number;
+  rules: {
+    moduleLoadTimeout: number;
+    stalePurgeCycles: number;
+  };
 }
 
 /** A module as it appears in the NodularApp result after bootstrap. */

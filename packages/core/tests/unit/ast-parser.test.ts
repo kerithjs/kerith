@@ -9,129 +9,129 @@ describe('ast-parser tests', () => {
     vi.restoreAllMocks();
   });
 
-  const runWithTempFile = (content: string, testFn: (filePath: string) => void) => {
+  const runWithTempFile = async (content: string, testFn: (filePath: string) => Promise<void> | void) => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-ast-'));
     const filePath = path.join(tmpDir, 'index.ts');
     fs.writeFileSync(filePath, content);
     
     try {
-      testFn(filePath);
+      await testFn(filePath);
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   };
 
-  it('correctly detects Module("users", { imports: ["auth"] })', () => {
-    runWithTempFile(`
+  it('', async () => {
+    await runWithTempFile(`
       import { Module } from '@kerith/core';
       Module('users', { imports: ['auth'] });
-    `, (filePath) => {
-      const res = extractIdentifierCall(filePath, 'Module');
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Module');
       expect(res).not.toBeNull();
       expect(res?.name).toBe('users');
       expect(res?.options).toEqual({ imports: ['auth'] });
     });
   });
 
-  it('correctly detects Domain("billing", { modules: ["payments"] })', () => {
-    runWithTempFile(`
+  it('', async () => {
+    await runWithTempFile(`
       import { Domain } from '@kerith/core';
       Domain('billing', { modules: ['payments'] });
-    `, (filePath) => {
-      const res = extractIdentifierCall(filePath, 'Domain');
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Domain');
       expect(res).not.toBeNull();
       expect(res?.name).toBe('billing');
       expect(res?.options).toEqual({ modules: ['payments'] });
     });
   });
 
-  it('returns null if the callee does not match the requested name', () => {
-    runWithTempFile(`
+  it('', async () => {
+    await runWithTempFile(`
       import { Module } from '@kerith/core';
       Module('core', { imports: [] });
-    `, (filePath) => {
-      const res = extractIdentifierCall(filePath, 'Domain'); // requesting Domain when it is Module
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Domain'); // requesting Domain when it is Module
       expect(res).toBeNull();
     });
   });
 
-  it('returns null if the file does not contain any call to the requested callee', () => {
-    runWithTempFile(`
+  it('', async () => {
+    await runWithTempFile(`
       export const utils = () => {};
       console.log('No identifiers here');
-    `, (filePath) => {
-      const res = extractIdentifierCall(filePath, 'Module');
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Module');
       expect(res).toBeNull();
     });
   });
 
-  it('identifies call expressions via fallback regex for unsupported syntaxes (e.g. decorators, pure TS)', () => {
-    runWithTempFile(`
+  it('', async () => {
+    await runWithTempFile(`
       @Controller('/api')
       export class MyController {
         constructor() {
           Controller('UserController');
         }
       }
-    `, (filePath) => {
-      const res = extractIdentifierCall(filePath, 'Controller');
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Controller');
       expect(res).not.toBeNull();
       expect(res?.name).toBe('UserController');
     });
   });
 
-  it('identifies call expressions via fallback regex even if code is malformed for acorn', () => {
-    runWithTempFile(`
+  it('', async () => {
+    await runWithTempFile(`
       import type { SomeType } from "./types";
       // bad syntax that throws acorn parser Error
       @@@
       Service('TestService');
-    `, (filePath) => {
-      const res = extractIdentifierCall(filePath, 'Service');
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Service');
       expect(res).not.toBeNull();
       expect(res?.name).toBe('TestService');
     });
   });
 
-  it('fallback regex correctly returns empty options for simple calls like Domain("billing")', () => {
-    runWithTempFile(`
+  it('', async () => {
+    await runWithTempFile(`
       import type { SomeType } from "./types";
       // bad syntax that throws acorn parser Error
       @@@
       Domain('billing');
-    `, (filePath) => {
-      const res = extractIdentifierCall(filePath, 'Domain');
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Domain');
       expect(res).not.toBeNull();
       expect(res?.name).toBe('billing');
       expect(res?.options).toEqual({});
     });
   });
 
-  it('extractTopLevelIdentifier returns the first Kerith call in source order', () => {
-    runWithTempFile(`
+  it('', async () => {
+    await runWithTempFile(`
       import { Domain, Module } from '@kerith/core';
       Domain('billing');
       Module('payments');
-    `, (filePath) => {
-      const res = extractTopLevelIdentifier(filePath);
+    `, async (filePath) => {
+      const res = await extractTopLevelIdentifier(filePath);
       expect(res).toEqual({ type: 'Domain', name: 'billing', options: {} });
     });
   });
 
-  it('extractTopLevelIdentifier returns null when no Kerith identifier is present', () => {
-    runWithTempFile(`export const value = 42;`, (filePath) => {
-      expect(extractTopLevelIdentifier(filePath)).toBeNull();
+  it('', async () => {
+    await runWithTempFile(`export const value = 42;`, async (filePath) => {
+      expect(await extractTopLevelIdentifier(filePath)).toBeNull();
     });
   });
 
-  it('fallback regex correctly captures simple options like Module("payments", { imports: ["invoices"] })', () => {
-    runWithTempFile(`
+  it('', async () => {
+    await runWithTempFile(`
       import type { SomeType } from "./types";
       // bad syntax that throws acorn parser Error
       @@@
       Module('payments', { imports: ['invoices'], foo: 'bar' });
-    `, (filePath) => {
-      const res = extractIdentifierCall(filePath, 'Module');
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Module');
       expect(res).not.toBeNull();
       expect(res?.name).toBe('payments');
       expect(res?.options).toEqual({ imports: ['invoices'], foo: 'bar' });

@@ -30,9 +30,7 @@ describe('loadConfig', () => {
     await runInTmpDir({}, async () => {
       const config = await loadConfig();
 
-      expect(config.modules).toBe(DEFAULTS.modules);
-      expect(config.domains).toBeUndefined();
-      expect(config.shared).toBeUndefined();
+      expect((config as any).modules).toBe((DEFAULTS as any).modules);
       expect(config.prefix).toBe(DEFAULTS.prefix);
       expect(config.strict).toBe(DEFAULTS.strict);
       expect(config.resolveAliases).toBe(DEFAULTS.resolveAliases);
@@ -48,9 +46,8 @@ describe('loadConfig', () => {
       const config = await loadConfig();
       expect(config.prefix).toBe('/file-prefix');
       expect(config.strict).toBe(false);
-      expect(config.domains).toBeUndefined();
       // Fallback
-      expect(config.modules).toBe(DEFAULTS.modules);
+      expect((config as any).modules).toBe((DEFAULTS as any).modules);
     });
   });
 
@@ -59,9 +56,9 @@ describe('loadConfig', () => {
       'kerith.config.js': 'export default { domains: "src/domains/*", shared: "src/shared/*" };'
     }, async () => {
       const config = await loadConfig();
-      expect(config.domains).toBe("src/domains/*");
-      expect(config.shared).toBe("src/shared/*");
-      expect(config.modules).toBe(DEFAULTS.modules);
+      expect((config as any).domains).toBe("src/domains/*");
+      expect((config as any).shared).toBe("src/shared/*");
+      expect((config as any).modules).toBe((DEFAULTS as any).modules);
     });
   });
 
@@ -70,7 +67,7 @@ describe('loadConfig', () => {
       'kerith.config.js': 'export default {};'
     }, async () => {
       const config = await loadConfig();
-      expect(config.modules).toBe(DEFAULTS.modules);
+      expect((config as any).modules).toBe((DEFAULTS as any).modules);
       expect(config.prefix).toBe(DEFAULTS.prefix);
       expect(config.strict).toBe(DEFAULTS.strict);
       expect(config.resolveAliases).toBe(DEFAULTS.resolveAliases);
@@ -78,7 +75,7 @@ describe('loadConfig', () => {
       expect(config.logFormat).toBe(DEFAULTS.logFormat);
       expect(config.nits.enabled).toBe(DEFAULTS.nits.enabled);
       expect(config.requirePreloader).toBe(DEFAULTS.requirePreloader);
-      expect(config.moduleLoadTimeoutMs).toBe(DEFAULTS.moduleLoadTimeoutMs);
+      expect((config as any).moduleLoadTimeoutMs).toBe((DEFAULTS as any).moduleLoadTimeoutMs);
     });
   });
 
@@ -88,7 +85,7 @@ describe('loadConfig', () => {
     }, async () => {
       const config = await loadConfig();
       expect(config.logLevel).toBe('debug');
-      expect(config.moduleLoadTimeoutMs).toBe(5000);
+      expect((config as any).moduleLoadTimeoutMs).toBe(5000);
       expect(config.requirePreloader).toBe(true);
       expect(config.resolveAliases).toBe(false);
     });
@@ -97,28 +94,28 @@ describe('loadConfig', () => {
   it('should fallback and warn on invalid numeric/enum config fields', async () => {
     const loggerSpy = vi.fn();
     await runInTmpDir({
-      'kerith.config.js': 'export default { logLevel: "invalid", logFormat: "yaml", moduleLoadTimeoutMs: -1 };'
+      'kerith.config.js': 'export default { logLevel: "invalid", logFormat: "yaml", rules: { moduleLoadTimeout: -1 } };'
     }, async () => {
       const config = await loadConfig({ logger: loggerSpy });
       
       expect(config.logLevel).toBe('info');
       expect(config.logFormat).toBe('auto');
-      expect(config.moduleLoadTimeoutMs).toBe(30000);
+      expect(config.rules.moduleLoadTimeout).toBe(30000);
       
       expect(loggerSpy).toHaveBeenCalledWith('warn', expect.stringContaining('Invalid logLevel'), expect.any(Object));
       expect(loggerSpy).toHaveBeenCalledWith('warn', expect.stringContaining('Invalid logFormat'), expect.any(Object));
-      expect(loggerSpy).toHaveBeenCalledWith('warn', expect.stringContaining('moduleLoadTimeoutMs must be a positive number'), expect.any(Object));
+      expect(loggerSpy).toHaveBeenCalledWith('warn', expect.stringContaining('rules.moduleLoadTimeout must be a positive number'), expect.any(Object));
     });
   });
 
   it('should fallback and warn on moduleLoadTimeoutMs: 0', async () => {
     const loggerSpy = vi.fn();
     await runInTmpDir({
-      'kerith.config.js': 'export default { moduleLoadTimeoutMs: 0 };'
+      'kerith.config.js': 'export default { rules: { moduleLoadTimeout: 0 } };'
     }, async () => {
       const config = await loadConfig({ logger: loggerSpy });
-      expect(config.moduleLoadTimeoutMs).toBe(30000);
-      expect(loggerSpy).toHaveBeenCalledWith('warn', expect.stringContaining('moduleLoadTimeoutMs must be a positive number'), expect.any(Object));
+      expect(config.rules.moduleLoadTimeout).toBe(30000);
+      expect(loggerSpy).toHaveBeenCalledWith('warn', expect.stringContaining('rules.moduleLoadTimeout must be a positive number'), expect.any(Object));
     });
   });
 

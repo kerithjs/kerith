@@ -302,7 +302,7 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(appWithHangingModule, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 100 };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { rules: { moduleLoadTimeout: 100 } };');
         await expect(createApp(app as any)).rejects.toMatchObject({
           code: 'MODULE_LOAD_TIMEOUT'
         });
@@ -321,7 +321,7 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(appWithHangingController, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 100 };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { rules: { moduleLoadTimeout: 100 } };');
         await expect(createApp(app as any)).rejects.toMatchObject({
           code: 'MODULE_LOAD_TIMEOUT'
         });
@@ -338,7 +338,7 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(appWithSlowModule, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 500, strict: false, modules: "src/modules/*" };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { rules: { moduleLoadTimeout: 500 }, strict: false, modules: "src/modules/*" };');
         const KerithApp = await createApp(app as any);
         expect(KerithApp.modules).toHaveLength(1);
         expect(KerithApp.modules[0].name).toBe('slow');

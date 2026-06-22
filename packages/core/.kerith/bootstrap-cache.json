@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "status": "ok",
+  "savedAt": "2026-06-22T17:27:59.120Z",
+  "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core",
+  "configHash": "d23e3eed",
+  "data": {
+    "domains": [],
+    "modules": [
+      {
+        "name": "slow",
+        "dirPath": "C:/Users/Keiver/AppData/Local/Temp/Kerith-app-test-XUSHT5/src/modules/slow",
+        "indexPath": "C:\\Users\\Keiver\\AppData\\Local\\Temp\\Kerith-app-test-XUSHT5\\src\\modules\\slow\\index.ts",
+        "imports": [],
+        "exports": [],
+        "shared": [],
+        "options": {},
+        "id": "mod_30c2b615",
+        "files": [],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 0,
+        "cachedMtime": 0
+      }
+    ],
+    "submodules": [],
+    "shared": [],
+    "identifiers": [],
+    "aliases": []
+  }
+}

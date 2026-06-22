@@ -19,7 +19,10 @@ export const DEFAULTS: Omit<ResolvedConfig, 'aliases' | 'modules' | 'origin'> = 
     maxRouteLines: 5,
   },
   requirePreloader: false,
-  moduleLoadTimeoutMs: 30_000
+  rules: {
+    moduleLoadTimeout: 30_000,
+    stalePurgeCycles: 5
+  }
 };
 
 export type BootConfig = ResolvedConfig & { resolvedAliases: Map<string, string> };
@@ -63,7 +66,10 @@ export const loadConfig = async (
       maxRouteLines:       fileConfig.logging?.maxRouteLines    ?? DEFAULTS.logging.maxRouteLines,
     },
     requirePreloader:    fileConfig.requirePreloader    ?? DEFAULTS.requirePreloader,
-    moduleLoadTimeoutMs: fileConfig.moduleLoadTimeoutMs ?? DEFAULTS.moduleLoadTimeoutMs,
+    rules: {
+      moduleLoadTimeout: fileConfig.rules?.moduleLoadTimeout ?? DEFAULTS.rules.moduleLoadTimeout,
+      stalePurgeCycles:  fileConfig.rules?.stalePurgeCycles  ?? DEFAULTS.rules.stalePurgeCycles
+    },
     resolvedAliases:     fileConfig.resolvedAliases     ?? new Map(),
   };
 };

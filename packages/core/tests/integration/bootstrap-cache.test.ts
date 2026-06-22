@@ -285,10 +285,10 @@ describe("Bootstrap Cache Integration", () => {
 
       const res = await createApp(app as any);
       
-      const sharedEntry = res.registry.getShared('@shared');
+      const sharedEntry = (res.registry as any).getShared('@shared');
       expect(sharedEntry).toBeDefined();
       expect(sharedEntry?.type).toBe('global');
-      expect(sharedEntry?.path).toBe(normalizePath(sharedPath));
+      expect(normalizePath(sharedEntry?.path as string)).toBe(normalizePath(sharedPath));
     });
   });
 });

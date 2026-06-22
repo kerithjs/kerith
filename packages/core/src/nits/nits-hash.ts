@@ -106,8 +106,11 @@ export async function computeModuleHash(
   const targetCallees = ['Service', 'Repository', 'Schema'];
   const allIdentifiers: string[] = [];
   
-  for (const file of files) {
-    const results = extractMultipleIdentifierCalls(file, targetCallees);
+  const resultsArray = await Promise.all(
+    files.map(file => extractMultipleIdentifierCalls(file, targetCallees))
+  );
+  
+  for (const results of resultsArray) {
     for (const result of results) {
       allIdentifiers.push(result.name);
     }
