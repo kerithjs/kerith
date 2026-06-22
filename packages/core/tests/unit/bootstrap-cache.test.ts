@@ -184,7 +184,7 @@ describe('MtimeValidator', () => {
     // savedAt en el futuro (después de la creación)
     const savedAt = new Date(stat.mtimeMs + 1000).toISOString();
     
-    const cache = createMockCache([{ domain: 'dom1', files: [file1], cachedSize: stat.size }], savedAt);
+    const cache = createMockCache([{ domain: 'dom1', files: [file1], cachedSize: stat.size, cachedMtime: stat.mtimeMs }], savedAt);
     const result = MtimeValidator.validate(cache);
     
     expect(result.toRescan).toEqual([]);
@@ -198,7 +198,7 @@ describe('MtimeValidator', () => {
     // savedAt en el pasado (antes de la creación)
     const savedAt = new Date(stat.mtimeMs - 1000).toISOString();
     
-    const cache = createMockCache([{ domain: 'dom1', files: [file1], cachedSize: stat.size }], savedAt);
+    const cache = createMockCache([{ domain: 'dom1', files: [file1], cachedSize: stat.size, cachedMtime: stat.mtimeMs - 1000 }], savedAt);
     const result = MtimeValidator.validate(cache);
     
     expect(result.toRescan).toContain('dom1');
@@ -212,7 +212,7 @@ describe('MtimeValidator', () => {
     // savedAt en el futuro, pero tamaño difiere
     const savedAt = new Date(stat.mtimeMs + 1000).toISOString();
     
-    const cache = createMockCache([{ domain: 'dom1', files: [file1], cachedSize: stat.size + 100 }], savedAt);
+    const cache = createMockCache([{ domain: 'dom1', files: [file1], cachedSize: stat.size + 100, cachedMtime: stat.mtimeMs }], savedAt);
     const result = MtimeValidator.validate(cache);
     
     expect(result.toRescan).toContain('dom1');
@@ -220,7 +220,7 @@ describe('MtimeValidator', () => {
 
   it('5.2.4 — MtimeValidator.validate() marca como dirty si un archivo listado no existe', () => {
     const savedAt = new Date().toISOString();
-    const cache = createMockCache([{ domain: 'dom1', files: ['/no/existe.ts'], cachedSize: 0 }], savedAt);
+    const cache = createMockCache([{ domain: 'dom1', files: ['/no/existe.ts'], cachedSize: 0, cachedMtime: 0 }], savedAt);
     const result = MtimeValidator.validate(cache);
     
     expect(result.toRescan).toContain('dom1');
@@ -234,8 +234,8 @@ describe('MtimeValidator', () => {
     const savedAt = new Date(stat.mtimeMs - 1000).toISOString(); // fuerza rescan
     
     const cache = createMockCache([
-      { domain: 'billing', files: [file1], cachedSize: stat.size },
-      { domain: 'billing', files: ['/no/existe.ts'], cachedSize: 0 }
+      { domain: 'billing', files: [file1], cachedSize: stat.size, cachedMtime: stat.mtimeMs - 1000 },
+      { domain: 'billing', files: ['/no/existe.ts'], cachedSize: 0, cachedMtime: 0 }
     ], savedAt);
     
     const result = MtimeValidator.validate(cache);
@@ -245,7 +245,7 @@ describe('MtimeValidator', () => {
 
   it('5.2.6 — MtimeValidator.validate() usa "__flat__" para módulos sin dominio', () => {
     const savedAt = new Date().toISOString();
-    const cache = createMockCache([{ files: ['/no/existe.ts'], cachedSize: 0 }], savedAt); // flat module missing file
+    const cache = createMockCache([{ files: ['/no/existe.ts'], cachedSize: 0, cachedMtime: 0 }], savedAt); // flat module missing file
     const result = MtimeValidator.validate(cache);
     
     expect(result.toRescan).toContain('__flat__');

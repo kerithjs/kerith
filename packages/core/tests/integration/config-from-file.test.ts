@@ -70,7 +70,7 @@ describe("Integration: Config From File", () => {
     it("throws MODULE_LOAD_TIMEOUT if module load exceeds moduleLoadTimeoutMs", async () => {
       await runInTmpApp(
         {
-          "kerith.config.js": "export default { strict: false, moduleLoadTimeoutMs: 100 };",
+          "kerith.config.js": "export default { strict: false, rules: { moduleLoadTimeout: 100 } };",
           "src/modules/slow/index.ts": `
             import { Module } from '{{SOURCE}}';
             Module('slow');

@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "status": "ok",
-  "savedAt": "2026-06-15T19:21:02.332Z",
+  "savedAt": "2026-06-22T17:35:09.429Z",
   "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app",
   "configHash": "79329199",
   "data": {
@@ -28,7 +28,8 @@
         ],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 392
+        "cachedSize": 392,
+        "cachedMtime": 1775940391830.9624
       },
       {
         "name": "core",
@@ -48,7 +49,8 @@
         "files": [],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 0
+        "cachedSize": 0,
+        "cachedMtime": 0
       },
       {
         "name": "notifications",
@@ -70,7 +72,8 @@
         ],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 67
+        "cachedSize": 67,
+        "cachedMtime": 1775940391834.5027
       },
       {
         "name": "users",
@@ -98,7 +101,8 @@
         ],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 581
+        "cachedSize": 581,
+        "cachedMtime": 1779028768394.0388
       }
     ],
     "submodules": [],

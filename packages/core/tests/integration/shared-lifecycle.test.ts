@@ -168,9 +168,9 @@ describe('Shared Lifecycle — domain-scoped (@billing/shared)', () => {
 
   it('SHARED_SCOPE_VIOLATION es siempre error — isErrorViolation() retorna true', async () => {
     const { isErrorViolation } = await import('../../src/cli/lib/violations.js');
-    expect(isErrorViolation({ type: ViolationType.SHARED_SCOPE_VIOLATION } as any)).toBe(true);
+    expect(isErrorViolation({ type: ViolationType.SHARED_SCOPE_VIOLATION, severity: 'error' } as any)).toBe(true);
     // Contraste: UNDECLARED_SHARED no es always-error
-    expect(isErrorViolation({ type: ViolationType.UNDECLARED_SHARED } as any)).toBe(false);
+    expect(isErrorViolation({ type: ViolationType.UNDECLARED_SHARED, severity: 'warn' } as any)).toBe(false);
   });
 });
 
