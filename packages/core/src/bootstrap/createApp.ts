@@ -33,65 +33,31 @@ export async function createApp(
     const startTime = performance.now();
     let ctx: BootstrapContext | undefined;
     try {
-      const cwd = process.cwd();
-      ctx = { cwd, options, registry };
+      ctx = { cwd: process.cwd(), options, registry };
 
-      // Step 01 — Load configuration
       await runConfigLoad(ctx);
-
-      // Step 01b — Setup & Pre-validation
       await runSetupPhase(ctx);
 
-      const { config, log, preloaderActive, preloadConfig } = ctx;
+      const { config, log } = ctx;
       if (!config || !log) throw new Error("Config load failed");
 
-      // Step 02 — Cache Decision & Scanner
       await runCacheAndScan(ctx);
 
-      const { scanResult, resolvedModules, usedCache, numRescanned, cacheLogReason, isFullCacheHit, cacheEnabled, configHash } = ctx;
-      const rescannedDomains = ctx.rescannedDomains ?? new Set<string>();
-      const isOriginMode = !!config.origin;
-      if (!scanResult || !resolvedModules) throw new Error("Scanner failed");
+      if (!ctx.scanResult || !ctx.resolvedModules) throw new Error("Scanner failed");
 
-      // Step 03 — Entity Registration & File Prefetch
       await runEntityRegistration(ctx);
-
-      // Step 04 — NITS identity reconciliation
       await runNitsReconciliation(ctx);
-
-      const allProjectFiles = ctx.allProjectFiles ?? [];
-      const filesByModulePath = ctx.filesByModulePath;
-
-      // Step 05 — Activate runtime aliases (domains, modules, shared from scan)
-      await runAliasActivation({
-        options,
-        config,
-        log,
-        registry,
-        resolvedModules,
-        cwd,
-      } as BootstrapContext);
-
-      // Step 06 — Dynamic Imports
+      await runAliasActivation(ctx);
       await runDynamicImports(ctx);
-
-      // Step 07 — Validate dependencies (strict mode only)
       await runValidations(ctx);
+      await runControllersAndMount(ctx, app);
 
       const allModules = ctx.allModules ?? [];
-      const modulePathMap = ctx.modulePathMap!;
-      const sortedModulePaths = ctx.sortedModulePaths ?? [];
-
-
-
-      // Step 08 — Discover controllers and mount routes (Express only)
-      await runControllersAndMount(ctx, app);
       const mountedRoutes = ctx.mountedRoutes ?? [];
 
       const safeRegisteredModules = allModules.map(
         (m) => registry.getModule(m.name, m.domain)!,
       );
-      const durationMs = Math.round(performance.now() - startTime);
 
       if (app) {
         log.info(`Mounted ${mountedRoutes.length} route(s)`, {
@@ -99,12 +65,11 @@ export async function createApp(
         });
       }
 
-      const endTime = performance.now();
-      const ms = Math.round(endTime - startTime);
+      const ms = Math.round(performance.now() - startTime);
 
-      if (usedCache) {
+      if (ctx.usedCache) {
         log.info(
-          `Bootstrap complete from cache — ${ms}ms (${numRescanned} modules rescanned)`,
+          `Bootstrap complete from cache — ${ms}ms (${ctx.numRescanned} modules rescanned)`,
           {
             _module: "boot",
             durationMs: ms,
@@ -114,7 +79,7 @@ export async function createApp(
         );
       } else {
         log.info(
-          `Bootstrap complete — ${ms}ms ${cacheLogReason || "(first boot)"}`.trim(),
+          `Bootstrap complete — ${ms}ms ${ctx.cacheLogReason || "(first boot)"}`.trim(),
           {
             _module: "boot",
             durationMs: ms,
@@ -124,25 +89,16 @@ export async function createApp(
         );
       }
 
-      // Step 09 — Bootstrap Cache Write
-      runCacheWrite({
-        cwd,
-        options,
-        registry,
-        cacheEnabled,
-        scanResult,
-        configHash,
-        filesByModulePath,
-      } as BootstrapContext);
+      runCacheWrite(ctx);
 
       return {
         modules: safeRegisteredModules,
         routes: mountedRoutes,
         registry,
         runtime: {
-          preloaderActive: preloaderActive ?? false,
-          preloaderVersion: preloadConfig?._version ?? null,
-          aliasesAtBoot: preloadConfig?.aliases ?? {},
+          preloaderActive: ctx.preloaderActive ?? false,
+          preloaderVersion: ctx.preloadConfig?._version ?? null,
+          aliasesAtBoot: ctx.preloadConfig?.aliases ?? {},
         },
         listen(server, listenOptions) {
           return registerShutdown({

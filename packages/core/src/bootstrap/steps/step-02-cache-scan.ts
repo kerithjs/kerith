@@ -19,7 +19,7 @@ import { CacheManager } from "../../cache/bootstrap-cache.js";
 import { MtimeValidator } from "../../cache/mtime-validator.js";
 import { scanFromConfig, scanModulesToResolved } from "../scanner.js";
 import type { BootstrapContext } from "../context.js";
-import { KERITH_VERSION } from "../createApp.js";
+import { KERITH_VERSION } from "../version.js";
 
 /**
  * Executes the cache and scan phase.

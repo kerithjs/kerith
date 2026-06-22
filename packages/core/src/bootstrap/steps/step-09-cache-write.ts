@@ -28,7 +28,7 @@ import type { CachedModule } from "../../cache/bootstrap-cache.js";
 import { getModuleSignature } from "../../cache/mtime-validator.js";
 import { normalizePath } from "../../core/utils/paths.js";
 import type { BootstrapContext } from "../context.js";
-import { KERITH_VERSION } from "../createApp.js";
+import { KERITH_VERSION } from "../version.js";
 
 /**
  * Executes the cache write phase of the bootstrap pipeline.

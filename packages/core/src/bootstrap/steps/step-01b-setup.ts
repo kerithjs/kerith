@@ -19,7 +19,7 @@ import {
   ensureTsconfigExtends,
 } from "../../config/tsconfig-generator.js";
 import type { BootstrapContext } from "../context.js";
-import { KERITH_VERSION } from "../createApp.js";
+import { KERITH_VERSION } from "../version.js";
 
 /**
  * Executes the setup and pre-validation phase.
