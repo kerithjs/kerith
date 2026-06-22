@@ -48,8 +48,10 @@ import { scanFromConfig, scanModulesToResolved } from "./scanner.js";
 import { registerEntitiesFromScan } from "./register-from-scan.js";
 import { importIndexEntry } from "./import-index.js";
 import { CacheManager } from "../cache/bootstrap-cache.js";
-import type { CachedModule } from "../cache/bootstrap-cache.js";
 import { MtimeValidator } from "../cache/mtime-validator.js";
+import { runGuard } from "./steps/step-00-guard.js";
+import { runCacheWrite } from "./steps/step-09-cache-write.js";
+import type { BootstrapContext } from "./context.js";
 
 // Helper for extracting version from package.json
 const getKerithVersion = () => {
@@ -75,34 +77,8 @@ export async function createApp(
   app?: Application,
   options: CreateAppOptions = {},
 ): Promise<KerithApp> {
-  // Step 0 — Prevent Duplicate Bootstrap
-  if (app && (app as any).__KerithBootstrapped) {
-    throw new KerithError(
-      "DUPLICATE_BOOTSTRAP",
-      "createApp() was called more than once with the same Express instance.",
-    );
-  }
-
-  // Step 0.5 — ESM Environment Validation
-  let isEsm = false;
-  try {
-    const pkgPath = path.resolve(process.cwd(), "package.json");
-    if (fs.existsSync(pkgPath)) {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-      if (pkg.type === "module") {
-        isEsm = true;
-      }
-    }
-  } catch (_e) {
-    // Failsafe
-  }
-
-  if (!isEsm) {
-    throw new KerithError(
-      "INVALID_ESM_ENV",
-      'Kerith requires an ESM environment. Please ensure "type": "module" is present in your root package.json file.',
-    );
-  }
+  // Step 00 — Bootstrap precondition guards (duplicate check + ESM validation)
+  runGuard(app);
 
   const registry = createRegistry();
 
@@ -1250,74 +1226,16 @@ export async function createApp(
         );
       }
 
-      if (cacheEnabled) {
-        // Build cache data payload from scan modules (source of truth for options/imports/exports/shared)
-        // combined with NITS IDs from the registry and file lists from the NITS step.
-        const modulesForCache: CachedModule[] = scanResult.modules.map(
-          (scanMod) => {
-            // Retrieve NITS ID from registry (seeded in Step 4). Falls back to dirPath-based temp ID.
-            const registeredMod = registry.getModule(
-              scanMod.name,
-              scanMod.domain,
-            );
-            const nitsId =
-              registeredMod?.id ??
-              `mod_${Buffer.from(scanMod.dirPath).toString("hex").slice(0, 8)}`;
-
-            // Retrieve files from the NITS step file map
-            let files: string[] = [];
-            if (filesByModulePath) {
-              files =
-                filesByModulePath.get(
-                  normalizePath(path.resolve(scanMod.dirPath)),
-                ) || [];
-            }
-            let cachedSize = 0;
-            let cachedMtime = 0;
-            for (const f of files) {
-              if (fs.existsSync(f)) {
-                const stat = fs.statSync(f);
-                cachedSize += stat.size;
-                if (stat.mtimeMs > cachedMtime) {
-                  cachedMtime = stat.mtimeMs;
-                }
-              }
-            }
-
-            return {
-              // ModuleScanEntry fields
-              name: scanMod.name,
-              dirPath: scanMod.dirPath,
-              indexPath: scanMod.indexPath,
-              domain: scanMod.domain,
-              imports: scanMod.imports,
-              exports: scanMod.exports,
-              shared: scanMod.shared,
-              options: scanMod.options,
-              // CachedModule-specific fields
-              id: nitsId,
-              files,
-              identifiers: [],
-              aliases: [],
-              cachedSize,
-              cachedMtime,
-            };
-          },
-        );
-
-        CacheManager.write(
-          {
-            domains: scanResult.domains,
-            modules: modulesForCache,
-            submodules: scanResult.submodules,
-            shared: scanResult.shared,
-            identifiers: [],
-            aliases: [],
-          },
-          KERITH_VERSION,
-          configHash,
-        );
-      }
+      // Step 09 — Bootstrap Cache Write
+      runCacheWrite({
+        cwd,
+        options,
+        registry,
+        cacheEnabled,
+        scanResult,
+        configHash,
+        filesByModulePath,
+      } as BootstrapContext);
 
       return {
         modules: safeRegisteredModules,
