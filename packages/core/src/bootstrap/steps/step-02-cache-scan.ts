@@ -153,7 +153,7 @@ export async function runCacheAndScan(ctx: BootstrapContext): Promise<void> {
     }
   }
 
-  // Step 2 — Filesystem scan (if not fully/partially cached)
+  // Step 2.1 — Filesystem scan (if not fully/partially cached)
   if (!scanResult) {
     scanResult = await scanFromConfig(
       config,

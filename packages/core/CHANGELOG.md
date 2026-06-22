@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] — 2026-06-03
 
 ### Added
+
 - Global shared (`@shared`): place shared code in `src/shared/`, declare with `shared: ['@shared']` in Module()
 - Domain-scoped shared (`@{domain}/shared`): place code in `src/{domain}/_shared/`, implicit access for domain modules
 - `kerith check` detects UNDECLARED_SHARED, UNUSED_SHARED, SHARED_SCOPE_VIOLATION
@@ -28,23 +29,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - NITS tracks domain migration — modules moved between domains preserve their ID
 
 ### Changed
+
+- **Bootstrap Pipeline**: Refactored `createApp()` into an explicit step-based pipeline (`step-00` → `step-09`) with isolated bootstrap stages.
+- **Bootstrap Context**: Introduced shared `BootstrapContext` passed across all bootstrap steps, replacing the previous monolithic bootstrap state.
+- **Architecture**: Bootstrap internals reorganized into dedicated step modules, significantly improving maintainability and future extensibility without changing runtime behavior.
 - `createApp(app?)`: Express app is now optional (REGLA-02)
 - `modulesByName` key is now `domain/name` for domain modules — enables same name in different domains
 - Scanner uses single fg() call instead of O(n) per-module globs (N-32 fix)
 - Import scanner includes only registered aliases, no hardcoded npm exclusion list (N-33 fix)
 
 ### Fixed
+
 - Module with no controllers no longer emits warning (REGLA-01)
 - ast-parser fallback captures string and array literals from options
 
 ### Migration
+
 - v1.x projects work without any changes — `modules:` config key still supported
 - See MIGRATION.md for incremental adoption guide
 
 ---
 
 ## [1.8.2] — 2026-06-03
+
 ### Changed
+
 - **Rebranding**: Project renamed from Nodulus to **Kerith** (internal rename, no public API changes).
   - NPM package: `@vlynk-studios/nodulus-core` → `@kerith/core`
   - CLI binary: `nodulus` → `kerith`
@@ -60,25 +69,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.8.1] — 2026-05-28
 
 ### Fixed
+
 - Fixed failing test `ensureTsconfigExtends() > sin tsconfig.json emite log.info y no lanza` in `tsconfig-generator.test.ts` and removed an unused linter import.
 
 ### Internal
+
 - Triaged and moved `N-50`, `N-51`, and `N-55` into the resolved section of the `Backlog.md` since they were already fixed in prior 1.8.0 updates.
 
 ---
+
 ## [1.8.0] — 2026-05-27
 
 ### Changed
+
 - `createApp()` ya no acepta opciones de configuración — toda la config vive en `nodulus.config.ts`
 - `createApp(app, options)` → `createApp(app)` (o `createApp(app, { logger })` para logger custom)
 - `onShutdown` se mueve de `createApp()` a `nodulus.listen(server, { onShutdown })`
 
 ### Added
+
 - `nodulus.config.ts` soporta todos los campos de configuración: `logLevel`, `logFormat`, `resolveAliases`, `requirePreloader`, `moduleLoadTimeoutMs`
 - `ListenOptions` — interfaz para las opciones de `nodulus.listen()`
 - Validación de `logLevel`, `logFormat`, y `moduleLoadTimeoutMs` en la carga del config file
 
 ### Removed
+
 - `CreateAppOptions.modules` — mover a `nodulus.config.ts`
 - `CreateAppOptions.prefix` — mover a `nodulus.config.ts`
 - `CreateAppOptions.strict` — mover a `nodulus.config.ts`
@@ -95,6 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.7.0] — 2026-05-25
 
 ### Added
+
 - Unified alias system: `nodulus.config.ts` as the single source of truth for aliases
 - Automatic generation of `tsconfig.nodulus.json` on every bootstrap
 - `defineConfig()` helper with full typing for `nodulus.config.ts`
@@ -104,19 +120,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `nodulus check` always reports boundary violations with error severity
 
 ### Changed
+
 - `createApp()` no longer accepts `aliases` in its options — move aliases to `nodulus.config.ts`
 - `extractModuleImports()` filters using registered aliases instead of `excludedScopes`
 
 ### Removed
+
 - `aliases` field from `CreateAppOptions` — replaced by `nodulus.config.ts`
 - Hardcoded `excludedScopes` list in `import-scanner.ts`
 
 ### Fixed
+
 - False positives in module import detection when projects use npm scopes not listed in `excludedScopes`
 
 ## [1.6.0] — 2026-05-24
 
 ### Added
+
 - **Verification Triangle unit tests**:
   - `similarityThreshold` option coverage mapping.
   - Same-cycle path swaps matching for multiple moved modules.
@@ -131,6 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Complete integration testing for static CLI check commands via `cli-check-fixture.test.ts`.
 
 ### Fixed
+
 - **Candidate-to-Active transition**: Fully validated candidate module stabilization in subsequent bootstrap runs (DESIGN-2).
 - **Registry Record Validation**: Enhanced validation in `loadNitsRegistry()` to safely catch malformed records (null identifiers or invalid status) with descriptive warnings.
 - **Dynamic Imports Extraction**: Expanded `extractModuleImports()` to gracefully handle dynamic `import()` statements alongside static imports.
@@ -139,6 +160,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.5.8] — 2026-05-17
 
 ### Added
+
 - **`check-reporter.ts`**: Extracted all presentation logic from `check.ts` into a dedicated `src/cli/lib/check-reporter.ts` module, implementing a fully structured Ayu Dark-themed report for `nodulus check`.
   - **Header**: version + project name banner.
   - **Architecture section**: per-module status with color-coded icons — `✔` OK, `⚠` warn, `✗` circular dep, `◈` new.
@@ -151,10 +173,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Unit tests** for `check-reporter.ts`: 43 tests covering 100% functions, 100% statements, 97.72% branches — above the `>= 85%` branch threshold.
 
 ### Changed
+
 - **`check.ts`**: Removed all inline `console.log` presentation blocks. The command now collects data and delegates entirely to `printCheckReport(data)`.
 - **`check.ts`**: Removed the call to `reportReconciliation` from the check cycle — NITS reconciliation changes are now surfaced via `printCheckReport`'s Identity section. `nits-reporter.ts` contract with `createApp.ts` (bootstrap logging) is unchanged.
 
 ### Fixed
+
 - **Colores**: Replaced all `picocolors` usages in check output with the Ayu Dark ANSI palette (`AYU` object), eliminating color inconsistencies between sections.
 - **`cli-check.test.ts`**: Added missing `deleted: []` field to `ReconciliationResult` mocks — the field became required in v1.5.7.
 - **`tests/helpers/shadow-file.ts`**: Fixed `version?: number | undefined` type error by defaulting to `version: 1` in the helper.
@@ -164,6 +188,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.5.7] — 2026-05-16
 
 ### Added
+
 - **NITS Delete Detection**: The reconciler now distinguishes between `STALE` modules (missing from disk, 3-cycle grace period) and `DELETED` modules (confirmed missing via Shadow File ID).
 - **Registry Purge**: Modules confirmed as deleted are now automatically purged from `registry.json` at the end of the bootstrap or check cycle.
 - **NITS Security Guards**:
@@ -175,6 +200,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Non-zero exit code (1) when deleted or stale modules are found.
 
 ### Changed
+
 - **NITS Reconciliation Step 0**: Elevated Shadow File ID matching to the highest priority, enabling 100% confidence moves even with aggressive name and content changes.
 - **Cross-platform Paths**: Improved path normalization for NITS guards on Windows environments.
 - **Advanced Glob Support**: NITS root detection now supports glob brace expansion (e.g., `{src/modules/*,src/domains/*}`).
@@ -182,6 +208,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.5.5] — 2026-05-11
 
 ### Added
+
 - Shadow File (`.nodulus`): persistent module identity per directory
 - NITS now resolves module identity by ID first, Jaccard similarity as fallback
 - `create-module` command now generates `.nodulus` automatically
@@ -189,16 +216,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `resolvedBy` field in reconciliation result: `'shadow-file' | 'path' | 'jaccard'`
 
 ### Changed
+
 - Module identity resolution order: Shadow File ID > path match > Jaccard similarity
 
 ### Fixed
+
 - Modules renamed aggressively (both location and internal identifiers) now
   retain their identity across reconciliation cycles
-
 
 ## [1.5.3] - 2026-05-09
 
 ### Added
+
 - Explicit export of `LogFormat` type from `index.ts` to ensure users can properly type their configurations.
 - 100% unit test coverage for the shutdown manager (`shutdown.ts`), guaranteeing correct system signal handling and `process.exit(0)`.
 - Internal integration with Pino as the logging engine.
@@ -209,17 +238,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - \`useLogger()\` now creates Pino child loggers with a \`service\` field in JSON output.
 
 ### Removed
+
 - Removed the unused `createUserLogHandler` function from `logger.ts` (dead code) to prevent confusion with the correct public APIs (`useLogger` and `createLogger`).
 
 ### Changed
+
 - Downgraded \`ESM alias hook skipped\` and \`Merged N alias(es)\` logs from \`info\` to \`debug\`.
 - Changed \`Mounted 0 route(s)\` log from \`info\` to \`warn\`.
 - Production timestamps are now full ISO 8601 (including the date).
 
 ### Fixed
+
 - Removed redundant \`[Nodulus] info [module]\` prefix — module information is now properly structured in the \`module\` field.
 
 ### Migration (v1.5.2 → v1.5.3)
+
 - Fully backwards compatible. No breaking changes.
 - If you were using a custom \`LogHandler\`, it will continue to work exactly the same.
 - If you had scripts parsing Nodulus' console output, you should update them to handle the new JSON format in production.
@@ -227,18 +260,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.5.2] - 2026-05-07
 
 ### Changed
+
 - **CLI `create-module` Defaults**: Inverted the file generation logic so that only `index.ts` is generated by default. Added positive flags (`--service`, `--routes`, `--repository`, `--schema`) and a `--full` shorthand to explicitly opt-in to additional files, improving clarity and honesty of the scaffolding tool.
 - **NITS Reporting Verbosity**: Internal NITS module IDs (`[mod_...]`) are now hidden by default in `nodulus check` output to reduce visual noise. They are now exclusively shown when using the new `--verbose` flag or automatically when a module identity conflict requires human review (e.g. moved or candidate modules).
 
 ### Fixed
+
 - **CLI `check` ENOENT Warnings**: Fixed a noisy `ENOENT` warning that occurred when `import.meta.url` resolution depths varied between development and production builds in monorepo setups, properly failing gracefully.
 
 ## [1.5.1] - 2026-05-07
 
 ### Added
+
 - **Regression Test Suite**: Comprehensive integration tests in `scenarios.test.ts` to prevent regressions in the dependency validation pipeline and module bootstrapping.
 
 ### Changed
+
 - **Optimized Module Scanning**: Refactored the file scanning logic to use a single, consolidated root-level glob instead of per-module globs, significantly improving bootstrap performance in large projects.
 - **Improved Import Detection**: Refined Step 5.5 of the bootstrap pipeline to ensure undeclared cross-module imports are reliably detected even when module names share common prefixes.
 
@@ -247,6 +284,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > **Runtime Pre-loader:** Solves ESM import timing — aliases are now available in top-level `import` statements of your server entry file, not just inside dynamically-loaded modules.
 
 ### Added
+
 - **`nodulus dev --watch`**: file watching basado en chokidar v5 con debounce configurable.
 - **Canonical Logging System**: Redesigned the internal logger for consistent, aligned, and metadata-driven output across all core components.
 - **New `useLogger(name)` API**: Public zero-config API for user-space logging that follows the framework's visual style and respects global settings.
@@ -273,26 +311,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`dist/preload/preload-hook.js`** added to the build output (separate tsup entry). Exported via `package.json` as `"./preload-hook"`.
 
 ### Changed
+
 - **Alias priority in the ESM hook**: Aliases are now sorted by descending key length before resolution, ensuring `@specific/deep` is matched before `@specific` when both exist.
 - **`package.json` exports**: Added `"./preload-hook": "./dist/preload/preload-hook.js"` subpath export.
 
 ### Fixed
+
 - **`package.json` resolution in bundled CLI**: `sync-preload`, `dev`, and version-check logic now probe multiple `../package.json` depths to correctly locate the manifest from both source (`src/`) and bundled (`dist/`) execution contexts.
 
 ### Migration guide (v1.4.0 → v1.5.0)
+
 Fully backward-compatible. No breaking changes.
 
 To opt in to top-level alias resolution:
+
 ```bash
 npx nodulus sync-preload          # generates .nodulus/preload.js
 npx nodulus sync-tsconfig         # keep IDE paths in sync
 ```
 
 Then update `package.json` scripts:
+
 ```json
 {
   "scripts": {
-    "dev":   "nodulus dev src/server.ts",
+    "dev": "nodulus dev src/server.ts",
     "start": "node --import ./.nodulus/preload.js src/server.ts"
   }
 }
@@ -305,6 +348,7 @@ Commit `.nodulus/preload.js` — CI/CD needs it to be present.
 > **Prerequisite for v2.0.0:** This release establishes the foundational **Nodulus Integrated Tracking System (NITS)** and a completely overhauled **Alias Robustness** engine. It replaces fragile name-based module resolution with a robust persistent identity system and first-class custom aliases, paving the way for the upcoming unified Domain-Driven architecture.
 
 ### Added
+
 - **Alias Robustness Engine**: Completed a comprehensive overhaul of the alias resolution system (P1-P7).
 - **Custom Aliases Support**: User-defined aliases in `createApp({ aliases: { ... } })` are now first-class citizens:
   - **Auto-Subpaths**: Directory aliases now automatically resolve their children without needing wildcards (e.g., `@shared/utils` works if `@shared` points to a folder).
@@ -316,15 +360,17 @@ Commit `.nodulus/preload.js` — CI/CD needs it to be present.
 - **Semantic AST Hashing**: Computes module hashes strictly via semantic domain identifiers (Services, Controllers, Repositories), honoring refactors regardless of whitespace or comments.
 - **Interactive Clone Detection** [N-29] & [N-44]: Incorporates strict state policies (`clonePolicy`) and dynamic `activeHashes` to definitively protect the project graph from split-brain scenarios.
 - **Outdated Import Scanner**: The engine natively parses cross-module dependencies to detect and emit targeted console warnings when aliases import routes from previously `moved` modules.
-- **Immutable Timestamp Persistence** [N-30]: Registry payloads permanently track `createdAt` lifecycles shielding origins. 
+- **Immutable Timestamp Persistence** [N-30]: Registry payloads permanently track `createdAt` lifecycles shielding origins.
 
 ### Changed
+
 - **Identity-First Core** [N-28]: Completely standardized the underlying runtime memory Maps (`registry.ts`) to anchor architecture via `nitsId`, deprecating string-name keys.
 - **Duplicate Directory Policies** [N-43]: System actively prevents generic module-name collisions by emitting safe `DUPLICATE_MODULE` errors upon `modulesByName` overwrites.
 - **Dynamic Reconcile Options** [N-45]: Allows customized integration hooks overriding the Jaccard similarity threshold arrays (`similarityThreshold`).
 - **Enhanced Bootstrap Resilience**: Integrated NITS strictly as an audit layer in `createApp`. Total disk I/O or corrupted registries will gracefully report warnings without disrupting backend initializations.
 
 ### Fixed
+
 - **Absolute Path Normalization**: All aliases are now normalized to absolute paths during registration, eliminating `cwd`-dependency issues.
 - **Validation Hints**: `ALIAS_NOT_FOUND` now suggests probable paths if an `index.ts/js` is missing (e.g., checking for index.ts helper).
 - **Idempotent Registry**: Refactored ESM hook registration to be content-addressable, allowing safe multiple calls to `createApp()` without race conditions.
@@ -340,34 +386,38 @@ Commit `.nodulus/preload.js` — CI/CD needs it to be present.
 - **[CODE-1] `nits-app` fixture `src/modules/` was completely orphaned** (`tests/unit/nits-hash-fixture.test.ts`): The fixture's module directories (`users/`, `orders/`) had no test coverage. Added a dedicated test file `nits-hash-fixture.test.ts` (isolated from the `vi.mock('node:fs')` context of `nits-store.test.ts`) exercising `computeModuleHash` against the real fixture files, verifying `UserService`/`OrderService` identifier extraction, distinct hashes per module, and a BUG-1 regression guard (no identifier may start with `/`).
 - **[CODE-2] `isValidRegistry` did not validate `NitsModuleRecord` fields** (`src/nits/nits-store.ts`): The function only verified that `modules` was an object, allowing records with missing `hash`, `createdAt`, `status`, etc. to pass validation and reach `reconcile()` with `undefined` values (root cause of BUG-3). Fixed by adding per-record validation: any record missing one of the 7 required fields (`name`, `path`, `hash`, `status`, `createdAt`, `lastSeen`, `identifiers`) causes `loadNitsRegistry` to return `null` with a descriptive warning identifying the offending record and missing fields.
 - **[REGLA-01] Spurious warning for modules without controllers** (`src/bootstrap/createApp.ts`): Nodulus is a structural layer, not an opinionated Express framework. Modules of pure infrastructure (workers, email senders, event listeners) do not need controllers. Fixed by removing the `log.warn` for empty `controllers` array in Step 6, honoring the principle that a module with no controllers is perfectly valid.
-- **[REGLA-14] Silent overwrite of modules with duplicate names** (`src/core/registry.ts`): The `registerModule` function checked for name uniqueness *after* the `modules.set` operation, leading to a silent overwrite in `modulesByName` and an inconsistent registry state. Fixed by moving the validation check before the map mutation, ensuring early termination (`DUPLICATE_MODULE`) before any state corruption.
+- **[REGLA-14] Silent overwrite of modules with duplicate names** (`src/core/registry.ts`): The `registerModule` function checked for name uniqueness _after_ the `modules.set` operation, leading to a silent overwrite in `modulesByName` and an inconsistent registry state. Fixed by moving the validation check before the map mutation, ensuring early termination (`DUPLICATE_MODULE`) before any state corruption.
 - **[REGLA-31] Inconsistent path normalization causing ID reassignment** (`src/nits/nits-reconciler.ts`): The internal `normalize` regex in the reconciler did not handle relative paths with backslashes on Windows properly (`src\modules\users`), causing comparisons to fail and IDs to be unnecessarily reassigned on every bootstrap. Fixed by importing and using the global `normalizePath` utility from `paths.ts`.
 
 ### Custom Aliases Usage
+
 Internal Nodulus resolution:
+
 ```typescript
 createApp(app, {
   aliases: {
-    "@config": "./src/config",        // Directory alias (supports subpaths)
-    "@shared": "./src/shared/index.ts" // File alias
-  }
+    "@config": "./src/config", // Directory alias (supports subpaths)
+    "@shared": "./src/shared/index.ts", // File alias
+  },
 });
 ```
 
 Integration with Vite/esbuild:
+
 ```typescript
 import { getAliases } from "@vlynk-studios/nodulus-core";
 
 export default {
   resolve: {
-    alias: await getAliases({ absolute: true }) // Returns all aliases as absolute paths
-  }
+    alias: await getAliases({ absolute: true }), // Returns all aliases as absolute paths
+  },
 };
 ```
 
 ## [1.3.1] - 2026-04-12
 
 ### Fixed
+
 - **NPM Provenance Synchronization**: Bumped version to sync with `eslint-plugin-nodulus` after a sigstore publishing failure forced a tag re-spin.
 - **NITS Scheme Versioning** [A-08]: `NitsRegistry.version` dynamically tracks expected format.
 - **Strict Express v5 Typing**: Ensured forwards-compatibility by defending `layer.route` access points in the core app builder.
@@ -376,27 +426,32 @@ export default {
 ## [1.3.0] - 2026-04-12
 
 ### Added
+
 - **ESLint Plugin src/index.ts Entrypoint** [N-14]: Created the canonical entrypoint for @vlynk-studios/eslint-plugin-nodulus, registering all rules without depending on @typescript-eslint/parser. Added modern "exports" field to the plugin's package.json.
-- **ESLint Plugin Build Pipeline** [N-15]: Added 	sup.config.ts and a "build": "tsup" script to eslint-plugin-nodulus, enabling its first-ever compiled distribution.
+- **ESLint Plugin Build Pipeline** [N-15]: Added sup.config.ts and a "build": "tsup" script to eslint-plugin-nodulus, enabling its first-ever compiled distribution.
 - **Cache Invalidation API** [N-23]: Exported clearDomainCache(), clearSharedAllowedCache(), and clearModuleImportsCache() from module-resolver.ts to prevent state-leakage between tests in the ESLint plugin.
-- **Cross-Domain @scope/* Import Support** [N-04]: Updated extractModuleImports to capture any @-scoped import, filtering known NPM scopes to avoid false positives. Enables full compatibility with cross-domain @domain/* aliases.
+- **Cross-Domain @scope/\* Import Support** [N-04]: Updated extractModuleImports to capture any @-scoped import, filtering known NPM scopes to avoid false positives. Enables full compatibility with cross-domain @domain/\* aliases.
 - **NITS Registry Corruption Warning** [N-25]: loadNitsRegistry now emits a console.warn() with the underlying JSON.parse error message before performing a soft reset on a corrupted registry file.
 - **NITS Reconciler Test Coverage** [N-27]: Added tests for identity-conflict healing (Step 2) and dynamic similarity-threshold matching when internalIdentifiers is empty, bringing branch coverage of src/nits to a satisfactory level.
 
 ### Changed
+
 - **extractIdentifierCall Robustness** [N-26]: The ESLint plugin's AST parser now handles spread elements and non-literal variables in import option arrays without crashing, emitting a graceful warning instead.
 - **getDomainSharedAllowed AST Migration** [N-16]: Replaced the regex-based TypeScript parser in the ESLint plugin with a proper corn AST walk for rigorous extractIdentifierCall analysis, eliminating false positive/negative classification errors.
 
 ## [1.2.6] - 2026-04-11
 
 ### Added
+
 - **Publish CI Validation**: The NPM publish pipeline now validates that the workflow tag versions exactly match the `package.json` descriptor before dispatching the build to the public registry.
 - **Coverage Metrics Baseline**: Bootstrapped robust baseline instrumentation via `@vitest/coverage-v8`, setting dynamic thresholds inside Vite and enforcing total validation in CI environments to prevent regressions.
 
 ### Changed
+
 - **Alias Resolution Predictability**: Centralized runtime assertions within the internal module loading bootstrap path to fail-fast (`ALIAS_NOT_FOUND`) if a manually specified path mapping in `nodulus.config` points to a nonexistent directory.
 
 ### Fixed
+
 - **Undeclared Import Guard**: Bootstrapping now correctly intercepts undeclared cross-module dependencies at runtime; when combined with `strict: true` the app fails explicitly with an `UNDECLARED_IMPORT` validation error, harmonizing runtime guarantees with the CLI's static analysis.
 - **Variable Shadowing Collisions**: Resolved an internal variable scope shadowing defect residing within `sync-tsconfig` logic blocks related to iterator aliases.
 - **Wildcard Alias Generation Anomalies**: Synchronizing configurations containing targeted single-file aliases no longer incorrectly emits wildcard boundaries (`/*`) for properties matching discrete resources instead of expansive directory hierarchies.
@@ -404,12 +459,14 @@ export default {
 ## [1.2.5] - 2026-04-11
 
 ### Added
+
 - **Configurable NITS Registry**: The NITS registry path is now configurable via `nits.registryPath` in `nodulus.config.ts` (defaults to `.nodulus/registry.json`).
 - **Internal Compatibility Layer**: Prepared core structures for upcoming v1.3.0 and v2.0.0 features (Domains, Shared Layouts, and Submodules).
 - **Public Registration Types**: Exported `ModuleRegistration` and `FeatureRegistration` types for enhanced framework integrations and tooling.
 - **NITS Identity Tracking**: Nodulus 1.2.5+ includes the **NITS (Nodulus Integrated Tracking System)**, which assigns a stable, unique ID to every module.
 
 ### Changed
+
 - **Encapsulated Public API**: Refactored `src/index.ts` to use explicit named exports, hiding internal registry logic and internal types from the public surface.
 - **Express v5 Alignment**: Updated `peerDependencies` to require `express >= 5.0.0`, enforcing compatibility with the project's native Express 5 types.
 - **ESM Hook Cleanup**: Removed legacy `__filename` checks in the alias resolver, optimizing for a pure ESM environment.
@@ -420,6 +477,7 @@ export default {
 - **ESM Hook Stability**: Implemented a singleton promise pattern in the ESM alias resolver to prevent race conditions during concurrent activations.
 
 ### Fixed
+
 - **Phantom Types Elimination**: Removed the legacy `types/` directory and corrected `tsconfig.json` to prevent re-generation of invalid type definitions.
 - **Alias Resolution Consistency**: Resolved a major discrepancy where `@modules/*` aliases resolved differently in runtime vs `tsconfig.json`. Now both use consistent dual-mapping (index file + directory wildcard).
 - **Custom Alias Precision**: Fixed a bug where wildcard suffixes (`/*`) were incorrectly forced on aliases pointing to single files instead of directories.
@@ -431,6 +489,7 @@ export default {
 ## [1.2.0] - 2026-04-09
 
 ### Added
+
 - **CLI Command `check`**: Added static code analysis to enforce boundaries via fast AST parsing (`acorn`). Uncovers architectural violations before loading.
 - **Rule Detection Mechanisms**: Captures circular dependencies, deep private imports, and undeclared external imports between modules.
 - **CI/CD Integration Tools**: `--strict` mode forcing process exits on rule breakage and `--format json` payload schema reports.
@@ -438,6 +497,7 @@ export default {
 ## [1.1.0] - 2026-04-08
 
 ### Changed
+
 - Centralized stack trace capture logic for identifiers (`getCallerInfo`) into a single internal helper `src/core/caller.ts` resolving DRY violations.
 - Restringed public API surface on `src/index.ts`. Internal utilities `loadConfig` and `DEFAULTS` are no longer exported.
 - Simplified schema generation scaffolding avoiding hard dependency assumptions (`import { z } from 'zod'`).
@@ -446,9 +506,11 @@ export default {
 - Renamed testing suite strings internally stripping hardcoded framework versions (`V1.0.0`) enhancing legibility.
 
 ### Deprecated
+
 - `ERROR_MESSAGES` in `errors.ts` has been marked as deprecated and will be removed in v2.0.0. Actual error messages are now defined at the throw site.
 
 ### Fixed
+
 - Fixed bug causing misleading error mappings (`REGISTRY_MISSING_CONTEXT`) across non-express Identifiers when caller bounds fail. They correctly throw `INVALID_MODULE_DECLARATION`.
 - Reorganized `activateAliasResolver` destructuring spread prioritizing user configuration aliases over auto-generated module ones.
 - Removed unreachable condition branch inside `createApp.ts` unlocking proper stdout logs for explicitly disabled controllers.
@@ -458,6 +520,7 @@ export default {
 ## [1.0.0] - 2026-04-05
 
 ### Added
+
 - **Core structural layer**: Automatic module discovery and controller registration for Express apps.
 - **Nodulus CLI**: Shipped the `nodulus` binary with `create-module` (scaffolding) and `sync-tsconfig` (IDE sync) commands.
 - **Identifiers**: Added `Service()`, `Repository()`, and `Schema()` structural markers for registering domain concepts alongside `Controller()`.
@@ -468,11 +531,13 @@ export default {
 - **Strict Mode**: Validation for circular dependencies and undeclared cross-module imports.
 
 ### Changed
+
 - Rebranded project from "Modular" to "Nodulus".
 - **ESM-Only Architecture**: Dropped CommonJS support; Nodulus now requires `"type": "module"` in `package.json`.
 - Updated minimum Node.js requirement to `v20.6.0+` for native ESM hook support.
 - Refined `NodulusError` structure with clearer cause/solution messages.
 
 ### Fixed
+
 - Fixed race conditions and duplicate registration errors in hot-reloading scenarios.
 - Fixed ESM module caching issues in high-frequency integration tests.

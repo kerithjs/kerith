@@ -52,7 +52,7 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
 
   if (config.nits?.enabled !== false) {
     try {
-      // Step 2.5a — Read/create shadow files for all discovered modules.
+      // Step 4.1 — Read/create shadow files for all discovered modules.
       const shadowFileMap = scanShadowFiles(resolvedModules);
 
       // Un solo glob global para todos los archivos (filtrado en memoria)
@@ -134,7 +134,7 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
       const updatedNits = buildUpdatedNitsRegistry(nitsResult, oldRegistry.project);
       await saveNitsRegistry(updatedNits, cwd);
 
-      // Step 2.5c — Write shadow files for modules resolved by path/Jaccard (migration path).
+      // Step 4.2 — Write shadow files for modules resolved by path/Jaccard (migration path).
       const resolvedDirs = new Map<string, string>(
         resolvedModules.map((m) => [m.dirPath, m.name]),
       );
