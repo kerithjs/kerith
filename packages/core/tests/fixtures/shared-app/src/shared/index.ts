@@ -1,5 +1,5 @@
-// @shared — recursos compartidos globales del proyecto
-// Exportá desde aquí todo lo que los módulos necesiten compartir entre dominios.
+// @shared — global shared resources of the project
+// Export from here everything that modules need to share between domains.
 
 /** Formats a value as a string. */
 export function format(value: unknown): string {

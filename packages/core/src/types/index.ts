@@ -90,6 +90,33 @@ export interface HttpLoggerOptions {
    * @default false 
    */
   logBody?: boolean;
+
+  /**
+   * In production (`NODE_ENV=production`), replaces the error message exposed to the client
+   * with a generic text. The real message is always logged internally in Pino.
+   * Set to `false` to expose the real message (useful in staging).
+   * @default true
+   */
+  sanitizeErrors?: boolean;
+
+  /**
+   * If `true`, generates a UUID v4 per request and stores it in `res.locals.requestId`.
+   * In JSON mode (production) it's included in each request log entry.
+   * The ID is generated before the ignore check, so it's available even for ignored routes.
+   * This allows users to access the ID in their own middlewares regardless of log suppression.
+   * @default false
+   */
+  requestId?: boolean;
+
+  /**
+   * Function to get or generate the ID. Useful if a gateway already provides the ID
+   * in a header (e.g. `X-Request-Id`).
+   * Only used if `requestId: true`.
+   * @default () => crypto.randomUUID()
+   * @example
+   *   getRequestId: (req) => req.headers['x-request-id'] as string ?? crypto.randomUUID()
+   */
+  getRequestId?: (req: import('express').Request) => string;
 }
 
 /**

@@ -53,8 +53,8 @@ export function createSharedCommand() {
         fs.mkdirSync(sharedDir, { recursive: true });
 
         const content =
-          `// @shared — recursos compartidos globales del proyecto\n` +
-          `// Exportá desde aquí todo lo que los módulos necesiten compartir entre dominios.\n`;
+          `// @shared — global shared resources of the project\n` +
+          `// Export from here everything that modules need to share between domains.\n`;
         fs.writeFileSync(indexPath, content, 'utf-8');
 
         console.log(pc.green(`\n✔ Global shared created at src/shared/`));
@@ -97,8 +97,8 @@ export function createSharedCommand() {
       fs.mkdirSync(sharedDir, { recursive: true });
 
       const content =
-        `// @${domainName}/shared — recursos compartidos internos del dominio ${domainName}\n` +
-        `// Exportá desde aquí todo lo que los módulos de este dominio necesiten compartir.\n`;
+        `// @${domainName}/shared — internal shared resources of domain ${domainName}\n` +
+        `// Export from here everything that modules of this domain need to share.\n`;
       fs.writeFileSync(indexPath, content, 'utf-8');
 
       console.log(pc.green(`\n✔ Domain shared created at src/${domainName}/_shared/`));

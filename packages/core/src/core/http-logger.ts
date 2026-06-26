@@ -28,18 +28,40 @@ export function useHttpLogger(options: HttpLoggerOptions = {}): HttpLogger {
   const logger = getPinoInstance().child({ service: 'http' });
   const ignorePatterns = options.ignore ?? [];
 
-  const shouldIgnore = (path: string) => {
-    return ignorePatterns.some((pattern) => {
-      if (pattern.endsWith('*')) {
-        return path.startsWith(pattern.slice(0, -1));
-      }
-      return path === pattern;
-    });
+  function patternToRegex(pattern: string): RegExp {
+    // Escapar todo excepto '*', luego convertir '*' a '[^/]+'
+    // '[^/]+' matchea un segmento pero NO cruza barras
+    // Esto cubre: '/health*', '/api/*/status', '/a/b/c'
+    // Si '*' está al final, permitimos cruzar barras (comportamiento original)
+    const escaped = pattern
+      .replace(/[.+^${}()|[\]\\]/g, '\\$&');  // escapar regex specials
+    
+    if (pattern.endsWith('*')) {
+      // Comportamiento original para * al final: cruza barras
+      const prefix = escaped.slice(0, -1); // quitar el * escapado
+      return new RegExp(`^${prefix}.*$`);
+    } else {
+      // * en medio: solo un segmento sin barras
+      const withWildcard = escaped.replace(/\*/g, '[^/]+');
+      return new RegExp(`^${withWildcard}(/.*)?$`);
+    }
+  }
+
+  const compiledPatterns = ignorePatterns.map(patternToRegex);
+
+  const shouldIgnore = (path: string): boolean => {
+    return compiledPatterns.some((re) => re.test(path));
   };
 
   return {
     requests(): RequestHandler {
       return (req, res, next) => {
+        // Generar requestId si está habilitado
+        if (options.requestId) {
+          const getId = options.getRequestId ?? (() => crypto.randomUUID());
+          res.locals.requestId = getId(req);
+        }
+
         if (shouldIgnore(req.path)) {
           return next();
         }
@@ -49,7 +71,7 @@ export function useHttpLogger(options: HttpLoggerOptions = {}): HttpLogger {
         res.on('finish', () => {
           const responseTime = Date.now() - start;
           const status = res.statusCode;
-          const msg = `${req.method} ${req.path} ${status}`;
+          const msg = `${req.method} ${req.originalUrl} ${status}`;
 
           let level: 'info' | 'warn' | 'error' = 'info';
           if (status >= 400 && status < 500) {
@@ -62,6 +84,10 @@ export function useHttpLogger(options: HttpLoggerOptions = {}): HttpLogger {
             status,
             responseTime,
           };
+
+          if (res.locals.requestId) {
+            meta.requestId = res.locals.requestId;
+          }
 
           // Pino exposes isLevelEnabled, but we can also just log it in debug if options.logBody is true
           if (options.logBody && logger.isLevelEnabled('debug')) {
@@ -79,13 +105,20 @@ export function useHttpLogger(options: HttpLoggerOptions = {}): HttpLogger {
       // Express requires 4 arguments for error handlers, even if next is unused
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       return (err: any, req, res, next) => {
-        const msg = `${req.method} ${req.path}`;
+        const msg = `${req.method} ${req.originalUrl}`;
         const status = err.status ?? 500;
 
+        // Log interno: siempre el mensaje real (para debugging)
         logger.error({ err, status }, `${msg} — ${err.message}`);
 
         if (!res.headersSent) {
-          res.status(status).json({ error: err.message });
+          const sanitize = options.sanitizeErrors !== false;
+          const isProduction = process.env.NODE_ENV === 'production';
+          const clientMessage = (sanitize && isProduction)
+            ? 'Internal server error'
+            : err.message;
+
+          res.status(status).json({ error: clientMessage });
         }
       };
     },

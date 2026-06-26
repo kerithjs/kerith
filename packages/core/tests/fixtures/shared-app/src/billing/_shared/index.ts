@@ -1,3 +1,3 @@
-// @billing/shared — recursos compartidos internos del dominio billing
-// Exportá desde aquí todo lo que los módulos de este dominio necesiten compartir.
+// @billing/shared — internal shared resources of domain billing
+// Export from here everything that modules of this domain need to share.
 export { db } from './db.js'

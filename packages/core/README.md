@@ -198,8 +198,8 @@ A cold start of 80–120 ms means Kerith is viable in AWS Lambda, Cloudflare Wor
 In development, Kerith writes a bootstrap cache to `.kerith/bootstrap-cache.json`. On subsequent restarts, only modules whose files changed on disk are re-scanned. Unchanged modules are hydrated from cache.
 
 ```
-[bootstrap] bootstrap desde cache — 12ms (0 módulos re-escaneados)
-[bootstrap] bootstrap desde cache — 34ms (1 módulos re-escaneados)
+[bootstrap] bootstrap from cache — 12ms (0 modules re-scanned)
+[bootstrap] bootstrap from cache — 34ms (1 modules re-scanned)
 ```
 
 The cache is automatically invalidated when `kerith.config.ts` changes. Use `kerith dev --force` to force a full re-scan.
@@ -556,20 +556,20 @@ export default defineConfig({
 })
 ```
 
-|Campo|Tipo|Default|Descripción|
+|Field|Type|Default|Description|
 |---|---|---|---|
-|`origin`|`string`|—|Scan root para jerarquía v2 (`Domain → Module → SubModule`)|
-|`modules`|`string`|`'src/modules/*'`|Glob de directorios de módulos (modo v1.x, sigue soportado)|
-|`prefix`|`string`|`''`|Prefijo global de rutas HTTP|
-|`strict`|`boolean`|`true` en dev, `false` en prod|Modo estricto|
-|`logLevel`|`'debug'\|'info'\|'warn'\|'error'`|`'info'`|Nivel de logs|
-|`logFormat`|`'json'\|'pretty'\|'auto'`|`'auto'`|Formato de logs|
-|`resolveAliases`|`boolean`|`true`|Activar resolución de aliases en runtime|
-|`requirePreloader`|`boolean`|`false`|Requerir el pre-loader activo|
-|`moduleLoadTimeoutMs`|`number`|`30000`|Timeout de carga de módulos en ms|
-|`nits.enabled`|`boolean`|`true`|Activar NITS identity tracking|
-|`nits.similarityThreshold`|`number`|dinámico|Umbral de similitud Jaccard|
-|`aliases`|`AliasMap`|`{}`|Mapa de aliases de usuario|
+|`origin`|`string`|—|Scan root for v2 hierarchy (`Domain → Module → SubModule`)|
+|`modules`|`string`|`'src/modules/*'`|Module directories glob (v1.x mode, still supported)|
+|`prefix`|`string`|`''`|Global HTTP route prefix|
+|`strict`|`boolean`|`true` in dev, `false` in prod|Strict mode|
+|`logLevel`|`'debug'\|'info'\|'warn'\|'error'`|`'info'`|Log level|
+|`logFormat`|`'json'\|'pretty'\|'auto'`|`'auto'`|Log format|
+|`resolveAliases`|`boolean`|`true`|Enable runtime alias resolution|
+|`requirePreloader`|`boolean`|`false`|Require active pre-loader|
+|`moduleLoadTimeoutMs`|`number`|`30000`|Module load timeout in ms|
+|`nits.enabled`|`boolean`|`true`|Enable NITS identity tracking|
+|`nits.similarityThreshold`|`number`|dynamic|Jaccard similarity threshold|
+|`aliases`|`AliasMap`|`{}`|User alias map|
 
 Config file loading order (first match wins):
 

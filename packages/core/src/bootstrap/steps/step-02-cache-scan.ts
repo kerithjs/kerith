@@ -46,8 +46,8 @@ export async function runCacheAndScan(ctx: BootstrapContext): Promise<void> {
   const rescannedDomains = new Set<string>();
   let isFullCacheHit = false;
 
-  // Si ningún archivo de config existe, configPath queda vacío.
-  // hashConfig('') devuelve 'no-config', que es estable entre boots — no degrada.
+  // If no config file exists, configPath remains empty.
+  // hashConfig('') returns 'no-config', which is stable between boots — no degradation.
   const configCandidates = [
     "kerith.config.ts",
     "kerith.config.js",
@@ -73,10 +73,10 @@ export async function runCacheAndScan(ctx: BootstrapContext): Promise<void> {
       if (!CacheManager.valid(rawCache, KERITH_VERSION, configHash)) {
         cacheLogReason =
           rawCache.version !== KERITH_VERSION
-            ? "(cache inválido — versión mismatch)"
+            ? "(cache invalid — version mismatch)"
             : rawCache.cwd !== process.cwd()
-              ? "(cache inválido — directorio movido)"
-              : "(cache inválido — config modificado)";
+              ? "(cache invalid — directory moved)"
+              : "(cache invalid — config modified)";
       } else {
         // toRescan: domain IDs whose modules on disk changed (by mtime or size).
         // Domains not in toRescan will be loaded directly from rawCache.data.
@@ -126,10 +126,10 @@ export async function runCacheAndScan(ctx: BootstrapContext): Promise<void> {
             partialScan.submodules,
           );
 
-          // Global @shared se rescannea siempre (costo mínimo: una stat de directorio).
-          // La razón: @shared no pertenece a ningún dominio, por lo que no tiene un
-          // domainKey que pueda aparecer en `toRescan`. Se fuerza rescan para detectar
-          // si src/shared/ fue creado o eliminado entre boots.
+          // Global @shared is always rescanned (minimal cost: one directory stat).
+          // The reason: @shared does not belong to any domain, so it has no
+          // domainKey that can appear in `toRescan`. Force rescan to detect
+          // if src/shared/ was created or deleted between boots.
           // Domain-scoped shared is tied to domain.
           const finalSharedMap = new Map();
           for (const s of rawCache.data!.shared) {

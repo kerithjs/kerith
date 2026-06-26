@@ -35,7 +35,7 @@ async function scanAndRegister(fixturePath: string) {
 // ─── Ciclo completo global ───────────────────────────────────────────────────
 
 describe('Shared Lifecycle — global (@shared)', () => {
-  it('scanner detecta src/shared/ y lo registra como @shared global', async () => {
+  it('scanner detects src/shared/ and registers it as @shared global', async () => {
     const scan = await scanFromConfig({ origin: 'src' }, sharedApp);
 
     const globalShared = scan.shared.find(s => s.alias === '@shared');
@@ -44,7 +44,7 @@ describe('Shared Lifecycle — global (@shared)', () => {
     expect(globalShared?.path).toContain('shared');
   });
 
-  it('módulo payments declara shared: ["@shared"] → sin UNDECLARED_SHARED', async () => {
+  it('module payments declares shared: ["@shared"] → no UNDECLARED_SHARED', async () => {
     const { scan, registry } = await scanAndRegister(sharedApp);
     const graph = await buildModuleGraph({ origin: 'src', strict: false }, sharedApp);
 
@@ -84,7 +84,7 @@ describe('Shared Lifecycle — global (@shared)', () => {
 // ─── Ciclo completo domain-scoped ───────────────────────────────────────────
 
 describe('Shared Lifecycle — domain-scoped (@billing/shared)', () => {
-  it('scanner detecta src/billing/_shared/ y lo registra como @billing/shared', async () => {
+  it('scanner detects src/billing/_shared/ and registers it as @billing/shared', async () => {
     const scan = await scanFromConfig({ origin: 'src' }, sharedApp);
 
     const billingShared = scan.shared.find(s => s.alias === '@billing/shared');
@@ -93,7 +93,7 @@ describe('Shared Lifecycle — domain-scoped (@billing/shared)', () => {
     expect(billingShared?.domain).toBe('billing');
   });
 
-  it('módulo payments (billing) importa @billing/shared → sin SHARED_SCOPE_VIOLATION', async () => {
+  it('module payments (billing) imports @billing/shared → no SHARED_SCOPE_VIOLATION', async () => {
     const scan  = await scanFromConfig({ origin: 'src' }, sharedApp);
     const graph = await buildModuleGraph({ origin: 'src', strict: false }, sharedApp);
 
@@ -120,7 +120,7 @@ describe('Shared Lifecycle — domain-scoped (@billing/shared)', () => {
     });
   });
 
-  it('módulo members (workspace) importa @billing/shared → SHARED_SCOPE_VIOLATION', async () => {
+  it('module members (workspace) imports @billing/shared → SHARED_SCOPE_VIOLATION', async () => {
     const scan  = await scanFromConfig({ origin: 'src' }, sharedApp);
     const graph = await buildModuleGraph({ origin: 'src', strict: false }, sharedApp);
 
@@ -166,25 +166,25 @@ describe('Shared Lifecycle — domain-scoped (@billing/shared)', () => {
   });
 
 
-  it('SHARED_SCOPE_VIOLATION es siempre error — isErrorViolation() retorna true', async () => {
+  it('SHARED_SCOPE_VIOLATION is always error — isErrorViolation() returns true', async () => {
     const { isErrorViolation } = await import('../../src/cli/lib/violations.js');
     expect(isErrorViolation({ type: ViolationType.SHARED_SCOPE_VIOLATION, severity: 'error' } as any)).toBe(true);
-    // Contraste: UNDECLARED_SHARED no es always-error
+    // Contrast: UNDECLARED_SHARED is not always-error
     expect(isErrorViolation({ type: ViolationType.UNDECLARED_SHARED, severity: 'warn' } as any)).toBe(false);
   });
 });
 
-// ─── Retrocompatibilidad ─────────────────────────────────────────────────────
+// ─── Backward compatibility ─────────────────────────────────────────────────────
 
-describe('Shared Lifecycle — retrocompatibilidad v1.x', () => {
-  it('proyecto sin ningún shared/ → scan.shared está vacío, sin errores', async () => {
+describe('Shared Lifecycle — backward compatibility v1.x', () => {
+  it('project without any shared/ → scan.shared is empty, no errors', async () => {
     const fixturePath = path.join(fixturesDir, 'v1-compat-app');
     const scan = await scanFromConfig({ modules: 'src/modules/*' }, fixturePath);
 
     expect(scan.shared).toHaveLength(0);
   });
 
-  it('módulo v1.x sin campo shared[] → no hay UNDECLARED_SHARED si no importa @shared', async () => {
+  it('v1.x module without shared[] field → no UNDECLARED_SHARED if it does not import @shared', async () => {
     const fixturePath = path.join(fixturesDir, 'v1-compat-app');
     const scan        = await scanFromConfig({ modules: 'src/modules/*' }, fixturePath);
     const graph       = await buildModuleGraph({ modules: 'src/modules/*', strict: false }, fixturePath);
@@ -213,7 +213,7 @@ describe('Shared Lifecycle — retrocompatibilidad v1.x', () => {
     });
   });
 
-  it('clearRegistry() limpia las entradas shared — sin contaminación entre tests', () => {
+  it('clearRegistry() clears shared entries — no contamination between tests', () => {
     const registry = createRegistry();
     registry.registerShared({ type: 'global', alias: '@shared', path: '/src/shared' });
     expect(registry.getAllShared()).toHaveLength(1);

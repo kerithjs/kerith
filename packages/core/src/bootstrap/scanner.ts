@@ -143,7 +143,7 @@ async function detectSharedEntries(
       });
     }
   } catch {
-    // Ignorar — path desapareció entre existsSync y statSync (race condition)
+    // Ignore — path disappeared between existsSync and statSync (race condition)
   }
 
   for (const domain of domains) {
@@ -241,7 +241,7 @@ export async function scanOrigin(
           options: identifier.options,
         });
         break;
-      case 'Module':
+      case 'Module': {
         modules.push({
           name: identifier.name,
           dirPath,
@@ -251,20 +251,25 @@ export async function scanOrigin(
           shared: stringArrayOption(identifier.options.shared),
           options: identifier.options,
         });
-        
-        // Inline domain check (single pass)
-        const domainCall = calls.find(c => c.type === 'Domain');
-        if (domainCall) {
-          if (!domains.some(d => d.name === domainCall.name && normalizePath(d.dirPath) === normalizePath(dirPath))) {
-            domains.push({
-              name: domainCall.name,
-              dirPath,
-              indexPath,
-              options: domainCall.options,
-            });
+
+        // Inline domain check (single pass): a Module() index file may also
+        // declare a Domain() in the same file. Register it here to avoid a
+        // second glob pass over the filesystem.
+        {
+          const domainCall = calls.find(c => c.type === 'Domain');
+          if (domainCall) {
+            if (!domains.some(d => d.name === domainCall.name && normalizePath(d.dirPath) === normalizePath(dirPath))) {
+              domains.push({
+                name: domainCall.name,
+                dirPath,
+                indexPath,
+                options: domainCall.options,
+              });
+            }
           }
         }
         break;
+      }
       case 'SubModule':
         submodules.push({
           name: identifier.name,

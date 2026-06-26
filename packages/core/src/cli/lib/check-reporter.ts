@@ -89,7 +89,7 @@ export function printArchitectureSection(data: CheckReportData): void {
   const hasDomains = domains && domains.length > 0;
 
   if (!hasDomains) {
-    // Modo v1.x (sin secciones)
+    // v1.x mode (without sections)
     printNodeGroup(modules, data);
     blank();
     return;
@@ -392,16 +392,16 @@ export function printSharedSection(data: CheckReportData): void {
 
     if (hasUndeclared) {
       const violators = new Set(undeclared.filter(v => v.message.includes('@shared')).map(v => v.module));
-      const usageInfo = violators.size > 0 ? ` ${AYU.muted}— módulos: ${[...violators].join(', ')}${R}` : '';
+      const usageInfo = violators.size > 0 ? ` ${AYU.muted}— modules: ${[...violators].join(', ')}${R}` : '';
       console.log(`  ${AYU.red}✗${R}  @shared          ${AYU.red}UNDECLARED_SHARED${R}${usageInfo}`);
     } else if (hasUnused) {
       const violators = new Set(unused.filter(v => v.message.includes('@shared')).map(v => v.module));
-      const usageInfo = violators.size > 0 ? ` ${AYU.muted}— módulos: ${[...violators].join(', ')}${R}` : '';
+      const usageInfo = violators.size > 0 ? ` ${AYU.muted}— modules: ${[...violators].join(', ')}${R}` : '';
       console.log(`  ${AYU.orange}⚠${R}  @shared          ${AYU.orange}UNUSED_SHARED${R}${usageInfo}`);
     } else {
       // ✔ — show which modules declared @shared in verbose mode
       const usageInfo = globalDeclaredBy.length > 0
-        ? ` ${AYU.muted}— usado por: ${globalDeclaredBy.join(', ')}${R}`
+        ? ` ${AYU.muted}— used by: ${globalDeclaredBy.join(', ')}${R}`
         : '';
       console.log(`  ${AYU.green}✔${R}  @shared          ${AYU.green}OK${R}${usageInfo}`);
     }
@@ -438,17 +438,17 @@ export function printSharedSection(data: CheckReportData): void {
 
     if (hasScopeVio) {
       const violators = new Set(scopeVios.filter(v => v.message.includes(alias)).map(v => v.module));
-      const fromInfo = violators.size > 0 ? ` ${AYU.muted}— desde: ${[...violators].join(', ')}${R}` : '';
+      const fromInfo = violators.size > 0 ? ` ${AYU.muted}— from: ${[...violators].join(', ')}${R}` : '';
       console.log(`  ${AYU.red}✗${R}  ${aliasLabel} ${AYU.red}SCOPE_VIOLATION${R}${fromInfo}`);
     } else if (hasUndecl) {
       const violators = new Set(aliasVios.filter(v => v.type === ViolationType.UNDECLARED_SHARED).map(v => v.module));
-      console.log(`  ${AYU.red}✗${R}  ${aliasLabel} ${AYU.red}UNDECLARED_SHARED${R} ${AYU.muted}— módulos: ${[...violators].join(', ')}${R}`);
+      console.log(`  ${AYU.red}✗${R}  ${aliasLabel} ${AYU.red}UNDECLARED_SHARED${R} ${AYU.muted}— modules: ${[...violators].join(', ')}${R}`);
     } else if (hasUnused) {
       const violators = new Set(aliasVios.filter(v => v.type === ViolationType.UNUSED_SHARED).map(v => v.module));
-      console.log(`  ${AYU.orange}⚠${R}  ${aliasLabel} ${AYU.orange}UNUSED_SHARED${R} ${AYU.muted}— módulos: ${[...violators].join(', ')}${R}`);
+      console.log(`  ${AYU.orange}⚠${R}  ${aliasLabel} ${AYU.orange}UNUSED_SHARED${R} ${AYU.muted}— modules: ${[...violators].join(', ')}${R}`);
     } else {
-      // ✔ OK — implícito para {domain}
-      console.log(`  ${AYU.green}✔${R}  ${aliasLabel} ${AYU.green}OK${R} ${AYU.muted}— implícito para ${domain}${R}`);
+      // ✔ OK — implicit for {domain}
+      console.log(`  ${AYU.green}✔${R}  ${aliasLabel} ${AYU.green}OK${R} ${AYU.muted}— implicit for ${domain}${R}`);
     }
   }
 

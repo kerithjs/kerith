@@ -127,6 +127,7 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
 
       const nitsResult = reconcile(discovered as DiscoveredModule[], oldRegistry, cwd, {
         similarityThreshold: config.nits?.similarityThreshold,
+        log,
       });
 
       reportReconciliation(nitsResult, log);

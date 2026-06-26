@@ -82,28 +82,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `createApp()` ya no acepta opciones de configuración — toda la config vive en `nodulus.config.ts`
-- `createApp(app, options)` → `createApp(app)` (o `createApp(app, { logger })` para logger custom)
-- `onShutdown` se mueve de `createApp()` a `nodulus.listen(server, { onShutdown })`
+- `createApp()` no longer accepts configuration options — all config lives in `nodulus.config.ts`
+- `createApp(app, options)` → `createApp(app)` (or `createApp(app, { logger })` for custom logger)
+- `onShutdown` moves from `createApp()` to `nodulus.listen(server, { onShutdown })`
 
 ### Added
 
-- `nodulus.config.ts` soporta todos los campos de configuración: `logLevel`, `logFormat`, `resolveAliases`, `requirePreloader`, `moduleLoadTimeoutMs`
-- `ListenOptions` — interfaz para las opciones de `nodulus.listen()`
-- Validación de `logLevel`, `logFormat`, y `moduleLoadTimeoutMs` en la carga del config file
+- `nodulus.config.ts` supports all configuration fields: `logLevel`, `logFormat`, `resolveAliases`, `requirePreloader`, `moduleLoadTimeoutMs`
+- `ListenOptions` — interface for `nodulus.listen()` options
+- Validation of `logLevel`, `logFormat`, and `moduleLoadTimeoutMs` on config file load
 
 ### Removed
 
-- `CreateAppOptions.modules` — mover a `nodulus.config.ts`
-- `CreateAppOptions.prefix` — mover a `nodulus.config.ts`
-- `CreateAppOptions.strict` — mover a `nodulus.config.ts`
-- `CreateAppOptions.logLevel` — mover a `nodulus.config.ts`
-- `CreateAppOptions.logFormat` — mover a `nodulus.config.ts`
-- `CreateAppOptions.resolveAliases` — mover a `nodulus.config.ts`
-- `CreateAppOptions.requirePreloader` — mover a `nodulus.config.ts`
-- `CreateAppOptions.moduleLoadTimeoutMs` — mover a `nodulus.config.ts`
-- `CreateAppOptions.nits` — mover a `nodulus.config.ts`
-- `CreateAppOptions.onShutdown` — movido a `nodulus.listen(server, { onShutdown })`
+- `CreateAppOptions.modules` — move to `nodulus.config.ts`
+- `CreateAppOptions.prefix` — move to `nodulus.config.ts`
+- `CreateAppOptions.strict` — move to `nodulus.config.ts`
+- `CreateAppOptions.logLevel` — move to `nodulus.config.ts`
+- `CreateAppOptions.logFormat` — move to `nodulus.config.ts`
+- `CreateAppOptions.resolveAliases` — move to `nodulus.config.ts`
+- `CreateAppOptions.requirePreloader` — move to `nodulus.config.ts`
+- `CreateAppOptions.moduleLoadTimeoutMs` — move to `nodulus.config.ts`
+- `CreateAppOptions.nits` — move to `nodulus.config.ts`
+- `CreateAppOptions.onShutdown` — moved to `nodulus.listen(server, { onShutdown })`
 
 ---
 

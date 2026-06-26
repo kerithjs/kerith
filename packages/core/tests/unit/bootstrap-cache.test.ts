@@ -24,13 +24,13 @@ describe('CacheManager', () => {
     expect(CacheManager.read()).toBeNull();
   });
 
-  it('5.1.2 — CacheManager.read() retorna null si el JSON es inválido', () => {
+  it('5.1.2 — CacheManager.read() returns null if JSON is invalid', () => {
     fs.mkdirSync(kerithDir, { recursive: true });
     fs.writeFileSync(path.join(kerithDir, 'bootstrap-cache.json'), 'not-json', 'utf-8');
     expect(CacheManager.read()).toBeNull();
   });
 
-  it('5.1.3 — CacheManager.read() retorna null si data está ausente', () => {
+  it('5.1.3 — CacheManager.read() returns null if data is absent', () => {
     fs.mkdirSync(kerithDir, { recursive: true });
     fs.writeFileSync(
       path.join(kerithDir, 'bootstrap-cache.json'),
@@ -63,7 +63,7 @@ describe('CacheManager', () => {
     expect(content.data).toEqual(mockData);
   });
 
-  it('5.1.5 — CacheManager.write() usa escritura atómica (.tmp -> rename)', () => {
+  it('5.1.5 — CacheManager.write() uses atomic write (.tmp -> rename)', () => {
     const mockData = {
       domains: [],
       modules: [],
@@ -113,12 +113,12 @@ describe('CacheManager', () => {
     const cache = { status: 'ok' as const, version: '2.0.0', configHash: 'oldHash', cwd: tmpDir, data: {} as any };
     expect(CacheManager.valid(cache, '2.0.0', 'newHash')).toBe(false);
   });
-  it('5.1.11 — CacheManager.valid() retorna false si cwd mismatch', () => {
-    const cache = { status: 'ok' as const, version: '2.0.0', configHash: 'hash', cwd: '/otro/directorio', data: {} as any };
+  it('5.1.11 — CacheManager.valid() returns false if cwd mismatch', () => {
+    const cache = { status: 'ok' as const, version: '2.0.0', configHash: 'hash', cwd: '/other/directory', data: {} as any };
     expect(CacheManager.valid(cache, '2.0.0', 'hash')).toBe(false);
   });
 
-  it('5.1.12 — CacheManager.valid() retorna true cuando todo coincide', () => {
+  it('5.1.12 — CacheManager.valid() returns true when everything matches', () => {
     const cache = { status: 'ok' as const, version: '2.0.0', configHash: 'hash', cwd: tmpDir, data: {} as any };
     expect(CacheManager.valid(cache, '2.0.0', 'hash')).toBe(true);
   });
@@ -176,12 +176,12 @@ describe('MtimeValidator', () => {
     };
   }
 
-  it('5.2.1 — MtimeValidator.validate() retorna toRescan: [] cuando ningún archivo cambió', () => {
+  it('5.2.1 — MtimeValidator.validate() returns toRescan: [] when no file changed', () => {
     const file1 = path.join(tmpDir, 'f1.ts');
     fs.writeFileSync(file1, 'data');
     const stat = fs.statSync(file1);
     
-    // savedAt en el futuro (después de la creación)
+    // savedAt in the future (after creation)
     const savedAt = new Date(stat.mtimeMs + 1000).toISOString();
     
     const cache = createMockCache([{ domain: 'dom1', files: [file1], cachedSize: stat.size, cachedMtime: stat.mtimeMs }], savedAt);
@@ -190,12 +190,12 @@ describe('MtimeValidator', () => {
     expect(result.toRescan).toEqual([]);
   });
 
-  it('5.2.2 — MtimeValidator.validate() incluye el domainKey cuando un archivo cambió (mtime > savedAt)', () => {
+  it('5.2.2 — MtimeValidator.validate() includes domainKey when a file changed (mtime > savedAt)', () => {
     const file1 = path.join(tmpDir, 'f1.ts');
     fs.writeFileSync(file1, 'data');
     const stat = fs.statSync(file1);
     
-    // savedAt en el pasado (antes de la creación)
+    // savedAt in the past (before creation)
     const savedAt = new Date(stat.mtimeMs - 1000).toISOString();
     
     const cache = createMockCache([{ domain: 'dom1', files: [file1], cachedSize: stat.size, cachedMtime: stat.mtimeMs - 1000 }], savedAt);
@@ -204,12 +204,12 @@ describe('MtimeValidator', () => {
     expect(result.toRescan).toContain('dom1');
   });
 
-  it('5.2.3 — MtimeValidator.validate() incluye el domainKey cuando cachedSize difiere', () => {
+  it('5.2.3 — MtimeValidator.validate() includes domainKey when cachedSize differs', () => {
     const file1 = path.join(tmpDir, 'f1.ts');
     fs.writeFileSync(file1, 'data');
     const stat = fs.statSync(file1);
     
-    // savedAt en el futuro, pero tamaño difiere
+    // savedAt in the future, but size differs
     const savedAt = new Date(stat.mtimeMs + 1000).toISOString();
     
     const cache = createMockCache([{ domain: 'dom1', files: [file1], cachedSize: stat.size + 100, cachedMtime: stat.mtimeMs }], savedAt);
@@ -218,7 +218,7 @@ describe('MtimeValidator', () => {
     expect(result.toRescan).toContain('dom1');
   });
 
-  it('5.2.4 — MtimeValidator.validate() marca como dirty si un archivo listado no existe', () => {
+  it('5.2.4 — MtimeValidator.validate() marks as dirty if a listed file does not exist', () => {
     const savedAt = new Date().toISOString();
     const cache = createMockCache([{ domain: 'dom1', files: ['/no/existe.ts'], cachedSize: 0, cachedMtime: 0 }], savedAt);
     const result = MtimeValidator.validate(cache);
@@ -226,12 +226,12 @@ describe('MtimeValidator', () => {
     expect(result.toRescan).toContain('dom1');
   });
 
-  it('5.2.5 — MtimeValidator.validate() agrupa módulos por dominio correctamente', () => {
+  it('5.2.5 — MtimeValidator.validate() groups modules by domain correctly', () => {
     const file1 = path.join(tmpDir, 'f1.ts');
     fs.writeFileSync(file1, 'data');
     const stat = fs.statSync(file1);
     
-    const savedAt = new Date(stat.mtimeMs - 1000).toISOString(); // fuerza rescan
+    const savedAt = new Date(stat.mtimeMs - 1000).toISOString(); // force rescan
     
     const cache = createMockCache([
       { domain: 'billing', files: [file1], cachedSize: stat.size, cachedMtime: stat.mtimeMs - 1000 },
@@ -240,10 +240,10 @@ describe('MtimeValidator', () => {
     
     const result = MtimeValidator.validate(cache);
     
-    expect(result.toRescan).toEqual(['billing']); // solo una vez
+    expect(result.toRescan).toEqual(['billing']); // only once
   });
 
-  it('5.2.6 — MtimeValidator.validate() usa "__flat__" para módulos sin dominio', () => {
+  it('5.2.6 — MtimeValidator.validate() uses "__flat__" for modules without domain', () => {
     const savedAt = new Date().toISOString();
     const cache = createMockCache([{ files: ['/no/existe.ts'], cachedSize: 0, cachedMtime: 0 }], savedAt); // flat module missing file
     const result = MtimeValidator.validate(cache);

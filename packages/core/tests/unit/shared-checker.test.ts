@@ -29,8 +29,8 @@ describe('Shared Checker', () => {
     vi.restoreAllMocks();
   });
 
-  describe('Paso A — UNDECLARED_SHARED', () => {
-    it('Módulo importa @shared/utils sin shared: ["@shared"] -> violación reportada', async () => {
+  describe('Step A — UNDECLARED_SHARED', () => {
+    it('Module imports @shared/utils without shared: ["@shared"] -> violation reported', async () => {
       const r = setupRegistry();
       r.registerModule('users', { imports: [], shared: [] }, '/project/src/modules/users', '/project/src/modules/users/index.ts', 'id_1');
       
@@ -48,7 +48,7 @@ describe('Shared Checker', () => {
       expect(violations[0].module).toBe('users');
     });
 
-    it('Módulo importa @shared/utils con shared: ["@shared"] -> sin violación', async () => {
+    it('Module imports @shared/utils with shared: ["@shared"] -> no violation', async () => {
       const r = setupRegistry();
       r.registerModule('users', { imports: [], shared: ['@shared'] }, '/project/src/modules/users', '/project/src/modules/users/index.ts', 'id_1');
       
@@ -64,7 +64,7 @@ describe('Shared Checker', () => {
       expect(violations).toHaveLength(0);
     });
 
-    it('SubModule importa @shared/utils y módulo padre tiene shared: ["@shared"] -> sin violación', async () => {
+    it('SubModule imports @shared/utils and parent module has shared: ["@shared"] -> no violation', async () => {
       const r = setupRegistry();
       r.registerModule('users', { imports: [], shared: ['@shared'] }, '/project/src/modules/users', '/project/src/modules/users/index.ts', 'id_1');
       r.registerSubModule({ name: 'profile', parentModule: 'users', path: '/project/src/modules/users/profile' });
@@ -84,7 +84,7 @@ describe('Shared Checker', () => {
       expect(violations).toHaveLength(0);
     });
 
-    it('SubModule importa @shared/utils y módulo padre NO tiene @shared -> violación en el padre', async () => {
+    it('SubModule imports @shared/utils and parent module does NOT have @shared -> violation on parent', async () => {
       const r = setupRegistry();
       r.registerModule('users', { imports: [], shared: [] }, '/project/src/modules/users', '/project/src/modules/users/index.ts', 'id_1');
       r.registerSubModule({ name: 'profile', parentModule: 'users', path: '/project/src/modules/users/profile' });
@@ -107,8 +107,8 @@ describe('Shared Checker', () => {
     });
   });
 
-  describe('Paso B — UNUSED_SHARED', () => {
-    it('Módulo declara shared: ["@shared"] pero ningún archivo importa de @shared -> violación', async () => {
+  describe('Step B — UNUSED_SHARED', () => {
+    it('Module declares shared: ["@shared"] but no file imports from @shared -> violation', async () => {
       const r = setupRegistry();
       r.registerModule('users', { imports: [], shared: ['@shared'] }, '/project/src/modules/users', '/project/src/modules/users/index.ts', 'id_1');
       
@@ -126,7 +126,7 @@ describe('Shared Checker', () => {
       expect(violations[0].module).toBe('users');
     });
 
-    it('Módulo declara shared: ["@shared"] y al menos un archivo importa -> sin violación', async () => {
+    it('Module declares shared: ["@shared"] and at least one file imports -> no violation', async () => {
       const r = setupRegistry();
       r.registerModule('users', { imports: [], shared: ['@shared'] }, '/project/src/modules/users', '/project/src/modules/users/index.ts', 'id_1');
 
@@ -144,7 +144,7 @@ describe('Shared Checker', () => {
       expect(unused).toHaveLength(0);
     });
 
-    it('Módulo declara shared: ["@shared"] y SubModule importa -> sin violación (padre usa shared via hijo)', async () => {
+    it('Module declares shared: ["@shared"] and SubModule imports -> no violation (parent uses shared via child)', async () => {
       const r = setupRegistry();
       r.registerModule('users', { imports: [], shared: ['@shared'] }, '/project/src/modules/users', '/project/src/modules/users/index.ts', 'id_1');
       r.registerSubModule({ name: 'profile', parentModule: 'users', path: '/project/src/modules/users/profile' });
@@ -168,8 +168,8 @@ describe('Shared Checker', () => {
     });
   });
 
-  describe('Paso C — SHARED_SCOPE_VIOLATION', () => {
-    it('Módulo de workspace importa @billing/shared -> violación, siempre error', async () => {
+  describe('Step C — SHARED_SCOPE_VIOLATION', () => {
+    it('Workspace module imports @billing/shared -> violation, always error', async () => {
       const r = setupRegistry();
       r.registerModule('orders', { imports: [], shared: [] }, '/project/src/workspace/orders', '/project/src/workspace/orders/index.ts', 'id_1', 'workspace');
       
@@ -187,7 +187,7 @@ describe('Shared Checker', () => {
       expect(violations[0].module).toBe('orders');
     });
 
-    it('Módulo de billing importa @billing/shared -> sin violación', async () => {
+    it('Billing module imports @billing/shared -> no violation', async () => {
       const r = setupRegistry();
       r.registerModule('payments', { imports: [], shared: [] }, '/project/src/billing/payments', '/project/src/billing/payments/index.ts', 'id_1', 'billing');
       
@@ -203,7 +203,7 @@ describe('Shared Checker', () => {
       expect(violations).toHaveLength(0);
     });
 
-    it('Módulo plano (src/modules/) importa @billing/shared -> violación', async () => {
+    it('Flat module (src/modules/) imports @billing/shared -> violation', async () => {
       const r = setupRegistry();
       r.registerModule('users', { imports: [], shared: [] }, '/project/src/modules/users', '/project/src/modules/users/index.ts', 'id_1');
       
@@ -220,13 +220,13 @@ describe('Shared Checker', () => {
       expect(violations[0].type).toBe(ViolationType.SHARED_SCOPE_VIOLATION);
     });
 
-    it('Módulo plano importa @shared -> sin violación (si lo declaró)', async () => {
+    it('Flat module imports @shared -> no violation (if declared)', async () => {
        // Done in UNDECLARED_SHARED test 2
     });
   });
 
-  describe('Severidad', () => {
-    it('isErrorViolation determina si causa exit 1', () => {
+  describe('Severity', () => {
+    it('isErrorViolation determines if it causes exit 1', () => {
       expect(isErrorViolation({ type: ViolationType.SHARED_SCOPE_VIOLATION, severity: 'error' } as any)).toBe(true);
       expect(isErrorViolation({ type: ViolationType.UNDECLARED_SHARED, severity: 'warn' } as any)).toBe(false);
       expect(isErrorViolation({ type: ViolationType.UNUSED_SHARED, severity: 'warn' } as any)).toBe(false);

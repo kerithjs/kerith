@@ -53,6 +53,13 @@ export function reconcile(
   cwd: string = process.cwd(),
   options: ReconcileOptions = {}
 ): ReconciliationResult {
+  // Internal log helper — routes through the framework logger when available,
+  // falls back to console.* so calls from CLI/tests without a logger still work.
+  const nitsWarn = (msg: string) =>
+    options.log ? options.log.warn(msg, { _module: 'nits' }) : console.warn(msg);
+  const nitsInfo = (msg: string) =>
+    options.log ? options.log.info(msg, { _module: 'nits' }) : console.info(msg);
+
   const result: ReconciliationResult = {
     confirmed: [],
     moved: [],
@@ -147,7 +154,7 @@ export function reconcile(
           // the existing (wrong) file passes validation — causing an infinite loop
           // of warnings on every subsequent boot.
           const newId = generateShadowId();
-          console.warn(
+          nitsWarn(
             `[NITS] Duplicate module identity detected. "${disc.dirPath}" was assigned a new ID (${newId}). Was it copied from "${originalPath}"?`
           );
           deleteShadowFile(disc.dirPath);  // remove the cloned ID
@@ -182,7 +189,7 @@ export function reconcile(
       if (pathChanged) {
         // Module moved — shadow file proves it's the same module
         if (prev.name !== disc.name) {
-          console.info(`[NITS] Module rename detected via shadow file: "${prev.name}" -> "${disc.name}" (${shadowId})`);
+          nitsInfo(`[NITS] Module rename detected via shadow file: "${prev.name}" -> "${disc.name}" (${shadowId})`);
         }
         const record = createRecord(prev.id, disc, 'moved', 'shadow-file', prev.createdAt);
         result.moved.push({
@@ -194,7 +201,7 @@ export function reconcile(
       } else {
         // Same path — confirmed (may have been renamed or refactored)
         if (prev.name !== disc.name) {
-          console.info(`[NITS] Module rename detected: "${prev.name}" -> "${disc.name}" at ${discNormPath}`);
+          nitsInfo(`[NITS] Module rename detected: "${prev.name}" -> "${disc.name}" at ${discNormPath}`);
         }
         const record = createRecord(prev.id, disc, 'active', 'shadow-file', prev.createdAt);
         result.confirmed.push(record);
@@ -226,7 +233,7 @@ export function reconcile(
 
       // LOG BORDER CASE: Name change
       if (prev.name !== disc.name) {
-        console.info(`[NITS] Module rename detected: "${prev.name}" -> "${disc.name}" at ${relPath}`);
+        nitsInfo(`[NITS] Module rename detected: "${prev.name}" -> "${disc.name}" at ${relPath}`);
       }
 
       // Even if hash changed, if path is same, it's the same module (Confirmed)

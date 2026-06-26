@@ -30,11 +30,11 @@ export const MtimeValidator = {
     const toRescanSet = new Set<string>();
 
     // First pass: identify all dirty domains
-    // Nota (PT3-2): Los submodules no se iteran directamente aquí. Esto es intencional.
-    // Los archivos físicos de los submodules están dentro del directorio del módulo padre.
-    // En createApp.ts, el agrupador de `filesByModulePath` asigna por prefijo de ruta,
-    // por lo que los archivos del submodule quedan incluidos en `module.files` del padre.
-    // Un cambio en un submodule invalidará correctamente al padre y a su dominio.
+    // Note (PT3-2): Submodules are not iterated directly here. This is intentional.
+    // The physical files of submodules are inside the parent module's directory.
+    // In createApp.ts, the `filesByModulePath` grouper assigns by path prefix,
+    // so submodule files are included in the parent's `module.files`.
+    // A change in a submodule will correctly invalidate the parent and its domain.
     for (const module of cache.data!.modules) {
       const { maxMtime, totalSize } = getModuleSignature(module.files);
       const domainKey = module.domain || '__flat__';

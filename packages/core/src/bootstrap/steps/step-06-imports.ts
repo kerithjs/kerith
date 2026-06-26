@@ -37,7 +37,7 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
   const isOriginMode = !!config.origin;
   const startTime = performance.now(); // local measurement
 
-  // 6a — Domains en paralelo
+  // 6a — Domains in parallel
   await Promise.all(
     scanResult.domains.map(async (domain) => {
       await importIndexEntry(domain.indexPath, config.rules.moduleLoadTimeout);
@@ -48,7 +48,7 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
     }),
   );
 
-  // 6b — Modules en paralelo: import primero, correlación y validación después
+  // 6b — Modules in parallel: import first, correlation and validation after
   const importedModules = await Promise.all(
     resolvedModules.map(async (mod) => {
       const modStart = performance.now();
@@ -66,7 +66,7 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
     }),
   );
 
-  // Correlación y validación (CPU pura — mantiene el orden original)
+  // Correlation and validation (pure CPU — maintains original order)
   const allRegisteredOnce = registry.getAllModules();
   const registeredByPath = new Map(
     allRegisteredOnce.map((m) => [normalizePath(m.path), m]),
@@ -77,7 +77,7 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
 
     if (!registeredMod) {
       if (isOriginMode) {
-        // Un index.ts sin identificador Kerith se ignora silenciosamente
+        // An index.ts without Kerith identifier is silently ignored
         continue;
       } else {
         throw new KerithError(
@@ -138,7 +138,7 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
     }
   }
 
-  // 6c — Submodules en paralelo
+  // 6c — Submodules in parallel
   await Promise.all(
     scanResult.submodules.map(async (sub) => {
       await importIndexEntry(sub.indexPath, config.rules.moduleLoadTimeout);
