@@ -15,6 +15,7 @@ import { performance } from "node:perf_hooks";
 import pc from "picocolors";
 import { KerithError } from "../../core/errors.js";
 import { normalizePath, groupFilesByModulePath } from "../../core/utils/paths.js";
+import { withTimeout } from "../../core/utils/timeout.js";
 import { buildModuleKey } from "../../core/registry.js";
 import type { BootstrapContext } from "../context.js";
 import type { Application } from "express";
@@ -123,25 +124,18 @@ export async function runControllersAndMount(
   // 2. Import all controller files in parallel with per-file timeout
   const importResults = await Promise.all(
     controllerTasks.map(async (task) => {
-      let timer: NodeJS.Timeout;
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        timer = setTimeout(() => {
-          reject(
+      let imported: any;
+      try {
+        imported = await withTimeout(
+          import(task.importUrl),
+          config.rules.moduleLoadTimeout,
+          () =>
             new KerithError(
               "MODULE_LOAD_TIMEOUT",
               `Controller load timed out after ${config.rules.moduleLoadTimeout}ms. Check for unhandled promises or blocking operations.`,
               `File: ${task.file}`,
             ),
-          );
-        }, config.rules.moduleLoadTimeout);
-      });
-
-      let imported: any;
-      try {
-        imported = await Promise.race([
-          import(task.importUrl),
-          timeoutPromise,
-        ]);
+        );
       } catch (err: any) {
         if (err instanceof KerithError) throw err;
         throw new KerithError(
@@ -149,8 +143,6 @@ export async function runControllersAndMount(
           `Failed to import controller file. Check for syntax errors or missing dependencies.`,
           `File: ${task.file} — ${err.message}`,
         );
-      } finally {
-        clearTimeout(timer!);
       }
 
       return { task, imported };
