@@ -27,6 +27,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New violations: `domain-boundary-violation`, `relative-boundary-violation`, `module-space-conflict`, `submodule-domain-bypass`, `submodule-direct-sibling`
 - ESLint rules: `no-domain-boundary-violations`, `no-relative-boundary-violations`
 - NITS tracks domain migration — modules moved between domains preserve their ID
+- **Coupling rules (Fan-Out / Fan-In)**: `kerith check` now detects and reports high coupling between modules
+  - `FAN_OUT_HIGH`: a module imports from more distinct modules than the configured threshold
+  - `FAN_IN_HIGH`: a module is consumed by more modules than the configured threshold
+  - `_shared` and `domain/_shared` modules are excluded from the fan-in check by design
+  - Configurable per project in `kerith.config.ts` via the `coupling` key (see below)
+  - Both warnings carry `severity: 'warn'` — they never block the exit code without `--strict`
+  - `--strict` mode elevates all warnings (including coupling) to blocking
+  - Output includes actionable messages: imported module list for fan-out, consumer list for fan-in
+  - `--format json` includes a `coupling` map with `fanOut` and `fanIn` counts per module
+  - `CouplingRuleConfig` and `CouplingConfig` added to `KerithConfig` and `ResolvedConfig`
+  - Defaults: `fanOut.threshold: 10`, `fanIn.threshold: 10` (both configurable)
+  - Use `Number.MAX_SAFE_INTEGER` to effectively disable a rule (`Infinity` is not JSON-serializable)
+- `printNextStep` now shows contextually accurate exit messages:
+  - `exit 0 — no violations found` (no violations)
+  - `exit 0 — N warnings (use --strict to block)` (warnings only, without `--strict`)
+  - `exit 1 — violations found` (hard errors, or any violation with `--strict`)
 
 ### Changed
 
@@ -37,11 +53,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `modulesByName` key is now `domain/name` for domain modules — enables same name in different domains
 - Scanner uses single fg() call instead of O(n) per-module globs (N-32 fix)
 - Import scanner includes only registered aliases, no hardcoded npm exclusion list (N-33 fix)
+- **Exit-code logic** migrated from hardcoded `ViolationType` lists (`alwaysExit1`/`strictExit1`) to `severity`-based checks — adding a new violation type no longer requires updating a second list
+- **`CIRCULAR_DEPENDENCY`** corrected to `severity: 'warn'` — it now only blocks in `--strict` mode, matching design intent (regression fix)
 
 ### Fixed
 
 - Module with no controllers no longer emits warning (REGLA-01)
-- ast-parser fallback captures string and array literals from options
+- `ast-parser` fallback captures string and array literals from options
+- `CIRCULAR_DEPENDENCY` was incorrectly assigned `severity: 'error'`, causing it to block even outside `--strict` mode in severity-based checks — now correctly set to `severity: 'warn'`
+
+### Configuration
+
+```typescript
+// kerith.config.ts
+import { defineConfig } from '@kerith/core';
+
+export default defineConfig({
+  coupling: {
+    fanOut: { threshold: 8 },  // large monolith: higher threshold
+    fanIn:  { threshold: 5 },  // shared remains strict
+  }
+});
+```
 
 ### Migration
 
