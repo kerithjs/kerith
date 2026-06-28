@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Output includes actionable messages: imported module list for fan-out, consumer list for fan-in
   - `--format json` includes a `coupling` map with `fanOut` and `fanIn` counts per module
   - `CouplingRuleConfig` and `CouplingConfig` added to `KerithConfig` and `ResolvedConfig`
-  - Defaults: `fanOut.threshold: 10`, `fanIn.threshold: 10` (both configurable)
+  - Defaults: `fanOut.threshold: 5`, `fanIn.threshold: 5` (both configurable)
   - Use `Number.MAX_SAFE_INTEGER` to effectively disable a rule (`Infinity` is not JSON-serializable)
 - `printNextStep` now shows contextually accurate exit messages:
   - `exit 0 — no violations found` (no violations)
