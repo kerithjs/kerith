@@ -46,6 +46,8 @@ For full technical details, see the individual package changelogs:
 - **Enhanced Check**: `kerith check` groups output by Domains / Modules / SubModules
 - **New Violations**: Domain boundary violations, relative boundary violations, module space conflicts
 - **ESLint Rules**: `no-domain-boundary-violations`, `no-relative-boundary-violations`
+- **Coupling Rules**: Detects `FAN_OUT_HIGH` and `FAN_IN_HIGH` based on configurable thresholds (`kerith.config.ts`)
+- **Strict Mode Checks**: `kerith check` exit-code logic refactored; warnings like coupling or circular dependencies only block in `--strict` mode
 - **Config Simplification**: `origin` config key replaces separate `domains`/`modules` config
 - **Optional Express App**: `createApp(app?)` now accepts optional Express app (REGLA-02)
 - **Performance**: Single fg() call instead of O(n) per-module globs (N-32 fix)

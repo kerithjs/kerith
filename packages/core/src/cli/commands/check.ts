@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import pc from 'picocolors';
 import { loadConfig } from '../../core/config.js';
 import { buildModuleGraph } from '../lib/graph-builder.js';
-import { detectViolations, ViolationType } from '../lib/violations.js';
+import { detectViolations, ViolationType, detectCouplingWarnings, isHardViolation } from '../lib/violations.js';
 import { printCheckReport, AYU, type CheckReportData } from '../lib/check-reporter.js';
 import { loadNitsRegistry, saveNitsRegistry, initNitsRegistry, inferProjectName, scanShadowFiles } from '../../nits/nits-store.js';
 import { createLogger, defaultLogHandler } from '../../core/logger.js';
@@ -181,6 +181,10 @@ export function checkCommand(): Command {
         const sharedViolations = await checkSharedAccess(graph, registry, cwd);
         violations.push(...sharedViolations);
 
+        // Add coupling warnings
+        const { warnings: couplingWarnings, fanInMap, fanOutMap } = detectCouplingWarnings(graph, config);
+        let allViolations = [...violations, ...couplingWarnings];
+
         // Build sharedInfo: alias → module names that declare it in shared[]
         const sharedInfo: Record<string, string[]> = {};
         for (const entry of registry.getAllShared()) {
@@ -196,30 +200,29 @@ export function checkCommand(): Command {
         }
 
         if (options.circular === false) { 
-          violations = violations.filter(v => v.type !== ViolationType.CIRCULAR_DEPENDENCY);
+          allViolations = allViolations.filter(v => v.type !== ViolationType.CIRCULAR_DEPENDENCY);
         }
 
-        const alwaysExit1: ViolationType[] = [
-          ViolationType.RELATIVE_BOUNDARY_VIOLATION,
-          ViolationType.DOMAIN_BOUNDARY_VIOLATION,
-          ViolationType.SHARED_SCOPE_VIOLATION
-        ];
-        
-        const strictExit1: ViolationType[] = [
-          ...alwaysExit1,
-          ViolationType.SUBMODULE_DIRECT_SIBLING,
-          ViolationType.SUBMODULE_DOMAIN_BYPASS,
-          ViolationType.CIRCULAR_DEPENDENCY,
-          ViolationType.UNDECLARED_SHARED,
-          ViolationType.UNUSED_SHARED
-        ];
-
-        const checkTypes = options.strict ? strictExit1 : alwaysExit1;
-
-        const hasBlockingViolations = violations.some(v => checkTypes.includes(v.type));
+        // In normal mode: only hard errors (severity: 'error') block.
+        // In --strict mode: hard errors + warnings block.
+        const hasBlockingViolations = options.strict
+          ? allViolations.some(v => v.severity === 'error' || v.severity === 'warn')
+          : allViolations.some(v => isHardViolation(v));
 
         if (options.format === 'json') {
-          console.log(JSON.stringify({ domains: graph.domains, modules: nodes, violations }, null, 2));
+          const couplingJson: Record<string, { fanOut: number; fanIn: number }> = {};
+          for (const node of graph.modules) {
+            couplingJson[node.name] = {
+              fanOut: fanOutMap.get(node.name) ?? 0,
+              fanIn:  (fanInMap.get(node.name) ?? []).length,
+            };
+          }
+          console.log(JSON.stringify({ 
+            domains: graph.domains, 
+            modules: nodes, 
+            violations: allViolations,
+            coupling: couplingJson
+          }, null, 2));
           if (hasBlockingViolations) {
             throw new Error('Structural integrity violations found (JSON format)');
           }
@@ -232,9 +235,10 @@ export function checkCommand(): Command {
           domains:     graph.domains,
           modules:     nodes,
           submodules:  graph.submodules || [],
-          violations,
+          violations:  allViolations,
           nitsResult,
           sharedInfo,
+          coupling: { fanInMap, fanOutMap },
           options: {
             verbose:      options.verbose ?? false,
             strict:       options.strict  ?? false,

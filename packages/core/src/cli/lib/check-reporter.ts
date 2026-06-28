@@ -47,6 +47,10 @@ export interface CheckReportData {
    * Populated in check.ts from the registry after entity registration.
    */
   sharedInfo?:  Record<string, string[]>;
+  coupling?: {
+    fanInMap:  Map<string, string[]>;
+    fanOutMap: Map<string, number>;
+  };
   options: {
     verbose:      boolean;
     strict:       boolean;
@@ -66,7 +70,7 @@ export function printCheckReport(data: CheckReportData): void {
   }
   
   printSharedSection(data);
-  printViolationDetails(data.violations);
+  printViolationDetails(data.violations, data);
   
   if (!data.options.verbose) {
     printIdentitySection(data.nitsResult, data.modules);
@@ -320,7 +324,7 @@ function printIdentityLegend(): void {
   blank();
 }
 
-export function printViolationDetails(violations: Violation[]): void {
+export function printViolationDetails(violations: Violation[], data: CheckReportData): void {
   if (violations.length === 0) return;
 
   const modulesWithViolations = Array.from(new Set(violations.map(v => v.module)));
@@ -339,6 +343,22 @@ export function printViolationDetails(violations: Violation[]): void {
           `       ${AYU.dim}${fileBase}${lineSuffix}  →  import from '${v.import}'${R}`,
         );
         console.log(`       ${AYU.dim}${v.hint}${R}`);
+        continue;
+      }
+
+      if (v.type === ViolationType.FAN_OUT_HIGH && data.coupling) {
+        const imports = data.modules.find(m => m.name === v.module)?.declaredImports ?? [];
+        console.log(`    ${AYU.orange}⚠${R}  ${AYU.fg}${v.message}${R}`);
+        console.log(`       ${AYU.dim}Imported modules: ${imports.join(', ')}${R}`);
+        console.log(`       ${AYU.dim}Suggestion: ${v.suggestion}${R}`);
+        continue;
+      }
+
+      if (v.type === ViolationType.FAN_IN_HIGH && data.coupling) {
+        const consumers = data.coupling.fanInMap.get(v.module) ?? [];
+        console.log(`    ${AYU.orange}⚠${R}  ${AYU.fg}${v.message}${R}`);
+        console.log(`       ${AYU.dim}Consumed by: ${consumers.join(', ')}${R}`);
+        console.log(`       ${AYU.dim}Suggestion: ${v.suggestion}${R}`);
         continue;
       }
 
@@ -511,6 +531,14 @@ export function printSummary(data: CheckReportData): void {
 
   console.log(`  ${AYU.fg}Summary: ${okNodes} OK${newText}, ${domainVios} domain violation${domainVios === 1 ? '' : 's'}, ${modVios} module violation${modVios === 1 ? '' : 's'}, ${subVios} submodule violation${subVios === 1 ? '' : 's'}, ${sharedVios} shared violation${sharedVios === 1 ? '' : 's'}${R}`);
 
+  const couplingWarnings = data.violations.filter(
+    v => v.type === ViolationType.FAN_OUT_HIGH || v.type === ViolationType.FAN_IN_HIGH
+  ).length;
+
+  if (couplingWarnings > 0) {
+    console.log(`  ${AYU.orange}⚠${R}  ${AYU.fg}${couplingWarnings} coupling warning${couplingWarnings === 1 ? '' : 's'}${R}   ${AYU.dim}— run kerith check --help to configure thresholds${R}`);
+  }
+
   if (data.nitsResult) {
     const missingShadow = data.modules.filter(m => {
       const isNew = data.nitsResult?.newModules?.some(n => n.name === m.name);
@@ -538,8 +566,16 @@ export function printNextStep(data: CheckReportData): void {
     console.log(`  ${AYU.dim}run${R} ${AYU.lime}kerith check --verbose${R} ${AYU.dim}to view IDs and resolution method${R}`);
   }
   
-  if (data.violations.length > 0) {
+  const hardViolations = data.violations.filter(v => v.severity === 'error');
+  const warnViolations = data.violations.filter(v => v.severity === 'warn');
+  const willBlock = data.options.strict
+    ? (hardViolations.length > 0 || warnViolations.length > 0)
+    : hardViolations.length > 0;
+
+  if (willBlock) {
     console.log(`  ${AYU.dim}exit 1 — violations found${R}`);
+  } else if (warnViolations.length > 0) {
+    console.log(`  ${AYU.dim}exit 0 — ${warnViolations.length} warning${warnViolations.length === 1 ? '' : 's'} (use --strict to block)${R}`);
   } else {
     console.log(`  ${AYU.dim}exit 0 — no violations found${R}`);
   }

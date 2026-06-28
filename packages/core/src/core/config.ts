@@ -19,6 +19,10 @@ export const DEFAULTS: Omit<ResolvedConfig, 'aliases' | 'modules' | 'origin'> = 
     maxRouteLines: 5,
   },
   requirePreloader: false,
+  coupling: {
+    fanOut: { threshold: 5, severity: 'warn' as const },
+    fanIn:  { threshold: 5, severity: 'warn' as const },
+  },
   rules: {
     moduleLoadTimeout: 30_000,
     stalePurgeCycles: 5
@@ -66,6 +70,16 @@ export const loadConfig = async (
       maxRouteLines:       fileConfig.logging?.maxRouteLines    ?? DEFAULTS.logging.maxRouteLines,
     },
     requirePreloader:    fileConfig.requirePreloader    ?? DEFAULTS.requirePreloader,
+    coupling: {
+      fanOut: {
+        threshold: fileConfig.coupling?.fanOut?.threshold ?? DEFAULTS.coupling.fanOut.threshold,
+        severity:  'warn',
+      },
+      fanIn: {
+        threshold: fileConfig.coupling?.fanIn?.threshold ?? DEFAULTS.coupling.fanIn.threshold,
+        severity:  'warn',
+      },
+    },
     rules: {
       moduleLoadTimeout: fileConfig.rules?.moduleLoadTimeout ?? DEFAULTS.rules.moduleLoadTimeout,
       stalePurgeCycles:  fileConfig.rules?.stalePurgeCycles  ?? DEFAULTS.rules.stalePurgeCycles
