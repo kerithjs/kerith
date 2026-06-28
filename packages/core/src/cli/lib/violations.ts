@@ -281,7 +281,7 @@ export function detectViolations(
     const cycleStr = cycle.join(' -> ');
     violations.push({
       type: ViolationType.CIRCULAR_DEPENDENCY,
-      severity: 'error',
+      severity: 'warn', // Phase 0b: only blocks with --strict (via strictExit1). 'error' was incorrect.
       module: cycle[0],
       message: `Circular dependency detected: ${cycleStr}`,
       suggestion: 'Extract shared logic into a separate module to break the cycle.',
