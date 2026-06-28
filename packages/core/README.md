@@ -159,6 +159,35 @@ import { X } from '../payments/service'  // ❌ RELATIVE_BOUNDARY_VIOLATION
 
 A relative path that escapes the module directory is always an error, regardless of `strict` mode. Fix it by declaring the import in `imports[]` and using the corresponding alias.
 
+### Coupling Rules (Fan-out / Fan-in)
+
+Kerith detects high structural coupling between modules. 
+- **Fan-out**: How many distinct modules a module imports from. High fan-out suggests too many responsibilities.
+- **Fan-in**: How many distinct modules consume a module. High fan-in suggests a central dependency that might belong in `_shared`.
+
+You can configure thresholds for these warnings in `kerith.config.ts`:
+
+```typescript
+// kerith.config.ts
+import { defineConfig } from '@kerith/core';
+
+export default defineConfig({
+  coupling: {
+    fanOut: { threshold: 8 },  // large monolith: higher threshold
+    fanIn:  { threshold: 5 },  // shared remains strict
+  }
+});
+```
+
+To effectively disable a rule, set the threshold to `Number.MAX_SAFE_INTEGER` (do not use `Infinity`, as it serializes to `null` in JSON output):
+
+```typescript
+  coupling: {
+    fanOut: { threshold: Number.MAX_SAFE_INTEGER }, // effectively disabled
+    fanIn:  { threshold: 5 },
+  }
+```
+
 ---
 
 ## Runtime Zero

@@ -116,6 +116,10 @@ import { defineConfig } from "@kerith/core";
 export default defineConfig({
   modules: "src/modules/*",
   prefix: "/api/v1",
+  coupling: {
+    fanOut: { threshold: 8 },  // large monolith: higher threshold
+    fanIn:  { threshold: 5 },  // shared remains strict
+  },
   aliases: {
     "@config": "./src/config",
     "@middleware": "./src/middleware",

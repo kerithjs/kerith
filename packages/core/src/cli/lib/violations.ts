@@ -344,8 +344,8 @@ export function detectCouplingWarnings(
     }
   }
 
-  const fanOutThreshold = config.coupling.fanOut.threshold;
-  const fanInThreshold  = config.coupling.fanIn.threshold;
+  const fanOutThreshold = config?.coupling?.fanOut?.threshold ?? Number.MAX_SAFE_INTEGER;
+  const fanInThreshold  = config?.coupling?.fanIn?.threshold ?? Number.MAX_SAFE_INTEGER;
 
   for (const node of nodes) {
     // --- Fan-out ---
