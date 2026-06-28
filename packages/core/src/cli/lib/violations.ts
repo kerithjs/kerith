@@ -4,6 +4,7 @@ import fg from 'fast-glob';
 import type { ModuleGraph } from './graph-builder.js';
 import { extractRelativeCrossModuleImports } from './import-scanner.js';
 import { findCircularDependencies } from '../../core/utils/cycle-detector.js';
+import type { KerithConfig } from '../../config/kerith-config.types.js';
 
 export const ViolationType = {
   PRIVATE_IMPORT: 'private-import',
@@ -17,6 +18,8 @@ export const ViolationType = {
   UNDECLARED_SHARED: 'undeclared-shared',
   UNUSED_SHARED: 'unused-shared',
   SHARED_SCOPE_VIOLATION: 'shared-scope-violation',
+  FAN_OUT_HIGH: 'fan-out-high',
+  FAN_IN_HIGH: 'fan-in-high',
 } as const;
 
 export type ViolationType = typeof ViolationType[keyof typeof ViolationType];
@@ -311,4 +314,69 @@ export function detectViolations(
   }
 
   return violations;
+}
+
+export interface CouplingAnalysis {
+  warnings: Violation[];
+  /** Map of module -> list of modules that consume it. Used by the formatter. */
+  fanInMap: Map<string, string[]>;
+  /** Map of module -> count of declared imports. Used by the formatter. */
+  fanOutMap: Map<string, number>;
+}
+
+export function detectCouplingWarnings(
+  graph: ModuleGraph,
+  config: { coupling: { fanOut: { threshold: number }; fanIn: { threshold: number } } }
+): CouplingAnalysis {
+  const warnings: Violation[] = [];
+  const nodes = graph.modules;
+
+  // --- Fan-in: build map of how many modules consume each module ---
+  // O(n×m) but the module graph is small in practice.
+  const fanInMap = new Map<string, string[]>();
+  const fanOutMap = new Map<string, number>();
+  for (const node of nodes) {
+    if (!fanInMap.has(node.name)) fanInMap.set(node.name, []);
+    fanOutMap.set(node.name, node.declaredImports.length);
+    for (const imp of node.declaredImports) {
+      if (!fanInMap.has(imp)) fanInMap.set(imp, []);
+      fanInMap.get(imp)!.push(node.name);
+    }
+  }
+
+  const fanOutThreshold = config.coupling.fanOut.threshold;
+  const fanInThreshold  = config.coupling.fanIn.threshold;
+
+  for (const node of nodes) {
+    // --- Fan-out ---
+    const fanOutCount = node.declaredImports.length;
+    if (fanOutCount > fanOutThreshold) {
+      warnings.push({
+        type: ViolationType.FAN_OUT_HIGH,
+        severity: 'warn',
+        module: node.name,
+        message: `High fan-out coupling: "${node.name}" imports from ${fanOutCount} modules (threshold: ${fanOutThreshold}).`,
+        suggestion: `Consider if "${node.name}" has too many responsibilities. It could be split into more cohesive modules.`,
+      } satisfies StandardViolation);
+    }
+
+    // --- Fan-in ---
+    // Exclude _shared: has high fan-in by design, it's not a problem.
+    const isSharedModule = node.name === '_shared' || node.name.endsWith('/_shared');
+    if (!isSharedModule) {
+      const consumers = fanInMap.get(node.name) ?? [];
+      const fanInCount = consumers.length;
+      if (fanInCount > fanInThreshold) {
+        warnings.push({
+          type: ViolationType.FAN_IN_HIGH,
+          severity: 'warn',
+          module: node.name,
+          message: `High fan-in coupling: "${node.name}" is consumed by ${fanInCount} modules (threshold: ${fanInThreshold}).`,
+          suggestion: `"${node.name}" is a central dependency. Consider moving it to \`_shared\` or revisiting its responsibilities.`,
+        } satisfies StandardViolation);
+      }
+    }
+  }
+
+  return { warnings, fanInMap, fanOutMap };
 }

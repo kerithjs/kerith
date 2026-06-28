@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import pc from 'picocolors';
 import { loadConfig } from '../../core/config.js';
 import { buildModuleGraph } from '../lib/graph-builder.js';
-import { detectViolations, ViolationType } from '../lib/violations.js';
+import { detectViolations, ViolationType, detectCouplingWarnings } from '../lib/violations.js';
 import { printCheckReport, AYU, type CheckReportData } from '../lib/check-reporter.js';
 import { loadNitsRegistry, saveNitsRegistry, initNitsRegistry, inferProjectName, scanShadowFiles } from '../../nits/nits-store.js';
 import { createLogger, defaultLogHandler } from '../../core/logger.js';
@@ -181,6 +181,10 @@ export function checkCommand(): Command {
         const sharedViolations = await checkSharedAccess(graph, registry, cwd);
         violations.push(...sharedViolations);
 
+        // Add coupling warnings
+        const { warnings: couplingWarnings, fanInMap, fanOutMap } = detectCouplingWarnings(graph, config);
+        violations.push(...couplingWarnings);
+
         // Build sharedInfo: alias → module names that declare it in shared[]
         const sharedInfo: Record<string, string[]> = {};
         for (const entry of registry.getAllShared()) {
@@ -235,6 +239,8 @@ export function checkCommand(): Command {
           violations,
           nitsResult,
           sharedInfo,
+          fanInMap,
+          fanOutMap,
           options: {
             verbose:      options.verbose ?? false,
             strict:       options.strict  ?? false,

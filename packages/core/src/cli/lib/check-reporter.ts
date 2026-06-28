@@ -47,6 +47,8 @@ export interface CheckReportData {
    * Populated in check.ts from the registry after entity registration.
    */
   sharedInfo?:  Record<string, string[]>;
+  fanInMap:     Map<string, string[]>;
+  fanOutMap:    Map<string, number>;
   options: {
     verbose:      boolean;
     strict:       boolean;
