@@ -92,3 +92,24 @@ export interface ReconciliationResult {
   deleted: NitsModuleRecord[];     // confirmed delete — shadow ID absent from all discovered modules in this cycle
   newModules: NitsModuleRecord[];  // no match in previous registry
 }
+
+export interface DomainRegistryFile {
+  version: string;
+  domain: {
+    id: string;              // dom_xxxxxxxx
+    name: string;
+    description?: string;
+    registeredAt: string;
+  };
+  modules: Record<string, NitsModuleRecord>;  // mismo shape que NitsRegistry.modules
+  submodules: DomainSubModuleRecord[];
+  shared?: { path: string; alias: string; exists: boolean };
+  lastCheck: string;
+}
+
+export interface DomainSubModuleRecord {
+  name: string;
+  parentModule: string;
+  path: string;
+  status: NitsStatus;
+}
