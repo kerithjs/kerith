@@ -11,7 +11,7 @@ export interface SubModuleOptions {
 }
 
 export interface ModuleOptions {
-  /** Nodulus modules this module depends on (within the same domain). */
+  /** Kerith modules this module depends on (within the same domain). */
   imports?: string[];
   /** Public API of the module within the domain. */
   exports?: string[];

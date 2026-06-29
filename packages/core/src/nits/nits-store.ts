@@ -185,7 +185,7 @@ export async function saveNitsRegistry(registry: NitsRegistry, cwd: string): Pro
  *  - If a valid `.Kerith` file already exists → reads and returns it (no-op).
  *  - If missing or corrupted → creates a new one with a fresh `mod_{hex}` ID.
  *
- * Called during Step 2.5 of the bootstrap pipeline, BEFORE NITS reconciliation,
+ * Called during Step 04 — NITS Identity Reconciliation, sub-paso 4.1, BEFORE NITS reconciliation,
  * so every module enters the reconciler with a stable shadow identity.
  *
  * **Edge case — write permission denied:** `ensureShadowFile` swallows the error

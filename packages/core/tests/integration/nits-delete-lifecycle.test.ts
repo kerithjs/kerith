@@ -120,7 +120,7 @@ async function runCycle(
     discovered.push({ name, dirPath, identifiers, hash, shadowFile: shadowMap.get(dirPath) });
   }
 
-  const result   = reconcile(discovered, previous, cwd);
+  const result   = reconcile(discovered, previous, cwd, { stalePurgeCycles: 3 });
   const registry = buildUpdatedNitsRegistry(result, 'test');
   writeRegistry(cwd, registry);
   return { result, registry };

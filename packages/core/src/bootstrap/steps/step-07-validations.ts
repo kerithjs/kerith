@@ -80,11 +80,11 @@ export async function runValidations(ctx: BootstrapContext): Promise<void> {
         }
       };
 
-      // Check if it's a Nodulus module alias (should be in imports[], not shared[])
+      // Check if it's a Kerith module alias (should be in imports[], not shared[])
       if (registry.hasModule(sharedAlias, mod.domain)) {
         error(
           "SHARED_IN_IMPORTS",
-          `Module "${mod.name}" declares "${sharedAlias}" in shared[] but it is a Nodulus module alias.`,
+          `Module "${mod.name}" declares "${sharedAlias}" in shared[] but it is a Kerith module alias.`,
           `Move "${sharedAlias}" from shared[] to imports[] in Module() for "${mod.name}".`,
         );
         continue;

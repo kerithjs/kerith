@@ -354,7 +354,8 @@ export function reconcile(
       // Its absence here means the directory — and its .kerith file — are
       // genuinely gone. We implement a 3-cycle grace period before confirming a delete.
       const missingCount = (prev.missingCount || 0) + 1;
-      if (missingCount >= 3) {
+      const purgeCycles = options.stalePurgeCycles ?? 5;
+      if (missingCount >= purgeCycles) {
         result.deleted.push({ ...prev, status: 'deleted', missingCount });
       } else {
         result.stale.push({ ...prev, status: 'stale', missingCount });
@@ -364,7 +365,8 @@ export function reconcile(
       // last cycle. Without a shadow ID we cannot distinguish delete from a
       // missed move. Fall back to a 3-cycle grace period too.
       const missingCount = (prev.missingCount || 0) + 1;
-      if (missingCount >= 3) {
+      const purgeCycles = options.stalePurgeCycles ?? 5;
+      if (missingCount >= purgeCycles) {
         result.deleted.push({ ...prev, status: 'deleted', missingCount });
       } else {
         result.stale.push({ ...prev, status: 'stale', missingCount });

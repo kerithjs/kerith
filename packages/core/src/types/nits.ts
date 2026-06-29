@@ -57,6 +57,7 @@ export interface ReconcileOptions {
   clonePolicy?: 'error' | 'new';
   isCi?: boolean;
   similarityThreshold?: number;
+  stalePurgeCycles?: number;
   /** Structured logger. When provided, NITS diagnostic messages are routed
    * through the framework logger instead of raw `console.*` calls. */
   log?: import('../types/index.js').Logger;

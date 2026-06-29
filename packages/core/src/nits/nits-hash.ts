@@ -103,6 +103,8 @@ export async function computeModuleHash(
   // path (e.g. '/users'), not a semantic domain name. Including it would store route
   // strings as module identifiers, causing false-positive Jaccard matches between any
   // two modules sharing the same prefix (BUG-1).
+  // Future identifiers of type `kind: 'logical'` (e.g. Jobs, Consumers) should only be 
+  // added here if their primary argument is a domain-semantic name, not a generic string.
   const targetCallees = ['Service', 'Repository', 'Schema'];
   const allIdentifiers: string[] = [];
   

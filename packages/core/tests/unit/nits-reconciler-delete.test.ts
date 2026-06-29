@@ -230,7 +230,7 @@ describe("NITS Reconciler — Confirmed Delete Detection", () => {
     });
 
     // Empty discovered — module is gone for the 3rd time
-    const result = reconcile([], previous, CWD);
+    const result = reconcile([], previous, CWD, { stalePurgeCycles: 3 });
 
     expect(result.deleted).toHaveLength(1);
     expect(result.deleted[0].id).toBe("mod_11223344");

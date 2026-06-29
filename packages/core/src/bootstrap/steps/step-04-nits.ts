@@ -3,7 +3,7 @@
  *
  * Step 04 — NITS Identity Reconciliation
  *
- * This step manages the NITS (Nominal Identity Tracking System) lifecycle:
+ * This step manages the NITS (Native Identity Tracking System) lifecycle:
  * 1. Read/create `.kerith` shadow files for all discovered modules.
  * 2. Hash module contents and identifiers.
  * 3. Load the previous NITS registry (`.kerith/registry.json`).
@@ -127,6 +127,7 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
 
       const nitsResult = reconcile(discovered as DiscoveredModule[], oldRegistry, cwd, {
         similarityThreshold: config.nits?.similarityThreshold,
+        stalePurgeCycles: config.rules?.stalePurgeCycles,
         log,
       });
 
