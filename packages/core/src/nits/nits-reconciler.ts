@@ -425,6 +425,31 @@ export function buildUpdatedNitsRegistry(
 }
 
 /**
+ * Like buildUpdatedNitsRegistry(), but takes an already-filtered list of
+ * records instead of a full ReconciliationResult. Used by step-04-nits.ts
+ * once domain-owned records have been routed to their domain registry —
+ * this function only ever sees flat (domain-less) records.
+ */
+export function buildUpdatedNitsRegistryFromRecords(
+  records: NitsModuleRecord[],
+  projectName: string
+): NitsRegistry {
+  const modules: Record<string, NitsModuleRecord> = {};
+
+  for (const record of records) {
+    const { resolvedBy: _drop, ...persistedRecord } = record as any;
+    modules[record.id] = persistedRecord as NitsModuleRecord;
+  }
+
+  return {
+    project: projectName,
+    version: NITS_REGISTRY_VERSION,
+    lastCheck: new Date().toISOString(),
+    modules
+  };
+}
+
+/**
  * Extracts a clean path -> nitsId mapping from a reconciliation result.
  * Paths are returned as absolute normalized paths.
  */

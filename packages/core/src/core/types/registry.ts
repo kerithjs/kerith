@@ -1,6 +1,7 @@
 import type { HierarchyLevel } from './hierarchy.js';
 
 export interface DomainRegistration {
+  id?: string;
   name: string;
   path: string;
   description?: string;

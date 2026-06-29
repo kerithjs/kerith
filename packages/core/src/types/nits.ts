@@ -69,6 +69,7 @@ export interface NitsRegistry {
   version: string;      // NITS schema version
   lastCheck: string;    // ISO 8601 timestamp
   modules: Record<string, NitsModuleRecord>; // key: id
+  domains?: Record<string, { id: string; name: string; path: string }>;
 }
 
 export interface BrokenImport {

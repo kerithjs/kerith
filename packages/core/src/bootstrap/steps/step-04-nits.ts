@@ -28,12 +28,14 @@ import {
 import {
   reconcile,
   buildUpdatedNitsRegistry,
+  buildUpdatedNitsRegistryFromRecords,
   buildNitsIdMap,
 } from "../../nits/nits-reconciler.js";
 import { reportReconciliation } from "../../nits/nits-reporter.js";
 import { computeModuleHash } from "../../nits/nits-hash.js";
 import { normalizePath, groupFilesByModulePath } from "../../core/utils/paths.js";
-import type { DiscoveredModule } from "../../types/nits.js";
+import { loadDomainRegistry, saveDomainRegistry } from "../../nits/domain-store.js";
+import type { DiscoveredModule, NitsModuleRecord } from "../../types/nits.js";
 import type { BootstrapContext } from "../context.js";
 
 /**
@@ -133,7 +135,71 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
 
       reportReconciliation(nitsResult, log);
 
-      const updatedNits = buildUpdatedNitsRegistry(nitsResult, oldRegistry.project);
+      // ← Partición por dominio dueño, antes de construir el registry global.
+      // nits-reconciler.ts NO se modifica: esto solo agrupa el resultado ya
+      // calculado por record.domain.
+      const allActiveForPartition = [
+        ...nitsResult.confirmed,
+        ...nitsResult.moved.map(m => m.record),
+        ...nitsResult.candidates.map(m => m.record),
+        ...nitsResult.newModules,
+        ...nitsResult.stale,
+      ];
+
+      const byDomain = new Map<string, typeof allActiveForPartition>();
+      const flatModules: typeof allActiveForPartition = [];
+
+      for (const record of allActiveForPartition) {
+        if (record.domain) {
+          const bucket = byDomain.get(record.domain) ?? [];
+          bucket.push(record);
+          byDomain.set(record.domain, bucket);
+        } else {
+          flatModules.push(record);
+        }
+      }
+
+      for (const [domainName, records] of byDomain) {
+        const domainEntry = registry.getDomain(domainName);
+        if (!domainEntry) {
+          log.warn(`[NITS] Module(s) reference domain "${domainName}" but it is not registered. Skipping domain registry write.`, {
+            _module: "nits",
+          });
+          continue;
+        }
+
+        const existingDomainRegistry = await loadDomainRegistry(domainEntry.path);
+        const modulesRecord: Record<string, NitsModuleRecord> = {};
+        for (const record of records) {
+          const { resolvedBy: _drop, ...persisted } = record;
+          modulesRecord[record.id] = persisted as NitsModuleRecord;
+        }
+
+        await saveDomainRegistry(domainEntry.path, {
+          version: existingDomainRegistry?.version ?? '1.0.0',
+          domain: existingDomainRegistry?.domain ?? {
+            id: '',
+            name: domainName,
+            registeredAt: new Date().toISOString(),
+          },
+          modules: modulesRecord,
+          submodules: existingDomainRegistry?.submodules ?? [],
+          shared: existingDomainRegistry?.shared,
+          lastCheck: new Date().toISOString(),
+        });
+      }
+
+      // The global registry only ever receives flat (domain-less) records from here on.
+      const updatedNits = buildUpdatedNitsRegistryFromRecords(flatModules, oldRegistry.project);
+
+      const domainsIndex: Record<string, { id: string; name: string; path: string }> = {};
+      for (const domain of registry.getAllDomains()) {
+        if (domain.id) {
+          domainsIndex[domain.id] = { id: domain.id, name: domain.name, path: domain.path };
+        }
+      }
+      updatedNits.domains = domainsIndex;
+
       await saveNitsRegistry(updatedNits, cwd);
 
       // Step 4.2 — Write shadow files for modules resolved by path/Jaccard (migration path).
