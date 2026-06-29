@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { atomicWriteJson } from './atomic-write.js';
 import { generateDomainId, isValidDomainId } from './domain-id.js';
-import type { DomainRegistryFile } from '../types/nits.js';
+import type { DomainRegistryFile, NitsModuleRecord } from '../types/nits.js';
 
 const DOMAIN_REGISTER_DIR = '.kerith-register';
 const DOMAIN_REGISTER_FILE = 'registry.json';
@@ -133,4 +133,31 @@ function isValidDomainRegistryFile(data: any): data is DomainRegistryFile {
   }
 
   return true;
+}
+
+/**
+ * One-time backward migration: for a domain that has modules with `domain`
+ * set in the global registry but no .kerith-register/registry.json yet
+ * (the system didn't exist when the domain was created), create the domain
+ * registry and populate it from what the global already has — BEFORE
+ * removing those modules from the global on the next save.
+ *
+ * Must be called before the partition logic in step-04-nits.ts runs for
+ * that domain, so the domain registry write succeeds first. Never purge
+ * from the global until this succeeds — inverse order risks data loss.
+ */
+export async function migrateLegacyDomainModules(
+  domainDirPath: string,
+  domainName: string,
+  legacyModulesFromGlobal: Record<string, NitsModuleRecord>
+): Promise<void> {
+  const existing = await loadDomainRegistry(domainDirPath);
+  if (existing !== null) {
+    return; // already migrated, nothing to do
+  }
+
+  const fresh = initDomainRegistry(domainName);
+  fresh.modules = legacyModulesFromGlobal;
+
+  await saveDomainRegistry(domainDirPath, fresh); // throws on failure — caller must not proceed to purge if this throws
 }

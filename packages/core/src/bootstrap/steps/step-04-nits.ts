@@ -16,7 +16,6 @@
  */
 
 import path from "node:path";
-import { KerithError } from "../../core/errors.js";
 import {
   loadNitsRegistry,
   saveNitsRegistry,
@@ -27,14 +26,20 @@ import {
 } from "../../nits/nits-store.js";
 import {
   reconcile,
-  buildUpdatedNitsRegistry,
   buildUpdatedNitsRegistryFromRecords,
   buildNitsIdMap,
 } from "../../nits/nits-reconciler.js";
 import { reportReconciliation } from "../../nits/nits-reporter.js";
 import { computeModuleHash } from "../../nits/nits-hash.js";
-import { normalizePath, groupFilesByModulePath } from "../../core/utils/paths.js";
-import { loadDomainRegistry, saveDomainRegistry } from "../../nits/domain-store.js";
+import {
+  normalizePath,
+  groupFilesByModulePath,
+} from "../../core/utils/paths.js";
+import {
+  loadDomainRegistry,
+  saveDomainRegistry,
+  migrateLegacyDomainModules,
+} from "../../nits/domain-store.js";
 import type { DiscoveredModule, NitsModuleRecord } from "../../types/nits.js";
 import type { BootstrapContext } from "../context.js";
 
@@ -43,11 +48,29 @@ import type { BootstrapContext } from "../context.js";
  *
  * @param ctx - The shared bootstrap context.
  */
-export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void> {
-  const { config, log, registry, resolvedModules, cwd, allProjectFiles, absoluteModulesRoot } = ctx;
+export async function runNitsReconciliation(
+  ctx: BootstrapContext,
+): Promise<void> {
+  const {
+    config,
+    log,
+    registry,
+    resolvedModules,
+    cwd,
+    allProjectFiles,
+    absoluteModulesRoot,
+  } = ctx;
 
-  if (!config || !log || !resolvedModules || !allProjectFiles || absoluteModulesRoot === undefined) {
-    throw new Error("runNitsReconciliation requires config, log, resolvedModules, allProjectFiles, and absoluteModulesRoot in context");
+  if (
+    !config ||
+    !log ||
+    !resolvedModules ||
+    !allProjectFiles ||
+    absoluteModulesRoot === undefined
+  ) {
+    throw new Error(
+      "runNitsReconciliation requires config, log, resolvedModules, allProjectFiles, and absoluteModulesRoot in context",
+    );
   }
 
   let filesByModulePath: Map<string, string[]> | undefined;
@@ -67,7 +90,9 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
 
       // Agrupar por módulo usando el dirPath como prefijo (ordenados por longitud desc)
       if (allNitsFiles) {
-        const modPaths = resolvedModules.map((mod) => path.resolve(mod.dirPath));
+        const modPaths = resolvedModules.map((mod) =>
+          path.resolve(mod.dirPath),
+        );
         filesByModulePath = groupFilesByModulePath(allNitsFiles, modPaths);
       }
 
@@ -95,7 +120,8 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
         loadNitsRegistry(cwd),
       ]);
 
-      const oldRegistry = loadedRegistry || initNitsRegistry(inferProjectName(cwd));
+      const oldRegistry =
+        loadedRegistry || initNitsRegistry(inferProjectName(cwd));
 
       // Layer 1 Filter: Purge compilation artifacts (e.g. dist/) from registry
       let modulesRoots: string[] = [];
@@ -127,11 +153,16 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
         }
       }
 
-      const nitsResult = reconcile(discovered as DiscoveredModule[], oldRegistry, cwd, {
-        similarityThreshold: config.nits?.similarityThreshold,
-        stalePurgeCycles: config.rules?.stalePurgeCycles,
-        log,
-      });
+      const nitsResult = reconcile(
+        discovered as DiscoveredModule[],
+        oldRegistry,
+        cwd,
+        {
+          similarityThreshold: config.nits?.similarityThreshold,
+          stalePurgeCycles: config.rules?.stalePurgeCycles,
+          log,
+        },
+      );
 
       reportReconciliation(nitsResult, log);
 
@@ -140,8 +171,8 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
       // calculado por record.domain.
       const allActiveForPartition = [
         ...nitsResult.confirmed,
-        ...nitsResult.moved.map(m => m.record),
-        ...nitsResult.candidates.map(m => m.record),
+        ...nitsResult.moved.map((m) => m.record),
+        ...nitsResult.candidates.map((m) => m.record),
         ...nitsResult.newModules,
         ...nitsResult.stale,
       ];
@@ -159,16 +190,42 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
         }
       }
 
+      // 5.8 — Migración hacia atrás (backward migration)
+      // Done BEFORE the regular domain write to guarantee safe transfer
+      for (const domainName of byDomain.keys()) {
+        const domainEntry = registry.getDomain(domainName);
+        if (domainEntry) {
+          const legacyModules: Record<string, NitsModuleRecord> = {};
+          for (const [id, mod] of Object.entries(oldRegistry.modules)) {
+            if (mod.domain === domainName) {
+              legacyModules[id] = mod;
+            }
+          }
+          if (Object.keys(legacyModules).length > 0) {
+            await migrateLegacyDomainModules(
+              domainEntry.path,
+              domainName,
+              legacyModules,
+            );
+          }
+        }
+      }
+
       for (const [domainName, records] of byDomain) {
         const domainEntry = registry.getDomain(domainName);
         if (!domainEntry) {
-          log.warn(`[NITS] Module(s) reference domain "${domainName}" but it is not registered. Skipping domain registry write.`, {
-            _module: "nits",
-          });
+          log.warn(
+            `[NITS] Module(s) reference domain "${domainName}" but it is not registered. Skipping domain registry write.`,
+            {
+              _module: "nits",
+            },
+          );
           continue;
         }
 
-        const existingDomainRegistry = await loadDomainRegistry(domainEntry.path);
+        const existingDomainRegistry = await loadDomainRegistry(
+          domainEntry.path,
+        );
         const modulesRecord: Record<string, NitsModuleRecord> = {};
         for (const record of records) {
           const { resolvedBy: _drop, ...persisted } = record;
@@ -176,9 +233,9 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
         }
 
         await saveDomainRegistry(domainEntry.path, {
-          version: existingDomainRegistry?.version ?? '1.0.0',
+          version: existingDomainRegistry?.version ?? "1.0.0",
           domain: existingDomainRegistry?.domain ?? {
-            id: '',
+            id: "",
             name: domainName,
             registeredAt: new Date().toISOString(),
           },
@@ -190,12 +247,22 @@ export async function runNitsReconciliation(ctx: BootstrapContext): Promise<void
       }
 
       // The global registry only ever receives flat (domain-less) records from here on.
-      const updatedNits = buildUpdatedNitsRegistryFromRecords(flatModules, oldRegistry.project);
+      const updatedNits = buildUpdatedNitsRegistryFromRecords(
+        flatModules,
+        oldRegistry.project,
+      );
 
-      const domainsIndex: Record<string, { id: string; name: string; path: string }> = {};
+      const domainsIndex: Record<
+        string,
+        { id: string; name: string; path: string }
+      > = {};
       for (const domain of registry.getAllDomains()) {
         if (domain.id) {
-          domainsIndex[domain.id] = { id: domain.id, name: domain.name, path: domain.path };
+          domainsIndex[domain.id] = {
+            id: domain.id,
+            name: domain.name,
+            path: domain.path,
+          };
         }
       }
       updatedNits.domains = domainsIndex;
