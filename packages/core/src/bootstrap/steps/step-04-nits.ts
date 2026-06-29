@@ -211,18 +211,22 @@ export async function runNitsReconciliation(
         }
       }
 
-      for (const [domainName, records] of byDomain) {
-        const domainEntry = registry.getDomain(domainName);
-        if (!domainEntry) {
+      // Check for unregistered domains that still have records
+      for (const domainName of byDomain.keys()) {
+        if (!registry.getDomain(domainName)) {
           log.warn(
             `[NITS] Module(s) reference domain "${domainName}" but it is not registered. Skipping domain registry write.`,
             {
               _module: "nits",
             },
           );
-          continue;
         }
+      }
 
+      // Update all discovered domains, even if they have no active modules
+      for (const domainEntry of registry.getAllDomains()) {
+        const records = byDomain.get(domainEntry.name) ?? [];
+        
         const existingDomainRegistry = await loadDomainRegistry(
           domainEntry.path,
         );
@@ -234,11 +238,13 @@ export async function runNitsReconciliation(
 
         await saveDomainRegistry(domainEntry.path, {
           version: existingDomainRegistry?.version ?? "1.0.0",
-          domain: existingDomainRegistry?.domain ?? {
-            id: "",
-            name: domainName,
-            registeredAt: new Date().toISOString(),
-          },
+          domain: existingDomainRegistry?.domain
+            ? { ...existingDomainRegistry.domain, name: domainEntry.name }
+            : {
+                id: "",
+                name: domainEntry.name,
+                registeredAt: new Date().toISOString(),
+              },
           modules: modulesRecord,
           submodules: existingDomainRegistry?.submodules ?? [],
           shared: existingDomainRegistry?.shared,
