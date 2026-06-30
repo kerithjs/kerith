@@ -121,7 +121,8 @@ export function checkCommand(): Command {
             }
 
             const result = reconcile(discovered, oldRegistry, cwd, {
-              similarityThreshold: config.nits.similarityThreshold
+              similarityThreshold: config.nits.similarityThreshold,
+              stalePurgeCycles: config.resolvedRules.stalePurgeCycles
             });
             nitsResult = result;
             const updatedRegistry = buildUpdatedNitsRegistry(result, oldRegistry.project);

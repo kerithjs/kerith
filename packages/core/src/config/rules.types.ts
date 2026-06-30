@@ -1,4 +1,5 @@
 export type QualityRuleValue<T> = T | false;
+import type { LogHandler } from '../types/index.js';
 
 export interface QualityRulesConfig {
   /** Maximum folder depth within a module. Default: 3 */
@@ -50,68 +51,88 @@ export const DEFAULT_QUALITY_RULES: ResolvedQualityRules = {
 };
 
 export function resolveQualityRules(
-  config?: QualityRulesConfig
+  config?: QualityRulesConfig,
+  legacyTimeoutMs?: number,
+  logger?: LogHandler
 ): ResolvedQualityRules {
-  if (!config) return { ...DEFAULT_QUALITY_RULES };
+  if (!config && legacyTimeoutMs === undefined) return { ...DEFAULT_QUALITY_RULES };
 
   const resolveNumeric = (
     val: QualityRuleValue<number> | undefined,
-    def: number | null
+    def: number | null,
+    ruleName: string
   ): number | null => {
-    if (val === false) return null;
+    if (val === false) {
+      if (logger) logger('debug', `[kerith] Quality rule disabled explicitly: ${ruleName}`, { _module: 'config' });
+      return null;
+    }
     if (val === undefined) return def;
     return val;
   };
 
   const resolveBoolean = (
     val: QualityRuleValue<boolean> | undefined,
-    def: boolean
+    def: boolean,
+    ruleName: string
   ): boolean => {
-    if (val === false) return false;
+    if (val === false) {
+      if (logger) logger('debug', `[kerith] Quality rule disabled explicitly: ${ruleName}`, { _module: 'config' });
+      return false;
+    }
     if (val === undefined) return def;
     return val;
   };
 
   return {
     maxModuleDepth: resolveNumeric(
-      config.maxModuleDepth,
-      DEFAULT_QUALITY_RULES.maxModuleDepth
+      config?.maxModuleDepth,
+      DEFAULT_QUALITY_RULES.maxModuleDepth,
+      'maxModuleDepth'
     ),
     fanOutThreshold: resolveNumeric(
-      config.fanOutThreshold,
-      DEFAULT_QUALITY_RULES.fanOutThreshold
+      config?.fanOutThreshold,
+      DEFAULT_QUALITY_RULES.fanOutThreshold,
+      'fanOutThreshold'
     ),
     fanInThreshold: resolveNumeric(
-      config.fanInThreshold,
-      DEFAULT_QUALITY_RULES.fanInThreshold
+      config?.fanInThreshold,
+      DEFAULT_QUALITY_RULES.fanInThreshold,
+      'fanInThreshold'
     ),
     maxModuleFiles: resolveNumeric(
-      config.maxModuleFiles,
-      DEFAULT_QUALITY_RULES.maxModuleFiles
+      config?.maxModuleFiles,
+      DEFAULT_QUALITY_RULES.maxModuleFiles,
+      'maxModuleFiles'
     ),
     maxSubModulesPerModule: resolveNumeric(
-      config.maxSubModulesPerModule,
-      DEFAULT_QUALITY_RULES.maxSubModulesPerModule
+      config?.maxSubModulesPerModule,
+      DEFAULT_QUALITY_RULES.maxSubModulesPerModule,
+      'maxSubModulesPerModule'
     ),
     unusedExports: resolveBoolean(
-      config.unusedExports,
-      DEFAULT_QUALITY_RULES.unusedExports
+      config?.unusedExports,
+      DEFAULT_QUALITY_RULES.unusedExports,
+      'unusedExports'
     ),
     emptyModule: resolveBoolean(
-      config.emptyModule,
-      DEFAULT_QUALITY_RULES.emptyModule
+      config?.emptyModule,
+      DEFAULT_QUALITY_RULES.emptyModule,
+      'emptyModule'
     ),
     circularDependency: resolveBoolean(
-      config.circularDependency,
-      DEFAULT_QUALITY_RULES.circularDependency
+      config?.circularDependency,
+      DEFAULT_QUALITY_RULES.circularDependency,
+      'circularDependency'
     ),
     stalePurgeCycles: resolveNumeric(
-      config.stalePurgeCycles,
-      DEFAULT_QUALITY_RULES.stalePurgeCycles
-    ) as number, // Cast or handle default because stalePurgeCycles is always number in default
+      config?.stalePurgeCycles,
+      DEFAULT_QUALITY_RULES.stalePurgeCycles,
+      'stalePurgeCycles'
+    ) as number,
     moduleLoadTimeout: resolveNumeric(
-      config.moduleLoadTimeout,
-      DEFAULT_QUALITY_RULES.moduleLoadTimeout
+      config?.moduleLoadTimeout,
+      legacyTimeoutMs ?? DEFAULT_QUALITY_RULES.moduleLoadTimeout,
+      'moduleLoadTimeout'
     ) as number,
   };
 }

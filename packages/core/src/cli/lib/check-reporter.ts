@@ -1,4 +1,5 @@
 import type { ReconciliationResult } from '../../types/nits.js';
+import type { ResolvedQualityRules } from '../../config/rules.types.js';
 import type { Violation, RelativeBoundaryViolation, StandardViolation } from './violations.js';
 import { ViolationType, isHardViolation } from './violations.js';
 import { type ModuleNode as ModuleGraphNode, type DomainNode, type SubModuleNode } from './graph-builder.js';
@@ -45,7 +46,7 @@ export interface CheckReportData {
   /** Quality warnings — severity: 'warn', only block with --strict. */
   qualityWarnings: Violation[];
   /** Resolved rule values used during this run (shown in JSON output). */
-  resolvedRules?: Record<string, unknown>;
+  resolvedRules?: ResolvedQualityRules;
   nitsResult:   ReconciliationResult | null;
   /**
    * Map of shared alias → list of module names that declare it in shared[].
@@ -69,6 +70,9 @@ export function printCheckReport(data: CheckReportData): void {
   divider();
   
   if (data.options.verbose) {
+    if (data.resolvedRules) {
+      printRulesSummary(data.resolvedRules);
+    }
     printArchitectureWithIdentity(data);
   } else {
     printArchitectureSection(data);
@@ -561,6 +565,28 @@ export function printIdentitySection(nitsResult: ReconciliationResult | null, _m
   blank();
 }
 
+export function printRulesSummary(rules: ResolvedQualityRules): void {
+  sectionHeader('Rules');
+
+  const pad = (str: string) => str.padEnd(20, ' ');
+  const formatVal = (val: number | null | boolean, suffix = '') => {
+    if (val === null || val === false) return `${AYU.dim}— disabled${R}`;
+    if (val === true) return `${AYU.green}✔${R}`;
+    return `${AYU.fg}${val}${suffix}${R}`;
+  };
+
+  console.log(`    ${AYU.dim}${pad('maxModuleDepth')}${R} ${formatVal(rules.maxModuleDepth)}`);
+  console.log(`    ${AYU.dim}${pad('fanOutThreshold')}${R} ${formatVal(rules.fanOutThreshold)}`);
+  console.log(`    ${AYU.dim}${pad('fanInThreshold')}${R} ${formatVal(rules.fanInThreshold)}`);
+  console.log(`    ${AYU.dim}${pad('maxModuleFiles')}${R} ${formatVal(rules.maxModuleFiles)}`);
+  console.log(`    ${AYU.dim}${pad('maxSubModulesPerModule')}${R} ${formatVal(rules.maxSubModulesPerModule)}`);
+  console.log(`    ${AYU.dim}${pad('unusedExports')}${R} ${formatVal(rules.unusedExports)}`);
+  console.log(`    ${AYU.dim}${pad('circularDependency')}${R} ${formatVal(rules.circularDependency)}`);
+  console.log(`    ${AYU.dim}${pad('moduleLoadTimeout')}${R} ${formatVal(rules.moduleLoadTimeout, 'ms')}`);
+  console.log(`    ${AYU.dim}${pad('emptyModule')}${R} ${formatVal(rules.emptyModule)}`);
+  blank();
+}
+
 export function printSummary(data: CheckReportData): void {
   sectionHeader('Summary');
 
@@ -568,32 +594,44 @@ export function printSummary(data: CheckReportData): void {
   const submodules = data.submodules || [];
   const domains = data.domains || [];
 
-  const _totalModules = modules.length + submodules.length + domains.length;
+  const totalNodes = modules.length + submodules.length + domains.length;
   const allNodes = [...modules, ...submodules, ...domains];
-  
-  const _getQualifiedName = (m: ModuleGraphNode | DomainNode | SubModuleNode) => m.name; // Simplified for summary matching
   const okNodes = allNodes.filter(n => data.violations.filter(v => v.module === n.name).length === 0).length;
-
-  const domainVios = data.violations.filter(v => v.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION).length;
-  const subVios = data.violations.filter(v => submodules.some(s => s.name === v.module) && v.type !== ViolationType.DOMAIN_BOUNDARY_VIOLATION).length;
-  const sharedVios = data.violations.filter(v => 
-    v.type === ViolationType.UNDECLARED_SHARED ||
-    v.type === ViolationType.UNUSED_SHARED ||
-    v.type === ViolationType.SHARED_SCOPE_VIOLATION
-  ).length;
-  const modVios = data.violations.length - domainVios - subVios - sharedVios;
   const newModules = data.nitsResult?.newModules?.length || 0;
+  const okCount = Math.max(0, okNodes - newModules);
+
+  let modDetail = `${okCount} ok`;
+  if (newModules > 0) modDetail += `, ${newModules} new`;
   
-  const newText = newModules > 0 ? `, ${newModules} new` : '';
+  console.log(`    ${AYU.dim}${'modules'.padEnd(12, ' ')}${R} ${AYU.fg}${totalNodes.toString().padEnd(3, ' ')}${R} ${AYU.dim}(${modDetail})${R}`);
 
-  console.log(`  ${AYU.fg}Summary: ${okNodes} OK${newText}, ${domainVios} domain violation${domainVios === 1 ? '' : 's'}, ${modVios} module violation${modVios === 1 ? '' : 's'}, ${subVios} submodule violation${subVios === 1 ? '' : 's'}, ${sharedVios} shared violation${sharedVios === 1 ? '' : 's'}${R}`);
+  const viosCount = data.violations.length;
+  let vioDetail = viosCount === 1 ? '1 error' : `${viosCount} errors`;
+  console.log(`    ${AYU.dim}${'violations'.padEnd(12, ' ')}${R} ${AYU.fg}${viosCount.toString().padEnd(3, ' ')}${R} ${AYU.dim}(${vioDetail})${R}`);
 
-  const couplingWarnings = data.violations.filter(
-    v => v.type === ViolationType.FAN_OUT_HIGH || v.type === ViolationType.FAN_IN_HIGH
-  ).length;
-
-  if (couplingWarnings > 0) {
-    console.log(`  ${AYU.orange}⚠${R}  ${AYU.fg}${couplingWarnings} coupling warning${couplingWarnings === 1 ? '' : 's'}${R}   ${AYU.dim}— run kerith check --help to configure thresholds${R}`);
+  const warnCount = data.qualityWarnings?.length || 0;
+  if (warnCount > 0) {
+    const typeMapping: Record<string, string> = {
+      'module-depth-exceeded': 'depth',
+      'fan-in-high': 'fan-in',
+      'fan-out-high': 'fan-out',
+      'module-too-large': 'size',
+      'too-many-submodules': 'submodules',
+      'unused-export': 'exports',
+      'circular-dependency': 'circular',
+      'empty-module': 'empty'
+    };
+    
+    const warnTypes = new Map<string, number>();
+    for (const w of data.qualityWarnings!) {
+      const shortName = typeMapping[w.type] || w.type;
+      warnTypes.set(shortName, (warnTypes.get(shortName) || 0) + 1);
+    }
+    const details = Array.from(warnTypes.entries()).map(([t, c]) => `${c} ${t}`).join(', ');
+    
+    console.log(`    ${AYU.dim}${'warnings'.padEnd(12, ' ')}${R} ${AYU.fg}${warnCount.toString().padEnd(3, ' ')}${R} ${AYU.dim}(${details})${R}`);
+  } else {
+    console.log(`    ${AYU.dim}${'warnings'.padEnd(12, ' ')}${R} ${AYU.fg}0${R}`);
   }
 
   if (data.nitsResult) {
@@ -604,13 +642,13 @@ export function printSummary(data: CheckReportData): void {
     
     let identityDisplay: string;
     if (missingShadow > 0) {
-      identityDisplay = `${AYU.orange}⚠   ${missingShadow} missing .kerith${R}`;
+      identityDisplay = `${AYU.orange}⚠${R}   ${AYU.orange}${missingShadow} missing .kerith${R}`;
     } else {
-      identityDisplay = `${AYU.green}✔   all modules tracked${R}`;
+      identityDisplay = `${AYU.green}✔${R}   ${AYU.green}all modules tracked${R}`;
     }
-    console.log(`    ${AYU.dim}identity${R}   ${identityDisplay}`);
+    console.log(`    ${AYU.dim}${'identity'.padEnd(12, ' ')}${R} ${identityDisplay}`);
   } else {
-    console.log(`    ${AYU.dim}identity${R}   ${AYU.dim}— disabled${R}`);
+    console.log(`    ${AYU.dim}${'identity'.padEnd(12, ' ')}${R} ${AYU.dim}— disabled${R}`);
   }
   
   blank();

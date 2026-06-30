@@ -153,7 +153,7 @@ export async function loadKerithConfig(
     resolvedAliases.set(key, absolutePath);
   }
 
-  const resolvedRules = resolveQualityRules(fileConfig?.rules);
+  const resolvedRules = resolveQualityRules(fileConfig?.rules, (fileConfig as any).moduleLoadTimeoutMs, logger);
 
   return {
     ...fileConfig,
