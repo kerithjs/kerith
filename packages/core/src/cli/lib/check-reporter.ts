@@ -663,14 +663,16 @@ export function printNextStep(data: CheckReportData): void {
   
   const hardViolations = data.violations.filter(v => v.severity === 'error');
   const warnViolations = data.violations.filter(v => v.severity === 'warn');
+  const qualityWarnings = data.qualityWarnings ?? [];
   const willBlock = data.options.strict
-    ? (hardViolations.length > 0 || warnViolations.length > 0)
+    ? (hardViolations.length > 0 || warnViolations.length > 0 || qualityWarnings.length > 0)
     : hardViolations.length > 0;
 
   if (willBlock) {
     console.log(`  ${AYU.dim}exit 1 — violations found${R}`);
-  } else if (warnViolations.length > 0) {
-    console.log(`  ${AYU.dim}exit 0 — ${warnViolations.length} warning${warnViolations.length === 1 ? '' : 's'} (use --strict to block)${R}`);
+  } else if (warnViolations.length > 0 || qualityWarnings.length > 0) {
+    const totalWarn = warnViolations.length + qualityWarnings.length;
+    console.log(`  ${AYU.dim}exit 0 — ${totalWarn} warning${totalWarn === 1 ? '' : 's'} (use --strict to block)${R}`);
   } else {
     console.log(`  ${AYU.dim}exit 0 — no violations found${R}`);
   }

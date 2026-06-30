@@ -51,6 +51,11 @@ describe('Quality Rules Engine & Checkers', () => {
       expect(resolved).toEqual(DEFAULT_QUALITY_RULES);
     });
 
+    it('sin config → retorna exactamente DEFAULT_QUALITY_RULES (stalePurgeCycles === 5)', () => {
+      const resolved = resolveQualityRules();
+      expect(resolved.stalePurgeCycles).toBe(5);
+    });
+
     it('sin rules.moduleLoadTimeout pero con config.moduleLoadTimeoutMs seteado → fallback', () => {
       const resolved = resolveQualityRules({}, 45000);
       expect(resolved.moduleLoadTimeout).toBe(45000);

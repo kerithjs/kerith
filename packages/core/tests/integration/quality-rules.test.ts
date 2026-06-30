@@ -31,7 +31,7 @@ function baseConfig(overrides: Record<string, unknown> = {}) {
       circularDependency: true,
       moduleLoadTimeout: 30000,
       emptyModule: true,
-      stalePurgeCycles: 3,
+      stalePurgeCycles: 5,
     },
     ...overrides,
   };

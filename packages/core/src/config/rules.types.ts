@@ -1,5 +1,5 @@
 export type QualityRuleValue<T> = T | false;
-import type { LogHandler } from '../types/index.js';
+import type { LogHandler } from "../types/index.js";
 
 export interface QualityRulesConfig {
   /** Maximum folder depth within a module. Default: 3 */
@@ -18,7 +18,7 @@ export interface QualityRulesConfig {
   emptyModule?: QualityRuleValue<boolean>;
   /** Detect dependency cycles between modules. Default: true */
   circularDependency?: QualityRuleValue<boolean>;
-  /** Bootstrap cycles before purging a stale module. Default: 3 */
+  /** Bootstrap cycles before purging a stale module. Default: 5 */
   stalePurgeCycles?: QualityRuleValue<number>;
   /** Ms before MODULE_LOAD_TIMEOUT during bootstrap. Default: 30000 */
   moduleLoadTimeout?: QualityRuleValue<number>;
@@ -46,24 +46,30 @@ export const DEFAULT_QUALITY_RULES: ResolvedQualityRules = {
   unusedExports: true,
   emptyModule: true,
   circularDependency: true,
-  stalePurgeCycles: 3,
+  stalePurgeCycles: 5,
   moduleLoadTimeout: 30_000,
 };
 
 export function resolveQualityRules(
   config?: QualityRulesConfig,
   legacyTimeoutMs?: number,
-  logger?: LogHandler
+  logger?: LogHandler,
 ): ResolvedQualityRules {
-  if (!config && legacyTimeoutMs === undefined) return { ...DEFAULT_QUALITY_RULES };
+  if (!config && legacyTimeoutMs === undefined)
+    return { ...DEFAULT_QUALITY_RULES };
 
   const resolveNumeric = (
     val: QualityRuleValue<number> | undefined,
     def: number | null,
-    ruleName: string
+    ruleName: string,
   ): number | null => {
     if (val === false) {
-      if (logger) logger('debug', `[kerith] Quality rule disabled explicitly: ${ruleName}`, { _module: 'config' });
+      if (logger)
+        logger(
+          "debug",
+          `[kerith] Quality rule disabled explicitly: ${ruleName}`,
+          { _module: "config" },
+        );
       return null;
     }
     if (val === undefined) return def;
@@ -73,10 +79,15 @@ export function resolveQualityRules(
   const resolveBoolean = (
     val: QualityRuleValue<boolean> | undefined,
     def: boolean,
-    ruleName: string
+    ruleName: string,
   ): boolean => {
     if (val === false) {
-      if (logger) logger('debug', `[kerith] Quality rule disabled explicitly: ${ruleName}`, { _module: 'config' });
+      if (logger)
+        logger(
+          "debug",
+          `[kerith] Quality rule disabled explicitly: ${ruleName}`,
+          { _module: "config" },
+        );
       return false;
     }
     if (val === undefined) return def;
@@ -87,52 +98,52 @@ export function resolveQualityRules(
     maxModuleDepth: resolveNumeric(
       config?.maxModuleDepth,
       DEFAULT_QUALITY_RULES.maxModuleDepth,
-      'maxModuleDepth'
+      "maxModuleDepth",
     ),
     fanOutThreshold: resolveNumeric(
       config?.fanOutThreshold,
       DEFAULT_QUALITY_RULES.fanOutThreshold,
-      'fanOutThreshold'
+      "fanOutThreshold",
     ),
     fanInThreshold: resolveNumeric(
       config?.fanInThreshold,
       DEFAULT_QUALITY_RULES.fanInThreshold,
-      'fanInThreshold'
+      "fanInThreshold",
     ),
     maxModuleFiles: resolveNumeric(
       config?.maxModuleFiles,
       DEFAULT_QUALITY_RULES.maxModuleFiles,
-      'maxModuleFiles'
+      "maxModuleFiles",
     ),
     maxSubModulesPerModule: resolveNumeric(
       config?.maxSubModulesPerModule,
       DEFAULT_QUALITY_RULES.maxSubModulesPerModule,
-      'maxSubModulesPerModule'
+      "maxSubModulesPerModule",
     ),
     unusedExports: resolveBoolean(
       config?.unusedExports,
       DEFAULT_QUALITY_RULES.unusedExports,
-      'unusedExports'
+      "unusedExports",
     ),
     emptyModule: resolveBoolean(
       config?.emptyModule,
       DEFAULT_QUALITY_RULES.emptyModule,
-      'emptyModule'
+      "emptyModule",
     ),
     circularDependency: resolveBoolean(
       config?.circularDependency,
       DEFAULT_QUALITY_RULES.circularDependency,
-      'circularDependency'
+      "circularDependency",
     ),
     stalePurgeCycles: resolveNumeric(
       config?.stalePurgeCycles,
       DEFAULT_QUALITY_RULES.stalePurgeCycles,
-      'stalePurgeCycles'
+      "stalePurgeCycles",
     ) as number,
     moduleLoadTimeout: resolveNumeric(
       config?.moduleLoadTimeout,
       legacyTimeoutMs ?? DEFAULT_QUALITY_RULES.moduleLoadTimeout,
-      'moduleLoadTimeout'
+      "moduleLoadTimeout",
     ) as number,
   };
 }

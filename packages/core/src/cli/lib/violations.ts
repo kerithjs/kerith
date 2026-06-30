@@ -284,18 +284,7 @@ export function detectViolations(
     dependencyMap.set(node.name, node.declaredImports);
   }
 
-  const cycles = findCircularDependencies(dependencyMap);
-  for (const cycle of cycles) {
-    const cycleStr = cycle.join(' -> ');
-    violations.push({
-      type: ViolationType.CIRCULAR_DEPENDENCY,
-      severity: 'warn', // Phase 0b: only blocks with --strict (via strictExit1). 'error' was incorrect.
-      module: cycle[0],
-      message: `Circular dependency detected: ${cycleStr}`,
-      suggestion: 'Extract shared logic into a separate module to break the cycle.',
-      cycle,
-    });
-  }
+
 
   // 4. MODULE_SPACE_CONFLICT
   const nameToDomains = new Map<string, Set<string | undefined>>();
