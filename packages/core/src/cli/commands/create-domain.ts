@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
 import pc from 'picocolors';
+import { initDomainRegistry, saveDomainRegistry } from '../../nits/domain-store.js';
 import { KerithError } from '../../core/errors.js';
 
 export function createDomainCommand() {
@@ -43,6 +44,9 @@ import { Domain } from '@kerith/core'
 Domain('${name}')
 `;
       fs.writeFileSync(path.join(domainPath, `index.${ext}`), indexContent.trim() + '\n', 'utf-8');
+
+      const domainRegistry = initDomainRegistry(name, undefined);
+      await saveDomainRegistry(domainPath, domainRegistry);
 
       console.log(pc.green(`\n✔ Domain '${name}' created at src/${name}/`));
       console.log(`  ${pc.cyan(`index.${ext}`)}`);

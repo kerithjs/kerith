@@ -14,6 +14,7 @@ import path from "node:path";
 import fg from "fast-glob";
 import { registerEntitiesFromScan } from "../register-from-scan.js";
 import { normalizePath } from "../../core/utils/paths.js";
+import { ensureDomainRegistry } from "../../nits/domain-store.js";
 import type { BootstrapContext } from "../context.js";
 
 /**
@@ -32,6 +33,24 @@ export async function runEntityRegistration(ctx: BootstrapContext): Promise<void
   registerEntitiesFromScan(registry, scanResult, (level, message, meta) => {
     log[level](message, meta);
   });
+
+  // 1.5 — Ensure every discovered domain has a .kerith-register/registry.json.
+  // Covers domains created by hand (no CLI) or domains that pre-date this system.
+  // Mirrors scanShadowFiles()/ensureShadowFile() for modules — silent self-heal,
+  // never an error.
+  for (const domain of scanResult.domains) {
+    try {
+      const reg = await ensureDomainRegistry(domain.dirPath, domain.name, domain.options?.description as string | undefined);
+      const entry = registry.getDomain(domain.name);
+      if (entry) {
+        entry.id = reg.domain.id;
+      }
+    } catch (err: any) {
+      log.warn(`[domain-store] Could not ensure domain registry for "${domain.name}": ${err.message}`, {
+        _module: "bootstrap",
+      });
+    }
+  }
 
   log.debug("Scan entities seeded in registry", {
     domains: scanResult.domains.length,

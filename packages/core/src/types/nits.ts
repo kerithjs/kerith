@@ -69,6 +69,7 @@ export interface NitsRegistry {
   version: string;      // NITS schema version
   lastCheck: string;    // ISO 8601 timestamp
   modules: Record<string, NitsModuleRecord>; // key: id
+  domains?: Record<string, { id: string; name: string; path: string }>;
 }
 
 export interface BrokenImport {
@@ -91,4 +92,25 @@ export interface ReconciliationResult {
   stale: NitsModuleRecord[];       // disappeared from disk — unresolved (no shadow ID or shadow ID not seen in this cycle yet)
   deleted: NitsModuleRecord[];     // confirmed delete — shadow ID absent from all discovered modules in this cycle
   newModules: NitsModuleRecord[];  // no match in previous registry
+}
+
+export interface DomainRegistryFile {
+  version: string;
+  domain: {
+    id: string;              // dom_xxxxxxxx
+    name: string;
+    description?: string;
+    registeredAt: string;
+  };
+  modules: Record<string, NitsModuleRecord>;  // mismo shape que NitsRegistry.modules
+  submodules: DomainSubModuleRecord[];
+  shared?: { path: string; alias: string; exists: boolean };
+  lastCheck: string;
+}
+
+export interface DomainSubModuleRecord {
+  name: string;
+  parentModule: string;
+  path: string;
+  status: NitsStatus;
 }

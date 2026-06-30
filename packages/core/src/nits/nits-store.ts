@@ -3,6 +3,7 @@ import path from 'node:path';
 import { NITS_REGISTRY_VERSION, KERITH_DIR } from './constants.js';
 import { isValidModuleId } from './nits-id.js';
 import { ensureShadowFile, readShadowFile } from './shadow-file.js';
+import { atomicWriteJson } from './atomic-write.js';
 
 import type { NitsRegistry } from '../types/nits.js';
 import type { ShadowFileRecord } from './shadow-file.types.js';
@@ -165,17 +166,8 @@ export async function saveNitsRegistry(registry: NitsRegistry, cwd: string): Pro
     project: inferProjectName(cwd),
     lastCheck: new Date().toISOString()
   };
-
-  // Atomic write: 
-  // 1. Write to temporary file
-  await fs.promises.writeFile(
-    tempPath, 
-    JSON.stringify(registryToSave, null, 2), 
-    'utf-8'
-  );
-
-  // 2. Atomic rename (replaces existing if any)
-  await fs.promises.rename(tempPath, fullPath);
+  // Atomic write via shared utility
+  await atomicWriteJson(fullPath, registryToSave);
 }
 
 /**
