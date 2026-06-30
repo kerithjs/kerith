@@ -13,6 +13,12 @@ For full technical details, see the individual package changelogs:
 
 ## [2.0.0] - 2026-06-04
 
+### Fixed
+
+- `stalePurgeCycles`: default corrected from `3` to `5`, aligned with the actual
+  configured value (`3` was a hardcoded bug detected during code audit,
+  not the intentional value).
+
 ### Bootstrap
 
 - **Bootstrap Pipeline**: Refactored `createApp()` into an explicit step-based pipeline (`step-00` → `step-09`) with isolated bootstrap stages.

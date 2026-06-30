@@ -159,6 +159,34 @@ import { X } from '../payments/service'  // ❌ RELATIVE_BOUNDARY_VIOLATION
 
 A relative path that escapes the module directory is always an error, regardless of `strict` mode. Fix it by declaring the import in `imports[]` and using the corresponding alias.
 
+## Quality Rules
+
+Kerith distinguishes between two types of rules:
+
+**System Rules** — framework invariants. They have no configuration.
+They guarantee that `kerith check` remains the source of truth.
+
+**Quality Rules** — configurable warnings about design decisions.
+They have sensible defaults and can be adjusted per project.
+
+```typescript
+// kerith.config.ts
+export default defineConfig({
+  rules: {
+    maxModuleDepth:         3,      // warn if a module exceeds this depth
+    fanOutThreshold:        5,      // warn if a module imports from more than N modules
+    fanInThreshold:         5,      // warn if more than N modules depend on this one
+    maxModuleFiles:         30,     // warn if a module has more than N files
+    maxSubModulesPerModule: 5,      // warn if a module has more than N SubModules
+    unusedExports:          true,   // warn if a declared export is never used
+    emptyModule:            true,   // warn if a module has no registered identifiers
+    circularDependency:     true,   // warn (error with --strict)
+    moduleLoadTimeout:      30_000, // ms before MODULE_LOAD_TIMEOUT
+    stalePurgeCycles:       5,      // bootstrap cycles before purging a stale module
+  }
+})
+```
+
 ### Coupling Rules (Fan-out / Fan-in)
 
 Kerith detects high structural coupling between modules. 
