@@ -254,7 +254,7 @@ export function checkCommand(): Command {
           submodules:  graph.submodules || [],
           violations:  systemViolations,
           qualityWarnings,
-          resolvedRules: config.resolvedRules as unknown as Record<string, unknown>,
+          resolvedRules: config.resolvedRules,
           nitsResult,
           sharedInfo,
           coupling: { fanInMap, fanOutMap },
