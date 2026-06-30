@@ -1,5 +1,5 @@
 import type { ReconciliationResult } from '../../types/nits.js';
-import type { Violation, RelativeBoundaryViolation } from './violations.js';
+import type { Violation, RelativeBoundaryViolation, StandardViolation } from './violations.js';
 import { ViolationType, isHardViolation } from './violations.js';
 import { type ModuleNode as ModuleGraphNode, type DomainNode, type SubModuleNode } from './graph-builder.js';
 
@@ -40,7 +40,12 @@ export interface CheckReportData {
   domains:      DomainNode[];
   modules:      ModuleGraphNode[];
   submodules:   SubModuleNode[];
+  /** System violations — severity: 'error', always block. */
   violations:   Violation[];
+  /** Quality warnings — severity: 'warn', only block with --strict. */
+  qualityWarnings: Violation[];
+  /** Resolved rule values used during this run (shown in JSON output). */
+  resolvedRules?: Record<string, unknown>;
   nitsResult:   ReconciliationResult | null;
   /**
    * Map of shared alias → list of module names that declare it in shared[].
@@ -71,6 +76,7 @@ export function printCheckReport(data: CheckReportData): void {
   
   printSharedSection(data);
   printViolationDetails(data.violations, data);
+  printQualityWarningsSection(data);
   
   if (!data.options.verbose) {
     printIdentitySection(data.nitsResult, data.modules);
@@ -379,6 +385,57 @@ export function printViolationDetails(violations: Violation[], data: CheckReport
     }
     blank();
   }
+}
+
+/**
+ * Renders the "Quality Warnings" section.
+ * Only shown when qualityWarnings is non-empty.
+ * --verbose adds extra detail lines per warning type.
+ */
+export function printQualityWarningsSection(data: CheckReportData): void {
+  const warnings = data.qualityWarnings ?? [];
+  if (warnings.length === 0) return;
+
+  sectionHeader('Quality Warnings');
+
+  // Group by module for display
+  const moduleNames = Array.from(new Set(warnings.map(w => w.module)));
+
+  for (const moduleName of moduleNames) {
+    const moduleWarnings = warnings.filter(w => w.module === moduleName);
+    const maxLen = Math.min(30, Math.max(...moduleNames.map(n => n.length), 4));
+    const paddedName = moduleName.padEnd(maxLen + 2, ' ');
+
+    for (const rawW of moduleWarnings) {
+      const w = rawW as StandardViolation;
+      console.log(`  ${AYU.orange}⚠${R}  ${AYU.fg}${paddedName}${R} ${AYU.orange}${w.type}${R}`);
+      console.log(`     ${AYU.dim}${w.message}${R}`);
+
+      // Verbose: extra per-type detail
+      if (data.options.verbose) {
+        if (w.type === ViolationType.FAN_IN_HIGH && data.coupling) {
+          const consumers = data.coupling.fanInMap.get(w.module) ?? [];
+          if (consumers.length > 0) {
+            console.log(`     ${AYU.dim}Consumers: ${consumers.join(', ')}${R}`);
+          }
+        }
+        if (w.type === ViolationType.FAN_OUT_HIGH) {
+          const imports = data.modules.find(m => m.name === w.module)?.declaredImports ?? [];
+          if (imports.length > 0) {
+            console.log(`     ${AYU.dim}Imports: ${imports.join(', ')}${R}`);
+          }
+        }
+        if (w.type === ViolationType.CIRCULAR_DEPENDENCY && w.cycle) {
+          console.log(`     ${AYU.dim}${w.cycle.join(' → ')}${R}`);
+        }
+      }
+
+      if (w.suggestion) {
+        console.log(`     ${AYU.dim}↳ ${w.suggestion}${R}`);
+      }
+    }
+  }
+  blank();
 }
 
 export function printSharedSection(data: CheckReportData): void {

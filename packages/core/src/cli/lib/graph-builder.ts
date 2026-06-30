@@ -26,6 +26,8 @@ export interface ModuleNode extends BaseNode {
   id?: string;
   domain?: string;
   submodules?: string[];
+  /** Identifiers explicitly listed in Module({ exports: [...] }). */
+  declaredExports: string[];
   /** How identity was resolved in the last NITS reconciliation cycle. @since v1.5.5 */
   resolvedBy?: 'shadow-file' | 'path' | 'jaccard';
 }
@@ -130,6 +132,7 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
       domain: mod.domain,
       submodules: submodules.length > 0 ? submodules : undefined,
       declaredImports: mod.imports,
+      declaredExports: mod.exports,
       actualImports,
       internalIdentifiers,
     });

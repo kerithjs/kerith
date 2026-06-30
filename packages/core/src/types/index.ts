@@ -1,5 +1,5 @@
 import type { RequestHandler, ErrorRequestHandler, Router } from 'express';
-import type { CouplingConfig } from '../config/kerith-config.types.js';
+
 
 // ─── Internal registry entries ───────────────────────────────────────────────
 // These types are NOT part of the public API. They represent the shape of data
@@ -269,10 +269,6 @@ export interface ResolvedConfig {
     maxRouteLines: number;
   };
   requirePreloader: boolean;
-  coupling: {
-    fanOut: { threshold: number; severity: 'warn' };
-    fanIn:  { threshold: number; severity: 'warn' };
-  };
   rules: {
     moduleLoadTimeout: number;
     stalePurgeCycles: number;

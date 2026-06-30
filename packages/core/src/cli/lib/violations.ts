@@ -20,6 +20,11 @@ export const ViolationType = {
   SHARED_SCOPE_VIOLATION: 'shared-scope-violation',
   FAN_OUT_HIGH: 'fan-out-high',
   FAN_IN_HIGH: 'fan-in-high',
+  MODULE_DEPTH_EXCEEDED: 'module-depth-exceeded',
+  MODULE_TOO_LARGE: 'module-too-large',
+  TOO_MANY_SUBMODULES: 'too-many-submodules',
+  UNUSED_EXPORT: 'unused-export',
+  EMPTY_MODULE: 'empty-module',
 } as const;
 
 export type ViolationType = typeof ViolationType[keyof typeof ViolationType];
