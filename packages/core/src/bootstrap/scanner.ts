@@ -71,7 +71,6 @@ const DEFAULT_SCAN_IGNORE = [
   '**/.cache/**',
   '**/.nyc_output/**',
   '**/__pycache__/**',
-  '**/tmp/**',
   '**/_shared/**',
 ] as const;
 
