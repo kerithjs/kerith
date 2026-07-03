@@ -30,6 +30,8 @@ This repository is the monorepo for the KerithJS ecosystem. All packages are ver
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | [`@kerith/core`](./packages/core)                   | The engine — deterministic bootstrap, module discovery, NITS identity tracking, HTTP logger, CLI | [![npm](https://img.shields.io/npm/v/@kerith/core?style=flat-square)](https://www.npmjs.com/package/@kerith/core)                   |
 | [`@kerith/eslint-plugin`](./packages/eslint-plugin) | Architectural rules enforced at edit time — before the server runs                               | [![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin?style=flat-square)](https://www.npmjs.com/package/@kerith/eslint-plugin) |
+| [`@kerith/app`](./packages/app)                     | Application layer — channel-based connection system (Alias, Middleware, Schedule, Binding)       | 🚧 in development                                                                                                                   |
+| [`@kerith/identifiers`](./packages/identifiers)     | Identifier catalog — architectural identifiers consumed by `@kerith/app`'s channel loops         | 🚧 in development                                                                                                                   |
 
 All packages are independent installs. `@kerith/eslint-plugin` is a companion — not a dependency of the core.
 
@@ -58,6 +60,12 @@ kerith/
 │   ├── eslint-plugin/               # @kerith/eslint-plugin
 │   │   └── src/
 │   │       └── rules/               # no-private-imports, no-undeclared-imports, no-domain-boundary-violations, no-relative-boundary-violations
+│   │
+│   ├── app/                         # @kerith/app
+│   │   └── src/                     # Generic channel loops — new identifiers never require touching this layer
+│   │
+│   ├── identifiers/                 # @kerith/identifiers
+│   │   └── src/                     # Identifier catalog, grouped by channel (Alias, Middleware, Schedule, Binding)
 │
 ├── package.json                     # Workspace root
 └── tsconfig.json                    # Shared TypeScript base config
@@ -117,8 +125,8 @@ export default defineConfig({
   modules: "src/modules/*",
   prefix: "/api/v1",
   coupling: {
-    fanOut: { threshold: 8 },  // large monolith: higher threshold
-    fanIn:  { threshold: 5 },  // shared remains strict
+    fanOut: { threshold: 8 }, // large monolith: higher threshold
+    fanIn: { threshold: 5 }, // shared remains strict
   },
   aliases: {
     "@config": "./src/config",
@@ -185,18 +193,18 @@ They have sensible defaults and can be adjusted per project.
 // kerith.config.ts
 export default defineConfig({
   rules: {
-    maxModuleDepth:         3,      // warn if a module exceeds this depth
-    fanOutThreshold:        5,      // warn if a module imports from more than N modules
-    fanInThreshold:         5,      // warn if more than N modules depend on this one
-    maxModuleFiles:         30,     // warn if a module has more than N files
-    maxSubModulesPerModule: 5,      // warn if a module has more than N SubModules
-    unusedExports:          true,   // warn if a declared export is never used
-    emptyModule:            true,   // warn if a module has no registered identifiers
-    circularDependency:     true,   // warn (error with --strict)
-    moduleLoadTimeout:      30_000, // ms before MODULE_LOAD_TIMEOUT
-    stalePurgeCycles:       5,      // bootstrap cycles before purging a stale module
-  }
-})
+    maxModuleDepth: 3, // warn if a module exceeds this depth
+    fanOutThreshold: 5, // warn if a module imports from more than N modules
+    fanInThreshold: 5, // warn if more than N modules depend on this one
+    maxModuleFiles: 30, // warn if a module has more than N files
+    maxSubModulesPerModule: 5, // warn if a module has more than N SubModules
+    unusedExports: true, // warn if a declared export is never used
+    emptyModule: true, // warn if a module has no registered identifiers
+    circularDependency: true, // warn (error with --strict)
+    moduleLoadTimeout: 30_000, // ms before MODULE_LOAD_TIMEOUT
+    stalePurgeCycles: 5, // bootstrap cycles before purging a stale module
+  },
+});
 ```
 
 ---
@@ -205,10 +213,10 @@ export default defineConfig({
 
 Kerith provides two levels of shared code that cover the vast majority of real-world use cases:
 
-| Type | Alias | Who can access | How to declare |
-|---|---|---|---|
-| Global | `@shared` | Any module, any domain | `shared: ['@shared']` in `Module()` |
-| Domain-scoped | `@{domain}/shared` | Only modules in that domain | Implicit — no declaration needed |
+| Type          | Alias              | Who can access              | How to declare                      |
+| ------------- | ------------------ | --------------------------- | ----------------------------------- |
+| Global        | `@shared`          | Any module, any domain      | `shared: ['@shared']` in `Module()` |
+| Domain-scoped | `@{domain}/shared` | Only modules in that domain | Implicit — no declaration needed    |
 
 ### Global shared (`@shared`)
 
@@ -216,12 +224,12 @@ Place code in `src/shared/` and declare access explicitly in `Module()`:
 
 ```typescript
 // src/billing/payments/index.ts
-Module('payments', {
-  shared: ['@shared']   // declares intent to use @shared
-})
+Module("payments", {
+  shared: ["@shared"], // declares intent to use @shared
+});
 
 // src/billing/payments/payments.service.ts
-import { format } from '@shared/format'   // valid — declared above
+import { format } from "@shared/format"; // valid — declared above
 ```
 
 Scaffold the global shared folder:
@@ -237,7 +245,7 @@ Place code in `src/{domain}/_shared/`. All modules **within that domain** can im
 
 ```typescript
 // src/billing/payments/payments.service.ts
-import { db } from '@billing/shared/db'  // implicit — same domain, no declaration needed
+import { db } from "@billing/shared/db"; // implicit — same domain, no declaration needed
 ```
 
 Scaffold a domain shared folder:
@@ -285,14 +293,14 @@ export default [kerith.configs.recommended];
 
 Ships six rules out of the box:
 
-| Rule | Severity | Description |
-|---|---|---|
-| `no-private-imports` | error | Prevents deep internal path imports |
-| `no-undeclared-imports` | warn | Module uses another without declaring it in `imports[]` |
-| `no-domain-boundary-violations` | error | Cross-domain internal alias access |
-| `no-relative-boundary-violations` | error | Relative imports that escape the module boundary |
-| `no-undeclared-shared` | warn | `@shared` imported without declaring it in `shared[]` |
-| `no-shared-scope-violation` | error | `@{domain}/shared` accessed from another domain |
+| Rule                              | Severity | Description                                             |
+| --------------------------------- | -------- | ------------------------------------------------------- |
+| `no-private-imports`              | error    | Prevents deep internal path imports                     |
+| `no-undeclared-imports`           | warn     | Module uses another without declaring it in `imports[]` |
+| `no-domain-boundary-violations`   | error    | Cross-domain internal alias access                      |
+| `no-relative-boundary-violations` | error    | Relative imports that escape the module boundary        |
+| `no-undeclared-shared`            | warn     | `@shared` imported without declaring it in `shared[]`   |
+| `no-shared-scope-violation`       | error    | `@{domain}/shared` accessed from another domain         |
 
 For full configuration details, see the [`@kerith/eslint-plugin` README](./packages/eslint-plugin/README.md).
 
