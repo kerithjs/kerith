@@ -44,7 +44,7 @@ kerith/
 ├── packages/
 │   ├── core/                        # @kerith/core
 │   │   ├── src/
-│   │   │   ├── bootstrap/           # createApp() — 17-step deterministic pipeline
+│   │   │   ├── bootstrap/           # createApp() — 11-step deterministic pipeline
 │   │   │   ├── identifiers/         # Module(), Controller(), Service(), ...
 │   │   │   ├── aliases/             # ESM hook — runtime alias resolution
 │   │   │   ├── nits/                # NITS — Node Identity Tracking System
@@ -274,7 +274,7 @@ The `@kerith/eslint-plugin` enforces the same rules at edit time:
 - `kerith/no-undeclared-shared` — warns when `@shared` is imported without declaring it in `shared[]`
 - `kerith/no-shared-scope-violation` — errors when `@{domain}/shared` is accessed from another domain
 
-> **Rule:** `SHARED_SCOPE_VIOLATION` always causes exit 1, even without `--strict`. A module in `workspace` has no valid reason to access `@billing/shared`.
+> **Rule:** `SHARED_SCOPE_VIOLATION` always causes exit 1 during `kerith check`, even without `--strict`. A module in `workspace` has no valid reason to access `@billing/shared`. (Note: This is a static analysis check, not a runtime exception).
 
 ---
 

@@ -157,10 +157,7 @@ function generateSubmodules(modDir: string, parentModule: string) {
     const subIndexContent = `
 import { SubModule } from '../../../../../src/index.js';
 
-SubModule('${capitalize(subName.replace(/-/g, ''))}', {
-  parentModule: '${parentModule}',
-  exports: ['execute']
-});
+SubModule('${capitalize(subName.replace(/-/g, ''))}');
 
 export function execute() {
   return true;
