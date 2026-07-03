@@ -7,6 +7,7 @@ import {
   detectRelativeBoundaryViolations,
   ViolationType,
 } from '../../src/cli/lib/violations.js';
+import { runQualityRules } from '../../src/cli/lib/rules-engine.js';
 import { buildModuleGraph, ModuleNode } from '../../src/cli/lib/graph-builder.js';
 import { checkCommand } from '../../src/cli/commands/check.js';
 import * as configModule from '../../src/core/config.js';
@@ -14,6 +15,7 @@ import * as nitsStore from '../../src/nits/nits-store.js';
 import * as nitsReconciler from '../../src/nits/nits-reconciler.js';
 import * as nitsHash from '../../src/nits/nits-hash.js';
 import { NITS_REGISTRY_VERSION } from '../../src/nits/constants.js';
+import { DEFAULT_QUALITY_RULES } from '../../src/config/rules.types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,11 +44,11 @@ describe('kerith check', () => {
       expect((undeclaredImp as any)?.suggestion).toContain('Add "orders" to the imports array');
     });
 
-    it('detects real circular dependency in fixture (users <-> orders)', async () => {
+    it('detects real circular dependency in fixture (users <-> orders) via quality rules', async () => {
       const graph = await buildModuleGraph({ modules: 'src/modules/*' } as any, fixturePath);
-      const violations = detectViolations(graph, fixturePath);
+      const qualityWarnings = runQualityRules(graph, DEFAULT_QUALITY_RULES);
       
-      const circular = violations.find(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
+      const circular = qualityWarnings.find(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
       expect(circular).toBeDefined();
       expect((circular as any)?.cycle).toContain('users');
       expect((circular as any)?.cycle).toContain('orders');
@@ -93,15 +95,15 @@ describe('kerith check', () => {
   });
 
   describe('detectViolations() with mock nodes', () => {
-    it('detects circular dependency A -> B -> A', () => {
+    it('detects circular dependency A -> B -> A via quality rules', () => {
       const mockNodes: ModuleNode[] = [
-        { name: 'A', dirPath: '/A', indexPath: '/A/index.ts', declaredImports: ['B'], actualImports: [], internalIdentifiers: [] },
-        { name: 'B', dirPath: '/B', indexPath: '/B/index.ts', declaredImports: ['A'], actualImports: [], internalIdentifiers: [] }
+        { name: 'A', dirPath: '/A', indexPath: '/A/index.ts', declaredImports: ['B'], declaredExports: [], actualImports: [], internalIdentifiers: [] },
+        { name: 'B', dirPath: '/B', indexPath: '/B/index.ts', declaredImports: ['A'], declaredExports: [], actualImports: [], internalIdentifiers: [] }
       ];
-      const mockGraph = { domains: [], modules: mockNodes };
+      const mockGraph = { domains: [], submodules: [], modules: mockNodes };
 
-      const violations = detectViolations(mockGraph);
-      const circular = violations.find(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
+      const qualityWarnings = runQualityRules(mockGraph as any, DEFAULT_QUALITY_RULES);
+      const circular = qualityWarnings.find(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
       
       expect(circular).toBeDefined();
       expect((circular as any)?.cycle).toEqual(['A', 'B', 'A']);
@@ -113,6 +115,7 @@ describe('kerith check', () => {
           name: 'orders', dirPath: '/orders', indexPath: '/orders/index.ts',
           // 'payments' declared in imports so it is NOT an undeclared violation
           declaredImports: ['payments'],
+          declaredExports: [],
           actualImports: [{ specifier: '@payments', file: '/orders/index.ts', line: 1 }],
           internalIdentifiers: []
         }
@@ -120,6 +123,7 @@ describe('kerith check', () => {
       const mockGraph = {
         // 'payments' exists as a domain — but since declaredImports includes it, no undeclared violation either
         domains: [{ name: 'payments', dirPath: '/payments', indexPath: '/payments/index.ts', modules: [] }],
+        submodules: [],
         modules: mockNodes
       };
 
@@ -133,12 +137,14 @@ describe('kerith check', () => {
         {
           name: 'orders', dirPath: '/orders', indexPath: '/orders/index.ts',
           declaredImports: [], // NOT declared
+          declaredExports: [],
           actualImports: [{ specifier: '@payments', file: '/orders/index.ts', line: 1 }],
           internalIdentifiers: []
         }
       ];
       const mockGraph = {
         domains: [{ name: 'payments', dirPath: '/payments', indexPath: '/payments/index.ts', modules: [] }],
+        submodules: [],
         modules: mockNodes
       };
 
@@ -153,12 +159,13 @@ describe('kerith check', () => {
         {
           name: 'orders', dirPath: '/orders', indexPath: '/orders/index.ts',
           declaredImports: [],
+          declaredExports: [],
           actualImports: [{ specifier: '@modules/users/internal/repo.js', file: '/orders/service.ts', line: 5 }],
           internalIdentifiers: []
         },
-        { name: 'users', dirPath: '/users', indexPath: '/users/index.ts', declaredImports: [], actualImports: [], internalIdentifiers: [] }
+        { name: 'users', dirPath: '/users', indexPath: '/users/index.ts', declaredImports: [], declaredExports: [], actualImports: [], internalIdentifiers: [] }
       ];
-      const violations = detectViolations({ domains: [], modules: mockNodes });
+      const violations = detectViolations({ domains: [], submodules: [], modules: mockNodes });
       const priv = violations.find(v => v.type === ViolationType.PRIVATE_IMPORT);
       expect(priv).toBeDefined();
       expect((priv as any)?.location).toBeDefined();
@@ -179,7 +186,8 @@ describe('kerith check', () => {
         prefix: '',
         aliases: {},
         strict: false,
-        nits: { enabled: false }
+        nits: { enabled: false },
+        resolvedRules: DEFAULT_QUALITY_RULES
       } as any);
     });
 
@@ -253,6 +261,7 @@ describe('kerith check', () => {
         modules: 'src/modules/*',
         strict: false,
         nits: { enabled: false },
+        resolvedRules: DEFAULT_QUALITY_RULES
       } as any);
 
       try {
@@ -279,7 +288,8 @@ describe('kerith check', () => {
           prefix: '',
           aliases: {},
           strict: false,
-          nits: { enabled: true }
+          nits: { enabled: true },
+          resolvedRules: DEFAULT_QUALITY_RULES
         } as any);
 
         const fakeRegistry = {

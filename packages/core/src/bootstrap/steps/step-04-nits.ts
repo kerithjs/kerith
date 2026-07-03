@@ -159,7 +159,7 @@ export async function runNitsReconciliation(
         cwd,
         {
           similarityThreshold: config.nits?.similarityThreshold,
-          stalePurgeCycles: config.rules?.stalePurgeCycles,
+          stalePurgeCycles: config.resolvedRules?.stalePurgeCycles,
           log,
         },
       );

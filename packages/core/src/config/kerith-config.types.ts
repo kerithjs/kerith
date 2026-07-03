@@ -1,26 +1,11 @@
 import type { LogLevel, LogFormat, NitsConfig } from '../types/index.js';
+import type { QualityRulesConfig } from './rules.types.js';
 
 export interface AliasMap {
   [alias: string]: string;
 }
 
-export interface CouplingRuleConfig {
-  /**
-   * Number of distinct modules that triggers the warning.
-   * Use Number.MAX_SAFE_INTEGER to effectively disable the rule.
-   * @default 5
-   */
-  threshold: number;
-  /** Currently always 'warn'. Reserved for future enforcement. */
-  severity?: 'warn';
-}
 
-export interface CouplingConfig {
-  /** Fan-out: how many distinct modules this module imports from. */
-  fanOut?: CouplingRuleConfig;
-  /** Fan-in: how many distinct modules consume this module. */
-  fanIn?: CouplingRuleConfig;
-}
 
 export interface KerithConfig {
   /** @deprecated Replaced by \`origin\` in v2.0.0. Glob pointing to module folders. Default: 'src/modules/*'. */
@@ -59,30 +44,13 @@ export interface KerithConfig {
    * @since v1.5.0
    */
   requirePreloader?: boolean;
-  /**
-   * Architectural and quality rules.
-   */
-  rules?: {
-    /**
-     * Maximum time (in milliseconds) allowed for a module to load via dynamic import().
-     * If the module exceeds this limit, a MODULE_LOAD_TIMEOUT error is thrown.
-     * Helps prevent silent deadlocks from top-level await tasks (e.g. infinite DB connections).
-     * @default 30000 (30 seconds)
-     */
-    moduleLoadTimeout?: number;
-    /**
-     * Determines how many reconciliation cycles a missing module is retained in the NITS
-     * registry before it is permanently purged.
-     * @default 5
-     */
-    stalePurgeCycles?: number;
-  };
+  /** Architectural and quality rules. */
+  rules?: QualityRulesConfig;
   /**
    * Alias configuration.
    */
   aliases?: AliasMap;
-  /** Coupling metric thresholds (fan-out / fan-in). */
-  coupling?: CouplingConfig;
+
   /** Logging behavior configuration */
   logging?: {
     /** Maximum number of routes to log per module during bootstrap. Default: 5 */

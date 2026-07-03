@@ -149,6 +149,7 @@ describe('check — relative boundary violations', () => {
       modules: 'src/modules/*',
       strict: false,
       nits: { enabled: false },
+      resolvedRules: { circularDependency: false }
     } as never);
 
     const originalExitCode = process.exitCode;

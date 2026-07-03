@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `stalePurgeCycles`: default corrected from `3` to `5`, aligned with the actual configured value (`3` was a hardcoded bug detected during code audit, not the intentional value).
 - Module with no controllers no longer emits warning (REGLA-01)
 - `ast-parser` fallback captures string and array literals from options
 - `CIRCULAR_DEPENDENCY` was incorrectly assigned `severity: 'error'`, causing it to block even outside `--strict` mode in severity-based checks — now correctly set to `severity: 'warn'`

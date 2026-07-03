@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import pc from 'picocolors';
 import { loadConfig } from '../../core/config.js';
 import { buildModuleGraph } from '../lib/graph-builder.js';
-import { detectViolations, ViolationType, detectCouplingWarnings, isHardViolation } from '../lib/violations.js';
+import { detectViolations, ViolationType, isHardViolation } from '../lib/violations.js';
+import { runQualityRules } from '../lib/rules-engine.js';
 import { printCheckReport, AYU, type CheckReportData } from '../lib/check-reporter.js';
 import { loadNitsRegistry, saveNitsRegistry, initNitsRegistry, inferProjectName, scanShadowFiles } from '../../nits/nits-store.js';
 import { createLogger, defaultLogHandler } from '../../core/logger.js';
@@ -120,7 +121,8 @@ export function checkCommand(): Command {
             }
 
             const result = reconcile(discovered, oldRegistry, cwd, {
-              similarityThreshold: config.nits.similarityThreshold
+              similarityThreshold: config.nits.similarityThreshold,
+              stalePurgeCycles: config.resolvedRules.stalePurgeCycles
             });
             nitsResult = result;
             const updatedRegistry = buildUpdatedNitsRegistry(result, oldRegistry.project);
@@ -175,15 +177,26 @@ export function checkCommand(): Command {
           registerEntitiesFromScan(registry, scanResult);
         });
 
-        let violations = detectViolations(graph, cwd);
+        let systemViolations = detectViolations(graph, cwd);
         
-        // Add shared access violations
+        // Add shared access violations (system level)
         const sharedViolations = await checkSharedAccess(graph, registry, cwd);
-        violations.push(...sharedViolations);
+        systemViolations = [...systemViolations, ...sharedViolations];
 
-        // Add coupling warnings
-        const { warnings: couplingWarnings, fanInMap, fanOutMap } = detectCouplingWarnings(graph, config);
-        let allViolations = [...violations, ...couplingWarnings];
+        // Run all quality rules via the unified engine
+        const qualityWarnings = runQualityRules(graph, config.resolvedRules);
+
+        // Build coupling maps for reporter (fan-in/fan-out display)
+        const fanInMap = new Map<string, string[]>();
+        const fanOutMap = new Map<string, number>();
+        for (const node of graph.modules) {
+          if (!fanInMap.has(node.name)) fanInMap.set(node.name, []);
+          fanOutMap.set(node.name, node.declaredImports.length);
+          for (const imp of node.declaredImports) {
+            if (!fanInMap.has(imp)) fanInMap.set(imp, []);
+            fanInMap.get(imp)!.push(node.name);
+          }
+        }
 
         // Build sharedInfo: alias → module names that declare it in shared[]
         const sharedInfo: Record<string, string[]> = {};
@@ -200,14 +213,16 @@ export function checkCommand(): Command {
         }
 
         if (options.circular === false) { 
-          allViolations = allViolations.filter(v => v.type !== ViolationType.CIRCULAR_DEPENDENCY);
+          // Remove circular from quality warnings if --no-circular passed
+          const filtered = qualityWarnings.filter(v => v.type !== ViolationType.CIRCULAR_DEPENDENCY);
+          filtered.length !== qualityWarnings.length && (qualityWarnings.length = 0, qualityWarnings.push(...filtered));
         }
 
-        // In normal mode: only hard errors (severity: 'error') block.
-        // In --strict mode: hard errors + warnings block.
-        const hasBlockingViolations = options.strict
-          ? allViolations.some(v => v.severity === 'error' || v.severity === 'warn')
-          : allViolations.some(v => isHardViolation(v));
+        // System violations → always exit 1.
+        // Quality warnings  → exit 0 normally, exit 1 with --strict.
+        const hasSystemErrors = systemViolations.some(v => isHardViolation(v));
+        const hasQualityIssues = qualityWarnings.length > 0;
+        const hasBlockingViolations = hasSystemErrors || (options.strict && hasQualityIssues);
 
         if (options.format === 'json') {
           const couplingJson: Record<string, { fanOut: number; fanIn: number }> = {};
@@ -220,7 +235,9 @@ export function checkCommand(): Command {
           console.log(JSON.stringify({ 
             domains: graph.domains, 
             modules: nodes, 
-            violations: allViolations,
+            violations: systemViolations,
+            qualityWarnings,
+            rules: config.resolvedRules,
             coupling: couplingJson
           }, null, 2));
           if (hasBlockingViolations) {
@@ -235,7 +252,9 @@ export function checkCommand(): Command {
           domains:     graph.domains,
           modules:     nodes,
           submodules:  graph.submodules || [],
-          violations:  allViolations,
+          violations:  systemViolations,
+          qualityWarnings,
+          resolvedRules: config.resolvedRules,
           nitsResult,
           sharedInfo,
           coupling: { fanInMap, fanOutMap },

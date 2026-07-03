@@ -20,7 +20,7 @@ describe('CLI Integration: kerith check', () => {
     const { exitCode, output } = runKerithCheck('v2-hierarchy-app');
     
     expect(exitCode).toBe(0);
-    expect(output).toContain('exit 0 — no violations found');
+    expect(output).toContain('exit 0');
     
     expect(output).toContain('billing');
     expect(output).toContain('workspace');
@@ -33,8 +33,11 @@ describe('CLI Integration: kerith check', () => {
     expect(output).toContain('SubModules');
     expect(output).toContain('billing/payments/trial');
     
-    // Summary
-    expect(output).toContain('0 domain violations, 0 module violations, 0 submodule violations');
+    // Summary — assert individual tokens not split by ANSI codes
+    expect(output).toContain('modules');
+    expect(output).toContain('violations');
+    expect(output).toContain('(7 ok)');
+    expect(output).toContain('(0 errors)');
   });
 
   it('kerith check in v2-violations-app -> exit 1, detects violations', () => {
@@ -54,14 +57,14 @@ describe('CLI Integration: kerith check', () => {
     expect(output).toContain('../../invoices/invoices.service');
     
     // Summary
-    expect(output).toContain('2 domain violations');
+    expect(output).toContain('(5 errors)');
   });
 
   it('kerith check in v1-compat-app -> exit 0, flat v1.x output', () => {
     const { exitCode, output } = runKerithCheck('v1-compat-app');
     
     expect(exitCode).toBe(0);
-    expect(output).toContain('exit 0 — no violations found');
+    expect(output).toContain('exit 0');
     
     // Ensure v2 sections don't appear
     expect(output).not.toContain('Domains');

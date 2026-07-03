@@ -20,6 +20,11 @@ export const ViolationType = {
   SHARED_SCOPE_VIOLATION: 'shared-scope-violation',
   FAN_OUT_HIGH: 'fan-out-high',
   FAN_IN_HIGH: 'fan-in-high',
+  MODULE_DEPTH_EXCEEDED: 'module-depth-exceeded',
+  MODULE_TOO_LARGE: 'module-too-large',
+  TOO_MANY_SUBMODULES: 'too-many-submodules',
+  UNUSED_EXPORT: 'unused-export',
+  EMPTY_MODULE: 'empty-module',
 } as const;
 
 export type ViolationType = typeof ViolationType[keyof typeof ViolationType];
@@ -279,18 +284,7 @@ export function detectViolations(
     dependencyMap.set(node.name, node.declaredImports);
   }
 
-  const cycles = findCircularDependencies(dependencyMap);
-  for (const cycle of cycles) {
-    const cycleStr = cycle.join(' -> ');
-    violations.push({
-      type: ViolationType.CIRCULAR_DEPENDENCY,
-      severity: 'warn', // Phase 0b: only blocks with --strict (via strictExit1). 'error' was incorrect.
-      module: cycle[0],
-      message: `Circular dependency detected: ${cycleStr}`,
-      suggestion: 'Extract shared logic into a separate module to break the cycle.',
-      cycle,
-    });
-  }
+
 
   // 4. MODULE_SPACE_CONFLICT
   const nameToDomains = new Map<string, Set<string | undefined>>();

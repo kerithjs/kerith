@@ -2,261 +2,135 @@
 
 <img src="../../public/logo.svg" alt="Kerith" width="200" height="200" />
 
-# KerithJS
+# @kerith/core
 
-**The architectural standard for Node.js and TypeScript.**
+**The architecture engine — deterministic bootstrap, module discovery, NITS identity tracking, HTTP logging, and CLI.**
 
 [![npm](https://img.shields.io/npm/v/@kerith/core?color=e4f222&label=%40kerith%2Fcore&style=flat-square)](https://www.npmjs.com/package/@kerith/core)
-[![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin?color=e4f222&label=%40kerith%2Feslint-plugin&style=flat-square)](https://www.npmjs.com/package/@kerith/eslint-plugin)
-[![License: MIT](https://img.shields.io/badge/license-MIT-e4f222?style=flat-square)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-e4f222?style=flat-square)](../../LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20.6-e4f222?style=flat-square)](https://nodejs.org/)
-[![kerith.dev](https://img.shields.io/badge/docs-kerith.dev-e4f222?style=flat-square)](https://docs.kerith.dev)
 
-> **Node.js ≥ 20.6** · **Express 5.x** · **ESM Only** · **TypeScript included**
+> **Node.js ≥ 20.6** · **Express 5.x (peer, optional)** · **ESM Only** · **TypeScript included**
 
 </div>
 
 ---
 
-## Why Kerith?
+This is the README for **`@kerith/core`** specifically. For the ESLint plugin, see [`packages/eslint-plugin`](../eslint-plugin). For the monorepo overview, see the [root README](../../README.md).
 
-Express is minimal by design. Kerith keeps it that way while adding just enough structure to scale:
+> **Notice:** This package is under active development. Some documented behavior reflects the current `v2.0.0` implementation exactly as found in `src/` — version markers (`@since vX.X.X`) are included where the source annotates them.
 
-- **Module discovery** — point it at a glob `src/modules/*` and it finds, validates, and loads every module automatically.
+---
+
+## Table of contents
+
+1. [Why Kerith](#why-kerith)
+2. [Installation & requirements](#installation--requirements)
+3. [Quick start](#quick-start)
+4. [Project structure](#project-structure)
+5. [Identifiers](#identifiers)
+6. [Import aliases](#import-aliases)
+7. [Module boundaries](#module-boundaries)
+8. [Shared resources](#shared-resources)
+9. [The pre-loader system](#the-pre-loader-system)
+10. [`kerith.config.ts` reference](#kerithconfigts-reference)
+11. [Runtime Zero & bootstrap cache](#runtime-zero--bootstrap-cache)
+12. [API reference](#api-reference)
+13. [HTTP request logging](#http-request-logging)
+14. [Graceful shutdown](#graceful-shutdown)
+15. [Error handling](#error-handling)
+16. [CLI reference](#cli-reference)
+17. [`kerith check` — architecture violations](#kerith-check--architecture-violations)
+18. [NITS — module identity tracking](#nits--module-identity-tracking)
+19. [TypeScript types](#typescript-types)
+20. [Requirements](#requirements)
+21. [License](#license)
+
+---
+
+## Why Kerith
+
+Express is minimal by design. `@kerith/core` keeps it that way while adding just enough structure to scale:
+
+- **Module discovery** — point it at `src/modules/*` (flat mode) or `src` (domain mode) and it finds, validates, and loads every module automatically.
 - **Route mounting** — controllers declare their prefix; `createApp()` wires them to Express via `app.use()`.
-- **Import aliases** — `@modules/users`, `@config/database` — no more `../../..` paths.
+- **Import aliases** — `@modules/users`, `@billing/payments`, `@config/database` — no more `../../..` paths.
 - **Dependency validation** — declare what your module imports and exports; Kerith catches mismatches before a single request is handled.
 - **No magic at runtime** — after bootstrap, Kerith is out of the way. Express handles requests exactly as normal.
+- **Worker-mode support** — `createApp()` no longer requires an Express instance. Background workers and scheduled jobs can use the same registry, aliases, and graceful shutdown without HTTP at all.
 
 ---
 
-## Packages
-
-Kerith ships as two focused packages from the same repository:
-
-| Package | Description | npm |
-|---|---|---|
-| `@kerith/core` | Core framework — module discovery, routing, aliases, validation | [![npm](https://img.shields.io/npm/v/@kerith/core.svg)](https://www.npmjs.com/package/@kerith/core) |
-| `@kerith/eslint-plugin` | ESLint plugin — static enforcement of Kerith module boundaries in your editor and CI | [![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin.svg)](https://www.npmjs.com/package/@kerith/eslint-plugin) |
-
-Both packages are independent installs — use one or both depending on your setup. The ESLint plugin is a companion, not a dependency of the core.
-
----
-
-## Installation
+## Installation & requirements
 
 ```bash
 npm install @kerith/core
 ```
 
-Express 5 is a peer dependency:
+Express is a **peer dependency** — and it's optional if you're not mounting HTTP routes (see [worker mode](#quick-start)):
 
 ```bash
 npm install express
 ```
 
----
-
-## The Pre-loader System _(v1.5.0+)_
-
-By default, the Node.js ESM hook activates **inside** `createApp()`. This means aliases like `@config/database` are **not** available in static top-level imports in your server entry file:
-
-```ts
-// ❌ This fails if the pre-loader is not active
-import { db } from '@config/database.js'  // MODULE_NOT_FOUND
-
-const app = express()
-await createApp(app)
-```
-
-The **runtime pre-loader** solves this by registering the alias resolution ESM hook *before* your code runs.
-
-### Automatic setup (`create-Kerith-app`)
-
-If you generated your project using `npx create-Kerith-app`, the pre-loader is **configured automatically**. You don't need to do anything. Your `npm run dev` script automatically syncs the pre-loader before starting the server.
-
-### Manual setup (existing projects)
-
-**1. Generate the pre-loader file:**
-```bash
-npx kerith sync-preload
-```
-
-This creates `.Kerith/preload.js` — commit it to version control.
-
-**2. Update your `package.json` scripts:**
-```json
-{
-  "scripts": {
-    "dev":   "Kerith sync-preload --silent && Kerith dev src/server.ts",
-    "start": "node --import ./.Kerith/preload.js src/server.ts"
-  }
-}
-```
-
-> **The `--silent` flag:** When chained in your `dev` script, `--silent` suppresses output if the pre-loader is already up to date, keeping your terminal clean on every startup. It only prints a message if it actually regenerated the file.
-
-**3. Aliases now work everywhere:**
-```ts
-// ✅ Works with the pre-loader active
-import { db } from '@config/database.js'
-import { UserService } from '@modules/users'
-
-const app = express()
-const { runtime } = await createApp(app)
-console.log(runtime.preloaderActive) // true
-```
-
-### When to run `sync-preload` manually
-
-Because `npm run dev` automatically chains `sync-preload --silent`, the pre-loader is usually kept in sync automatically. However, you need to run `npx kerith sync-preload` manually when:
-- You add, remove, or change aliases in `kerith.config.ts` while the server is NOT running.
-- You move your project to a different directory on your local machine (the pre-loader embeds absolute paths to the runtime hook).
-- In CI/CD pipelines to ensure the file is up to date (though committing `.Kerith/preload.js` is the recommended approach).
-
-### Legacy Mode (v1.4.0 compatibility)
-
-If `.Kerith/preload.js` is not found, Kerith falls back to **Legacy Mode**. 
-In this mode, aliases still work perfectly **inside** modules discovered by `createApp()` (exactly as they did in v1.4.0). However, top-level static imports in your entry file (`server.ts`) will fail to resolve aliases. Kerith will emit a warning during bootstrap if it detects Legacy Mode, prompting you to run `Kerith sync-preload`.
-
----
-
-## Alias System
-
-Define your aliases once in `kerith.config.ts`:
-
-```typescript
-import { defineConfig } from '@kerith/core'
-
-export default defineConfig({
-  aliases: {
-    '@config':     './src/config',
-    '@middleware': './src/middleware',
-    '@shared':     './src/shared',
-  }
-})
-```
-
-Kerith automatically generates `tsconfig.Kerith.json` with the corresponding `paths`. Add this to your `tsconfig.json` once:
+Your project's root `package.json` **must** declare:
 
 ```json
-{ "extends": "./tsconfig.Kerith.json" }
+{ "type": "module" }
 ```
 
-The `@modules` alias is always available — it points to the modules directory configured in `modules`.
+Kerith validates this at the very start of `createApp()` and throws `INVALID_ESM_ENV` if it's missing — before touching the filesystem or the config.
 
----
-
-## Module boundaries
-
-In Kerith, `@` always crosses into another module. `./` and `../` always stay within the current module.
-
-```typescript
-import { X } from './local-file'         // ✅ internal to the module
-import { X } from '@modules/payments'    // ✅ declared cross-module connection
-import { X } from '../payments/service'  // ❌ RELATIVE_BOUNDARY_VIOLATION
-```
-
-A relative path that escapes the module directory is always an error, regardless of `strict` mode. Fix it by declaring the import in `imports[]` and using the corresponding alias.
-
-### Coupling Rules (Fan-out / Fan-in)
-
-Kerith detects high structural coupling between modules. 
-- **Fan-out**: How many distinct modules a module imports from. High fan-out suggests too many responsibilities.
-- **Fan-in**: How many distinct modules consume a module. High fan-in suggests a central dependency that might belong in `_shared`.
-
-You can configure thresholds for these warnings in `kerith.config.ts`:
-
-```typescript
-// kerith.config.ts
-import { defineConfig } from '@kerith/core';
-
-export default defineConfig({
-  coupling: {
-    fanOut: { threshold: 8 },  // large monolith: higher threshold
-    fanIn:  { threshold: 5 },  // shared remains strict
-  }
-});
-```
-
-To effectively disable a rule, set the threshold to `Number.MAX_SAFE_INTEGER` (do not use `Infinity`, as it serializes to `null` in JSON output):
-
-```typescript
-  coupling: {
-    fanOut: { threshold: Number.MAX_SAFE_INTEGER }, // effectively disabled
-    fanIn:  { threshold: 5 },
-  }
-```
-
----
-
-## Runtime Zero
-
-Kerith charges the cost of architecture exactly once — during bootstrap.
-
-After `createApp()` returns, the framework is gone. Express handles every request exactly as it would without Kerith. There is no DI container alive in memory, no proxies wrapping your services, no automatic interceptors on any call.
-
-**The module graph is validated and wired at startup. At request time, only your code runs.**
-
-### Why this matters
-
-In frameworks with a runtime DI container (NestJS, InversifyJS), every request passes through a resolution layer even after the application is "ready." This is acceptable for long-running servers but becomes a serious constraint in serverless and edge environments, where cold start time is directly billed.
-
-| | Bootstrap | Per request |
-|---|---|---|
-| NestJS | ~2–3 s | DI container active |
-| **Kerith** | **~80–120 ms** | **Pure Express** |
-
-### Serverless and edge
-
-A cold start of 80–120 ms means Kerith is viable in AWS Lambda, Cloudflare Workers, Google Cloud Run, and similar environments where NestJS-style frameworks are often excluded by timeout constraints.
-
-> **Note:** The 80–120 ms range is for a typical project. It scales with the number of modules — more modules means a longer bootstrap — but **never** with request volume or traffic.
-
-### What scales bootstrap time
-
-| Factor | Affects bootstrap | Affects request latency |
-|---|---|---|
-| Number of modules | ✅ Yes | ❌ No |
-| Number of routes per module | ✅ Yes (mounting) | ❌ No |
-| Complexity of business logic | ❌ No | ✅ Yes |
-| Request concurrency | ❌ No | ✅ Yes |
-
-### Bootstrap cache _(v2.0.0+)_
-
-In development, Kerith writes a bootstrap cache to `.kerith/bootstrap-cache.json`. On subsequent restarts, only modules whose files changed on disk are re-scanned. Unchanged modules are hydrated from cache.
-
-```
-[bootstrap] bootstrap from cache — 12ms (0 modules re-scanned)
-[bootstrap] bootstrap from cache — 34ms (1 modules re-scanned)
-```
-
-The cache is automatically invalidated when `kerith.config.ts` changes. Use `kerith dev --force` to force a full re-scan.
-
-The cache is **never active in production** (`NODE_ENV=production`). Production always does a full scan to guarantee correctness.
+| Requirement | Minimum |
+|---|---|
+| Node.js | 20.6.0 (required for the native ESM Hooks `register()` API) |
+| Express | 5.x (peer dependency, only needed for HTTP mode) |
+| TypeScript | 5.0+ (optional — types are bundled) |
+| Module system | ESM (`"type": "module"`) |
 
 ---
 
 ## Quick start
 
-```typescript
+### HTTP mode (Express)
+
+```ts
 import express from 'express'
 import { createApp } from '@kerith/core'
 
 const app = express()
-const Kerith = await createApp(app)
+const kerith = await createApp(app)
+
 const server = app.listen(3000)
-Kerith.listen(server)
+kerith.listen(server)
 ```
 
-> **Note:** Alias resolution runs through the Node.js ESM Hooks API, which activates inside `createApp()` at bootstrap time. Aliases are available to any file that Kerith imports dynamically during bootstrap (your modules). They are **not** available to static imports in your entry point file (`app.ts`, `server.ts`) before `createApp()` is called. For bundler-based setups, see [Alias resolution with bundlers](#alias-resolution-with-bundlers).
+### Worker mode — no Express, no HTTP _(since v2.0.0)_
+
+`app` is now an **optional** first argument. When omitted, `createApp()` still runs the full pipeline — config load, module discovery, alias activation, NITS reconciliation, dependency validation — it simply skips controller discovery and route mounting (Step 08 is a no-op without an `Application` instance). This makes Kerith usable for background workers, queue consumers, or scheduled-job services that still want module boundaries, aliases, and graceful shutdown:
+
+```ts
+import { createApp } from '@kerith/core'
+import http from 'node:http'
+
+const kerith = await createApp() // no Express app
+
+// You can still register a graceful-shutdown hook against any http.Server:
+const server = http.createServer((_, res) => res.end('healthcheck'))
+kerith.listen(server, {
+  onShutdown: async () => {
+    await queue.close()
+  },
+})
+```
+
+> **Alias resolution note:** Alias resolution runs through the Node.js ESM Hooks API, which activates inside `createApp()` during Step 05 of the bootstrap. Aliases are available to any file Kerith dynamically imports during bootstrap (your modules). They are **not** available to static top-level imports in your entry point file *unless the [pre-loader](#the-pre-loader-system) is active*.
 
 ---
 
-## Project Structure
+## Project structure
 
-Kerith infers your architecture from the filesystem. Place your identifiers
-in `index.ts` files and Kerith builds the hierarchy automatically.
+Kerith infers your architecture from the filesystem. Place your identifiers in `index.ts` files and Kerith builds the hierarchy automatically. Two scanning modes are supported simultaneously and can be adopted incrementally — see [`MIGRATION.md`](./MIGRATION.md).
 
 ### v2 — Domain hierarchy (`origin` config)
 
@@ -264,6 +138,7 @@ in `index.ts` files and Kerith builds the hierarchy automatically.
 src/
   billing/
     index.ts              ← Domain('billing')
+    _shared/               ← domain-scoped shared code
     payments/
       index.ts            ← Module('payments', { imports: ['invoices'] })
       payments.service.ts
@@ -274,25 +149,23 @@ src/
       index.ts            ← Module('invoices', { exports: ['InvoiceService'] })
   users/
     index.ts              ← Module('users')   ← flat module, no domain
+  shared/                  ← global shared code
 ```
 
-Configure the scan root in `kerith.config.js`:
-
 ```js
+// kerith.config.js
 export default { origin: 'src' }
 ```
 
-Kerith automatically generates domain-scoped aliases:
+Every discovered module — flat or domain-scoped — gets a `@modules/<name>` alias. Domain-scoped modules **additionally** get a domain-qualified alias:
 
 ```ts
-import { InvoiceService } from '@billing/invoices'  // domain/module alias
-import { PaymentService } from '@billing/payments'
-import { UserService }    from '@modules/users'      // flat module alias
+import { InvoiceService } from '@billing/invoices'   // domain-qualified alias
+import { PaymentService } from '@modules/payments'    // always available too
+import { UserService }    from '@modules/users'       // flat module, no domain
 ```
 
 ### v1 — Flat modules (`modules` glob)
-
-If you prefer a flat structure (or are migrating from v1.x), the `modules` glob key still works exactly as before:
 
 ```
 src/
@@ -301,7 +174,6 @@ src/
       index.ts            ← Module('users', ...)
       users.routes.ts     ← controller (discovered automatically)
       users.service.ts    ← private business logic
-      users.types.ts
     payments/
       index.ts            ← Module('payments', ...)
 ```
@@ -311,155 +183,100 @@ src/
 export default { modules: 'src/modules/*' }
 ```
 
-Both modes are fully supported and can be adopted incrementally. See [MIGRATION.md](./MIGRATION.md) for the upgrade path from v1.x to v2.0.0.
-
-## Module Identity
-
-Each module in Kerith has a persistent identity stored in a `.Kerith` file
-at its root. This file is created automatically on first bootstrap and should
-be committed to Git.
-
-The identity file enables Kerith to track modules across renames and moves,
-even when the module's internal code changes significantly.
-
-**You don't need to manage this file manually.**
+`modules` and `origin` are mutually exclusive at resolution time: if `origin` is set, it always takes precedence and `modules` is ignored. If neither is set, `origin` defaults to `'src'`. `modules` is documented as **deprecated** in favor of `origin`, but remains fully supported — v1.x projects work unmodified.
 
 ---
 
-## API
+## Identifiers
 
-### `createApp(app, options?)`
+Identifiers are plain function calls executed once when their file is imported. They are not decorators — they write into an `AsyncLocalStorage`-scoped registry that only exists during a `createApp()` execution. Calling any identifier outside that context throws `REGISTRY_MISSING_CONTEXT`.
 
-Bootstraps the entire application. Runs module discovery, alias resolution, controller mounting, and validation in a deterministic sequence. Throws a `KerithError` before mounting any routes if anything is invalid — the app is never left in a partial state.
+### `Domain(name, options?)`
 
-```ts
-createApp(app: Application, options?: { logger?: LogHandler }): Promise<KerithApp>
-```
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `logger` | `LogHandler` | built-in | Custom log handler |
-
-Returns `KerithApp`:
+Declares a domain boundary. Must be called from the domain's `index.ts`; `name` **must** equal the folder name (`INVALID_DOMAIN_DECLARATION` otherwise).
 
 ```ts
-interface KerithApp {
-  modules:  RegisteredModule[]
-  routes:   MountedRoute[]
-  registry: KerithRegistry
-  runtime: {                       // v1.5.0+
-    preloaderActive:  boolean      // true when --import .Kerith/preload.js is active
-    preloaderVersion: string | null
-    aliasesAtBoot:    Record<string, string>
-  }
-  // v1.5.0+ — registers the HTTP server with the graceful shutdown manager
-  listen(server: http.Server): () => Promise<void>
-}
+// src/billing/index.ts
+import { Domain } from '@kerith/core'
+Domain('billing', { description: 'Billing and payments domain' })
 ```
 
----
+| Option | Type | Description |
+|---|---|---|
+| `description` | `string` | Documentation only — no runtime effect. |
+
+`Domain()` does not accept an `imports`/`exports` option — domains are pure filesystem groupings, not dependency units.
 
 ### `Module(name, options?)`
 
-Declares a module and registers its metadata in the registry. **Must** be called from the module's `index.ts` (or `index.js`), and the `name` **must match the containing folder name exactly** — Kerith enforces this as a structural rule.
+Declares a module. Must be called from the module's `index.ts`; `name` **must** equal the containing folder name (`INVALID_MODULE_DECLARATION` otherwise).
 
 ```ts
-// src/modules/orders/index.ts
+// src/modules/orders/index.ts (or src/billing/orders/index.ts)
 import { Module } from '@kerith/core'
 
 Module('orders', {
   description: 'Purchase order management',
   imports: ['users', 'payments'],
   exports: ['OrderService', 'createOrderSchema'],
+  shared: ['@shared'],
 })
 
-export { OrderService }       from './orders.service.js'
-export { createOrderSchema }  from './orders.schema.js'
+export { OrderService }      from './orders.service.js'
+export { createOrderSchema } from './orders.schema.js'
 ```
 
 | Option | Type | Description |
 |---|---|---|
-| `imports` | `string[]` | Modules this module depends on |
-| `exports` | `string[]` | Public API names — validated against real exports at bootstrap |
-| `description` | `string` | Documentation / future tooling |
+| `imports` | `string[]` | Modules this module depends on (within the same domain). |
+| `exports` | `string[]` | Public API — validated against real `index.ts` exports at bootstrap. |
+| `shared` | `string[]` | Global shared resources this module uses. Only accepts `'@shared'` or subpaths of it (`'@shared/utils'`). Access to `'@{domain}/shared'` is **implicit** for domain members — never list it here. |
+| `description` | `string` | Documentation only. |
 
-> **Rule**: The name passed to `Module()` must equal the directory name. `Module('orders')` inside `src/modules/billing/` will throw `INVALID_MODULE_DECLARATION`.
+> The domain a module belongs to is **always inferred from its filesystem location**, never passed as an option.
 
----
+### `SubModule(name, options?)`
+
+Declares an implementation unit nested inside a module, at `<module>/submodules/<name>/`. Must be called from its `index.ts`; `name` **must** equal the folder name (`INVALID_SUBMODULE_DECLARATION` otherwise).
+
+```ts
+// src/billing/payments/submodules/trial/index.ts
+import { SubModule } from '@kerith/core'
+SubModule('trial', { description: 'Free-trial billing logic' })
+```
+
+| Option | Type | Description |
+|---|---|---|
+| `description` | `string` | Documentation only. |
+
+`SubModule()` accepts **no** `imports`/`exports` — it's a scoped implementation detail of its parent, not an independently addressable dependency unit. Boundary rules (see [`kerith check`](#kerith-check--architecture-violations)) enforce that a submodule reaches siblings only through its parent module, and never imports the domain root directly. Parent module and domain are inferred automatically from the path; if no registered module exists as an ancestor, `PARENT_MODULE_NOT_FOUND` is thrown. Nesting a `SubModule` inside another `SubModule` throws `SUBMODULE_NESTED`.
 
 ### `Controller(prefix, options?)`
 
-Declares a file as an Express controller. The controller name is derived automatically from the filename. The file **must** have a `default export` of an Express `Router`.
+Declares a file as an Express controller. The controller name is derived from the filename. The file **must** have a `default export` of an Express `Router`.
 
 ```ts
 // src/modules/users/users.routes.ts
 import { Controller } from '@kerith/core'
 import { Router } from 'express'
-import { requireAuth } from '@middleware/auth.js'
-import { UserService } from './users.service.js'
 
-Controller('/users', {
-  middlewares: [requireAuth],
-})
+Controller('/users', { middlewares: [requireAuth] })
 
 const router = Router()
-
-router.get('/', async (req, res, next) => {
-  try {
-    res.json(await UserService.findAll())
-  } catch (err) {
-    next(err)
-  }
-})
-
-router.post('/', async (req, res, next) => {
-  try {
-    res.status(201).json(await UserService.create(req.body))
-  } catch (err) {
-    next(err)
-  }
-})
-
+router.get('/', async (req, res, next) => { /* ... */ })
 export default router
 ```
 
-| Parameter | Type | Description |
-|---|---|---|
-| `prefix` | `string` | Route prefix for this controller (e.g. `'/users'`) |
-| `options.middlewares` | `RequestHandler[]` | Middlewares applied to all routes in this controller. Default: `[]` |
-| `options.enabled` | `boolean` | If `false`, `createApp()` ignores this controller entirely. Default: `true` |
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `middlewares` | `RequestHandler[]` | `[]` | Applied to all routes in this controller, mounted before the router. |
+| `enabled` | `boolean` | `true` | If `false`, `createApp()` ignores this controller entirely. |
 
-Kerith mounts each controller as:
+Kerith mounts each controller as `app.use(globalPrefix + controllerPrefix, ...middlewares, router)`. Modules with **no** controllers are perfectly valid (workers, listeners, background modules) — this is enforced by design, not just tolerated.
 
-```ts
-app.use(globalPrefix + controllerPrefix, ...middlewares, router)
-```
+### `Service(name, options?)` / `Repository(name, options?)` / `Schema(name, options?)`
 
----
-
-### Domain Hierarchy Identifiers _(v2.0.0+)_
-
-In v2, you can group modules into domains using `Domain()` and nest implementation units inside modules with `SubModule()`.
-
-```ts
-// src/billing/index.ts
-import { Domain } from '@kerith/core'
-Domain('billing')
-
-// src/billing/payments/index.ts
-import { Module } from '@kerith/core'
-Module('payments', { imports: ['invoices'], exports: ['PaymentService'] })
-
-// src/billing/payments/submodules/trial/index.ts
-import { SubModule } from '@kerith/core'
-SubModule('trial', { module: 'payments', exports: [] })
-```
-
-Kerith infers the domain from the filesystem — `Module()` does not accept a `domain` option. The folder hierarchy is the only source of truth.
-
-### Domain Identifiers
-
-Label your business logic with domain identifiers to register them in the Kerith registry for tracing, tooling, and future framework features. Identifiers are **entirely optional** — a module with no identifiers is completely valid.
+Optional identity/documentation markers registered into the Kerith registry — they never alter runtime behavior. Each name must be **globally unique** (`DUPLICATE_SERVICE` / `DUPLICATE_REPOSITORY` / `DUPLICATE_SCHEMA`).
 
 ```ts
 import { Service, Repository, Schema } from '@kerith/core'
@@ -467,55 +284,50 @@ import { z } from 'zod'
 
 Service('UserService')
 Repository('UserRepository', { source: 'database' })
-Schema('UserSchema', { library: 'zod' })
+Schema('CreateUserSchema', { library: 'zod' })
+
+export const UserService = { /* ... */ }
 ```
 
-Each identifier accepts an optional options object:
+| Function | Extra option | Type | Description |
+|---|---|---|---|
+| `Service` | — | — | — |
+| `Repository` | `source` | `'database' \| 'api' \| 'cache' \| 'file' \| string` | Data source type. |
+| `Schema` | `library` | `'zod' \| 'joi' \| 'yup' \| 'ajv' \| string` | Validation library used. |
 
-**`Service(name, options?)`**
-
-| Option | Type | Description |
-|---|---|---|
-| `module` | `string` | Module this service belongs to. Inferred from parent folder if omitted |
-| `description` | `string` | Documentation |
-
-**`Repository(name, options?)`**
-
-| Option | Type | Description |
-|---|---|---|
-| `module` | `string` | Module this repository belongs to. Inferred from parent folder if omitted |
-| `description` | `string` | Documentation |
-| `source` | `'database' \| 'api' \| 'cache' \| 'file' \| string` | Data source type |
-
-**`Schema(name, options?)`**
-
-| Option | Type | Description |
-|---|---|---|
-| `module` | `string` | Module this schema belongs to. Inferred from parent folder if omitted |
-| `description` | `string` | Documentation |
-| `library` | `'zod' \| 'joi' \| 'yup' \| 'ajv' \| string` | Validation library used |
-
-Unlike `Controller` or `Module`, these identifiers do not alter runtime execution — they simply register presence and ownership into the `KerithRegistry`, which is accessible after bootstrap via `result.registry`.
-
-> **Note:** Kerith is validation-agnostic. While examples use Zod, you can use Joi, TypeBox, or any other library.
+All three also accept `module?: string` (inferred from the parent folder name if omitted) and `description?: string`. These are surfaced via `getRegistry().getAllServices() / getAllRepositories() / getAllSchemas()`.
 
 ---
 
-### Import aliases
+## Import aliases
 
-Kerith registers two kinds of aliases:
+Kerith registers several kinds of aliases automatically, plus any you configure:
 
-- **Module aliases** — auto-generated for every discovered module:
+- **Module aliases** — auto-generated for **every** discovered module, flat or domain-scoped:
   ```
-  @modules/<name> → src/modules/<name>/index.ts
+  @modules/<name> → <module>/index.ts
   ```
-- **Folder or file aliases** — configured in `kerith.config.ts` (see [Alias System](#alias-system)):
+- **Domain aliases** — auto-generated for domains and domain-scoped modules:
   ```
-  @config     → src/config/          (directory — supports subpaths automatically)
-  @db         → src/config/db.ts     (file — resolves exactly to that file)
+  @<domain>           → <domain folder>
+  @<domain>/<module>  → <module>/index.ts
+  ```
+- **Shared aliases** — `@shared` (global) and `@<domain>/shared` (domain-scoped) — see [Shared resources](#shared-resources).
+- **Config aliases** — defined in `kerith.config.ts` and take precedence over auto-generated ones:
+  ```ts
+  export default defineConfig({
+    aliases: {
+      '@config': './src/config',       // directory — subpaths supported automatically
+      '@db':     './src/config/db.ts', // file — resolves exactly to that file
+    },
+  })
   ```
 
-Use them anywhere inside your modules:
+Alias **keys** are validated when the config file loads (before any scan runs):
+
+- Must match `/^@[a-zA-Z][a-zA-Z0-9-]*$/` — otherwise throws `INVALID_ALIAS_KEY`.
+- Cannot be `@modules`, `@shared`, or the bare `@` — these are reserved and throw `ALIAS_RESERVED`.
+- If the resolved target path does not exist on disk, Kerith logs a `warn` (does not throw).
 
 ```ts
 import { UserService } from '@modules/users'
@@ -523,562 +335,466 @@ import { db }          from '@config/database.js'
 ```
 
 > [!IMPORTANT]
-> Kerith is an **ESM-only** framework. It requires `"type": "module"` in your `package.json`.
-> Runtime alias resolution uses the Node.js ESM Hooks API and activates inside `createApp()`. Aliases are **not** available in your entry point before `createApp()` is called.
+> Kerith is **ESM-only**. Runtime alias resolution uses the Node.js ESM Hooks API and activates inside `createApp()`. Aliases are **not** available in your entry point before `createApp()` is called, unless the pre-loader is active.
 
-#### Alias resolution with bundlers
+### Alias resolution with bundlers
 
-For bundler-based projects (Vite, esbuild, etc.), you can disable the runtime hook and inject `getAliases()` directly into your config:
+For bundler-based projects (Vite, esbuild, etc.), disable the runtime hook and inject `getAliases()` into your bundler config instead:
 
 ```ts
 // vite.config.ts
-import { getAliases } from '@kerith/core'
+import { createApp, getAliases } from '@kerith/core'
 
-const aliases = await getAliases()
+await createApp() // worker-mode bootstrap populates the in-memory alias cache
+const aliases = await getAliases({ absolute: true })
 
 export default {
-  resolve: { alias: aliases }
+  resolve: { alias: aliases },
 }
 ```
 
 ```ts
 // esbuild.config.ts
-import { getAliases } from '@kerith/core'
+import { createApp, getAliases } from '@kerith/core'
 import * as esbuild from 'esbuild'
 
-const aliases = await getAliases()
+await createApp()
+const aliases = await getAliases({ absolute: true })
 
 await esbuild.build({
   entryPoints: ['src/index.ts'],
   alias: aliases,
   bundle: true,
-  outfile: 'dist/app.js'
+  outfile: 'dist/app.js',
 })
 ```
 
-`getAliases()` accepts a `GetAliasesOptions` object:
+> **Note:** `getAliases()` reads from an in-memory cache populated by `createApp()` in the same process (via `updateAliasCache()` during Step 05). Calling it before any bootstrap has run in the current process returns an empty object — always `await createApp()` (worker mode is enough; no `app` argument required) before calling `getAliases()`.
+
+`getAliases(options?)`:
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `includeFolders` | `boolean` | `true` | If `false`, config-defined folder aliases are excluded (returns only `@modules/*` aliases) |
-| `includeConfigAliases` | `boolean` | `true` | Same as `includeFolders`, takes precedence when both are present |
-| `absolute` | `boolean` | `false` | If `true`, returned paths are absolute |
+| `includeFolders` | `boolean` | `true` | If `false`, config-defined aliases are excluded (only `@modules/*` returned). |
+| `includeConfigAliases` | `boolean` | `true` | Same effect as `includeFolders`, more descriptive name. Takes precedence when both are present. |
+| `absolute` | `boolean` | `false` | Return absolute paths instead of relative POSIX paths. |
+
+`resolveAlias(alias: string): string | undefined` resolves a single alias from the same cache.
 
 ---
 
-### `kerith.config.ts`
+## Module boundaries
 
-Centralise configuration in the project root. Options passed directly to `createApp()` take priority over the file.
+`@` always crosses into another module. `./` and `../` always stay within the current module.
 
-```typescript
-import { defineConfig } from '@kerith/core'
+```ts
+import { X } from './local-file'         // ✅ internal to the module
+import { X } from '@modules/payments'    // ✅ declared cross-module connection
+import { X } from '../payments/service'  // ❌ RELATIVE_BOUNDARY_VIOLATION
+```
 
-export default defineConfig({
-  modules:             'src/modules/*',
-  prefix:              '/api',
-  strict:              true,
-  logLevel:            'info',
-  moduleLoadTimeoutMs: 30_000,
-  aliases: {
-    '@config': './src/config'
-  }
+A relative path that escapes the module directory is **always** a hard error in `kerith check` (`severity: 'error'`, exit 1 regardless of `--strict`). Fix it by declaring the import in `imports[]` and using the corresponding alias.
+
+In domain mode, reaching into another domain's internal module directly is a **domain boundary violation** (also `severity: 'error'`, always exit 1):
+
+```ts
+import { X } from '@billing/payments'    // ❌ from outside 'billing' — DOMAIN_BOUNDARY_VIOLATION
+import { X } from '@billing'             // ✅ the domain's public surface is always importable
+```
+
+---
+
+## Shared resources
+
+Kerith provides two levels of shared code, both bootstrap-validated:
+
+**Global shared** (`@shared`) — available to any module in any domain. Place code in `src/shared/` and declare access explicitly:
+
+```ts
+Module('payments', {
+  shared: ['@shared'],
 })
 ```
 
-|Field|Type|Default|Description|
-|---|---|---|---|
-|`origin`|`string`|—|Scan root for v2 hierarchy (`Domain → Module → SubModule`)|
-|`modules`|`string`|`'src/modules/*'`|Module directories glob (v1.x mode, still supported)|
-|`prefix`|`string`|`''`|Global HTTP route prefix|
-|`strict`|`boolean`|`true` in dev, `false` in prod|Strict mode|
-|`logLevel`|`'debug'\|'info'\|'warn'\|'error'`|`'info'`|Log level|
-|`logFormat`|`'json'\|'pretty'\|'auto'`|`'auto'`|Log format|
-|`resolveAliases`|`boolean`|`true`|Enable runtime alias resolution|
-|`requirePreloader`|`boolean`|`false`|Require active pre-loader|
-|`moduleLoadTimeoutMs`|`number`|`30000`|Module load timeout in ms|
-|`nits.enabled`|`boolean`|`true`|Enable NITS identity tracking|
-|`nits.similarityThreshold`|`number`|dynamic|Jaccard similarity threshold|
-|`aliases`|`AliasMap`|`{}`|User alias map|
+**Domain-scoped shared** (`@{domain}/shared`) — available implicitly to every module *in that domain*. Place code in `src/{domain}/_shared/`. No declaration needed:
 
-Config file loading order (first match wins):
+```ts
+// src/billing/payments/payments.service.ts
+import { db } from '@billing/shared/db'  // implicit access — no declaration needed
+```
 
-1. `kerith.config.ts` — development only (requires a TypeScript loader such as `tsx`)
-2. `kerith.config.js` — always
+### Validation rules (enforced at bootstrap)
 
-> **Note:** `kerith.config.ts` cannot be loaded in production unless your build step compiles it to `.js`. Use `kerith.config.js` for production deployments, or build it as part of your pipeline.
+| Rule | Behavior |
+|---|---|
+| A module name (not `@shared`/`@shared/*`) is placed in `shared[]` | Should be in `imports[]` instead. Throws `SHARED_IN_IMPORTS` in strict mode; `log.warn` otherwise. |
+| A `@shared`-family alias is placed in `imports[]` | Should be in `shared[]` instead. Throws `SHARED_IN_IMPORTS` in strict mode; `log.warn` otherwise. |
+| `shared[]` contains something that isn't `'@shared'` or a `'@shared/...'` subpath | Throws `UNDECLARED_SHARED` in strict mode; `log.warn` otherwise. |
+| `shared: ['@shared']` is declared but no global `src/shared/` folder exists | Throws `UNDECLARED_SHARED` in strict mode; `log.warn` otherwise. |
+
+`UNUSED_SHARED` (declared but never actually imported) and `SHARED_SCOPE_VIOLATION` (a module from a foreign domain imports `@{domain}/shared`) are **not** thrown at bootstrap — they're detected exclusively by [`kerith check`](#kerith-check--architecture-violations), where `SHARED_SCOPE_VIOLATION` is a hard error and `UNUSED_SHARED` is a warning.
 
 ---
 
-## CLI Tools
+## The pre-loader system
 
-Kerith provides a built-in CLI to enforce conventions and improve developer experience.
+By default, the ESM alias hook activates **inside** `createApp()`. This means aliases like `@config/database` are **not** available in static top-level imports in your server entry file unless the pre-loader is active:
 
-### `kerith create-module <name>`
+```ts
+// ❌ Fails without the pre-loader
+import { db } from '@config/database.js'  // MODULE_NOT_FOUND
 
-Scaffolds a perfectly structured module. In v2, use `--domain` to place the module inside a domain:
-
-```bash
-npx kerith create-module payments --domain billing
+const app = express()
+await createApp(app)
 ```
 
-```bash
-npx kerith create-module users   # flat module (no domain)
+### Automatic setup — `kerith dev`
+
+`kerith dev` runs `sync-preload` and `sync-tsconfig` internally, silently, before every start. **You no longer need to chain them manually** — this is handled for you:
+
+```json
+{
+  "scripts": {
+    "dev":   "kerith dev src/server.ts",
+    "start": "node --import ./.kerith/preload.js src/server.ts"
+  }
+}
 ```
 
-| Option | Description |
-|---|---|
-| `--domain <name>` | Place the module inside an existing domain |
-| `--path <path>` | Custom absolute or relative destination |
-| `--service` | Generates a service file |
-| `--routes` | Generates a controller/routes file |
-| `--repository` | Generates a repository file |
-| `--schema` | Generates a schema file |
-| `--full` | Generates all of the above |
-| `--ts` | Force TypeScript output (`.ts` files) |
-| `--js` | Force JavaScript output (`.js` files) |
-
-> Language is auto-detected from the presence of `tsconfig.json` in the project root when neither `--ts` nor `--js` is specified.
-
----
-
-### `kerith create-domain <name>` _(v2.0.0+)_
-
-Scaffolds a domain folder with its `index.ts`:
-
-```bash
-npx kerith create-domain billing
-npx kerith create-domain billing --modules payments,invoices --shared
-```
-
-| Option | Description |
-|---|---|
-| `--modules <names...>` | Scaffold modules inside the new domain |
-| `--shared` | Create a `_shared/` folder inside the domain |
-
----
-
-### `kerith create-submodule <name>` _(v2.0.0+)_
-
-Scaffolds a submodule inside an existing module:
-
-```bash
-npx kerith create-submodule trial --module payments --domain billing
-```
-
-| Option | Description |
-|---|---|
-| `--module <name>` | Parent module (required) |
-| `--domain <name>` | Domain of the parent module (required for domain modules) |
-| `--path <path>` | Custom destination path |
-
-### `Kerith sync-tsconfig`
-
-Syncs Kerith aliases into `tsconfig.json` paths so IDEs and TypeScript recognise `@modules/*` and any folder aliases you've configured.
-
-```bash
-npx kerith sync-tsconfig
-```
-
-```text
-✔ tsconfig.json updated — 3 module(s), 2 folder alias(es)
-Added paths:
-  @modules/users      → ./src/modules/users/index.ts
-  @modules/auth       → ./src/modules/auth/index.ts
-  @config/*           → ./src/config/*
-```
-
-Run this command initially, and whenever you create, rename, or drop modules. It behaves idempotently and automatically purges references to modules that no longer exist.
-
-| Option | Description |
-|---|---|
-| `--tsconfig <path>` | Path to `tsconfig.json`. Default: `tsconfig.json` in the project root |
-
----
-
-### `Kerith sync-preload` _(v1.5.0+)_
-
-Generates `.Kerith/preload.js` — a static ESM entry point that registers the alias resolution hook **before** your application code runs. This enables aliases in top-level imports of your server entry file.
+### Manual setup (e.g. for `start`, or CI)
 
 ```bash
 npx kerith sync-preload
 ```
 
-```text
-✔ Pre-loader sync complete.
-
-To use the pre-loader, update your package.json scripts:
-  "dev":   "Kerith sync-preload --silent && Kerith dev src/server.ts"
-  "start": "node --import ./.Kerith/preload.js src/server.ts"
-```
-
-The generated file embeds your current alias config and is **idempotent** — running it again with the same config produces no changes. Re-run it whenever you add or rename aliases.
-
-> [!IMPORTANT]
-> **Commit `.Kerith/preload.js` to version control.** CI/CD and production environments rely on it being present without needing to run `sync-preload` at deploy time. It is safe to commit — it contains only resolved paths and no secrets.
-
----
-
-### `Kerith dev` _(v1.5.0+)_
-
-Starts your application in development mode. Automatically injects `--import ./.Kerith/preload.js` if the file exists, ensuring aliases are available before any module loads.
-
-The expected workflow is to chain this command with `sync-preload` to ensure the pre-loader is always up to date before the server starts:
-
-```bash
-npx kerith sync-preload --silent && npx kerith dev <entrypoint> [--watch] [--runtime <node|tsx>]
-```
-
-| Option | Description |
-|---|---|
-| `--watch` | Run in watch mode using Chokidar (restarts on file changes) |
-| `--runtime tsx` | Uses `tsx` instead of `node` for TypeScript without a build step |
-
-If `.Kerith/preload.js` does not exist, `Kerith dev` falls back to legacy mode (v1.4.0 behaviour) with a warning. However, chaining `sync-preload` first guarantees it will be present.
-
----
-
-### `kerith check`
-
-Performs static architecture analysis by inspecting raw ASTs across your module structure without evaluating your application code.
-
-```bash
-npx kerith check
-```
-
-In v2 projects with domains, output is grouped by hierarchy level:
-
-```text
-Architecture
-Domains
-✔  billing     OK
-✗  workspace   1 violation(s)
-
-Modules
-✔  billing/payments    OK
-✗  workspace/members   1 violation(s)
-  ✗ domain-boundary-violation: importing '@billing/payments' directly
-    Suggestion: Import from '@billing' instead
-
-Summary: 3 OK, 1 domain violation, 0 module violations, 0 submodule violations
-```
-
-In v1 projects (flat modules), the output is identical to v1.x — no domain sections.
-
-| Option | Description |
-|---|---|
-| `--strict` | Exit with code 1 on `SUBMODULE_DIRECT_SIBLING` and `SUBMODULE_DOMAIN_BYPASS` in addition to always-fatal violations |
-| `--module <name>` | Narrow the analysis to a specific module |
-| `--level <level>` | Filter output sections: `domain`, `module`, `submodule`, `flat` |
-| `--format <json\|text>` | Output format. Use `json` for external pipeline consumption |
-| `--no-circular` | Disables cycle detection (`A → B → A`) |
-
-Violation severity:
-
-| Violation | Always exit 1 | Only with `--strict` |
-|---|---|---|
-| `DOMAIN_BOUNDARY_VIOLATION` | ✓ | — |
-| `RELATIVE_BOUNDARY_VIOLATION` | ✓ | — |
-| `SUBMODULE_DIRECT_SIBLING` | — | ✓ |
-| `SUBMODULE_DOMAIN_BYPASS` | — | ✓ |
-
----
-
-## Logging _(v1.5.3+)_
-
-Kerith uses a high-performance Pino logging engine internally, providing beautiful console output during development and highly structured JSON data for production observability.
-
-### Environment Variables
-
-| Variable | Description |
-|---|---|
-| `Kerith_LOG_LEVEL` | Minimum severity to output (`debug`, `info`, `warn`, `error`, `fatal`). Default: `info`. |
-| `Kerith_LOG_FORMAT` | Forces the output format. Allowed values: `pretty` \| `json` \| `auto`. Default is `auto` (uses `json` if `NODE_ENV=production`, otherwise `pretty`). |
-
-> **Note:** You can set `Kerith_LOG_FORMAT=pretty` to force human-readable output even in staging environments where `NODE_ENV=production` might be set.
-
-### User-space Logger (`useLogger`)
-
-You can create context-aware child loggers for your own modules. This keeps your application logs visually identical to the framework logs and inherits global settings automatically.
-
-**Development Output (`logFormat: 'pretty'`):**
-```ts
-import { useLogger } from '@kerith/core';
-
-const log = useLogger('my-app');
-log.info('Connecting to database...'); 
-// 19:15:30.123  [my-app]  INFO  Connecting to database...
-```
-
-**Production Output (`logFormat: 'json'`):**
-```json
-{"level":"info","time":"2026-05-08T22:15:30.123Z","service":"my-app","msg":"Connecting to database..."}
-```
-
-If you pass an `Error` object under the `err` or `error` key in the meta object, Kerith automatically serializes the full stack trace in JSON mode:
-```ts
-log.error('Database connection failed', { err: new Error('Timeout') });
-```
-
-### Custom Transports (Loki, Datadog, etc.)
-
-If you need to stream logs directly to external providers using Pino transports instead of stdout, you can wrap a custom Pino instance and pass it via `kerith.config.ts`:
+This creates `.kerith/preload.js` — **commit it to version control**. It contains only resolved paths (no secrets) and lets `start` scripts and CI/CD run without regenerating it at deploy time.
 
 ```ts
-// kerith.config.ts
-import pino from 'pino';
-
-// Define your external transport (e.g., Datadog, Loki, Axiom)
-const externalPino = pino({
-  transport: {
-    target: 'pino-datadog-transport',
-    options: { ddClientConf: { authMethods: { apiKeyAuth: '...' } } }
-  }
-});
-
-export default {
-  // Redirect all Kerith internal logs to your custom Pino instance
-  logger: (level, msg, meta) => externalPino[level](meta || {}, msg)
-};
-```
-
----
-
-## Shared Resources
-
-Kerith provides two levels of shared code:
-
-**Global shared** (`@shared`) — available to any module in any domain.
-Place code in `src/shared/` and declare access in Module():
-
-```typescript
-Module('payments', {
-  shared: ['@shared']
-})
-```
-
-**Domain shared** (`@{domain}/shared`) — available only within a domain.
-Place code in `src/{domain}/_shared/`. No declaration needed — access
-is implicit for all modules in that domain.
-
-```typescript
-// src/billing/payments/payments.service.ts
-import { db } from '@billing/shared/db'  // implicit access — no declaration needed
-```
-
----
-
-## ESLint Plugin
-
-> **Available from v1.3.0** · Package: `@kerith/eslint-plugin`
-
-`Kerith check` validates your architecture on demand or in CI. `@kerith/eslint-plugin` brings the same rules into your editor — so you catch boundary violations the moment you write the import.
-
-```bash
-npm install --save-dev @kerith/eslint-plugin
-```
-
-### Setup
-
-```js
-// eslint.config.js
-import kerith from '@kerith/eslint-plugin'
-
-export default [kerith.configs.recommended]
-```
-
-To configure rules individually:
-
-```js
-// eslint.config.js
-import kerith from '@kerith/eslint-plugin'
-
-export default [
-  {
-    plugins: { kerith },
-    rules: {
-      'kerith/no-private-imports':    'error',
-      'kerith/no-undeclared-imports': 'warn',
-    }
-  }
-]
-```
-
-### Rules
-
-| Rule | Severity (recommended) | Description |
-|---|---|---|
-| `Kerith/no-private-imports` | `error` | Prevents importing internal files from another module directly. Only the public index (`@modules/<name>`) is a valid cross-module import target |
-| `Kerith/no-undeclared-imports` | `warn` | Flags cross-module imports from modules not listed in the consuming module's `imports` array |
-
-#### `Kerith/no-private-imports`
-
-```ts
-// ✗ error — accessing a private file directly
-import { UserRepository } from '@modules/users/users.repository.js'
-
-// ✓ correct — importing through the public index
+// ✅ Works once the pre-loader is active
+import { db } from '@config/database.js'
 import { UserService } from '@modules/users'
+
+const app = express()
+const { runtime } = await createApp(app)
+console.log(runtime.preloaderActive) // true
 ```
 
-#### `Kerith/no-undeclared-imports`
+Re-run `kerith sync-preload` manually whenever you:
+- Add/remove/change aliases in `kerith.config.ts` while the server isn't running.
+- Move the project to a different absolute path (the pre-loader embeds absolute paths).
+
+### Legacy mode
+
+If `.kerith/preload.js` is missing, Kerith falls back to legacy mode: aliases still work **inside** modules discovered by `createApp()`, but not in top-level entry-file imports. A `warn` log is emitted during bootstrap. If the pre-loader exists but was generated by a different `@kerith/core` version, a `PRELOADER_VERSION_MISMATCH` warning is logged (not thrown).
+
+---
+
+## `kerith.config.ts` reference
 
 ```ts
-// src/modules/orders/index.ts
-Module('orders', {
-  imports: ['users'],   // 'payments' is not declared
-})
+import { defineConfig } from '@kerith/core'
 
-// src/modules/orders/orders.service.ts
-import { PaymentService } from '@modules/payments'  // ✗ warn — undeclared import
-import { UserService }    from '@modules/users'      // ✓ correct
+export default defineConfig({
+  origin: 'src',
+  prefix: '/api/v1',
+  strict: true,
+  aliases: { '@config': './src/config' },
+  rules: {
+    fanOutThreshold: 8,   // large monolith: higher threshold
+  },
+})
 ```
 
-### Relationship to `Kerith check`
+Config candidates are searched **in this order** from `cwd`, first match wins: `kerith.config.ts` → `kerith.config.js` → `kerith.config.mjs`. If a `.ts` file is found but the runtime can't execute raw TypeScript (no loader like `tsx` registered), Kerith throws a descriptive error rather than silently falling back to a `.js` file — pick one file, not several.
 
-| | `Kerith check` | `@kerith/eslint-plugin` |
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `origin` | `string` | `'src'` (if `modules` is also unset) | Scan root for the v2 `Domain → Module → SubModule` hierarchy. Takes precedence over `modules` when both are set. |
+| `modules` | `string` | — | **Deprecated**, replaced by `origin`. v1.x flat-module glob, e.g. `'src/modules/*'`. |
+| `prefix` | `string` | `''` | Global HTTP route prefix. |
+| `strict` | `boolean` | `true` in dev, `false` when `NODE_ENV=production` | Enables `MISSING_IMPORT`, `UNDECLARED_IMPORT`, `UNUSED_IMPORT`, `CIRCULAR_DEPENDENCY`, and hard-fails `SHARED_IN_IMPORTS`/`UNDECLARED_SHARED` instead of warning. |
+| `resolveAliases` | `boolean` | `true` | If `false`, the runtime ESM alias hook is not activated (use `getAliases()` with a bundler instead). |
+| `logLevel` | `'debug' \| 'info' \| 'warn' \| 'error'` | `'info'` (or `KERITH_LOG_LEVEL` / `debug` if `NODE_DEBUG` includes `kerith`) | Minimum severity emitted. |
+| `logFormat` | `'pretty' \| 'json' \| 'auto'` | `'auto'` (`json` if `NODE_ENV=production`, else `pretty`) | Log output format. |
+| `requirePreloader` | `boolean` | `false` | If `true`, throws `PRELOADER_REQUIRED` when the process wasn't started with `--import ./.kerith/preload.js`. |
+| `nits.enabled` | `boolean` | `true` | Enables NITS identity tracking. |
+| `nits.similarityThreshold` | `number` | `0.9` | Jaccard similarity threshold used by NITS Step 2 (hash-based match). |
+| `aliases` | `Record<string, string>` | `{}` | User alias map — see [Import aliases](#import-aliases). |
+| `logging.maxRouteLines` | `number` | `5` | Max number of mounted routes logged per module during bootstrap. |
+| `rules` | `QualityRulesConfig` | see below | Architectural quality rules — see next section. |
+
+### Quality rules
+
+All rules live under the single `rules` key. Numeric/boolean rules accept `false` to disable them explicitly (except `moduleLoadTimeout` and `stalePurgeCycles`, which always require a positive number).
+
+```ts
+export default defineConfig({
+  rules: {
+    maxModuleDepth:         3,      // warn if a module exceeds this folder depth
+    fanOutThreshold:        5,      // warn if a module imports from more than N modules
+    fanInThreshold:         5,      // warn if more than N modules depend on this one
+    maxModuleFiles:         30,     // warn if a module has more than N files
+    maxSubModulesPerModule: 5,      // warn if a module has more than N SubModules
+    unusedExports:          true,   // warn if a declared export is never used
+    emptyModule:            true,   // warn if a module has no registered identifiers
+    circularDependency:     true,   // warn (error with --strict)
+    moduleLoadTimeout:      30_000, // ms before MODULE_LOAD_TIMEOUT during bootstrap
+    stalePurgeCycles:       5,      // bootstrap cycles before purging a stale NITS module
+  },
+})
+```
+
+`fanOutThreshold` / `fanInThreshold` are the **only** configuration surface for coupling detection — there is no separate top-level `coupling` config block. To effectively disable a threshold, set it to `Number.MAX_SAFE_INTEGER` (do not use `Infinity` — it serializes to `null` in JSON output):
+
+```ts
+rules: { fanOutThreshold: Number.MAX_SAFE_INTEGER }
+```
+
+All quality-rule violations (`fan-out-high`, `fan-in-high`, `module-depth-exceeded`, `module-too-large`, `too-many-submodules`, `unused-export`, `empty-module`, and `circular-dependency` as a *quality-rule* warning) have `severity: 'warn'` — they never block `kerith check`'s exit code without `--strict`.
+
+---
+
+## Runtime Zero & bootstrap cache
+
+Kerith charges the cost of architecture exactly once — during bootstrap. After `createApp()` returns, the framework is gone: no DI container alive in memory, no proxies, no interceptors on any request path.
+
+| | Bootstrap | Per request |
 |---|---|---|
-| When it runs | On demand / CI step | On save / pre-commit / CI lint step |
-| How it works | Full AST analysis across the whole project | Per-file ESLint rule evaluation |
-| Circular dependency detection | ✓ | — |
-| Editor integration (inline errors) | — | ✓ |
-| CI gate | `--strict` flag | `--max-warnings` flag |
+| **Kerith** | Scales with module/route count | Pure Express — zero overhead |
+
+| Factor | Affects bootstrap | Affects request latency |
+|---|---|---|
+| Number of modules | ✅ Yes | ❌ No |
+| Number of routes per module | ✅ Yes (mounting) | ❌ No |
+| Complexity of business logic | ❌ No | ✅ Yes |
+| Request concurrency | ❌ No | ✅ Yes |
+
+### Bootstrap cache
+
+In development, Kerith writes a bootstrap cache to `.kerith/bootstrap-cache.json`. On restarts, only modules whose files changed on disk are re-scanned; unchanged ones are hydrated from cache:
+
+```
+Bootstrap complete from cache — 12ms (0 modules rescanned)
+Bootstrap complete from cache — 34ms (1 modules rescanned)
+```
+
+The cache is invalidated automatically when `kerith.config.ts` changes. Use `kerith dev --force` (forces cache invalidation before starting) or `kerith clean --cache` (deletes the cache file) to force a full re-scan. **Never active in production** (`NODE_ENV=production`) — production always does a full scan.
+
+Kerith also (re)generates `tsconfig.kerith.json` on every bootstrap for IDE support, and ensures your root `tsconfig.json` extends it.
 
 ---
 
-## NITS Identity Tracking
+## API reference
 
-Kerith 1.2.5+ includes **NITS (Native Identity Tracking System)**, which assigns a stable, unique `mod_{hex}` ID to every module. This allows the framework to track modules across renames, moves, and git branch switches — preventing identity loss during refactors.
-
-NITS maintains a state file at `.Kerith/registry.json` in your project root. **This file should be committed to version control.**
-
-### How NITS assigns identities
-
-NITS uses a three-step Verification Triangle algorithm:
-
-1. **Match by path** (maximum confidence) — same directory = same module.
-2. **Match by semantic hash** (high confidence, similarity ≥ 0.9) — same `Service`, `Repository`, and `Schema` names across locations = moved module.
-3. **Match by name** (medium confidence) — a previously `stale` module with the same name found at a new location = candidate for manual review.
-
-### Resolving merge conflicts
-
-Because `registry.json` tracks project-level state, parallel branches may occasionally produce Git merge conflicts. To resolve them:
-
-1. Accept either side of the conflict to make the JSON valid again.
-2. Run `npx kerith check`.
-3. NITS will automatically detect and heal the registry.
-4. Commit the updated `.Kerith/registry.json`.
-
----
-
-## Logging
-
-Kerith emits structured, color-coded log events throughout the bootstrap pipeline.
-
-### Default behavior
-
-Kerith uses a high-performance **Pino** singleton internally. It automatically adapts to the environment:
-- **Development**: Outputs human-readable, colorized logs via `pino-pretty`.
-- **Production**: Outputs structured JSON logs (NDJSON).
-
-| Environment Variable | Description |
-|---|---|
-| `Kerith_LOG_LEVEL` | Minimum severity. E.g., `debug`, `info`, `warn`. (Or use `NODE_DEBUG=Kerith`) |
-| `Kerith_LOG_FORMAT` | Format output. `pretty` forces colorized text, `json` forces structured JSON, `auto` detects by environment. |
-
-### Semantic levels
-
-| Level | When Kerith uses it |
-|---|---|
-| `debug` | Internal bootstrap state, paths resolved, files scanned |
-| `info` | Module loaded, route mounted, bootstrap complete |
-| `warn` | Undeclared import (non-strict), unused import (non-strict), NITS fallback warning |
-| `error` | Never — Kerith uses `throw KerithError` instead |
-
-### Using a custom logger (Pino)
+### `createApp(app?, options?)`
 
 ```ts
-import pino from 'pino'
-const log = pino()
+function createApp(app?: Application, options?: CreateAppOptions): Promise<KerithApp>
+```
 
-await createApp(app, {
-  logger: (level, message, meta) => {
-    log[level]({ ...meta, framework: 'Kerith' }, message)
+Bootstraps the application through a deterministic 10-step pipeline: guard checks → config load → setup/pre-validation → cache decision & scan → entity registration → NITS reconciliation → alias activation → dynamic imports → dependency validation → controller discovery & mounting (skipped without `app`) → cache write. Throws a `KerithError` before mounting any route if anything is invalid — the app is never left in a partial state.
+
+`app` is **optional** since v2.0.0 — see [worker mode](#quick-start). All declarative configuration lives in `kerith.config.ts`; the only thing that remains a `createApp()` option is `logger`, because it's a runtime function reference that can't be serialized into a config file.
+
+| Option | Type | Description |
+|---|---|---|
+| `logger` | `LogHandler` | Custom log handler. If omitted, Kerith uses its internal Pino instance configured via `logLevel`/`logFormat`. |
+
+Returns `KerithApp`:
+
+```ts
+interface KerithApp {
+  modules: RegisteredModule[]
+  routes: MountedRoute[]
+  registry: KerithRegistry
+  runtime: {
+    preloaderActive: boolean       // true when --import ./.kerith/preload.js is active
+    preloaderVersion: string | null
+    aliasesAtBoot: Record<string, string>
   }
-})
+  listen(server: http.Server, options?: ListenOptions): ShutdownHook
+}
 ```
 
-### Total silence
+`RegisteredModule`:
 
 ```ts
-await createApp(app, {
-  logger: () => {}
-})
+interface RegisteredModule {
+  id: string
+  name: string
+  domain?: string
+  path: string          // absolute path to the module directory
+  imports: string[]
+  exports: string[]
+  controllers: string[]
+}
 ```
 
-### Using the Kerith Logger in your app (v1.5.0+)
+`MountedRoute`:
 
-You can use the same visual style for your own application logs by using `useLogger`. This creates a logger instance that respects your global log level settings and provides aligned, color-coded output.
+```ts
+interface MountedRoute {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'USE'
+  path: string
+  module: string
+  controller: string
+}
+```
+
+### Registry — `getRegistry()`
+
+Returns the read-only, `@unstable`-extended registry bound to the current async execution context. Only callable within a `createApp()` scope (or synchronously during its execution — the context is `AsyncLocalStorage`-scoped and ends once `createApp()` resolves).
+
+```ts
+import { getRegistry } from '@kerith/core'
+
+const registry = getRegistry()
+registry.hasModule('users')
+registry.getModule('payments', 'billing')     // domain-aware lookup
+registry.getAllModules()
+registry.hasDomain('billing')
+registry.getAllDomains()
+registry.resolveAlias('@modules/users')
+registry.getAllAliases()
+registry.getRegisteredAliases()               // bare alias keys, no /* wildcards
+```
+
+`KerithRegistry` (stable):
+
+```ts
+interface KerithRegistry {
+  hasModule(name: string, domain?: string): boolean
+  getModule(name: string, domain?: string): RegisteredModule | undefined
+  getAllModules(): RegisteredModule[]
+  hasDomain(name: string): boolean
+  getDomain(name: string): DomainRegistration | undefined
+  getAllDomains(): DomainRegistration[]
+  resolveAlias(alias: string): string | undefined
+  getAllAliases(): Record<string, string>
+  getRegisteredAliases(): string[]
+}
+```
+
+`KerithRegistryAdvanced` (returned by `getRegistry()`, `@unstable` — may change between minor versions):
+
+```ts
+interface KerithRegistryAdvanced extends KerithRegistry {
+  getDependencyGraph(): Map<string, string[]>
+  findCircularDependencies(): string[][]
+}
+```
+
+Instead accessible directly off the result of `createApp()` is `kerith.registry`, typed as the stable `KerithRegistry`.
+
+### Logging — `useLogger()` / `createLogger()`
 
 ```ts
 import { useLogger } from '@kerith/core'
 
 const log = useLogger('my-app')
-
-log.info('Application started')
-// Output: [my-app]  info   Application started
+log.info('Connecting to database...')
+// Development: 19:15:30.123  [my-app]  INFO  Connecting to database...
+// Production:  {"level":"info","time":"...","service":"my-app","msg":"Connecting to database..."}
 ```
 
-### User-space logs
+`createLogger(name: string)` is a convenience alias for `useLogger(name)`. `createLogger(handler, minLevel, module?)` is an internal-facing overload for full control (used internally to build the bootstrap logger).
 
-Kerith **does not** intercept or wrap standard `console.log` calls from your application code.
-Messages like `Mounted N route(s)` or `Server running on http://localhost:3000` generated in your `app.ts` or `server.ts` are entirely your responsibility and will output normally without the `[Kerith]` prefix.
+`Logger` interface:
+
+```ts
+interface Logger {
+  debug(message: string, meta?: Record<string, unknown>): void
+  info(message: string, meta?: Record<string, unknown>): void
+  warn(message: string, meta?: Record<string, unknown>): void
+  error(message: string, meta?: Record<string, unknown> & { err?: Error; error?: Error }): void
+}
+```
+
+If `meta.err` or `meta.error` is an `Error` instance, its stack trace is automatically serialized in JSON mode.
+
+**Environment variables:**
+
+| Variable | Description |
+|---|---|
+| `KERITH_LOG_LEVEL` | Minimum severity (`debug`, `info`, `warn`, `error`). Takes priority over `logLevel` resolution defaults. |
+| `NODE_DEBUG=kerith` | Forces `debug` level (checked if `KERITH_LOG_LEVEL` is unset). |
+| `KERITH_LOG_FORMAT` | Forces `pretty` or `json`, overriding the `auto` (`NODE_ENV`-based) default. |
+| `KERITH_PROFILE=true` | Emits `[perf]` debug timing logs for module imports during bootstrap. |
+
+### Custom transports (Loki, Datadog, etc.)
+
+```ts
+// kerith.config.ts
+import pino from 'pino'
+
+const externalPino = pino({
+  transport: { target: 'pino-datadog-transport', options: { /* ... */ } },
+})
+
+export default {
+  logger: (level, msg, meta) => externalPino[level](meta || {}, msg),
+}
+```
+
+Kerith **does not** intercept `console.log` calls from your application code — those are your own responsibility and print without the framework's structured format.
 
 ---
 
-## Graceful Shutdown _(v1.5.0+)_
+## HTTP request logging
 
-By default, when you press `Ctrl+C` or a process manager sends `SIGTERM`, Node.js exits immediately — leaving the port open and blocking the next restart (the classic "zombie process" problem).
+_(New — not tied to a specific documented version tag in source, part of the current `v2.0.0` public surface.)_
 
-Kerith solves this with `Kerith.listen(server)`. Call it once after `app.listen()` and Kerith handles the rest:
+`useHttpLogger()` returns opt-in Express middlewares that share the same Pino instance as the rest of the app:
 
 ```ts
-import express from 'express'
-import { createApp } from '@kerith/core'
+import { useHttpLogger } from '@kerith/core'
 
-const app = express()
+const httpLogger = useHttpLogger({ ignore: ['/health*'], requestId: true })
 
-const Kerith = await createApp(app)
+app.use(httpLogger.requests())   // mount early in the pipeline
+// ... your routes and createApp() here ...
+app.use(httpLogger.errors())     // mount at the very end
+```
 
+`requests()` logs `METHOD /path STATUS` with response time on `res.on('finish')`; level auto-escalates to `warn` for 4xx and `error` for 5xx. `errors()` is a 4-argument Express error handler: it always logs the real error internally, and — in production, unless `sanitizeErrors: false` — returns a generic `"Internal server error"` message to the client while the real one stays in your logs.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `ignore` | `string[]` | `[]` | Routes to skip. Exact strings or simple globs (`'/health*'` crosses slashes; a `*` mid-pattern matches one path segment only). |
+| `logBody` | `boolean` | `false` | Include the request body — only actually printed when the logger's level is `debug`. |
+| `sanitizeErrors` | `boolean` | `true` | In production, replaces the client-facing error message with a generic one. The real message is always logged internally. |
+| `requestId` | `boolean` | `false` | Generates (or extracts) a request ID into `res.locals.requestId`, generated *before* the ignore check so it's usable in your own middlewares regardless of log suppression. |
+| `getRequestId` | `(req) => string` | `() => crypto.randomUUID()` | Custom ID source, e.g. reading an upstream gateway header. |
+
+---
+
+## Graceful shutdown
+
+`kerith.listen(server, options?)` — call it once after `app.listen()` (or with any `http.Server`, independent of whether an Express `app` was passed to `createApp()`):
+
+```ts
 const server = app.listen(3000)
-Kerith.listen(server, {
+kerith.listen(server, {
   onShutdown: async () => {
     await db.disconnect()
     await redis.quit()
-  }
+  },
 })
 ```
 
-### What happens on shutdown
+Sequence on `SIGINT` / `SIGTERM` (also triggerable via IPC message `'kerith:shutdown'`, used by `kerith dev`'s watcher on Windows):
 
-1. **SIGINT** (Ctrl+C) or **SIGTERM** (kill / PM2 / Docker) fires.
-2. Kerith calls `server.close()` — no new connections are accepted, port is freed.
-3. Your `onShutdown()` hook runs (DB close, queue drain, etc.).
-4. Process exits with code `0`.
+1. `server.close()` — no new connections accepted, existing ones drain naturally.
+2. Your `onShutdown()` hook runs, if provided (errors inside it are logged, not thrown).
+3. `process.exit(0)`.
 
-### Manual shutdown
-
-`Kerith.listen()` returns a `shutdown()` function you can call programmatically — useful for testing or custom signal logic:
+A double-invocation guard makes calling `shutdown()` twice — or receiving both signals at once — safe. `kerith.listen()` returns a `ShutdownHook`: a callable `shutdown()` function that also exposes `.unregister()` to remove the signal listeners (useful for tests or hot-reload scenarios).
 
 ```ts
-const server = app.listen(3000)
-const shutdown = Kerith.listen(server)
-
-// Trigger shutdown from anywhere:
-await shutdown()
+const shutdown = kerith.listen(server)
+await shutdown()          // trigger manually
+shutdown.unregister()     // remove SIGINT/SIGTERM/IPC listeners
 ```
-
-> [!TIP]
-> A double-invocation guard is built in — calling `shutdown()` twice (or receiving both SIGINT and SIGTERM simultaneously) is safe and runs the sequence only once.
 
 ---
 
@@ -1093,7 +809,7 @@ try {
   await createApp(app)
 } catch (err) {
   if (err instanceof KerithError) {
-    console.error(err.code)    // 'EXPORT_MISMATCH'
+    console.error(err.code)    // e.g. 'EXPORT_MISMATCH'
     console.error(err.message) // human-readable description
     console.error(err.details) // additional context (path, module name, etc.)
   }
@@ -1101,83 +817,286 @@ try {
 }
 ```
 
+### Codes thrown by `createApp()` / identifiers / config load
+
 | Code | When it's thrown |
 |---|---|
-| `MODULE_NOT_FOUND` | Discovered folder has no `index.ts` / `index.js`, or `index.ts` does not call `Module()` |
-| `INVALID_MODULE_DECLARATION` | `Module()` name doesn't match folder name, or an identifier is declared incorrectly or outside a `createApp()` context |
-| `DUPLICATE_MODULE` | Two modules share the same name or NITS ID |
-| `DUPLICATE_SERVICE` | Two `Service()` calls share the same name |
-| `DUPLICATE_REPOSITORY` | Two `Repository()` calls share the same name |
-| `DUPLICATE_SCHEMA` | Two `Schema()` calls share the same name |
-| `MISSING_IMPORT` | Module listed in `imports` does not exist in the registry |
-| `UNDECLARED_IMPORT` | Module imports from another not listed in `imports` (strict only) |
-| `UNUSED_IMPORT` | Module declares an import it never actually uses (strict only) |
-| `CIRCULAR_DEPENDENCY` | A dependency cycle was detected (strict only) |
-| `EXPORT_MISMATCH` | Name declared in `exports` is not an actual export of `index.ts` |
-| `INVALID_CONTROLLER` | Controller file has no `default export` of an Express `Router` |
-| `ALIAS_NOT_FOUND` | Configured alias points to a path that does not exist |
-| `ALIAS_INVALID` | Wildcard alias (`/*`) points to a file instead of a directory (strict only) |
-| `DUPLICATE_ALIAS` | Two aliases resolve to the same name but different paths |
-| `DUPLICATE_BOOTSTRAP` | `createApp()` called more than once with the same Express instance |
-| `REGISTRY_MISSING_CONTEXT` | A Kerith API was called outside of a `createApp()` async context |
-| `INVALID_ESM_ENV` | `createApp()` called in a non-ESM environment (missing `"type": "module"` in `package.json`) |
-| `CLI_ERROR` | A CLI command failed with a validation or runtime error |
-| `PRELOADER_REQUIRED` | _(v1.5.0+)_ `requirePreloader: true` and the runtime pre-loader is not active |
-| `PRELOADER_VERSION_MISMATCH` | _(v1.5.0+)_ `.Kerith/preload.js` was generated by a different version of `@kerith/core` (warning only, not thrown) |
+| `INVALID_ESM_ENV` | Project's root `package.json` is missing `"type": "module"`. |
+| `DUPLICATE_BOOTSTRAP` | The same Express `app` instance is passed to `createApp()` more than once. |
+| `ORIGIN_NOT_FOUND` | Configured `origin` directory does not exist. |
+| `PRELOADER_REQUIRED` | `requirePreloader: true` and the process wasn't started with `--import ./.kerith/preload.js`. |
+| `ALIAS_RESERVED` | An alias key in `kerith.config.ts` is `@modules`, `@shared`, or `@`. |
+| `INVALID_ALIAS_KEY` | An alias key doesn't match `/^@[a-zA-Z][a-zA-Z0-9-]*$/`. |
+| `MODULE_NOT_FOUND` | A module directory has no `index.ts`/`index.js`, or (flat mode) the index doesn't call `Module()`. |
+| `INVALID_MODULE_DECLARATION` | `Module()` name doesn't match its folder, or was called outside a valid index file / async context. |
+| `INVALID_DOMAIN_DECLARATION` | Same rule as above, for `Domain()`. |
+| `INVALID_SUBMODULE_DECLARATION` | Same rule as above, for `SubModule()`. |
+| `PARENT_MODULE_NOT_FOUND` | `SubModule()` has no registered ancestor module. |
+| `SUBMODULE_NESTED` | A `SubModule()` is declared inside another `SubModule()`'s folder. |
+| `DUPLICATE_MODULE` / `DUPLICATE_DOMAIN` / `DUPLICATE_SUBMODULE` | Two identifiers of the same kind register the same name/NITS ID/folder. |
+| `DUPLICATE_SERVICE` / `DUPLICATE_REPOSITORY` / `DUPLICATE_SCHEMA` | Two `Service()`/`Repository()`/`Schema()` calls share the same name. |
+| `MODULE_SPACE_CONFLICT` | A module name exists in both flat space and domain space simultaneously. |
+| `MISSING_IMPORT` | A module in `imports[]` doesn't exist in the registry (strict only). |
+| `UNDECLARED_IMPORT` | A file imports a module not listed in its `Module()` `imports[]` (strict only). |
+| `UNUSED_IMPORT` | A module declares an import in `imports[]` it never actually uses (strict only). |
+| `CIRCULAR_DEPENDENCY` | A dependency cycle was detected (strict only). |
+| `SHARED_IN_IMPORTS` | A module name is in `shared[]`, or a `@shared` alias is in `imports[]` (strict throws, non-strict warns). |
+| `UNDECLARED_SHARED` | `shared[]` contains something other than `'@shared'`/subpath, or `@shared` isn't registered (strict throws, non-strict warns). |
+| `EXPORT_MISMATCH` | A name in `exports[]` isn't a real export of the module's `index.ts`. |
+| `INVALID_CONTROLLER` | A controller file failed to import, or has no `default export` of an Express `Router`. |
+| `MODULE_LOAD_TIMEOUT` | A dynamic import of a module, domain, submodule, or controller exceeded `rules.moduleLoadTimeout`. |
+| `REGISTRY_MISSING_CONTEXT` | A Kerith identifier/registry API was called outside a `createApp()` async execution scope. |
+| `CLI_ERROR` | A `kerith` CLI command failed with a validation error (invalid name, existing directory, etc.). |
+
+### Warning-only / observability codes (never thrown)
+
+| Code | Meaning |
+|---|---|
+| `PRELOADER_VERSION_MISMATCH` | `.kerith/preload.js` was generated by a different `@kerith/core` version. Logged as `warn`. |
+| `NITS_DELETE_CONFIRMED` | Structured log emitted when NITS confirms a stale module was genuinely deleted. |
+
+### Reserved codes present in the type union but not currently thrown anywhere in `src/`
+
+These exist in `KerithErrorCode` for forward-compatibility, but no current code path constructs a `KerithError` with them: `ALIAS_NOT_FOUND`, `ALIAS_INVALID`, `ALIAS_CONFLICT`, `DUPLICATE_ALIAS`, `UNUSED_SHARED`, `SHARED_SCOPE_VIOLATION`, `MODULE_IN_SHARED`. Of these, `UNUSED_SHARED` and `SHARED_SCOPE_VIOLATION` **are** implemented — just as `kerith check` violation types, not as bootstrap-time exceptions. `RELATIVE_BOUNDARY_VIOLATION` and the other `kerith check`-only violation types are also part of `KerithErrorCode` but are only ever surfaced through the CLI report, not thrown by `createApp()`.
 
 ---
 
-## Advanced usage
+## CLI reference
 
-### `getRegistry()`
+All commands are available via the `kerith` binary (installed with the package) or `npx kerith <command>`.
 
-Returns the read-only registry bound to the current async execution context. Only callable within a `createApp()` scope.
+### `kerith create-module <name>`
 
-> [!CAUTION]
-> **@unstable API**: Intended for advanced framework integrations and debugging. Structure may change without a major version bump.
-
-```ts
-import { getRegistry } from '@kerith/core'
-
-const registry = getRegistry()
-const allModules   = registry.getAllModules()            // RegisteredModule[]
-const alias        = registry.resolveAlias('@modules/users')
-const allAliases   = registry.getAllAliases()            // Record<string, string>
+```bash
+npx kerith create-module payments --domain billing --full
+npx kerith create-module users --service --routes
 ```
 
-`KerithRegistry` interface (stable):
+| Option | Description |
+|---|---|
+| `-p, --path <path>` | Custom destination folder (default: `src/modules/<name>` or `src/<domain>/<name>`). |
+| `--domain <name>` | Scaffold the module inside an existing domain. |
+| `--service` / `--routes` / `--repository` / `--schema` | Generate the corresponding file. |
+| `--full` | Generate all of the above. |
+| `--ts` / `--js` | Force TypeScript/JavaScript output. Auto-detected from `tsconfig.json` presence if neither is passed. |
 
-```ts
-interface KerithRegistry {
-  hasModule(name: string): boolean
-  getModule(name: string): RegisteredModule | undefined
-  getAllModules(): RegisteredModule[]
-  resolveAlias(alias: string): string | undefined
-  getAllAliases(): Record<string, string>
-}
+### `kerith create-domain <name>`
+
+```bash
+npx kerith create-domain billing --modules payments,invoices --shared
 ```
 
-`KerithRegistryAdvanced` interface (@unstable):
+| Option | Description |
+|---|---|
+| `--modules <names...>` | Scaffold modules inside the new domain. |
+| `--shared` | Also create a `_shared/` folder inside the domain. |
+| `--ts` / `--js` | Force output language. |
 
-```ts
-interface KerithRegistryAdvanced extends KerithRegistry {
-  getDependencyGraph(): Map<string, string[]>
-  findCircularDependencies(): string[][]
-}
+### `kerith create-submodule <name>`
+
+```bash
+npx kerith create-submodule trial --module payments --domain billing
 ```
+
+| Option | Description |
+|---|---|
+| `--module <name>` | **Required.** Parent module. |
+| `--domain <name>` | Domain of the parent module, if any. |
+| `--routes` | Generate a routes file. |
+| `--ts` / `--js` | Force output language. |
+
+### `kerith create-shared`
+
+Creates a `_shared` folder inside a domain, or the global `src/shared/` folder.
+
+```bash
+npx kerith create-shared --domain billing
+npx kerith create-shared --global
+```
+
+| Option | Description |
+|---|---|
+| `--domain <name>` | Create `src/{domain}/_shared/`. |
+| `--global` | Create the global `src/shared/` folder instead. |
+| `--ts` / `--js` | Force output language. |
+
+### `kerith sync-tsconfig`
+
+Syncs Kerith aliases into `tsconfig.json`'s `paths` array for IDE support, and purges stale entries idempotently.
+
+```bash
+npx kerith sync-tsconfig
+```
+
+| Option | Description |
+|---|---|
+| `--tsconfig <path>` | Path to `tsconfig.json`. Default: `tsconfig.json`. |
+| `--silent` | Suppress output when already up to date. |
+
+### `kerith sync-preload`
+
+Generates `.kerith/preload.js`, a static ESM entry that registers the alias hook before your application code runs. **Idempotent** — commit the output file to version control.
+
+```bash
+npx kerith sync-preload
+```
+
+| Option | Description |
+|---|---|
+| `--silent` | Suppress output when already up to date. |
+
+### `kerith dev <entrypoint>`
+
+Starts the app in development mode. Runs `sync-preload` and `sync-tsconfig` automatically before every start, then injects `--import ./.kerith/preload.js` if present.
+
+```bash
+npx kerith dev src/server.ts --watch
+```
+
+| Option | Description |
+|---|---|
+| `--watch` | Restart on file changes, via chokidar (does **not** delegate to `node --watch`). |
+| `--clear` | Clear the terminal on start and on every restart. |
+| `--runtime <node\|tsx>` | Runtime used to run the entrypoint. Default: `node`. |
+| `--force` | Force bootstrap-cache invalidation before starting. |
+
+### `kerith check`
+
+Static architecture analysis — inspects raw ASTs across the module structure without evaluating your application code. See the [next section](#kerith-check--architecture-violations) for the full violation table.
+
+```bash
+npx kerith check --strict --format json
+```
+
+| Option | Description |
+|---|---|
+| `--strict` | Exit 1 if **any** violation is found (including `warn`-severity ones). |
+| `--module <name>` | Narrow analysis to a specific module. |
+| `--level <domain\|module\|submodule\|flat>` | Filter output sections. |
+| `--format <text\|json>` | Output format. `json` includes a `coupling` map (`fanOut`/`fanIn` per module). |
+| `--no-circular` | Disable circular-dependency detection. |
+| `--verbose` | Show internal NITS IDs in the output. |
+
+### `kerith clean`
+
+Removes generated Kerith artifacts.
+
+```bash
+npx kerith clean --shadow-files   # interactive confirmation, deletes .kerith identity files
+npx kerith clean --cache          # deletes .kerith/bootstrap-cache.json
+```
+
+| Option | Description |
+|---|---|
+| `--shadow-files` | Delete all `.kerith` module identity files. NITS IDs regenerate on next bootstrap (interactive `y/N` confirmation). |
+| `--cache` | Delete `.kerith/bootstrap-cache.json`. |
 
 ---
 
-## Use cases
+## `kerith check` — architecture violations
 
-### Microservices
-Isolate each domain into a module and share types through `@modules/shared`. Each service stays lean with zero cross-cutting concerns.
+`kerith check` detects 18 violation types. Only a handful are hard errors (`severity: 'error'`, always exit 1); the rest are `warn` — exit 0 unless `--strict` is passed.
 
-### Monoliths
-Enforce clean module boundaries at bootstrap, not code review. Kerith catches circular dependencies and missing imports before your server starts.
+| Violation | Severity | Description |
+|---|---|---|
+| `relative-boundary-violation` | 🔴 error | A relative import (`../`) escapes the module's own directory. |
+| `domain-boundary-violation` | 🔴 error | A module imports another domain's internal module alias instead of its public `@domain` surface. |
+| `shared-scope-violation` | 🔴 error | A module from a foreign domain imports `@{domain}/shared`. |
+| `undeclared-shared` | 🟡 warn | `shared[]` references something invalid, or `@shared` is used but not registered. |
+| `unused-shared` | 🟡 warn | A module declares `shared[]` access it never actually uses. |
+| `private-import` | 🟡 warn | Importing an internal file of another module directly instead of through its public index. |
+| `undeclared-import` | 🟡 warn | A file imports from a module not listed in the consuming module's `imports[]`. |
+| `circular-dependency` | 🟡 warn | A dependency cycle exists between modules. |
+| `module-space-conflict` | 🟡 warn | A module name exists in both flat space and domain space. |
+| `submodule-direct-sibling` | 🟡 warn | A submodule imports a sibling submodule directly instead of through the parent module. |
+| `submodule-domain-bypass` | 🟡 warn | A submodule imports its own domain root directly, bypassing its parent module. |
+| `fan-out-high` | 🟡 warn | A module imports from more distinct modules than `rules.fanOutThreshold`. |
+| `fan-in-high` | 🟡 warn | A module is consumed by more modules than `rules.fanInThreshold` (`_shared` modules excluded by design). |
+| `module-depth-exceeded` | 🟡 warn | A module's folder structure exceeds `rules.maxModuleDepth`. |
+| `module-too-large` | 🟡 warn | A module has more files than `rules.maxModuleFiles`. |
+| `too-many-submodules` | 🟡 warn | A module has more SubModules than `rules.maxSubModulesPerModule`. |
+| `unused-export` | 🟡 warn | A declared export is never imported by any other module. |
+| `empty-module` | 🟡 warn | A module has no registered identifiers at all. |
 
-### Fast prototyping
-Scaffold a new feature by creating a folder and an `index.ts`. Kerith handles all the boilerplate of wiring routes and middlewares.
+`kerith check`'s exit-code messaging reflects this directly:
+
+- `exit 0 — no violations found`
+- `exit 0 — N warnings (use --strict to block)`
+- `exit 1 — violations found` (any hard error, or any violation at all with `--strict`)
+
+Example (illustrative, domain-mode project):
+
+```text
+Domains
+✔  billing     OK
+✗  workspace   1 violation(s)
+
+Modules
+✔  billing/payments    OK
+✗  workspace/members   1 violation(s)
+  ✗ domain-boundary-violation: importing '@billing/payments' directly
+    Suggestion: Import from '@billing' instead
+
+Coupling
+⚠  payments   fan-out-high — imports from 9 modules (threshold: 5)
+
+Summary: exit 1 — violations found
+```
+
+In v1 (flat) projects, output has no Domain sections and looks identical to pre-domain-hierarchy versions.
+
+---
+
+## NITS — module identity tracking
+
+NITS (Native Identity Tracking System) assigns a stable `mod_{hex}` ID to every module, so Kerith can track it across renames, moves, and Git branch switches — preventing identity loss during refactors. State lives in `.kerith/registry.json`, which **should be committed** to version control.
+
+### The Verification Triangle
+
+1. **Match by path** (maximum confidence) — same directory ⇒ same module.
+2. **Match by hash** (high confidence, similarity ≥ `nits.similarityThreshold`, default **0.9**) — same `Service`/`Repository`/`Schema` names across locations ⇒ moved module. `Controller` names are intentionally excluded from this hash (route prefixes aren't semantic identity).
+3. **Match by name** (medium confidence) — a previously `stale` module found by name at a new location ⇒ `candidate` for confirmation on the *next* run (a deliberate two-cycle grace period, not a bug).
+
+A module gets permanently purged as deleted after `rules.stalePurgeCycles` (default **5**) consecutive bootstraps without being rediscovered.
+
+### Resolving merge conflicts
+
+1. Accept either side of the Git conflict to make the JSON valid again.
+2. Run `npx kerith check`.
+3. NITS automatically detects and heals the registry.
+4. Commit the updated `.kerith/registry.json`.
+
+---
+
+## TypeScript types
+
+Types are bundled — no `@types/kerith` needed.
+
+```ts
+import type {
+  // Bootstrap
+  CreateAppOptions, KerithApp, ListenOptions, ShutdownHook,
+  RegisteredModule, MountedRoute,
+  // Registry
+  KerithRegistry, KerithRegistryAdvanced,
+  DomainRegistration, SubModuleRegistration, ModuleRegistration,
+  // Identifiers
+  ModuleOptions, DomainOptions, SubModuleOptions, HierarchyLevel,
+  ControllerOptions, ServiceOptions, RepositoryOptions, SchemaOptions,
+  // Config
+  KerithConfig, NitsConfig, GetAliasesOptions,
+  // Logging
+  LogLevel, LogHandler, Logger, LogFormat,
+  HttpLogger, HttpLoggerOptions,
+  // Errors
+  KerithErrorCode,
+  // Misc
+  WatcherOptions, PreloadConfig,
+} from '@kerith/core'
+
+// Pre-loader runtime helpers
+import { isPreloaderActive, getPreloadConfig } from '@kerith/core'
+```
 
 ---
 
@@ -1186,63 +1105,15 @@ Scaffold a new feature by creating a folder and an `index.ts`. Kerith handles al
 | | Minimum |
 |---|---|
 | Node.js | 20.6.0 |
-| Express | 5.x |
+| Express | 5.x (peer, optional for worker mode) |
 | TypeScript | 5.0+ (optional) |
-| ESLint | 8.0+ (optional, for `@kerith/eslint-plugin`) |
 
-> **Why 20.6?** Kerith uses the Node.js [ESM Hooks API](https://nodejs.org/api/module.html#customization-hooks) (`register`) for runtime alias resolution. Native support without `--experimental-loader` requires Node 20.6+.
-
----
-
-## ESM Only
-
-Kerith is built as a pure ESM package. It does not support CommonJS (`require()`).
-
-```ts
-import { createApp, Module, Controller } from '@kerith/core'
-```
-
-Your project must have `"type": "module"` in `package.json`. Kerith validates this at bootstrap and throws `INVALID_ESM_ENV` if it is missing.
-
----
-
-## TypeScript
-
-Types are bundled — no `@types/Kerith` needed.
-
-```ts
-import type {
-  CreateAppOptions,
-  KerithApp,
-  KerithRegistry,
-  KerithRegistryAdvanced,
-  KerithConfig,
-  NitsConfig,
-  ModuleOptions,
-  ControllerOptions,
-  ServiceOptions,
-  RepositoryOptions,
-  SchemaOptions,
-  RegisteredModule,
-  MountedRoute,
-  GetAliasesOptions,
-  ModuleRegistration,
-  FeatureRegistration,
-  LogLevel,
-  LogHandler,
-} from '@kerith/core'
-
-// v1.5.0+ pre-loader utilities
-import type { PreloadConfig } from '@kerith/core'
-import { isPreloaderActive, getPreloadConfig } from '@kerith/core'
-```
+Kerith is a pure ESM package — no CommonJS support, no `require()`. Requires `"type": "module"` in `package.json`.
 
 ---
 
 ## License
 
 MIT
-
----
 
 Developed and maintained by **Vlynk Studios**.
