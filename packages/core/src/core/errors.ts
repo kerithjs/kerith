@@ -44,27 +44,27 @@ export type KerithErrorCode =
   // ─── Part 2 — Shared system violation codes ───────────────────────────────
   /**
    * Module imports `@shared` (or a subpath) without declaring it in `shared[]`.
-   * @since v2.0.0 (reserved — not yet thrown)
+   * @since v2.0.0
    */
   | "UNDECLARED_SHARED"
   /**
    * Module declares `@shared` in `shared[]` but no source file imports it.
-   * @since v2.0.0 (reserved — not yet thrown)
+   * @since v2.0.0 (detected via kerith check, not thrown at runtime)
    */
   | "UNUSED_SHARED"
   /**
    * Module from a foreign domain imports `@{domain}/shared`.
-   * @since v2.0.0 (reserved — not yet thrown)
+   * @since v2.0.0 (detected via kerith check, not thrown at runtime)
    */
   | "SHARED_SCOPE_VIOLATION"
   /**
    * A shared alias was placed in `imports[]` instead of `shared[]`.
-   * @since v2.0.0 (reserved — not yet thrown)
+   * @since v2.0.0
    */
   | "SHARED_IN_IMPORTS"
   /**
    * A module name was placed in `shared[]` instead of `imports[]`.
-   * @since v2.0.0 (reserved — not yet thrown)
+   * @since v2.0.0
    */
   | "MODULE_IN_SHARED";
 

@@ -9,6 +9,7 @@ import { checkCommand } from './commands/check.js'
 import { devCommand } from './commands/dev.js'
 import { syncPreloadCommand } from './commands/sync-preload.js'
 import { cleanCommand } from './commands/clean.js'
+import { initCommand } from './commands/init.js'
 
 import fs from 'node:fs';
 
@@ -20,6 +21,7 @@ program
   .name('kerith')
   .description('Kerith CLI')
   .version(pkg.version)
+  .addCommand(initCommand())
   .addCommand(createModuleCommand())
   .addCommand(createDomainCommand())
   .addCommand(createSubModuleCommand())

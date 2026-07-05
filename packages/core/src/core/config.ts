@@ -1,7 +1,7 @@
 import type { ResolvedConfig, LogHandler } from '../types/index.js';
 import { loadKerithConfig } from '../config/kerith-config.js';
 import { defaultLogHandler, resolveLogLevel } from './logger.js';
-import type { ResolvedQualityRules } from '../config/rules.types.js';
+import { type ResolvedQualityRules, DEFAULT_QUALITY_RULES } from '../config/rules.types.js';
 
 const defaultStrict = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
@@ -21,8 +21,8 @@ export const DEFAULTS: Omit<ResolvedConfig, 'aliases' | 'modules' | 'origin'> = 
   },
   requirePreloader: false,
   rules: {
-    moduleLoadTimeout: 30_000,
-    stalePurgeCycles: 3,
+    moduleLoadTimeout: DEFAULT_QUALITY_RULES.moduleLoadTimeout,
+    stalePurgeCycles: DEFAULT_QUALITY_RULES.stalePurgeCycles,
   }
 };
 

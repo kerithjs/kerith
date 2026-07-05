@@ -16,6 +16,7 @@ import { checkSharedAccess } from '../lib/shared-checker.js';
 import { createRegistry, registryContext } from '../../core/registry.js';
 import { registerEntitiesFromScan } from '../../bootstrap/register-from-scan.js';
 import { scanFromConfig } from '../../bootstrap/scanner.js';
+import { loadDomainRegistry } from '../../nits/domain-store.js';
 
 function resolveCorePkgVersion(): string | null {
   const depths = [
@@ -76,6 +77,19 @@ export function checkCommand(): Command {
         }
         
         const graph = await buildModuleGraph(config, cwd);
+        
+        // Load domain IDs from their registries
+        for (const domain of graph.domains) {
+          try {
+            const domainRegistry = await loadDomainRegistry(domain.dirPath);
+            if (domainRegistry) {
+              domain.id = domainRegistry.domain.id;
+            }
+          } catch (err: any) {
+            logger.warn(`Failed to load domain registry for "${domain.name}": ${err.message}`);
+          }
+        }
+        
         let nitsResult: any = null;
 
         // NITS Reconciliation (Identity Tracking)

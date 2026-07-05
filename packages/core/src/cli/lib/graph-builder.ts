@@ -2,7 +2,6 @@ import fg from 'fast-glob';
 import path from 'node:path';
 
 import { 
-  extractIdentifierCall,
   extractMultipleIdentifierCalls
 } from './ast-parser.js';
 import {
@@ -42,6 +41,7 @@ export interface DomainNode {
   dirPath: string;
   indexPath: string;
   modules: ModuleNode[];
+  id?: string;
 }
 
 export interface ModuleGraph {
