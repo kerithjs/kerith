@@ -23,7 +23,7 @@ export function initCommand() {
       
       // Mode A guard: Check if package.json exists
       if (fs.existsSync(path.join(cwd, 'package.json'))) {
-        console.log(pc.yellow(`\n⚠️  A package.json already exists in this directory.`));
+        console.log(pc.yellow(`\nWARN  A package.json already exists in this directory.`));
         console.log(pc.gray(`   Use kerith init on an existing project (Mode B) — coming soon.\n`));
         process.exit(0);
       }
@@ -36,16 +36,16 @@ export function initCommand() {
 
       if (hasFiles) {
         if (!options.yes) {
-          console.log(pc.yellow(`\n⚠️  The directory is not empty but does not have package.json.`));
+          console.log(pc.yellow(`\nWARN  The directory is not empty but does not have package.json.`));
           console.log(pc.gray(`   This might contain user files we don't want to overwrite.\n`));
           
           // In interactive mode, we would use @clack/prompts here
           // For now, we'll require --yes to proceed
           throw new KerithError('CLI_ERROR', pc.red(`\nError: To proceed in a non-empty directory, use --yes to confirm.\n`));
         } else {
-          console.log(pc.yellow(`\n⚠️  Warning: The directory is not empty.`));
+          console.log(pc.yellow(`\nWARN  Warning: The directory is not empty.`));
           console.log(pc.yellow(`   Found files: ${files.join(', ')}\n`));
-          console.log(pc.red(`   ⚠️  These files may be overwritten without further confirmation.\n`));
+          console.log(pc.red(`   WARN  These files may be overwritten without further confirmation.\n`));
         }
       }
 
@@ -63,7 +63,12 @@ export function initCommand() {
         } else {
           ext = 'ts';
         }
-        port = options.port || '3000';
+        const rawPort = options.port || '3000';
+        const numPort = Number(rawPort);
+        if (isNaN(numPort) || numPort < 1 || numPort > 65535) {
+          throw new KerithError('CLI_ERROR', pc.red(`\nError: Invalid port "${rawPort}". Port must be a number between 1 and 65535.\n`));
+        }
+        port = rawPort;
         prefix = options.prefix || '';
       } else {
         // Interactive mode: prompt user
@@ -102,7 +107,7 @@ export function initCommand() {
 
       // Show summary and ask for confirmation
       if (!options.yes) {
-        console.log(pc.cyan(`\n📋 Project summary:\n`));
+        console.log(pc.cyan(`\nProject summary:\n`));
         console.log(`  ${pc.gray('Name:')} ${pc.white(projectName)}`);
         console.log(`  ${pc.gray('Language:')} ${pc.white(ext === 'ts' ? 'TypeScript' : 'JavaScript')}`);
         console.log(`  ${pc.gray('Port:')} ${pc.white(port)}`);
@@ -115,7 +120,7 @@ export function initCommand() {
         });
 
         if (!shouldProceed) {
-          console.log(pc.yellow('\n❌ Cancelled by user.\n'));
+          console.log(pc.yellow('\nCancelled by user.\n'));
           process.exit(0);
         }
       }
@@ -135,34 +140,10 @@ export function initCommand() {
         fs.writeFileSync(fullPath, content.trim() + '\n', 'utf-8');
       }
 
-      console.log(pc.green(`\n✔ Kerith Express project initialized successfully!\n`));
+      console.log(pc.green(`\nKerith Express project initialized successfully!\n`));
       for (const filePath of Object.keys(projectFiles)) {
         console.log(`  ${pc.gray(filePath)}`);
       }
-
-      // Sync preload and tsconfig
-      const logger = createLogger(defaultLogHandler, 'info', 'init');
-      console.log(pc.yellow(`\n🔧 Syncing preload and tsconfig...\n`));
-      
-      try {
-        const { runSyncPreload } = await import('./sync-preload.js');
-        await runSyncPreload(logger, true);
-        console.log(pc.green('✅ Preload synced successfully'));
-      } catch (err: any) {
-        console.log(pc.yellow('⚠️  Preload sync failed (this is normal if dependencies are not installed yet)'));
-      }
-
-      if (ext === 'ts') {
-        try {
-          const { runSyncTsconfig } = await import('./sync-tsconfig.js');
-          await runSyncTsconfig(logger, 'tsconfig.json', true);
-          console.log(pc.green('✅ tsconfig synced successfully'));
-        } catch (err: any) {
-          console.log(pc.yellow('⚠️  tsconfig sync failed (this is normal if dependencies are not installed yet)'));
-        }
-      }
-
-      console.log();
 
       if (!options.skipInstall) {
         const installSpinner = spinner();
@@ -171,45 +152,73 @@ export function initCommand() {
         const { spawn } = await import('node:child_process');
         
         await new Promise<void>((resolve, reject) => {
-          const installProcess = spawn('npm', ['install', 'express', '@kerith/core'], { 
+          const installProcess = spawn('npm', ['install'], { 
             stdio: 'pipe', 
             shell: true 
+          });
+
+          let errOutput = '';
+          installProcess.stderr?.on('data', (data) => {
+            errOutput += data.toString();
           });
 
           installProcess.on('close', (code) => {
             if (code !== 0) {
               installSpinner.stop('Installation failed');
-              console.error(pc.red(`\n❌ npm install failed with exit code ${code}\n`));
+              console.error(pc.red(`\nERROR  npm install failed with exit code ${code}\n`));
+              if (errOutput) console.error(pc.gray(errOutput));
               console.log(pc.yellow('Project files have been created. To complete the setup:\n'));
               console.log(pc.cyan('  npm install\n'));
               reject(new Error(`npm install failed with exit code ${code}`));
             } else {
               installSpinner.stop('Dependencies installed successfully');
-              console.log(pc.green(`\n✅ Dependencies installed successfully!\n`));
+              console.log(pc.green(`\nDependencies installed successfully!\n`));
               resolve();
             }
           });
 
           installProcess.on('error', (err) => {
             installSpinner.stop('Installation failed');
-            console.error(pc.red(`\n❌ Failed to run npm install: ${err.message}\n`));
+            console.error(pc.red(`\nERROR  Failed to run npm install: ${err.message}\n`));
             console.log(pc.yellow('Project files have been created. To complete the setup:\n'));
             console.log(pc.cyan('  npm install\n'));
             reject(err);
           });
         });
       } else {
-        console.log(pc.yellow(`\n⚠️  Skipped npm install. Run the following command manually:\n`));
+        console.log(pc.yellow(`\nWARN  Skipped npm install. Run the following command manually:\n`));
         console.log(pc.cyan('  npm install\n'));
       }
 
-      console.log(pc.cyan(`\n🚀 Next steps:\n`));
-      console.log(`  ${pc.gray('1.')} cd ${path.basename(cwd)}`);
+      // Sync preload and tsconfig
+      const logger = createLogger(defaultLogHandler, 'info', 'init');
+      console.log(pc.yellow(`\nSyncing preload and tsconfig...\n`));
+      
+      try {
+        const { runSyncPreload } = await import('./sync-preload.js');
+        await runSyncPreload(logger, true);
+        console.log(pc.green('Preload synced successfully'));
+      } catch (err: any) {
+        console.log(pc.yellow('WARN  Preload sync failed (this is normal if dependencies are not installed yet)'));
+      }
+
+      if (ext === 'ts') {
+        try {
+          const { runSyncTsconfig } = await import('./sync-tsconfig.js');
+          await runSyncTsconfig(logger, 'tsconfig.json', true);
+          console.log(pc.green('tsconfig synced successfully'));
+        } catch (err: any) {
+          console.log(pc.yellow('WARN  tsconfig sync failed (this is normal if dependencies are not installed yet)'));
+        }
+      }
+
+      console.log(pc.cyan(`\nNext steps:\n`));
+      console.log(pc.yellow(`  (You are already in the project directory)`));
       if (!options.skipInstall) {
-        console.log(`  ${pc.gray('2.')} npm run dev`);
+        console.log(`  ${pc.gray('1.')} npm run dev`);
       } else {
-        console.log(`  ${pc.gray('2.')} npm install`);
-        console.log(`  ${pc.gray('3.')} npm run dev`);
+        console.log(`  ${pc.gray('1.')} npm install`);
+        console.log(`  ${pc.gray('2.')} npm run dev`);
       }
       console.log();
     });
@@ -282,19 +291,20 @@ function generatePackageJson(projectName: string, ext: string, kerithVersion: st
 }
 
 function generateKerithConfig(ext: string, prefix: string): string {
+  const safePrefix = JSON.stringify(prefix);
   if (ext === 'ts') {
     return `import { defineConfig } from '@kerith/core'
 
 export default defineConfig({
   origin: 'src',
-  prefix: '${prefix}',
+  prefix: ${safePrefix},
 })
 `;
   }
   return `/** @type {import('@kerith/core').KerithConfig} */
 export default {
   origin: 'src',
-  prefix: '${prefix}',
+  prefix: ${safePrefix},
 }
 `;
 }

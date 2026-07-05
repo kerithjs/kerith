@@ -290,8 +290,9 @@ The `@kerith/eslint-plugin` enforces the same rules at edit time:
 ## ESLint Plugin
 
 ```bash
-npm install --save-dev @kerith/eslint-plugin
+npm install --save-dev @kerith/eslint-plugin@alpha
 ```
+> **Note**: During the v2 alpha cycle, use the `@alpha` tag.
 
 ```js
 // eslint.config.js
