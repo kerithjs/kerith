@@ -64,8 +64,9 @@ Express is minimal by design. `@kerith/core` keeps it that way while adding just
 ## Installation & requirements
 
 ```bash
-npm install @kerith/core
+npm install @kerith/core@alpha
 ```
+> **Note**: During the v2 alpha cycle, please use the `@alpha` tag to install the latest pre-release versions.
 
 Express is a **peer dependency** — and it's optional if you're not mounting HTTP routes (see [worker mode](#quick-start)):
 

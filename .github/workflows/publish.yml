@@ -51,11 +51,11 @@ jobs:
           echo "✅ @kerith/eslint@$PLUGIN_VERSION matches tag $GITHUB_REF_NAME"
 
       - name: Publish @kerith/core
-        run: npm publish -w packages/core --provenance --access public
+        run: npm publish -w packages/core --provenance --access public --tag alpha
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @kerith/eslint
-        run: npm publish -w packages/eslint-plugin --provenance --access public
+        run: npm publish -w packages/eslint-plugin --provenance --access public --tag alpha
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

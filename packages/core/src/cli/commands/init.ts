@@ -7,6 +7,7 @@ import { select, text, confirm, spinner } from '@clack/prompts';
 import { generateModuleId } from '../../nits/shadow-file.js';
 import { SHADOW_FILE_VERSION } from '../../nits/shadow-file.types.js';
 import { createLogger, defaultLogHandler } from '../../core/logger.js';
+import { KERITH_VERSION } from '../../bootstrap/version.js';
 
 export function initCommand() {
   return new Command('init')
@@ -120,7 +121,7 @@ export function initCommand() {
       }
 
       // Generate project structure
-      const projectFiles = generateProjectStructure(projectName, ext, port, prefix);
+      const projectFiles = generateProjectStructure(projectName, ext, port, prefix, KERITH_VERSION);
 
       // Create directories and files
       for (const [filePath, content] of Object.entries(projectFiles)) {
@@ -180,7 +181,7 @@ export function initCommand() {
               installSpinner.stop('Installation failed');
               console.error(pc.red(`\n❌ npm install failed with exit code ${code}\n`));
               console.log(pc.yellow('Project files have been created. To complete the setup:\n'));
-              console.log(pc.cyan('  npm install express @kerith/core\n'));
+              console.log(pc.cyan('  npm install\n'));
               reject(new Error(`npm install failed with exit code ${code}`));
             } else {
               installSpinner.stop('Dependencies installed successfully');
@@ -193,13 +194,13 @@ export function initCommand() {
             installSpinner.stop('Installation failed');
             console.error(pc.red(`\n❌ Failed to run npm install: ${err.message}\n`));
             console.log(pc.yellow('Project files have been created. To complete the setup:\n'));
-            console.log(pc.cyan('  npm install express @kerith/core\n'));
+            console.log(pc.cyan('  npm install\n'));
             reject(err);
           });
         });
       } else {
         console.log(pc.yellow(`\n⚠️  Skipped npm install. Run the following command manually:\n`));
-        console.log(pc.cyan('  npm install express @kerith/core\n'));
+        console.log(pc.cyan('  npm install\n'));
       }
 
       console.log(pc.cyan(`\n🚀 Next steps:\n`));
@@ -214,10 +215,10 @@ export function initCommand() {
     });
 }
 
-function generateProjectStructure(projectName: string, ext: string, port: string, prefix: string): Record<string, string> {
+function generateProjectStructure(projectName: string, ext: string, port: string, prefix: string, kerithVersion: string): Record<string, string> {
   const files: Record<string, string> = {};
   
-  files['package.json'] = generatePackageJson(projectName, ext);
+  files['package.json'] = generatePackageJson(projectName, ext, kerithVersion);
   files[`kerith.config.${ext}`] = generateKerithConfig(ext, prefix);
   files[`src/server.${ext}`] = generateServer(ext, port);
   
@@ -247,7 +248,7 @@ function generateProjectStructure(projectName: string, ext: string, port: string
   return files;
 }
 
-function generatePackageJson(projectName: string, ext: string): string {
+function generatePackageJson(projectName: string, ext: string, kerithVersion: string): string {
   const isTs = ext === 'ts';
   
   return JSON.stringify({
@@ -266,7 +267,7 @@ function generatePackageJson(projectName: string, ext: string): string {
       check: 'kerith check',
     },
     dependencies: {
-      '@kerith/core': '^2.0.0',
+      '@kerith/core': `^${kerithVersion}`,
       express: '^5.0.0',
     },
     ...(isTs ? {

@@ -109,13 +109,22 @@ npm run build -w @kerith/eslint-plugin
 
 ---
 
+## Known Limitations (v2 Alpha)
+
+During the alpha cycle, the following known limitations apply:
+
+- **Mode B of `kerith init`**: Running `kerith init` in a directory with an existing `package.json` (Mode B) is currently disabled. The CLI will abort to prevent unintentional overwriting of your project files. If you want to scaffold a new Kerith project, please do so in an empty directory.
+
+---
+
 ## Quick Start
 
 Install manually:
 
 ```bash
-npm install @kerith/core express
+npm install @kerith/core@alpha express
 ```
+> **Note**: During the v2 alpha cycle, please use the `@alpha` tag to install the latest pre-release versions.
 
 ```ts
 // kerith.config.ts
