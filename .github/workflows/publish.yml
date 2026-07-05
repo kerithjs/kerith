@@ -50,12 +50,26 @@ jobs:
           fi
           echo "✅ @kerith/eslint@$PLUGIN_VERSION matches tag $GITHUB_REF_NAME"
 
+      - name: Determine NPM Tag
+        id: npm_tag
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE="${VERSION#*-}"
+            TAG="${PRERELEASE%%.*}"
+            echo "NPM_TAG=$TAG" >> $GITHUB_ENV
+            echo "Publishing prerelease with tag: $TAG"
+          else
+            echo "NPM_TAG=latest" >> $GITHUB_ENV
+            echo "Publishing stable release with tag: latest"
+          fi
+
       - name: Publish @kerith/core
-        run: npm publish -w packages/core --provenance --access public --tag alpha
+        run: npm publish -w packages/core --provenance --access public --tag ${{ env.NPM_TAG }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @kerith/eslint
-        run: npm publish -w packages/eslint-plugin --provenance --access public --tag alpha
+        run: npm publish -w packages/eslint-plugin --provenance --access public --tag ${{ env.NPM_TAG }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
