@@ -11,7 +11,7 @@ For full technical details, see the individual package changelogs:
 > **Note:** v1.0.0 - v1.8.1 were developed under the `Nodulus` repository
 > prior to the KerithJS rebranding. Full history is preserved below for reference.
 
-## [2.0.0] - 2026-06-04
+## [2.0.0-alpha.1] - 2026-06-04
 
 ### Fixed
 
@@ -62,7 +62,7 @@ For full technical details, see the individual package changelogs:
 ### @kerith/eslint-plugin
 
 - **New Rules**: `no-domain-boundary-violations`, `no-relative-boundary-violations`
-- **Version Sync**: Synchronized with `@kerith/core@2.0.0`
+- **Version Sync**: Synchronized with `@kerith/core@2.0.0-alpha.1`
 
 ---
 

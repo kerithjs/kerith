@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2026-06-04
+## [2.0.0-alpha.1] - 2026-06-04
 
 ### Added
 - **`no-undeclared-shared` rule**: Detects imports from `@shared` that are not declared in `shared: ['@shared']`
@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`no-relative-boundary-violations` rule**: Detects relative imports that cross module/submodule boundaries
 
 ### Changed
-- **Version Sync**: Synchronized with `@kerith/core@2.0.0`
+- **Version Sync**: Synchronized with `@kerith/core@2.0.0-alpha.1`
 
 ---
 
