@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 const sourceUrl = pathToFileURL(
   path.resolve(__dirname, "../../src/index.ts"),
 ).href;
+const pkgVersion = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../package.json"), "utf8")).version;
 
 const runInTmpApp = async (
   files: Record<string, string>,
@@ -69,7 +70,7 @@ describe("Bootstrap Cache Integration", () => {
 
       fs.mkdirSync(path.join(tmpDir, ".kerith"), { recursive: true });
       fs.writeFileSync(cachePath, JSON.stringify({
-        version: require("../../package.json").version,
+        version: pkgVersion,
         status: "ok",
         savedAt: new Date(Date.now() + 10000).toISOString(), // future so it doesn't trigger mtime rescan
         cwd: tmpDir,
@@ -157,7 +158,7 @@ describe("Bootstrap Cache Integration", () => {
       
       fs.mkdirSync(path.join(tmpDir, ".kerith"), { recursive: true });
       fs.writeFileSync(cachePath, JSON.stringify({
-        version: require("../../package.json").version,
+        version: pkgVersion,
         status: "ok",
         savedAt: new Date().toISOString(),
         cwd: tmpDir,
@@ -251,7 +252,7 @@ describe("Bootstrap Cache Integration", () => {
 
       fs.mkdirSync(path.join(tmpDir, ".kerith"), { recursive: true });
       fs.writeFileSync(cachePath, JSON.stringify({
-        version: require("../../package.json").version,
+        version: pkgVersion,
         status: "ok",
         savedAt: new Date(Date.now() + 10000).toISOString(),
         cwd: tmpDir,

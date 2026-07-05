@@ -68,7 +68,7 @@ export async function generatePreloadFile(config: KerithConfig, version: string,
   // This avoids a Node.js v24 bug on Windows where the ESM loader worker thread
   // does not follow directory junctions (created by `npm install file:...`) when
   // resolving package specifiers, causing ERR_MODULE_NOT_FOUND at runtime.
-  let hookUrl = HOOK_URL;
+  let hookUrl: string;
   try {
     const { createRequire } = await import('node:module');
     const cwdPkgPath = path.join(cwd, 'node_modules', '@kerith', 'core', 'package.json');

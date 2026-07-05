@@ -607,7 +607,7 @@ export function printSummary(data: CheckReportData): void {
   console.log(`    ${AYU.dim}${'modules'.padEnd(12, ' ')}${R} ${AYU.fg}${totalNodes.toString().padEnd(3, ' ')}${R} ${AYU.dim}(${modDetail})${R}`);
 
   const viosCount = data.violations.length;
-  let vioDetail = viosCount === 1 ? '1 error' : `${viosCount} errors`;
+  const vioDetail = viosCount === 1 ? '1 error' : `${viosCount} errors`;
   console.log(`    ${AYU.dim}${'violations'.padEnd(12, ' ')}${R} ${AYU.fg}${viosCount.toString().padEnd(3, ' ')}${R} ${AYU.dim}(${vioDetail})${R}`);
 
   const warnCount = data.qualityWarnings?.length || 0;

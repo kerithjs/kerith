@@ -229,7 +229,10 @@ export function checkCommand(): Command {
         if (options.circular === false) { 
           // Remove circular from quality warnings if --no-circular passed
           const filtered = qualityWarnings.filter(v => v.type !== ViolationType.CIRCULAR_DEPENDENCY);
-          filtered.length !== qualityWarnings.length && (qualityWarnings.length = 0, qualityWarnings.push(...filtered));
+          if (filtered.length !== qualityWarnings.length) {
+            qualityWarnings.length = 0;
+            qualityWarnings.push(...filtered);
+          }
         }
 
         // System violations → always exit 1.
