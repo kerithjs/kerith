@@ -65,11 +65,11 @@ jobs:
           fi
 
       - name: Publish @kerith/core
-        run: npm publish -w packages/core --provenance --access public --tag ${{ env.NPM_TAG }}
+        run: npm publish -w packages/core --provenance --access public --tag $NPM_TAG
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @kerith/eslint
-        run: npm publish -w packages/eslint-plugin --provenance --access public --tag ${{ env.NPM_TAG }}
+        run: npm publish -w packages/eslint-plugin --provenance --access public --tag $NPM_TAG
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
