@@ -299,8 +299,9 @@ function printNodeGroupWithIdentity(nodes: (ModuleGraphNode | DomainNode | SubMo
     const displayName = qualifiedName.length > 30 ? qualifiedName.slice(0, 29) + '…' : qualifiedName;
     const paddedName = displayName.padEnd(maxLen + 2, ' ');
     const isModuleNode = !('modules' in mod) && !('parentModule' in mod);
-    const idStr = isModuleNode ? (mod.id || 'unknown') : '—';
-    const resolvedBy = isNew ? 'new' : (isModuleNode ? (mod.resolvedBy || 'unknown') : '—');
+    const isDomainNode = 'modules' in mod;
+    const idStr = isModuleNode ? (mod.id || 'unknown') : (isDomainNode ? (mod.id || 'unknown') : '—');
+    const resolvedBy = isNew ? 'new' : (isModuleNode ? (mod.resolvedBy || 'unknown') : (isDomainNode ? 'shadow-file' : '—'));
     
     let methodColored: string;
     let hint = '';

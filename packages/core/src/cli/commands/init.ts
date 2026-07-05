@@ -4,7 +4,7 @@ import path from 'node:path';
 import pc from 'picocolors';
 import { KerithError } from '../../core/errors.js';
 import { select, text, confirm, spinner } from '@clack/prompts';
-import { generateModuleId, writeShadowFile } from '../../nits/shadow-file.js';
+import { generateModuleId } from '../../nits/shadow-file.js';
 import { SHADOW_FILE_VERSION } from '../../nits/shadow-file.types.js';
 import { createLogger, defaultLogHandler } from '../../core/logger.js';
 
@@ -28,16 +28,24 @@ export function initCommand() {
       }
 
       // Check if directory is empty
-      const files = fs.readdirSync(cwd);
+      const rawFiles = fs.readdirSync(cwd);
+      const ignoredFiles = new Set(['.git', '.gitignore', '.editorconfig', '.DS_Store', '.env', '.env.local', '.kerith']);
+      const files = rawFiles.filter(file => !ignoredFiles.has(file));
       const hasFiles = files.length > 0;
 
-      if (hasFiles && !options.yes) {
-        console.log(pc.yellow(`\n⚠️  The directory is not empty but does not have package.json.`));
-        console.log(pc.gray(`   This might contain user files we don't want to overwrite.\n`));
-        
-        // In interactive mode, we would use @clack/prompts here
-        // For now, we'll require --yes to proceed
-        throw new KerithError('CLI_ERROR', pc.red(`\nError: To proceed in a non-empty directory, use --yes to confirm.\n`));
+      if (hasFiles) {
+        if (!options.yes) {
+          console.log(pc.yellow(`\n⚠️  The directory is not empty but does not have package.json.`));
+          console.log(pc.gray(`   This might contain user files we don't want to overwrite.\n`));
+          
+          // In interactive mode, we would use @clack/prompts here
+          // For now, we'll require --yes to proceed
+          throw new KerithError('CLI_ERROR', pc.red(`\nError: To proceed in a non-empty directory, use --yes to confirm.\n`));
+        } else {
+          console.log(pc.yellow(`\n⚠️  Warning: The directory is not empty.`));
+          console.log(pc.yellow(`   Found files: ${files.join(', ')}\n`));
+          console.log(pc.red(`   ⚠️  These files may be overwritten without further confirmation.\n`));
+        }
       }
 
       // Determine language, port, and prefix
@@ -127,15 +135,9 @@ export function initCommand() {
       }
 
       console.log(pc.green(`\n✔ Kerith Express project initialized successfully!\n`));
-      console.log(`  ${pc.gray('package.json')}`);
-      console.log(`  ${pc.gray('kerith.config.' + ext)}`);
-      console.log(`  ${pc.gray('src/server.' + ext)}`);
-      console.log(`  ${pc.gray('src/modules/health/.kerith')}`);
-      console.log(`  ${pc.gray('src/modules/health/index.' + ext)}`);
-      console.log(`  ${pc.gray('src/modules/health/health.routes.' + ext)}`);
-      console.log(`  ${pc.gray('src/modules/.gitkeep')}`);
-      console.log(`  ${pc.gray('src/domains/.gitkeep')}`);
-      console.log(`  ${pc.gray('src/shared/.gitkeep')}`);
+      for (const filePath of Object.keys(projectFiles)) {
+        console.log(`  ${pc.gray(filePath)}`);
+      }
 
       // Sync preload and tsconfig
       const logger = createLogger(defaultLogHandler, 'info', 'init');
@@ -216,7 +218,7 @@ function generateProjectStructure(projectName: string, ext: string, port: string
   const files: Record<string, string> = {};
   
   files['package.json'] = generatePackageJson(projectName, ext);
-  files[`kerith.config.${ext}`] = generateKerithConfig(ext, port, prefix);
+  files[`kerith.config.${ext}`] = generateKerithConfig(ext, prefix);
   files[`src/server.${ext}`] = generateServer(ext, port);
   
   // Generate health module
@@ -234,8 +236,9 @@ function generateProjectStructure(projectName: string, ext: string, port: string
   files[`src/modules/${moduleName}/.kerith`] = JSON.stringify(shadowRecord, null, 2);
   
   files['src/modules/.gitkeep'] = '';
-  files['src/domains/.gitkeep'] = '';
   files['src/shared/.gitkeep'] = '';
+  files['.gitignore'] = generateGitignore();
+  files['README.md'] = generateReadme(projectName);
 
   if (ext === 'ts') {
     files['tsconfig.json'] = generateTsConfig();
@@ -277,75 +280,25 @@ function generatePackageJson(projectName: string, ext: string): string {
   }, null, 2);
 }
 
-function generateKerithConfig(ext: string, port: string, prefix: string): string {
+function generateKerithConfig(ext: string, prefix: string): string {
   if (ext === 'ts') {
     return `import { defineConfig } from '@kerith/core'
 
 export default defineConfig({
   origin: 'src',
-  server: {
-    port: ${port},
-    prefix: '${prefix}',
-  },
+  prefix: '${prefix}',
 })
 `;
   }
   return `/** @type {import('@kerith/core').KerithConfig} */
 export default {
   origin: 'src',
-  server: {
-    port: ${port},
-    prefix: '${prefix}',
-  },
+  prefix: '${prefix}',
 }
 `;
 }
 
 function generateServer(ext: string, port: string): string {
-  if (ext === 'ts') {
-    return `import express from 'express'
-import { createApp, KerithError, useLogger, useHttpLogger } from '@kerith/core'
-
-const log = useLogger('app')
-const httpLogger = useHttpLogger({ ignore: ['/health'] })
-
-const app = express()
-app.use(express.json())
-app.use(httpLogger.requests())
-
-try {
-  const kerith = await createApp(app)
-  
-  if (!kerith.runtime.preloaderActive) {
-    log.warn('Pre-loader not detected. Run: npm run setup')
-  }
-  
-  log.info(\`Mounted \${kerith.routes.length} route(s)\`)
-  
-  const server = app.listen(${port}, () => {
-    log.info('Server running on http://localhost:${port}')
-  })
-  
-  kerith.listen(server, {
-    onShutdown: async () => {
-      log.info('Cleaning up resources...')
-      // await db.disconnect()
-    }
-  })
-  
-  // Error handler — must be the last middleware in the pipeline
-  app.use(httpLogger.errors())
-} catch (err) {
-  if (err instanceof KerithError) {
-    log.error(\`[\${err.code}] \${err.message}\`)
-    if (err.details) log.error(err.details)
-    process.exit(1)
-  }
-  log.error(err instanceof Error ? err.message : String(err))
-  throw err
-}
-`;
-  }
   return `import express from 'express'
 import { createApp, KerithError, useLogger, useHttpLogger } from '@kerith/core'
 
@@ -365,8 +318,9 @@ try {
   
   log.info(\`Mounted \${kerith.routes.length} route(s)\`)
   
-  const server = app.listen(${port}, () => {
-    log.info('Server running on http://localhost:${port}')
+  const port = ${port}
+  const server = app.listen(port, () => {
+    log.info(\`Server running on http://localhost:\${port}\`)
   })
   
   kerith.listen(server, {
@@ -436,4 +390,33 @@ function generateTsConfig(): string {
     include: ['src/**/*'],
     exclude: ['node_modules', 'dist'],
   }, null, 2);
+}
+
+function generateGitignore(): string {
+  return `node_modules
+dist
+.env
+.env.local
+.kerith/bootstrap-cache.json
+`;
+}
+
+function generateReadme(projectName: string): string {
+  return `# ${projectName}
+
+## Getting Started
+
+To run the development server:
+\`\`\`bash
+npm run dev
+\`\`\`
+
+## Architecture
+
+This project is built using [Kerith](https://github.com/kerithjs/kerith).
+
+- \`kerith.config.ts\`: Central configuration for the framework. It defines where modules are located (\`origin\`) and custom route prefixes.
+- \`.kerith/registry.json\`: This file tracks all your modules and their identifiers. **It must be checked into Git** to ensure consistency across environments.
+- \`.kerith/preload.js\`: This is automatically generated and must also be checked into Git. It enables fast startup and ESM alias resolution.
+`;
 }
