@@ -36,6 +36,10 @@ describe('Pre-loader Integration (preloader.test.ts)', () => {
       export const GREETING = 'Hello from Alias';
     `);
 
+    // 4. Create node_modules/@kerith/core junction so it can resolve the hook
+    fs.mkdirSync(path.join(tmpDir, 'node_modules', '@kerith'), { recursive: true });
+    fs.symlinkSync(CORE_PATH, path.join(tmpDir, 'node_modules', '@kerith', 'core'), 'junction');
+
     return tmpDir;
   };
 
@@ -64,9 +68,10 @@ describe('Pre-loader Integration (preloader.test.ts)', () => {
           'main.js'
       ], { cwd: tmpDir, encoding: 'utf8' });
 
-      expect(result.stdout).toContain('MSG:Hello from Alias');
+      expect(result.stdout, result.stderr).toContain('MSG:Hello from Alias');
       expect(result.stdout).toContain('PRELOADER_ACTIVE:true');
       expect(result.stdout).not.toContain('Pre-loader not detected');
+
       
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });

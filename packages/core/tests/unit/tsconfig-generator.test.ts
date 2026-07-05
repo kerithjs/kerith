@@ -35,10 +35,9 @@ describe('tsconfig-generator', () => {
     logFormat: 'auto',
     nits: { enabled: true },
     requirePreloader: false,
-    moduleLoadTimeoutMs: 30000,
     aliases: {},
     resolvedAliases,
-  });
+  } as unknown as ResolvedKerithConfig);
 
   describe('generateTsconfigKerith()', () => {
     it('with empty aliases generates only the built-in @modules/*', () => {
@@ -274,19 +273,19 @@ describe('tsconfig-generator', () => {
       );
     });
 
-    it('tsconfig.json without extends emits log.info with instruction', async () => {
+    it('tsconfig.json without extends emits log.warn with instruction', async () => {
       const mockLog = { warn: vi.fn(), info: vi.fn(), debug: vi.fn(), error: vi.fn() };
       fs.writeFileSync(path.join(tmpDir, 'tsconfig.json'), '{}');
 
       await ensureTsconfigExtends(tmpDir, mockLog as never);
 
-      expect(mockLog.info).toHaveBeenCalledWith(
+      expect(mockLog.warn).toHaveBeenCalledWith(
         expect.stringContaining(hintFragment),
         expect.objectContaining({ _module: 'config' }),
       );
     });
 
-    it('tsconfig.json with extends to another file emits log.info (does not modify)', async () => {
+    it('tsconfig.json with extends to another file emits log.warn (does not modify)', async () => {
       const mockLog = { warn: vi.fn(), info: vi.fn(), debug: vi.fn(), error: vi.fn() };
       fs.writeFileSync(
         path.join(tmpDir, 'tsconfig.json'),
@@ -297,7 +296,7 @@ describe('tsconfig-generator', () => {
 
       const raw = fs.readFileSync(path.join(tmpDir, 'tsconfig.json'), 'utf-8');
       expect(raw).toContain('./tsconfig.base.json');
-      expect(mockLog.info).toHaveBeenCalledWith(
+      expect(mockLog.warn).toHaveBeenCalledWith(
         expect.stringContaining(hintFragment),
         expect.any(Object),
       );
