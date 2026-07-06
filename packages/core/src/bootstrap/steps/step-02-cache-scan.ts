@@ -80,7 +80,7 @@ export async function runCacheAndScan(ctx: BootstrapContext): Promise<void> {
       } else {
         // toRescan: domain IDs whose modules on disk changed (by mtime or size).
         // Domains not in toRescan will be loaded directly from rawCache.data.
-        const { toRescan } = MtimeValidator.validate(rawCache);
+        const { toRescan } = MtimeValidator.validate(rawCache, config, cwd, log);
         numRescanned = toRescan.length;
 
         if (numRescanned === 0) {

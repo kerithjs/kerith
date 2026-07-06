@@ -232,18 +232,30 @@ function generateProjectStructure(projectName: string, ext: string, port: string
   files[`src/server.${ext}`] = generateServer(ext, port);
   
   // Generate health module
-  const moduleName = 'health';
-  files[`src/modules/${moduleName}/index.${ext}`] = generateModuleIndex(moduleName);
-  files[`src/modules/${moduleName}/${moduleName}.routes.${ext}`] = generateModuleRoutes(moduleName);
+  const healthName = 'health';
+  files[`src/modules/${healthName}/index.${ext}`] = generateModuleIndex(healthName);
+  files[`src/modules/${healthName}/${healthName}.routes.${ext}`] = generateHealthRoutes();
   
-  // Write shadow file for health module
-  const shadowRecord = {
+  const healthShadowRecord = {
     version: SHADOW_FILE_VERSION,
     id: generateModuleId(),
-    name: moduleName,
+    name: healthName,
     createdAt: new Date().toISOString(),
   };
-  files[`src/modules/${moduleName}/.kerith`] = JSON.stringify(shadowRecord, null, 2);
+  files[`src/modules/${healthName}/.kerith`] = JSON.stringify(healthShadowRecord, null, 2);
+
+  // Generate home module
+  const homeName = 'home';
+  files[`src/modules/${homeName}/index.${ext}`] = generateModuleIndex(homeName);
+  files[`src/modules/${homeName}/${homeName}.routes.${ext}`] = generateHomeRoutes();
+  
+  const homeShadowRecord = {
+    version: SHADOW_FILE_VERSION,
+    id: generateModuleId(),
+    name: homeName,
+    createdAt: new Date().toISOString(),
+  };
+  files[`src/modules/${homeName}/.kerith`] = JSON.stringify(homeShadowRecord, null, 2);
   
   files['src/modules/.gitkeep'] = '';
   files['src/shared/.gitkeep'] = '';
@@ -366,17 +378,33 @@ Module('${name}', {
 `;
 }
 
-function generateModuleRoutes(name: string): string {
-  return `
-import { Controller } from '@kerith/core'
+function generateHealthRoutes(): string {
+  return `import { Controller } from '@kerith/core'
 import { Router } from 'express'
 
-Controller('/${name}')
+Controller('/health')
 
 const router = Router()
 
-// Add your routes here
-// router.get('/', (req, res) => { ... })
+router.get('/', (_req, res) => {
+  res.json({ status: 'ok', message: 'Hello from Kerith!' })
+})
+
+export default router
+`;
+}
+
+function generateHomeRoutes(): string {
+  return `import { Controller } from '@kerith/core'
+import { Router } from 'express'
+
+Controller('/')
+
+const router = Router()
+
+router.get('/', (_req, res) => {
+  res.send('Hello World! Welcome to Kerith Express')
+})
 
 export default router
 `;

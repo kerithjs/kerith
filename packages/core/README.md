@@ -581,6 +581,8 @@ Bootstrap complete from cache — 34ms (1 modules rescanned)
 
 The cache is invalidated automatically when `kerith.config.ts` changes. Use `kerith dev --force` (forces cache invalidation before starting) or `kerith clean --cache` (deletes the cache file) to force a full re-scan. **Never active in production** (`NODE_ENV=production`) — production always does a full scan.
 
+> **Note:** En modo flat (sin dominios), cualquier cambio en cualquier módulo invalida el cache del proyecto completo. Para invalidación incremental real, usar dominios.
+
 Kerith also (re)generates `tsconfig.kerith.json` on every bootstrap for IDE support, and ensures your root `tsconfig.json` extends it.
 
 ---
