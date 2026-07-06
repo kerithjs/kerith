@@ -121,13 +121,22 @@ function detectNewDomainDirs(
   }
 
   for (const name of actualEntries) {
-    if (!knownDomainNames.has(name)) {
-      // Unknown top-level folder under origin. It may be a fresh domain
-      // (with its first module) or a flat module folder container (e.g.
-      // `modules/`) — either way it's new territory the per-file pass can't
-      // see, so force it into the rescan set under its own name. If it turns
-      // out to be a flat container, scanOrigin's normal glob still covers it
-      // correctly since '__flat__' scanning is unaffected by this addition.
+    if (knownDomainNames.has(name)) continue;
+
+    // A real Domain() folder always has its own index.{ts,js,mts,mjs} at its
+    // root (same convention Domain() itself enforces). A generic flat-modules
+    // container (e.g. `modules/`) does NOT have an index file at that level —
+    // its modules are nested one level deeper (`modules/health/index.ts`).
+    // Checking for this is what keeps this check from misfiring on the flat
+    // container on every single boot and double-scanning modules that
+    // '__flat__' already covers via its own glob (this was caught live: it
+    // caused every module to be discovered/logged twice, growing with each
+    // edit, before this guard was added).
+    const hasOwnIndex = ['ts', 'js', 'mts', 'mjs'].some((ext) =>
+      fs.existsSync(path.join(originPath, name, `index.${ext}`)),
+    );
+
+    if (hasOwnIndex) {
       dirty.add(name);
     }
   }
