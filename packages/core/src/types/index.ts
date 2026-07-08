@@ -265,9 +265,7 @@ export interface ResolvedConfig {
     enabled: boolean;
     similarityThreshold?: number;
   };
-  logging: {
-    maxRouteLines: number;
-  };
+
   requirePreloader: boolean;
   rules: {
     moduleLoadTimeout: number;

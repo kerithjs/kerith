@@ -12,6 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { performance } from "node:perf_hooks";
+import { BootLogGate } from "../../core/utils/boot-log-limit.js";
 import pc from "picocolors";
 import { KerithError } from "../../core/errors.js";
 import { normalizePath, groupFilesByModulePath } from "../../core/utils/paths.js";
@@ -180,13 +181,11 @@ export async function runControllersAndMount(
   const step8Start = performance.now();
   let mountMs = 0;
   let logMs = 0;
+  const routeLogGate = new BootLogGate(config.logLevel);
 
   for (const mod of allModules) {
     const rawMod = registry.getRawModule(mod.name, mod.domain);
     if (!rawMod) continue;
-
-    let loggedRouteCount = 0;
-    const LOG_ROUTE_LIMIT = config.logging.maxRouteLines;
 
     for (const ctrl of rawMod.controllers) {
       if (!ctrl.enabled) {
@@ -265,7 +264,7 @@ export async function runControllersAndMount(
         const tLog = performance.now();
 
         for (const route of extractedRoutes) {
-          if (loggedRouteCount < LOG_ROUTE_LIMIT) {
+          if (routeLogGate.next()) {
             const colorFn = methodColors[route.method] || pc.white;
             log.info(
               `  ${colorFn(route.method.padEnd(6))} ${pc.white(route.path)}  ${pc.gray(`(${ctrl.name})`)}`,
@@ -277,19 +276,19 @@ export async function runControllersAndMount(
               },
             );
           }
-          loggedRouteCount++;
         }
 
         logMs += performance.now() - tLog;
       }
     }
 
-    if (loggedRouteCount > LOG_ROUTE_LIMIT) {
-      log.info(
-        `  ... and ${loggedRouteCount - LOG_ROUTE_LIMIT} more route(s) mounted (total: ${loggedRouteCount})`,
-        { _module: "router", module: mod.name },
-      );
-    }
+  }
+
+  if (routeLogGate.hasOverflow) {
+    log.info(
+      `  ... and ${routeLogGate.overflow} more route(s) mounted (total: ${routeLogGate.total})`,
+      { _module: "router" },
+    );
   }
 
   const step8Ms = performance.now() - step8Start;

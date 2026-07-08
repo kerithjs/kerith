@@ -11,6 +11,7 @@
  */
 
 import { performance } from "node:perf_hooks";
+import { BootLogGate } from "../../core/utils/boot-log-limit.js";
 import pc from "picocolors";
 import { importIndexEntry } from "../import-index.js";
 import { normalizePath } from "../../core/utils/paths.js";
@@ -38,15 +39,24 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
   const startTime = performance.now(); // local measurement
 
   // 6a — Domains in parallel
+  const domainLogGate = new BootLogGate(config.logLevel);
   await Promise.all(
     scanResult.domains.map(async (domain) => {
       await importIndexEntry(domain.indexPath, config.rules.moduleLoadTimeout);
-      log.info(`Domain loaded: ${pc.cyan(domain.name)}`, {
-        _module: "domain",
-        name: domain.name,
-      });
+      if (domainLogGate.next()) {
+        log.info(`Domain loaded: ${pc.cyan(domain.name)}`, {
+          _module: "domain",
+          name: domain.name,
+        });
+      }
     }),
   );
+  if (domainLogGate.hasOverflow) {
+    log.info(
+      `... and ${domainLogGate.overflow} more domain(s) loaded (total: ${domainLogGate.total})`,
+      { _module: "domain" },
+    );
+  }
 
   // 6b — Modules in parallel: import first, correlation and validation after
   const importedModules = await Promise.all(
@@ -71,6 +81,8 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
   const registeredByPath = new Map(
     allRegisteredOnce.map((m) => [normalizePath(m.path), m]),
   );
+
+  const moduleLogGate = new BootLogGate(config.logLevel);
 
   for (const { mod, imported } of importedModules) {
     const registeredMod = registeredByPath.get(normalizePath(mod.dirPath));
@@ -98,14 +110,16 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
       ? `${pc.dim(registeredMod.domain + "/")}${pc.green(registeredMod.name)}`
       : pc.green(registeredMod.name);
 
-    log.info(`Module loaded: ${moduleLabel}${cacheSuffix}`, {
-      _module: "module",
-      name: registeredMod.name,
-      domain: registeredMod.domain,
-      imports: registeredMod.imports,
-      exports: registeredMod.exports,
-      path: registeredMod.path,
-    });
+    if (moduleLogGate.next()) {
+      log.info(`Module loaded: ${moduleLabel}${cacheSuffix}`, {
+        _module: "module",
+        name: registeredMod.name,
+        domain: registeredMod.domain,
+        imports: registeredMod.imports,
+        exports: registeredMod.exports,
+        path: registeredMod.path,
+      });
+    }
 
     const actualExports = Object.keys(imported).filter(
       (key) => key !== "default",
@@ -136,6 +150,13 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
         }
       }
     }
+  }
+
+  if (moduleLogGate.hasOverflow) {
+    log.info(
+      `... and ${moduleLogGate.overflow} more module(s) loaded (total: ${moduleLogGate.total})`,
+      { _module: "module" },
+    );
   }
 
   // 6c — Submodules in parallel

@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `modulesByName` key is now `domain/name` for domain modules — enables same name in different domains
 - Scanner uses single fg() call instead of O(n) per-module globs (N-32 fix)
 - Import scanner includes only registered aliases, no hardcoded npm exclusion list (N-33 fix)
+- **Bootstrap log capping**: Bootstrap logs for domains, modules, and routes are now capped to 3 visible lines per category at `info` level, followed by a single summary line (`... and N more ...`) when the limit is exceeded. The cap is intentionally fixed — use `logLevel: 'debug'` (or `KERITH_LOG_LEVEL=debug`) to see every line, or `kerith check` for a full architectural report. The previous per-module route cap (`logging.maxRouteLines`, default 5) has been **removed**; it is replaced by this global fixed mechanism (`BOOT_LOG_LIMIT = 3`).
 - **Exit-code logic** migrated from hardcoded `ViolationType` lists (`alwaysExit1`/`strictExit1`) to `severity`-based checks — adding a new violation type no longer requires updating a second list
 - **`CIRCULAR_DEPENDENCY`** corrected to `severity: 'warn'` — it now only blocks in `--strict` mode, matching design intent (regression fix)
 
