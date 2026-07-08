@@ -77,7 +77,7 @@ export async function buildModuleGraph(config: KerithConfig, cwd: string): Promi
       .map(f => f.abs);
   }
 
-  const targetCallees = ['Service', 'Repository', 'Schema'];
+  const targetCallees = ['Service', 'Repository', 'Schema', 'Controller'];
 
   async function buildNodeData(
     dirPath: string,

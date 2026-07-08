@@ -223,6 +223,48 @@ describe('Quality Rules Engine & Checkers', () => {
       const result = detectEmptyModules(graph as any, nullRules);
       expect(result).toHaveLength(0);
     });
+
+    // ── Fix 2 regression — Controller() must NOT trigger empty-module ─────────
+    //
+    // Before the fix, graph-builder.ts only scanned for ['Service', 'Repository',
+    // 'Schema']. A module whose only file contained Controller() was left with an
+    // empty internalIdentifiers[] and detectEmptyModules() fired as a false positive.
+    // The fix adds 'Controller' to targetCallees so it populates internalIdentifiers.
+    // The tests below cover detectEmptyModules() directly (the checker layer), while
+    // the AST scanning layer is implicitly validated by the integration suite that
+    // exercises the full graph-builder pipeline against real fixture files.
+
+    it('Fix 2 regression — módulo con solo Controller() → sin violation (false positive)', () => {
+      // Simulates what graph-builder now produces for a module whose only
+      // registered identifier is a Controller() call.
+      const graph = { modules: [{ name: 'health', internalIdentifiers: ['HealthController'] }] };
+      const result = detectEmptyModules(graph as any, rules);
+      expect(result).toHaveLength(0);
+    });
+
+    it('Fix 2 regression — múltiples módulos solo-Controller → ninguno dispara empty-module', () => {
+      const graph = {
+        modules: [
+          { name: 'health', internalIdentifiers: ['HealthController'] },
+          { name: 'home',   internalIdentifiers: ['HomeController'] },
+        ],
+      };
+      const result = detectEmptyModules(graph as any, rules);
+      expect(result).toHaveLength(0);
+    });
+
+    it('Fix 2 regression — módulo verdaderamente vacío (sin ningún identifier) → sigue disparando', () => {
+      // Ensures the fix did not accidentally suppress legitimate empty-module warnings.
+      const graph = {
+        modules: [
+          { name: 'empty', internalIdentifiers: [] },
+          { name: 'health', internalIdentifiers: ['HealthController'] },
+        ],
+      };
+      const result = detectEmptyModules(graph as any, rules);
+      expect(result).toHaveLength(1);
+      expect(result[0].module).toBe('empty');
+    });
   });
 
   describe('runQualityRules() — motor completo', () => {

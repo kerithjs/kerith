@@ -59,6 +59,17 @@ export async function generatePreloadFile(config: KerithConfig, version: string,
     aliases[alias] = `resolve(__dirname, '${escapeStr(getRelativePathStr(sharedEntry.path))}')`;
   }
 
+  // 4. Add exact per-module aliases (fixes cross-module imports when
+  //    modules live nested under any directory, e.g. src/modules/<name>,
+  //    src/<domain>/<name>, or any other structure — resolves against
+  //    the module's real dirPath instead of assuming origin + name).
+  //    The preload hook's exactAliasMap is consulted before wildcardAliases /
+  //    prefixAliases, so these entries win automatically without any hook change.
+  for (const mod of scanResult.modules) {
+    const alias = escapeStr(`@modules/${mod.name}`);
+    aliases[alias] = `resolve(__dirname, '${escapeStr(getRelativePathStr(mod.dirPath))}')`;
+  }
+
 
   const aliasesEntries = Object.entries(aliases)
     .map(([key, val]) => `    '${key}': ${val},`)

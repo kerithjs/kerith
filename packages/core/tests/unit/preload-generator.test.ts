@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { generatePreloadFile } from '../../src/cli/lib/preload-generator.js';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
@@ -7,7 +7,10 @@ import os from 'node:os';
 import { vi } from 'vitest';
 
 vi.mock('../../src/bootstrap/scanner.js', () => ({
-  scanFromConfig: vi.fn().mockResolvedValue({ domains: [], shared: [] })
+  // Include all fields of ScanResult so the generator loop over scanResult.modules
+  // doesn't throw "is not iterable". Tests that need modules populated use
+  // vi.mocked(scanFromConfig).mockResolvedValueOnce(...) or rely on the default.
+  scanFromConfig: vi.fn().mockResolvedValue({ domains: [], modules: [], submodules: [], shared: [] })
 }));
 
 describe('Preload Generator (preload-generator.ts)', () => {
@@ -78,6 +81,7 @@ describe('Preload Generator (preload-generator.ts)', () => {
     // modulesDir should point to ../src/modules
     expect(output).toContain("modulesDir: resolve(__dirname, '../src/modules')");
   });
+
   it('changing modules glob path produces different output with the new path', async () => {
     const originalOutput = await generatePreloadFile(mockConfig, version, fakeCwd);
     
@@ -98,5 +102,113 @@ describe('Preload Generator (preload-generator.ts)', () => {
     
     expect(originalOutput).not.toEqual(newOutput);
     expect(newOutput).toContain("_version: '2.0.0-test'");
+  });
+
+  // ── Regression: Fix 1 — @modules/<name> must resolve to the module's real dirPath ──
+  //
+  // Before the fix, sync-preload only emitted a single '@modules' wildcard pointing
+  // to the origin directory.  `@modules/beta` was therefore resolved as `origin/beta`
+  // even when beta lives at `src/modules/beta`.  The fix adds one exact alias per
+  // module using the scanner-provided dirPath.
+  //
+  // This test pins the exact shape of the generated preload.js for the nested-module
+  // case so the bug cannot regress without breaking CI.
+
+  describe('Fix 1 regression — exact per-module aliases in generated preload', () => {
+    // scanFromConfig is mocked at the top of this file via vi.mock().
+    // We reference the mock handle here so we can override its return value per-test.
+    let scanMock: ReturnType<typeof vi.fn>;
+
+    beforeAll(async () => {
+      const scanner = await import('../../src/bootstrap/scanner.js') as any;
+      scanMock = vi.mocked(scanner.scanFromConfig);
+    });
+
+    it('emits exact @modules/<name> aliases for flat modules (src/<name>)', async () => {
+      scanMock.mockResolvedValueOnce({
+        domains: [],
+        submodules: [],
+        shared: [],
+        modules: [
+          { name: 'alpha', dirPath: path.join(fakeCwd, 'src', 'alpha'), indexPath: path.join(fakeCwd, 'src', 'alpha', 'index.ts') },
+          { name: 'beta',  dirPath: path.join(fakeCwd, 'src', 'beta'),  indexPath: path.join(fakeCwd, 'src', 'beta',  'index.ts') },
+        ],
+      });
+
+      const config = { ...mockConfig, origin: 'src' };
+      const output = await generatePreloadFile(config, version, fakeCwd);
+
+      // Generic fallback must still exist
+      expect(output).toContain("'@modules':");
+
+      // Exact per-module entries must now be present — these are what the
+      // preload hook's exactAliasMap picks up (highest priority).
+      expect(output).toContain("'@modules/alpha': resolve(__dirname, '../src/alpha')");
+      expect(output).toContain("'@modules/beta': resolve(__dirname, '../src/beta')");
+    });
+
+    it('emits exact @modules/<name> aliases for modules nested under src/modules/', async () => {
+      scanMock.mockResolvedValueOnce({
+        domains: [],
+        submodules: [],
+        shared: [],
+        modules: [
+          { name: 'alpha', dirPath: path.join(fakeCwd, 'src', 'modules', 'alpha'), indexPath: path.join(fakeCwd, 'src', 'modules', 'alpha', 'index.ts') },
+          { name: 'beta',  dirPath: path.join(fakeCwd, 'src', 'modules', 'beta'),  indexPath: path.join(fakeCwd, 'src', 'modules', 'beta',  'index.ts') },
+        ],
+      });
+
+      const config = { ...mockConfig, origin: 'src' };
+      const output = await generatePreloadFile(config, version, fakeCwd);
+
+      // Exact per-module entries must point to src/modules/<name>, NOT src/<name>
+      expect(output).toContain("'@modules/alpha': resolve(__dirname, '../src/modules/alpha')");
+      expect(output).toContain("'@modules/beta': resolve(__dirname, '../src/modules/beta')");
+
+      // Sanity: a wrong resolution (e.g. '../src/alpha') must NOT appear for @modules/alpha
+      expect(output).not.toContain("'@modules/alpha': resolve(__dirname, '../src/alpha')");
+    });
+
+    it('emits exact @modules/<name> aliases for modules inside a domain (src/<domain>/<name>)', async () => {
+      scanMock.mockResolvedValueOnce({
+        domains: [
+          { name: 'billing', dirPath: path.join(fakeCwd, 'src', 'billing'), indexPath: path.join(fakeCwd, 'src', 'billing', 'index.ts'), options: {} },
+        ],
+        submodules: [],
+        shared: [],
+        modules: [
+          {
+            name: 'payments',
+            dirPath: path.join(fakeCwd, 'src', 'billing', 'payments'),
+            indexPath: path.join(fakeCwd, 'src', 'billing', 'payments', 'index.ts'),
+            domain: 'billing',
+          },
+        ],
+      });
+
+      const config = { ...mockConfig, origin: 'src' };
+      const output = await generatePreloadFile(config, version, fakeCwd);
+
+      // Must resolve to the real domain-nested path
+      expect(output).toContain("'@modules/payments': resolve(__dirname, '../src/billing/payments')");
+
+      // Must NOT resolve to the origin root (the old buggy behaviour)
+      expect(output).not.toContain("'@modules/payments': resolve(__dirname, '../src/payments')");
+    });
+
+    it('generic @modules fallback still present when modules list is empty', async () => {
+      scanMock.mockResolvedValueOnce({
+        domains: [],
+        submodules: [],
+        shared: [],
+        modules: [],
+      });
+
+      const config = { ...mockConfig, origin: 'src' };
+      const output = await generatePreloadFile(config, version, fakeCwd);
+
+      // The generic '@modules' wildcard fallback must always be emitted
+      expect(output).toContain("'@modules':");
+    });
   });
 });
