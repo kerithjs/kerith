@@ -1,10 +1,10 @@
-export type NitsStatus = 'active' | 'stale' | 'moved' | 'candidate' | 'deleted';
+export type NitsStatus = "active" | "stale" | "moved" | "candidate" | "deleted";
 
 export interface DiscoveredModule {
   name: string;
   dirPath: string;
   domain?: string;
-  identifiers: string[];   // names extracted by nits-hash
+  identifiers: string[]; // names extracted by nits-hash
   hash: string;
   /**
    * Identity record read from the `.kerith` shadow file at the module root.
@@ -13,18 +13,18 @@ export interface DiscoveredModule {
    * `undefined` for legacy modules (created before v1.5.5) — Jaccard is used as fallback.
    * @since v1.5.5
    */
-  shadowFile?: import('../nits/shadow-file.types.js').ShadowFileRecord;
+  shadowFile?: import("../nits/shadow-file.types.js").ShadowFileRecord;
 }
 
 export interface NitsModuleRecord {
-  id: string;          // "mod_8f2a9b1c" — unique persistent identifier
-  name: string;        // current module name
-  path: string;        // directory path (relative to cwd in registry file)
+  id: string; // "mod_8f2a9b1c" — unique persistent identifier
+  name: string; // current module name
+  path: string; // directory path (relative to cwd in registry file)
   domain?: string;
-  hash: string;        // content-based signature (see nits-hash.ts)
+  hash: string; // content-based signature (see nits-hash.ts)
   status: NitsStatus;
-  createdAt: string;   // ISO 8601 timestamp (immutable)
-  lastSeen: string;    // ISO 8601 timestamp
+  createdAt: string; // ISO 8601 timestamp (immutable)
+  lastSeen: string; // ISO 8601 timestamp
   identifiers: string[];
   /**
    * Stable ID from the `.kerith` shadow file captured at the last reconciliation.
@@ -50,24 +50,24 @@ export interface NitsModuleRecord {
    * Optional so existing registry records without this field remain valid.
    * @since v1.5.5
    */
-  resolvedBy?: 'shadow-file' | 'path' | 'jaccard';
+  resolvedBy?: "shadow-file" | "path" | "jaccard";
 }
 
 export interface ReconcileOptions {
-  clonePolicy?: 'error' | 'new';
+  clonePolicy?: "error" | "new";
   isCi?: boolean;
   similarityThreshold?: number;
   stalePurgeCycles?: number;
   /** Structured logger. When provided, NITS diagnostic messages are routed
    * through the framework logger instead of raw `console.*` calls. */
-  log?: import('../types/index.js').Logger;
+  log?: import("./index.js").Logger;
 }
 
 export interface NitsRegistry {
-  _note?: string;       // Metadata for the human developer
+  _note?: string; // Metadata for the human developer
   project: string;
-  version: string;      // NITS schema version
-  lastCheck: string;    // ISO 8601 timestamp
+  version: string; // NITS schema version
+  lastCheck: string; // ISO 8601 timestamp
   modules: Record<string, NitsModuleRecord>; // key: id
   domains?: Record<string, { id: string; name: string; path: string }>;
 }
@@ -75,7 +75,7 @@ export interface NitsRegistry {
 export interface BrokenImport {
   file: string;
   line: number;
-  specifier: string;   // alias pointing to a legacy path
+  specifier: string; // alias pointing to a legacy path
 }
 
 export interface MovedModule {
@@ -86,23 +86,23 @@ export interface MovedModule {
 }
 
 export interface ReconciliationResult {
-  confirmed: NitsModuleRecord[];   // path + hash match
-  moved: MovedModule[];            // high confidence move (hash match)
-  candidates: MovedModule[];       // medium confidence move (name match)
-  stale: NitsModuleRecord[];       // disappeared from disk — unresolved (no shadow ID or shadow ID not seen in this cycle yet)
-  deleted: NitsModuleRecord[];     // confirmed delete — shadow ID absent from all discovered modules in this cycle
-  newModules: NitsModuleRecord[];  // no match in previous registry
+  confirmed: NitsModuleRecord[]; // path + hash match
+  moved: MovedModule[]; // high confidence move (hash match)
+  candidates: MovedModule[]; // medium confidence move (name match)
+  stale: NitsModuleRecord[]; // disappeared from disk — unresolved (no shadow ID or shadow ID not seen in this cycle yet)
+  deleted: NitsModuleRecord[]; // confirmed delete — shadow ID absent from all discovered modules in this cycle
+  newModules: NitsModuleRecord[]; // no match in previous registry
 }
 
 export interface DomainRegistryFile {
   version: string;
   domain: {
-    id: string;              // dom_xxxxxxxx
+    id: string; // dom_xxxxxxxx
     name: string;
     description?: string;
     registeredAt: string;
   };
-  modules: Record<string, NitsModuleRecord>;  // mismo shape que NitsRegistry.modules
+  modules: Record<string, NitsModuleRecord>; // mismo shape que NitsRegistry.modules
   submodules: DomainSubModuleRecord[];
   shared?: { path: string; alias: string; exists: boolean };
   lastCheck: string;
