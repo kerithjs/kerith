@@ -92,7 +92,9 @@ export async function runSyncPreload(logger: any, silent: boolean = false) {
                     entrypoint = userPkg.main;
                     found = true;
                 }
-            } catch {}
+            } catch {
+                // Ignore missing or malformed package.json
+            }
         }
         
         if (!found) {
