@@ -60,14 +60,12 @@ export function cleanCommand(): Command {
         try {
           config = await loadConfig();
         } catch {
-          // Fallback glob if config can't be read
-          config = { modules: 'src/modules/*' } as any;
+          // Fallback if config can't be read
+          config = { origin: 'src' } as any;
         }
 
-        const modulesGlob = (config as any).modules ?? 'src/modules/*';
-
-        // Discover all .kerith files under the modules root
-        const shadowPattern = modulesGlob.replace(/\/\*$/, '') + `/**/${SHADOW_FILE_NAME}`;
+        const scanRoot = (config as any).origin ?? (config as any).modules?.replace(/\/\*$/, '') ?? 'src';
+        const shadowPattern = `${scanRoot}/**/${SHADOW_FILE_NAME}`;
         const found = await fg(shadowPattern, { cwd, absolute: true, dot: true });
 
         if (found.length === 0) {

@@ -6,6 +6,7 @@ import {
   generateTsconfigKerith,
   writeTsconfigKerith,
   ensureTsconfigExtends,
+  resetTsconfigExtendsWarningForTest,
 } from '../../src/config/tsconfig-generator.js';
 import type { ResolvedKerithConfig } from '../../src/config/kerith-config.js';
 const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-tsconfig-test-'));
@@ -16,6 +17,7 @@ describe('tsconfig-generator', () => {
   beforeEach(() => {
     tmpDir = mkTmp();
     vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
+    resetTsconfigExtendsWarningForTest();
   });
 
   afterEach(() => {
@@ -283,6 +285,16 @@ describe('tsconfig-generator', () => {
         expect.stringContaining(hintFragment),
         expect.objectContaining({ _module: 'config' }),
       );
+    });
+
+    it('deduplicates warning on subsequent calls', async () => {
+      const mockLog = { warn: vi.fn(), info: vi.fn(), debug: vi.fn(), error: vi.fn() };
+      fs.writeFileSync(path.join(tmpDir, 'tsconfig.json'), '{}');
+
+      await ensureTsconfigExtends(tmpDir, mockLog as never);
+      await ensureTsconfigExtends(tmpDir, mockLog as never);
+
+      expect(mockLog.warn).toHaveBeenCalledTimes(1);
     });
 
     it('tsconfig.json with extends to another file emits log.warn (does not modify)', async () => {

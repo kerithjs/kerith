@@ -198,7 +198,7 @@ describe('CLI: sync-preload', () => {
     ).join('');
 
     expect(written).toContain('Pre-loader sync complete');
-    expect(written).toContain('kerith dev --watch src/app.');
+    expect(written).toContain('kerith dev --watch <your-entrypoint-file>');
   });
 
   it('exits with code 1 when loadConfig throws (invalid config)', async () => {

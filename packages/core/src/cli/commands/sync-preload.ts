@@ -73,7 +73,44 @@ export async function runSyncPreload(logger: any, silent: boolean = false) {
 
     if (!silent) {
         const ext = fs.existsSync(path.join(cwd, 'kerith.config.ts')) ? 'ts' : 'js';
-        logger.info(`✔ Pre-loader sync complete. Your package.json scripts should include: "dev": "kerith dev --watch src/app.${ext}"`, { _module: 'alias' });
+        
+        let entrypoint = '<your-entrypoint-file>';
+        const userPkgPath = path.join(cwd, 'package.json');
+        let found = false;
+        
+        if (fs.existsSync(userPkgPath)) {
+            try {
+                const userPkg = JSON.parse(fs.readFileSync(userPkgPath, 'utf8'));
+                if (userPkg.scripts?.dev && typeof userPkg.scripts.dev === 'string') {
+                    const match = userPkg.scripts.dev.match(/kerith\s+dev\s+(?:--watch\s+)?([^\s"']+)/);
+                    if (match && match[1]) {
+                        entrypoint = match[1];
+                        found = true;
+                    }
+                }
+                if (!found && userPkg.main) {
+                    entrypoint = userPkg.main;
+                    found = true;
+                }
+            } catch {}
+        }
+        
+        if (!found) {
+            const candidates = [
+                `src/app.${ext}`,
+                `src/index.${ext}`,
+                `src/server.${ext}`,
+                `src/main.${ext}`
+            ];
+            for (const candidate of candidates) {
+                if (fs.existsSync(path.join(cwd, candidate))) {
+                    entrypoint = candidate;
+                    break;
+                }
+            }
+        }
+        
+        logger.info(`✔ Pre-loader sync complete. Your package.json scripts should include: "dev": "kerith dev --watch ${entrypoint}"`, { _module: 'alias' });
     }
 }
 

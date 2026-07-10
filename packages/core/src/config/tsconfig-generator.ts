@@ -129,6 +129,12 @@ export async function writeTsconfigKerith(
 
 // ─── Extends checker ──────────────────────────────────────────────────────────
 
+let hasWarnedTsConfigExtends = false;
+
+export function resetTsconfigExtendsWarningForTest() {
+  hasWarnedTsConfigExtends = false;
+}
+
 /**
  * Reads the project's `tsconfig.json` and checks whether it already extends
  * `./tsconfig.kerith.json`. Never modifies the file — only informs via log.
@@ -158,7 +164,8 @@ export async function ensureTsconfigExtends(cwd: string, log?: Logger): Promise<
     (Array.isArray(extendsVal) &&
       extendsVal.includes('./tsconfig.kerith.json'));
 
-  if (!alreadyExtends) {
+  if (!alreadyExtends && !hasWarnedTsConfigExtends) {
     log?.warn(hint, { _module: 'config' });
+    hasWarnedTsConfigExtends = true;
   }
 }

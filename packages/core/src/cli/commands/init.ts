@@ -412,6 +412,7 @@ export default router
 
 function generateTsConfig(): string {
   return JSON.stringify({
+    extends: './tsconfig.kerith.json',
     compilerOptions: {
       target: 'ES2022',
       module: 'NodeNext',

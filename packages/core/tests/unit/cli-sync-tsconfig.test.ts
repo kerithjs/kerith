@@ -117,6 +117,19 @@ describe("CLI: sync-tsconfig", () => {
     fs.rmSync(path.resolve(process.cwd(), "src/modules"), { recursive: true, force: true });
   });
 
+  it("adds extends property to tsconfig if missing", async () => {
+    const initialConfig = { compilerOptions: { target: "es2022" } };
+    fs.writeFileSync(tsconfigPath, JSON.stringify(initialConfig, null, 2), "utf8");
+
+    vi.mocked(loadConfig).mockResolvedValue(makeBaseConfig() as any);
+    vi.mocked(fg).mockResolvedValue([]);
+
+    await runCommand(["--tsconfig", tsconfigPath]);
+
+    const result = JSON.parse(fs.readFileSync(tsconfigPath, "utf8"));
+    expect(result.extends).toBe("./tsconfig.kerith.json");
+  });
+
   it("overwrites existing paths without modifying the rest of tsconfig, preserving comments", async () => {
     // Note: To test comment preservation we don't use JSON.parse
     const commentedJson = `{

@@ -63,7 +63,7 @@ export function createSubModuleCommand() {
       const capName = name.charAt(0).toUpperCase() + name.slice(1);
 
       const files: Record<string, string> = {
-        [`index.${ext}`]: generateSubModuleIndex(name, options.module),
+        [`index.${ext}`]: generateSubModuleIndex(name),
         [`${name}.service.${ext}`]: generateSubModuleService(name, capName),
       };
 
@@ -94,14 +94,11 @@ export function createSubModuleCommand() {
     });
 }
 
-function generateSubModuleIndex(name: string, parentModule: string): string {
+function generateSubModuleIndex(name: string): string {
   return `
 import { SubModule } from '@kerith/core'
 
-SubModule('${name}', {
-  module: '${parentModule}',
-  exports: [],
-})
+SubModule('${name}')
 `;
 }
 
