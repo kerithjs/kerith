@@ -6,7 +6,6 @@ import {
   generateTsconfigKerith,
   writeTsconfigKerith,
   ensureTsconfigExtends,
-  resetTsconfigExtendsWarningForTest,
 } from '../../src/config/tsconfig-generator.js';
 import type { ResolvedKerithConfig } from '../../src/config/kerith-config.js';
 const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-tsconfig-test-'));
@@ -17,7 +16,6 @@ describe('tsconfig-generator', () => {
   beforeEach(() => {
     tmpDir = mkTmp();
     vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
-    resetTsconfigExtendsWarningForTest();
   });
 
   afterEach(() => {

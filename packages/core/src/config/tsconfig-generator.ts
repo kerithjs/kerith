@@ -129,12 +129,6 @@ export async function writeTsconfigKerith(
 
 // ─── Extends checker ──────────────────────────────────────────────────────────
 
-let hasWarnedTsConfigExtends = false;
-
-export function resetTsconfigExtendsWarningForTest() {
-  hasWarnedTsConfigExtends = false;
-}
-
 /**
  * Reads the project's `tsconfig.json` and checks whether it already extends
  * `./tsconfig.kerith.json`. Never modifies the file — only informs via log.
@@ -164,8 +158,21 @@ export async function ensureTsconfigExtends(cwd: string, log?: Logger): Promise<
     (Array.isArray(extendsVal) &&
       extendsVal.includes('./tsconfig.kerith.json'));
 
-  if (!alreadyExtends && !hasWarnedTsConfigExtends) {
-    log?.warn(hint, { _module: 'config' });
-    hasWarnedTsConfigExtends = true;
+  if (!alreadyExtends) {
+    const kerithDir = path.join(cwd, '.kerith');
+    const dedupFile = path.join(kerithDir, 'tsconfig-extends-warned');
+    const hasWarned = fs.existsSync(dedupFile);
+
+    if (!hasWarned) {
+      log?.warn(hint, { _module: 'config' });
+      try {
+        if (!fs.existsSync(kerithDir)) {
+          fs.mkdirSync(kerithDir, { recursive: true });
+        }
+        fs.writeFileSync(dedupFile, '1');
+      } catch {
+        // ignore errors (e.g. read-only filesystem)
+      }
+    }
   }
 }
