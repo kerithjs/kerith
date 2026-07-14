@@ -1,8 +1,8 @@
 ---
 name: Bug Report
 about: Report a problem in Kerith
-title: ""
-labels: needs-triage
+title: "[BUG] "
+labels: bug, needs-triage
 assignees: ""
 ---
 
@@ -29,4 +29,12 @@ assignees: ""
 
 ## Environment
 
-<!-- OS, package manager (npm/pnpm/yarn), monorepo or single project -->
+- OS:
+- Node.js version:
+- Package manager (npm/pnpm/yarn):
+- Monorepo or single project:
+
+## Cache / Shadow Files
+
+<!-- did you clear .kerith shadow files and/or bootstrap-cache.json before reproducing?
+     some issues (e.g. stale cache, module identity mismatches) only appear with stale state. -->

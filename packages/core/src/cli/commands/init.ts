@@ -264,6 +264,7 @@ function generateProjectStructure(projectName: string, ext: string, port: string
 
   if (ext === 'ts') {
     files['tsconfig.json'] = generateTsConfig();
+    files['tsconfig.kerith.json'] = generateTsConfigKerithBase();
   }
 
   return files;
@@ -408,6 +409,14 @@ router.get('/', (_req, res) => {
 
 export default router
 `;
+}
+
+function generateTsConfigKerithBase(): string {
+  return JSON.stringify({
+    // Base file that tsconfig.json always extends.
+    // Kept minimal on purpose — user-facing compiler options live in tsconfig.json.
+    compilerOptions: {},
+  }, null, 2);
 }
 
 function generateTsConfig(): string {

@@ -73,8 +73,13 @@ function formatPrettyLine(obj: Record<string, unknown>): string {
       ? ` ${AYU.muted}[${service}]${R}`
       : '';
 
-  // [module] / context: muted dim — disappears into background
-  const modStr = module ? ` ${AYU.muted}${DIM}[${module}]${R}` : '';
+  // ── Column widths (keeps the message column aligned across lines) ──────────
+  const MODULE_COL_WIDTH = 10; // covers typical names ([health]=8, [products]=10) without overflow
+
+  // [module] / context: muted dim — disappears into background, padded for alignment
+  const modStr = module
+    ? ` ${AYU.muted}${DIM}${`[${module}]`.padEnd(MODULE_COL_WIDTH + 2)}${R}`
+    : ' '.repeat(MODULE_COL_WIDTH + 3); // keep message column aligned even when no module
 
   // message: fg — the protagonist
   const msgStr = `${AYU.fg}${msg}${R}`;

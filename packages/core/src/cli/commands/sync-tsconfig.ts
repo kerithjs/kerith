@@ -17,6 +17,13 @@ export async function runSyncTsconfig(logger: any, tsconfigPath: string = 'tscon
         const cwd = process.cwd();
         const configPath = path.resolve(cwd, tsconfigPath);
 
+        // Defensive: create the base file if it doesn't exist so tsc never fails
+        // with TS5083 on projects created before this fix or with broken setups.
+        const kerithBasePath = path.join(path.dirname(configPath), 'tsconfig.kerith.json');
+        if (!fs.existsSync(kerithBasePath)) {
+          fs.writeFileSync(kerithBasePath, JSON.stringify({ compilerOptions: {} }, null, 2) + '\n', 'utf8');
+        }
+
         if (!fs.existsSync(configPath)) {
             if (!silent) {
                 logger.error(`Could not find ${tsconfigPath} at ${configPath}`, { _module: 'alias' });
