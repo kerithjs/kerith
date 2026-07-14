@@ -31,6 +31,7 @@ export interface ModuleScanEntry {
   exports: string[];
   shared: string[];
   options: Record<string, unknown>;
+  synthetic?: boolean;
 }
 
 export interface SubModuleScanEntry {
@@ -376,6 +377,7 @@ export async function scanModulesLegacy(
         exports: [],
         shared: [],
         options: {},
+        synthetic: true,
       });
     }
   }

@@ -65,6 +65,7 @@ export interface InternalRegistry extends KerithRegistryAdvanced {
     indexPath: string,
     nitsId: string,
     domain?: string,
+    fromScan?: boolean,
   ): void;
   registerDomain(entry: DomainRegistration): void;
   registerSubModule(entry: SubModuleRegistration): void;
@@ -124,6 +125,10 @@ export function createRegistry(): InternalRegistry {
   const modulesByName = new Map<string, string>();
   const modulesByPath = new Map<string, string>();
   const seededNitsIds = new Map<string, string>();
+  // Rastrea módulos pre-sembrados por registerModulesFromScan() (Step 03)
+  // para que la llamada real a Module() (Step 06) pueda finalizarlos/
+  // reemplazarlos en vez de chocar como DUPLICATE_MODULE.
+  const seededModulePaths = new Set<string>();
 
   const domains = new Map<string, DomainRegistration>();
   const domainsByPath = new Map<string, string>();
@@ -216,7 +221,29 @@ export function createRegistry(): InternalRegistry {
       indexPath: string,
       nitsId: string,
       domain?: string,
+      fromScan = false,
     ): void {
+      const normalizedPath = normalizePath(dirPath);
+      const key = buildModuleKey(name, domain);
+
+      // Si esta carpeta ya fue pre-sembrada desde el scanner, la llamada REAL
+      // de Module() la finaliza: se borra el placeholder y se sigue con el
+      // registro normal. Solo una segunda llamada REAL es un duplicado genuino.
+      const isFinalizingSeed = !fromScan && seededModulePaths.has(normalizedPath);
+
+      if (isFinalizingSeed) {
+        const staleId = modulesByPath.get(normalizedPath);
+        if (staleId) {
+          const stale = modules.get(staleId);
+          modules.delete(staleId);
+          if (stale) {
+            modulesByName.delete(buildModuleKey(stale.name, stale.domain));
+          }
+        }
+        modulesByPath.delete(normalizedPath);
+        seededModulePaths.delete(normalizedPath);
+      }
+
       if (modules.has(nitsId)) {
         throw new KerithError(
           'DUPLICATE_MODULE',
@@ -224,9 +251,6 @@ export function createRegistry(): InternalRegistry {
           `NITS ID: ${nitsId}, Name: ${name}, Path: ${dirPath}`,
         );
       }
-
-      const normalizedPath = normalizePath(dirPath);
-      const key = buildModuleKey(name, domain);
 
       if (modulesByPath.has(normalizedPath)) {
         const existingId = modulesByPath.get(normalizedPath)!;
@@ -261,6 +285,9 @@ export function createRegistry(): InternalRegistry {
       modules.set(nitsId, entry);
       modulesByName.set(key, nitsId);
       modulesByPath.set(normalizedPath, nitsId);
+      if (fromScan) {
+        seededModulePaths.add(normalizedPath);
+      }
     },
 
     registerDomain(entry: DomainRegistration): void {
@@ -504,6 +531,7 @@ export function createRegistry(): InternalRegistry {
       modules.clear();
       modulesByName.clear();
       modulesByPath.clear();
+      seededModulePaths.clear();
       seededNitsIds.clear();
       domains.clear();
       domainsByPath.clear();

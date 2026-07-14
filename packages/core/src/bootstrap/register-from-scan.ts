@@ -58,6 +58,10 @@ export function registerModulesFromScan(
   modules: ScanResult['modules'],
 ): void {
   for (const mod of modules) {
+    if (mod.synthetic) {
+      continue;
+    }
+
     if (registry.getRawModule(mod.name, mod.domain)) {
       continue;
     }
@@ -71,8 +75,9 @@ export function registerModulesFromScan(
       },
       mod.dirPath,
       mod.indexPath,
-      mod.dirPath, // synthetic id — this registry is throwaway, only used for `check`
+      mod.dirPath, // synthetic id — placeholder hasta que corra el Module() real
       mod.domain,
+      true, // fromScan — permite que el registro real de Module() lo finalice/reemplace
     );
   }
 }

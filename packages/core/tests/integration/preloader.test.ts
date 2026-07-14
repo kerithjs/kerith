@@ -119,6 +119,7 @@ describe('Pre-loader Integration (preloader.test.ts)', () => {
       // Should still work because createApp activates the resolver if not active
       const result = spawnSync('node', ['main.js'], { cwd: tmpDir, encoding: 'utf8' });
 
+      console.log('STDERR:', result.stderr);
       expect(result.stdout).toContain('BOOTSTRAPPED:1');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
