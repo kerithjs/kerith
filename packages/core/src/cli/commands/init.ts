@@ -285,6 +285,12 @@ function generatePackageJson(projectName: string, ext: string, kerithVersion: st
       dev: isTs 
         ? 'kerith dev --watch --clear --runtime tsx src/server.ts'
         : 'kerith dev --watch --clear src/server.js',
+      ...(isTs ? {
+        build: 'tsc',
+        start: 'NODE_ENV=production node dist/server.js'
+      } : {
+        start: 'NODE_ENV=production node src/server.js'
+      }),
       setup: 'kerith sync-preload && kerith sync-tsconfig',
       check: 'kerith check',
     },
@@ -429,6 +435,7 @@ function generateTsConfig(): string {
       outDir: './dist',
       rootDir: './src',
       strict: true,
+      verbatimModuleSyntax: true,
       esModuleInterop: true,
       skipLibCheck: true,
       forceConsistentCasingInFileNames: true,

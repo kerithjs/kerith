@@ -106,17 +106,26 @@ export function useHttpLogger(options: HttpLoggerOptions = {}): HttpLogger {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       return (err: any, req, res, next) => {
         const msg = `${req.method} ${req.originalUrl}`;
-        const status = err.status ?? 500;
+        const status = err?.status ?? 500;
 
-        // Log interno: siempre el mensaje real (para debugging)
-        logger.error({ err, status }, `${msg} — ${err.message}`);
+        // Normalize non-Error thrown values (strings, numbers, plain objects, etc.)
+        // so that .message is always defined in both the log and the HTTP response.
+        const normalizedErr = err instanceof Error
+          ? err
+          : new Error(typeof err === 'string' ? err : JSON.stringify(err));
+
+        // Log interno: siempre el mensaje real (para debugging).
+        // `raw` preserves the original thrown value for structured inspection.
+        const logMeta: Record<string, unknown> = { err: normalizedErr, status };
+        if (!(err instanceof Error)) logMeta.raw = err;
+        logger.error(logMeta, `${msg} — ${normalizedErr.message}`);
 
         if (!res.headersSent) {
           const sanitize = options.sanitizeErrors !== false;
           const isProduction = process.env.NODE_ENV === 'production';
           const clientMessage = (sanitize && isProduction)
             ? 'Internal server error'
-            : err.message;
+            : normalizedErr.message;
 
           res.status(status).json({ error: clientMessage });
         }

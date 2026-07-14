@@ -74,7 +74,9 @@ function formatPrettyLine(obj: Record<string, unknown>): string {
       : '';
 
   // ── Column widths (keeps the message column aligned across lines) ──────────
-  const MODULE_COL_WIDTH = 10; // covers typical names ([health]=8, [products]=10) without overflow
+  const MODULE_COL_WIDTH = process.env.KERITH_LOG_MODULE_WIDTH 
+    ? parseInt(process.env.KERITH_LOG_MODULE_WIDTH, 10) 
+    : 10; // covers typical names ([health]=8, [products]=10) without overflow
 
   // [module] / context: muted dim — disappears into background, padded for alignment
   const modStr = module

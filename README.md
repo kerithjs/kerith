@@ -267,6 +267,15 @@ kerith create-domain billing --shared
 # → creates domain + _shared in one step
 ```
 
+### Shared Best Practices
+
+1. **Type-only Barrels**: The `index.ts` of any `_shared` or `shared` directory should be used **strictly as a type barrel** (`export type { ... }`). Never re-export runtime logic or values from it.
+2. **Direct Imports**: Functions, constants, and classes should be imported **directly by their subpath** (e.g., `import { currency } from '@shop/shared/utils/currency.js'`). This works out-of-the-box thanks to Kerith's `preload-hook.ts` which automatically resolves aliases to their internal subpaths.
+3. **Why?**: `export type` is erased during compilation (zero cost, zero risk of cycles). A runtime barrel, however, evaluates all its top-level exports as soon as any single item is imported, which can easily introduce circular dependencies and unintended side-effects as the domain grows.
+4. **Verbatim Module Syntax**: It is highly recommended to enable `verbatimModuleSyntax: true` in your `tsconfig.json` (enabled by default in new projects scaffolded with `kerith init`). This enforces explicit `import type`/`export type` usage, preventing accidental runtime re-exports.
+
+> **Important**: The `tsx` runtime used by `kerith dev` transpiles files in isolation. If you accidentally re-export a type as a value in a shared barrel, `tsx` will not catch it, but it will break your production build when running `tsc`. For production, always use `tsc` for the full build and run the output via `node dist/server.js`.
+
 ### Enforcement
 
 `kerith check` detects shared violations automatically:
