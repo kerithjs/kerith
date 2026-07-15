@@ -868,6 +868,17 @@ These exist in `KerithErrorCode` for forward-compatibility, but no current code 
 
 All commands are available via the `kerith` binary (installed with the package) or `npx kerith <command>`.
 
+### `kerith generate <schematic> <name>` (alias `kerith g`)
+
+This is the recommended way to scaffold Kerith artifacts. It provides a familiar, Angular/Nest-like experience.
+
+```bash
+npx kerith generate module payments --domain billing --full
+npx kerith g mo users --service --routes
+```
+
+> **Note:** The `create-module`, `create-domain`, `create-submodule`, and `create-shared` commands are still available as direct equivalents and function identically.
+
 ### `kerith create-module <name>`
 
 ```bash
