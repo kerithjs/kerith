@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { createLogger, defaultLogHandler } from '../../core/logger.js';
 import { readShadowFile } from '../../nits/shadow-file.js';
+import { loadConfig } from '../../core/config.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -19,18 +20,33 @@ export function devCommand(): Command {
     .option('--watch', 'Run in watch mode using chokidar (does not delegate to node --watch)', false)
     .option('--clear', 'Clear the terminal on start and restart', false)
     .option('--runtime <runtime>', 'Runtime to use (node or tsx)', 'node')
+    .option('--force', 'Force cache invalidation before starting', false)
     .action(async (entrypoint, options) => {
         if (options.clear) {
             console.clear();
         }
         const logger = createLogger(defaultLogHandler, 'info', 'dev');
         const cwd = process.cwd();
+        const config = await loadConfig();
+
+        if (options.force) {
+            try {
+                const { CacheManager } = await import('../../cache/bootstrap-cache.js');
+                CacheManager.invalidate();
+                logger.info('Cache invalidado forzadamente (--force)', { _module: 'dev' });
+            } catch (err: any) {
+                logger.warn(`No se pudo invalidar el cache: ${err.message}`, { _module: 'dev' });
+            }
+        }
 
         try {
             const { runSyncPreload } = await import('./sync-preload.js');
-            const { runSyncTsconfig } = await import('./sync-tsconfig.js');
             await runSyncPreload(logger, true);
-            await runSyncTsconfig(logger, 'tsconfig.json', true);
+            // Only sync tsconfig in TS projects — JS projects have no tsconfig.json
+            if (fs.existsSync(path.join(cwd, 'tsconfig.json'))) {
+                const { runSyncTsconfig } = await import('./sync-tsconfig.js');
+                await runSyncTsconfig(logger, 'tsconfig.json', true);
+            }
         } catch (err: any) {
             logger.debug(`Auto-setup failed: ${err.message}`, { _module: 'dev' });
         }
@@ -154,10 +170,12 @@ export function devCommand(): Command {
         if (options.watch) {
             const { createWatcher } = await import('../lib/watcher.js');
 
-            const watcher = createWatcher({
-                paths: [path.join(cwd, 'src')],  // observe src/ by default
-                logger,
-                onRestart: async (changedPath) => {
+            let isRestartingInProgress = false;
+            let pendingRestartPath: string | null = null;
+
+            const executeRestart = async (changedPath: string) => {
+                isRestartingInProgress = true;
+                try {
                     if (options.clear) {
                         console.clear();
                     }
@@ -214,6 +232,35 @@ export function devCommand(): Command {
                     restarting = false;
 
                     child = startProcess();
+                } finally {
+                    isRestartingInProgress = false;
+                    if (pendingRestartPath) {
+                        const nextPath = pendingRestartPath;
+                        pendingRestartPath = null;
+                        executeRestart(nextPath);
+                    }
+                }
+            };
+
+            const watchPaths = [
+                path.join(cwd, config.origin ?? 'src'),
+                path.join(cwd, 'kerith.config.ts'),
+                path.join(cwd, 'kerith.config.js'),
+                path.join(cwd, 'kerith.config.mjs'),
+                path.join(cwd, 'kerith.config.cjs'),
+                path.join(cwd, 'kerith.config.cts'),
+            ];
+
+            const watcher = createWatcher({
+                paths: watchPaths,
+                logger,
+                onRestart: async (changedPath) => {
+                    if (isRestartingInProgress) {
+                        // Queue the restart. We only keep the latest path.
+                        pendingRestartPath = changedPath;
+                        return;
+                    }
+                    await executeRestart(changedPath);
                 }
             });
 

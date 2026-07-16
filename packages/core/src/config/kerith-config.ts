@@ -8,6 +8,7 @@ import {
   isValidAliasKey,
   RESERVED_ALIASES,
 } from './kerith-config.types.js';
+import { resolveQualityRules, type ResolvedQualityRules } from './rules.types.js';
 import { KerithError } from '../core/errors.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -22,6 +23,10 @@ export interface ResolvedKerithConfig extends KerithConfig {
    * e.g. `@config` → `/abs/path/to/src/config`
    */
   resolvedAliases: Map<string, string>;
+  /**
+   * Resolved quality rules (defaults applied, boolean false to null for metrics).
+   */
+  resolvedRules: ResolvedQualityRules;
 }
 
 // ─── Config candidate search order ───────────────────────────────────────────
@@ -86,10 +91,10 @@ export async function loadKerithConfig(
   }
 
   // ── 2.5 Validations ────────────────────────────────────────────────────────
-  if (fileConfig.moduleLoadTimeoutMs !== undefined) {
-    if (typeof fileConfig.moduleLoadTimeoutMs !== 'number' || fileConfig.moduleLoadTimeoutMs <= 0) {
-      logger('warn', `[kerith] moduleLoadTimeoutMs must be a positive number. Using default: 30000ms.`, { _module: 'config' });
-      fileConfig.moduleLoadTimeoutMs = 30000;
+  if (fileConfig.rules?.moduleLoadTimeout !== undefined && fileConfig.rules.moduleLoadTimeout !== false) {
+    if (typeof fileConfig.rules.moduleLoadTimeout !== 'number' || fileConfig.rules.moduleLoadTimeout <= 0) {
+      logger('warn', `[kerith] rules.moduleLoadTimeout must be a positive number. Using default: 30000ms.`, { _module: 'config' });
+      fileConfig.rules.moduleLoadTimeout = 30000;
     }
   }
 
@@ -148,8 +153,11 @@ export async function loadKerithConfig(
     resolvedAliases.set(key, absolutePath);
   }
 
+  const resolvedRules = resolveQualityRules(fileConfig?.rules, (fileConfig as any).moduleLoadTimeoutMs, logger);
+
   return {
     ...fileConfig,
     resolvedAliases,
+    resolvedRules,
   };
 }

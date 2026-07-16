@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
 import { createModuleCommand } from './commands/create-module.js'
+import { createDomainCommand } from './commands/create-domain.js'
+import { createSubModuleCommand } from './commands/create-submodule.js'
+import { createSharedCommand } from './commands/create-shared.js'
 import { syncTsconfigCommand } from './commands/sync-tsconfig.js'
 import { checkCommand } from './commands/check.js'
 import { devCommand } from './commands/dev.js'
 import { syncPreloadCommand } from './commands/sync-preload.js'
 import { cleanCommand } from './commands/clean.js'
+import { initCommand } from './commands/init.js'
+import { generateCommand } from './commands/generate.js'
 
 import fs from 'node:fs';
 
@@ -17,7 +22,12 @@ program
   .name('kerith')
   .description('Kerith CLI')
   .version(pkg.version)
+  .addCommand(initCommand())
+  .addCommand(generateCommand())
   .addCommand(createModuleCommand())
+  .addCommand(createDomainCommand())
+  .addCommand(createSubModuleCommand())
+  .addCommand(createSharedCommand())
   .addCommand(syncTsconfigCommand())
   .addCommand(checkCommand())
   .addCommand(devCommand())

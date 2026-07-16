@@ -19,6 +19,7 @@ vi.mock("node:fs");
 describe("Shadow File Identity System", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(fs.statSync).mockReturnValue({ isFile: () => true } as any);
   });
 
   describe("Types & Validation", () => {

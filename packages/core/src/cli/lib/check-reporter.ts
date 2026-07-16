@@ -1,7 +1,8 @@
 import type { ReconciliationResult } from '../../types/nits.js';
-import type { Violation, RelativeBoundaryViolation } from './violations.js';
-import { ViolationType, isErrorViolation } from './violations.js';
-import { type ModuleNode as ModuleGraphNode } from './graph-builder.js';
+import type { ResolvedQualityRules } from '../../config/rules.types.js';
+import type { Violation, RelativeBoundaryViolation, StandardViolation } from './violations.js';
+import { ViolationType, isHardViolation } from './violations.js';
+import { type ModuleNode as ModuleGraphNode, type DomainNode, type SubModuleNode } from './graph-builder.js';
 
 const R    = '\x1b[0m';
 const BOLD = '\x1b[1m';
@@ -37,14 +38,30 @@ export function blank(): void {
 export interface CheckReportData {
   version:      string;
   projectName:  string;
+  domains:      DomainNode[];
   modules:      ModuleGraphNode[];
+  submodules:   SubModuleNode[];
+  /** System violations — severity: 'error', always block. */
   violations:   Violation[];
+  /** Quality warnings — severity: 'warn', only block with --strict. */
+  qualityWarnings: Violation[];
+  /** Resolved rule values used during this run (shown in JSON output). */
+  resolvedRules?: ResolvedQualityRules;
   nitsResult:   ReconciliationResult | null;
+  /**
+   * Map of shared alias → list of module names that declare it in shared[].
+   * Populated in check.ts from the registry after entity registration.
+   */
+  sharedInfo?:  Record<string, string[]>;
+  coupling?: {
+    fanInMap:  Map<string, string[]>;
+    fanOutMap: Map<string, number>;
+  };
   options: {
     verbose:      boolean;
     strict:       boolean;
     moduleFilter?: string;
-    domain?:       string;  // v2.0.0 — always undefined in v1.x
+    levelFilter?:  string;
   };
 }
 
@@ -53,12 +70,17 @@ export function printCheckReport(data: CheckReportData): void {
   divider();
   
   if (data.options.verbose) {
+    if (data.resolvedRules) {
+      printRulesSummary(data.resolvedRules);
+    }
     printArchitectureWithIdentity(data);
   } else {
     printArchitectureSection(data);
   }
   
-  printViolationDetails(data.violations);
+  printSharedSection(data);
+  printViolationDetails(data.violations, data);
+  printQualityWarningsSection(data);
   
   if (!data.options.verbose) {
     printIdentitySection(data.nitsResult, data.modules);
@@ -77,13 +99,67 @@ export function printHeader(data: CheckReportData): void {
 export function printArchitectureSection(data: CheckReportData): void {
   sectionHeader('Architecture');
   
-  const maxLen = Math.min(20, Math.max(...data.modules.map(m => m.name.length), 4));
+  const { domains, modules, submodules } = data;
+  const hasDomains = domains && domains.length > 0;
 
-  for (const mod of data.modules) {
+  if (!hasDomains) {
+    // v1.x mode (without sections)
+    printNodeGroup(modules, data);
+    blank();
+    return;
+  }
+
+  const domainModules = modules.filter(m => m.domain);
+  const flatModules = modules.filter(m => !m.domain);
+
+  // Filter based on --level if present
+  const level = data.options.levelFilter;
+
+  if (!level || level === 'domain') {
+    sectionHeader('Domains');
+    printNodeGroup(domains, data);
+    blank();
+  }
+
+  if ((!level || level === 'module') && domainModules.length > 0) {
+    sectionHeader('Modules');
+    printNodeGroup(domainModules, data);
+    blank();
+  }
+
+  if ((!level || level === 'submodule') && submodules && submodules.length > 0) {
+    sectionHeader('SubModules');
+    printNodeGroup(submodules, data);
+    blank();
+  }
+
+  if ((!level || level === 'flat') && flatModules.length > 0) {
+    sectionHeader('Modules (flat)');
+    printNodeGroup(flatModules, data);
+    blank();
+  }
+}
+
+function printNodeGroup(nodes: (ModuleGraphNode | DomainNode | SubModuleNode)[], data: CheckReportData): void {
+  const getQualifiedName = (m: ModuleGraphNode | DomainNode | SubModuleNode) => {
+    if ('parentModule' in m) return `${m.domain}/${m.parentModule}/${m.name}`; // SubModule
+    if ('modules' in m) return m.name; // Domain
+    return m.domain ? `${m.domain}/${m.name}` : m.name; // Module
+  };
+  
+  if (nodes.length === 0) return;
+
+  const maxLen = Math.min(30, Math.max(...nodes.map(m => getQualifiedName(m).length), 4));
+
+  for (const mod of nodes) {
+    const qualifiedName = getQualifiedName(mod);
     const modViolations = data.violations.filter(v => v.module === mod.name);
     const hasCircular = modViolations.some(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
     const boundaryViolations = modViolations.filter(
       (v): v is RelativeBoundaryViolation => v.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION,
+    );
+    const _domainViolations = modViolations.filter(
+      v => v.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION,
     );
     const hasBoundary = boundaryViolations.length > 0;
     const isNew = data.nitsResult?.newModules?.some(n => n.name === mod.name) || false;
@@ -108,29 +184,101 @@ export function printArchitectureSection(data: CheckReportData): void {
       status = `${AYU.green}OK${R}`;
     }
 
-    const displayName = mod.name.length > 20 ? mod.name.slice(0, 19) + '…' : mod.name;
+    const displayName = qualifiedName.length > 30 ? qualifiedName.slice(0, 29) + '…' : qualifiedName;
     const paddedName = displayName.padEnd(maxLen + 2, ' ');
+    
+    // For domains, we don't usually have violations logged against the domain name itself, but if we do, show them.
+    // If it's a domain and has no violations, just print OK.
+    if ('modules' in mod && modViolations.length > 0) {
+       icon = `${AYU.red}✗${R}`;
+       status = `${AYU.red}${modViolations.length} violation(s)${R}`;
+    } else if ('modules' in mod) {
+       icon = `${AYU.green}✔${R}`;
+       status = `${AYU.green}OK${R}`;
+    }
+
     console.log(`  ${icon}  ${AYU.fg}${paddedName}${R} ${status}`);
 
-    for (const bv of boundaryViolations) {
-      const lineSuffix = bv.line !== undefined ? `:${bv.line}` : '';
-      const fileBase = bv.file.split(/[/\\]/).pop() || bv.file;
-      console.log(
-        `       ${AYU.dim}${fileBase}${lineSuffix}  →  import from '${bv.import}'${R}`,
-      );
-      console.log(`       ${AYU.dim}${bv.hint}${R}`);
+    // Print all violations for this node
+    for (const v of modViolations) {
+      if (v.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION) {
+        const bv = v as RelativeBoundaryViolation;
+        const lineSuffix = bv.line !== undefined ? `:${bv.line}` : '';
+        const fileBase = bv.file.split(/[/\\]/).pop() || bv.file;
+        console.log(
+          `       ${AYU.red}✗${R} ${AYU.dim}${fileBase}${lineSuffix}  →  import from '${bv.import}'${R}`,
+        );
+        console.log(`         ${AYU.dim}Suggestion: ${bv.hint}${R}`);
+      } else {
+        console.log(
+          `       ${AYU.red}✗${R} ${AYU.red}${v.type}:${R} ${AYU.dim}${v.message}${R}`,
+        );
+        if (v.suggestion) {
+          console.log(`         ${AYU.dim}Suggestion: ${v.suggestion}${R}`);
+        }
+      }
     }
   }
-  
-  blank();
 }
 
 export function printArchitectureWithIdentity(data: CheckReportData): void {
-  sectionHeader('Architecture + Identity');
+  const domains = data.domains || [];
+  const submodules = data.submodules || [];
+  const modules = data.modules || [];
+  const hasDomains = domains.length > 0;
 
-  const maxLen = Math.min(20, Math.max(...data.modules.map(m => m.name.length), 4));
+  if (!hasDomains) {
+    sectionHeader('Architecture + Identity');
+    printNodeGroupWithIdentity(modules, data);
+    blank();
+    printIdentityLegend();
+    return;
+  }
 
-  for (const mod of data.modules) {
+  const domainModules = modules.filter(m => m.domain);
+  const flatModules = modules.filter(m => !m.domain);
+  const level = data.options.levelFilter;
+
+  if (!level || level === 'domain') {
+    sectionHeader('Domains + Identity');
+    printNodeGroupWithIdentity(domains, data);
+    blank();
+  }
+
+  if ((!level || level === 'module') && domainModules.length > 0) {
+    sectionHeader('Modules + Identity');
+    printNodeGroupWithIdentity(domainModules, data);
+    blank();
+  }
+
+  if ((!level || level === 'submodule') && submodules && submodules.length > 0) {
+    sectionHeader('SubModules + Identity');
+    printNodeGroupWithIdentity(submodules, data);
+    blank();
+  }
+
+  if ((!level || level === 'flat') && flatModules.length > 0) {
+    sectionHeader('Modules (flat) + Identity');
+    printNodeGroupWithIdentity(flatModules, data);
+    blank();
+  }
+
+  printIdentityLegend();
+}
+
+function printNodeGroupWithIdentity(nodes: (ModuleGraphNode | DomainNode | SubModuleNode)[], data: CheckReportData): void {
+  const getQualifiedName = (m: ModuleGraphNode | DomainNode | SubModuleNode) => {
+    if ('parentModule' in m) return `${m.domain}/${m.parentModule}/${m.name}`; // SubModule
+    if ('modules' in m) return m.name; // Domain
+    return m.domain ? `${m.domain}/${m.name}` : m.name; // Module
+  };
+  
+  if (nodes.length === 0) return;
+
+  const maxLen = Math.min(30, Math.max(...nodes.map(m => getQualifiedName(m).length), 4));
+
+  for (const mod of nodes) {
+    const qualifiedName = getQualifiedName(mod);
     const modViolations = data.violations.filter(v => v.module === mod.name);
     const hasCircular = modViolations.some(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
     const hasBoundary = modViolations.some(
@@ -140,20 +288,20 @@ export function printArchitectureWithIdentity(data: CheckReportData): void {
     
     let icon: string;
     
-    if (hasCircular || hasBoundary) {
+    if (hasCircular || hasBoundary || modViolations.length > 0) {
       icon = `${AYU.red}✗${R}`;
-    } else if (modViolations.length > 0) {
-      icon = `${AYU.orange}⚠${R}`;
     } else if (isNew) {
       icon = `${AYU.cyan}◈${R}`;
     } else {
       icon = `${AYU.green}✔${R}`;
     }
 
-    const displayName = mod.name.length > 20 ? mod.name.slice(0, 19) + '…' : mod.name;
+    const displayName = qualifiedName.length > 30 ? qualifiedName.slice(0, 29) + '…' : qualifiedName;
     const paddedName = displayName.padEnd(maxLen + 2, ' ');
-    const idStr = mod.id || 'unknown';
-    const resolvedBy = isNew ? 'new' : (mod.resolvedBy || 'unknown');
+    const isModuleNode = !('modules' in mod) && !('parentModule' in mod);
+    const isDomainNode = 'modules' in mod;
+    const idStr = isModuleNode ? (mod.id || 'unknown') : (isDomainNode ? (mod.id || 'unknown') : '—');
+    const resolvedBy = isNew ? 'new' : (isModuleNode ? (mod.resolvedBy || 'unknown') : (isDomainNode ? 'shadow-file' : '—'));
     
     let methodColored: string;
     let hint = '';
@@ -177,9 +325,9 @@ export function printArchitectureWithIdentity(data: CheckReportData): void {
     
     console.log(`  ${icon}  ${AYU.fg}${paddedName}${R} ${AYU.dim}${idDisplay}${R} ${methodColored}${methodPad}${AYU.dim}]${R}${hint}`);
   }
-  
-  blank();
-  
+}
+
+function printIdentityLegend(): void {
   sectionHeader('Identity legend');
   console.log(`  ${AYU.green}shadow-file${R}  ${AYU.dim}— resolved by .kerith ID  (100% confidence)${R}`);
   console.log(`  ${AYU.orange}jaccard${R}      ${AYU.dim}— resolved by similarity   (heuristic)${R}`);
@@ -187,7 +335,7 @@ export function printArchitectureWithIdentity(data: CheckReportData): void {
   blank();
 }
 
-export function printViolationDetails(violations: Violation[]): void {
+export function printViolationDetails(violations: Violation[], data: CheckReportData): void {
   if (violations.length === 0) return;
 
   const modulesWithViolations = Array.from(new Set(violations.map(v => v.module)));
@@ -209,7 +357,23 @@ export function printViolationDetails(violations: Violation[]): void {
         continue;
       }
 
-      const isError = isErrorViolation(v);
+      if (v.type === ViolationType.FAN_OUT_HIGH && data.coupling) {
+        const imports = data.modules.find(m => m.name === v.module)?.declaredImports ?? [];
+        console.log(`    ${AYU.orange}⚠${R}  ${AYU.fg}${v.message}${R}`);
+        console.log(`       ${AYU.dim}Imported modules: ${imports.join(', ')}${R}`);
+        console.log(`       ${AYU.dim}Suggestion: ${v.suggestion}${R}`);
+        continue;
+      }
+
+      if (v.type === ViolationType.FAN_IN_HIGH && data.coupling) {
+        const consumers = data.coupling.fanInMap.get(v.module) ?? [];
+        console.log(`    ${AYU.orange}⚠${R}  ${AYU.fg}${v.message}${R}`);
+        console.log(`       ${AYU.dim}Consumed by: ${consumers.join(', ')}${R}`);
+        console.log(`       ${AYU.dim}Suggestion: ${v.suggestion}${R}`);
+        continue;
+      }
+
+      const isError = isHardViolation(v);
       const icon = isError ? `${AYU.red}✗${R}` : `${AYU.orange}⚠${R}`;
       
       console.log(`    ${icon}  ${AYU.fg}${v.message}${R}`);
@@ -226,6 +390,151 @@ export function printViolationDetails(violations: Violation[]): void {
     }
     blank();
   }
+}
+
+/**
+ * Renders the "Quality Warnings" section.
+ * Only shown when qualityWarnings is non-empty.
+ * --verbose adds extra detail lines per warning type.
+ */
+export function printQualityWarningsSection(data: CheckReportData): void {
+  const warnings = data.qualityWarnings ?? [];
+  if (warnings.length === 0) return;
+
+  sectionHeader('Quality Warnings');
+
+  // Group by module for display
+  const moduleNames = Array.from(new Set(warnings.map(w => w.module)));
+
+  for (const moduleName of moduleNames) {
+    const moduleWarnings = warnings.filter(w => w.module === moduleName);
+    const maxLen = Math.min(30, Math.max(...moduleNames.map(n => n.length), 4));
+    const paddedName = moduleName.padEnd(maxLen + 2, ' ');
+
+    for (const rawW of moduleWarnings) {
+      const w = rawW as StandardViolation;
+      console.log(`  ${AYU.orange}⚠${R}  ${AYU.fg}${paddedName}${R} ${AYU.orange}${w.type}${R}`);
+      console.log(`     ${AYU.dim}${w.message}${R}`);
+
+      // Verbose: extra per-type detail
+      if (data.options.verbose) {
+        if (w.type === ViolationType.FAN_IN_HIGH && data.coupling) {
+          const consumers = data.coupling.fanInMap.get(w.module) ?? [];
+          if (consumers.length > 0) {
+            console.log(`     ${AYU.dim}Consumers: ${consumers.join(', ')}${R}`);
+          }
+        }
+        if (w.type === ViolationType.FAN_OUT_HIGH) {
+          const imports = data.modules.find(m => m.name === w.module)?.declaredImports ?? [];
+          if (imports.length > 0) {
+            console.log(`     ${AYU.dim}Imports: ${imports.join(', ')}${R}`);
+          }
+        }
+        if (w.type === ViolationType.CIRCULAR_DEPENDENCY && w.cycle) {
+          console.log(`     ${AYU.dim}${w.cycle.join(' → ')}${R}`);
+        }
+      }
+
+      if (w.suggestion) {
+        console.log(`     ${AYU.dim}↳ ${w.suggestion}${R}`);
+      }
+    }
+  }
+  blank();
+}
+
+export function printSharedSection(data: CheckReportData): void {
+  const sharedViolations = data.violations.filter(
+    v => v.type === ViolationType.UNDECLARED_SHARED ||
+         v.type === ViolationType.UNUSED_SHARED ||
+         v.type === ViolationType.SHARED_SCOPE_VIOLATION
+  ) as Array<{ type: ViolationType; module: string; message: string; suggestion: string; location?: { file: string; line: number } }>;
+
+  // Only show if there are violations or --verbose is used
+  if (sharedViolations.length === 0 && !data.options.verbose) {
+    return;
+  }
+
+  sectionHeader('Shared');
+
+  // Group violations by type for display
+  const undeclared = sharedViolations.filter(v => v.type === ViolationType.UNDECLARED_SHARED);
+  const unused     = sharedViolations.filter(v => v.type === ViolationType.UNUSED_SHARED);
+  const scopeVios  = sharedViolations.filter(v => v.type === ViolationType.SHARED_SCOPE_VIOLATION);
+
+  // ── @shared global ──────────────────────────────────────────────────────────
+  const globalDeclaredBy = data.sharedInfo?.['@shared'] ?? [];
+  const globalHasAnyData = globalDeclaredBy.length > 0 ||
+    undeclared.some(v => v.message.includes('@shared')) ||
+    unused.some(v => v.message.includes('@shared'));
+
+  if (globalHasAnyData || data.options.verbose) {
+    const hasUndeclared = undeclared.some(v => v.message.includes('@shared'));
+    const hasUnused     = unused.some(v => v.message.includes('@shared'));
+
+    if (hasUndeclared) {
+      const violators = new Set(undeclared.filter(v => v.message.includes('@shared')).map(v => v.module));
+      const usageInfo = violators.size > 0 ? ` ${AYU.muted}— modules: ${[...violators].join(', ')}${R}` : '';
+      console.log(`  ${AYU.red}✗${R}  @shared          ${AYU.red}UNDECLARED_SHARED${R}${usageInfo}`);
+    } else if (hasUnused) {
+      const violators = new Set(unused.filter(v => v.message.includes('@shared')).map(v => v.module));
+      const usageInfo = violators.size > 0 ? ` ${AYU.muted}— modules: ${[...violators].join(', ')}${R}` : '';
+      console.log(`  ${AYU.orange}⚠${R}  @shared          ${AYU.orange}UNUSED_SHARED${R}${usageInfo}`);
+    } else {
+      // ✔ — show which modules declared @shared in verbose mode
+      const usageInfo = globalDeclaredBy.length > 0
+        ? ` ${AYU.muted}— used by: ${globalDeclaredBy.join(', ')}${R}`
+        : '';
+      console.log(`  ${AYU.green}✔${R}  @shared          ${AYU.green}OK${R}${usageInfo}`);
+    }
+  }
+
+  // ── Domain-scoped shared ─────────────────────────────────────────────────────
+  // In verbose mode show ALL registered domain-scoped entries (OK + violations).
+  // In non-verbose mode show only those with violations.
+  const knownDomainAliases = new Set<string>();
+
+  // Always include aliases that appear in violations
+  for (const v of [...undeclared, ...unused, ...scopeVios]) {
+    const m = v.message.match(/@([^/'"]+)\/shared/);
+    if (m) knownDomainAliases.add(`@${m[1]}/shared`);
+  }
+
+  // In verbose mode also include registered aliases from sharedInfo
+  if (data.options.verbose && data.sharedInfo) {
+    for (const alias of Object.keys(data.sharedInfo)) {
+      if (alias !== '@shared') knownDomainAliases.add(alias);
+    }
+  }
+
+  for (const alias of knownDomainAliases) {
+    const domainMatch = alias.match(/@([^/]+)\/shared/);
+    const domain = domainMatch?.[1];
+    if (!domain) continue;
+
+    const aliasVios  = [...undeclared, ...unused, ...scopeVios].filter(v => v.message.includes(alias));
+    const hasScopeVio = aliasVios.some(v => v.type === ViolationType.SHARED_SCOPE_VIOLATION);
+    const hasUndecl   = aliasVios.some(v => v.type === ViolationType.UNDECLARED_SHARED);
+    const hasUnused    = aliasVios.some(v => v.type === ViolationType.UNUSED_SHARED);
+    const aliasLabel   = alias.padEnd(18);
+
+    if (hasScopeVio) {
+      const violators = new Set(scopeVios.filter(v => v.message.includes(alias)).map(v => v.module));
+      const fromInfo = violators.size > 0 ? ` ${AYU.muted}— from: ${[...violators].join(', ')}${R}` : '';
+      console.log(`  ${AYU.red}✗${R}  ${aliasLabel} ${AYU.red}SCOPE_VIOLATION${R}${fromInfo}`);
+    } else if (hasUndecl) {
+      const violators = new Set(aliasVios.filter(v => v.type === ViolationType.UNDECLARED_SHARED).map(v => v.module));
+      console.log(`  ${AYU.red}✗${R}  ${aliasLabel} ${AYU.red}UNDECLARED_SHARED${R} ${AYU.muted}— modules: ${[...violators].join(', ')}${R}`);
+    } else if (hasUnused) {
+      const violators = new Set(aliasVios.filter(v => v.type === ViolationType.UNUSED_SHARED).map(v => v.module));
+      console.log(`  ${AYU.orange}⚠${R}  ${aliasLabel} ${AYU.orange}UNUSED_SHARED${R} ${AYU.muted}— modules: ${[...violators].join(', ')}${R}`);
+    } else {
+      // ✔ OK — implicit for {domain}
+      console.log(`  ${AYU.green}✔${R}  ${aliasLabel} ${AYU.green}OK${R} ${AYU.muted}— implicit for ${domain}${R}`);
+    }
+  }
+
+  blank();
 }
 
 export function printIdentitySection(nitsResult: ReconciliationResult | null, _modules: ModuleGraphNode[]): void {
@@ -257,32 +566,74 @@ export function printIdentitySection(nitsResult: ReconciliationResult | null, _m
   blank();
 }
 
+export function printRulesSummary(rules: ResolvedQualityRules): void {
+  sectionHeader('Rules');
+
+  const pad = (str: string) => str.padEnd(20, ' ');
+  const formatVal = (val: number | null | boolean, suffix = '') => {
+    if (val === null || val === false) return `${AYU.dim}— disabled${R}`;
+    if (val === true) return `${AYU.green}✔${R}`;
+    return `${AYU.fg}${val}${suffix}${R}`;
+  };
+
+  console.log(`    ${AYU.dim}${pad('maxModuleDepth')}${R} ${formatVal(rules.maxModuleDepth)}`);
+  console.log(`    ${AYU.dim}${pad('fanOutThreshold')}${R} ${formatVal(rules.fanOutThreshold)}`);
+  console.log(`    ${AYU.dim}${pad('fanInThreshold')}${R} ${formatVal(rules.fanInThreshold)}`);
+  console.log(`    ${AYU.dim}${pad('maxModuleFiles')}${R} ${formatVal(rules.maxModuleFiles)}`);
+  console.log(`    ${AYU.dim}${pad('maxSubModulesPerModule')}${R} ${formatVal(rules.maxSubModulesPerModule)}`);
+  console.log(`    ${AYU.dim}${pad('unusedExports')}${R} ${formatVal(rules.unusedExports)}`);
+  console.log(`    ${AYU.dim}${pad('circularDependency')}${R} ${formatVal(rules.circularDependency)}`);
+  console.log(`    ${AYU.dim}${pad('moduleLoadTimeout')}${R} ${formatVal(rules.moduleLoadTimeout, 'ms')}`);
+  console.log(`    ${AYU.dim}${pad('emptyModule')}${R} ${formatVal(rules.emptyModule)}`);
+  blank();
+}
+
 export function printSummary(data: CheckReportData): void {
   sectionHeader('Summary');
 
-  const totalModules = data.modules.length;
-  const okModules = data.modules.filter(m => data.violations.filter(v => v.module === m.name).length === 0).length;
+  const modules = data.modules || [];
+  const submodules = data.submodules || [];
+  const domains = data.domains || [];
+
+  const totalNodes = modules.length + submodules.length + domains.length;
+  const allNodes = [...modules, ...submodules, ...domains];
+  const okNodes = allNodes.filter(n => data.violations.filter(v => v.module === n.name).length === 0).length;
   const newModules = data.nitsResult?.newModules?.length || 0;
-  
-  const okDisplay = okModules > 0 ? `${okModules} ok` : '';
-  const newDisplay = newModules > 0 ? `${newModules} new` : '';
-  const modsSub = [okDisplay, newDisplay].filter(Boolean).join(', ');
-  const modsSubStr = modsSub ? `(${modsSub})` : '';
+  const okCount = Math.max(0, okNodes - newModules);
 
-  console.log(`    ${AYU.dim}modules${R}    ${AYU.fg}${totalModules.toString().padEnd(3)}${R} ${AYU.dim}${modsSubStr}${R}`);
+  let modDetail = `${okCount} ok`;
+  if (newModules > 0) modDetail += `, ${newModules} new`;
+  
+  console.log(`    ${AYU.dim}${'modules'.padEnd(12, ' ')}${R} ${AYU.fg}${totalNodes.toString().padEnd(3, ' ')}${R} ${AYU.dim}(${modDetail})${R}`);
 
-  const totalViolations = data.violations.length;
-  const errorViolations = data.violations.filter(isErrorViolation).length;
-  const warnViolations = totalViolations - errorViolations;
-  
-  const warnDisplay = warnViolations > 0 ? `${warnViolations} warn` : '';
-  const errDisplay = errorViolations > 0 ? `${errorViolations} error` : '';
-  const viosSub = [warnDisplay, errDisplay].filter(Boolean).join(', ');
-  const viosSubStr = viosSub ? `(${viosSub})` : '';
-  
-  const vioColor = totalViolations > 0 ? AYU.red : AYU.green;
-  
-  console.log(`    ${AYU.dim}violations${R} ${vioColor}${totalViolations.toString().padEnd(3)}${R} ${AYU.dim}${viosSubStr}${R}`);
+  const viosCount = data.violations.length;
+  const vioDetail = viosCount === 1 ? '1 error' : `${viosCount} errors`;
+  console.log(`    ${AYU.dim}${'violations'.padEnd(12, ' ')}${R} ${AYU.fg}${viosCount.toString().padEnd(3, ' ')}${R} ${AYU.dim}(${vioDetail})${R}`);
+
+  const warnCount = data.qualityWarnings?.length || 0;
+  if (warnCount > 0) {
+    const typeMapping: Record<string, string> = {
+      'module-depth-exceeded': 'depth',
+      'fan-in-high': 'fan-in',
+      'fan-out-high': 'fan-out',
+      'module-too-large': 'size',
+      'too-many-submodules': 'submodules',
+      'unused-export': 'exports',
+      'circular-dependency': 'circular',
+      'empty-module': 'empty'
+    };
+    
+    const warnTypes = new Map<string, number>();
+    for (const w of data.qualityWarnings!) {
+      const shortName = typeMapping[w.type] || w.type;
+      warnTypes.set(shortName, (warnTypes.get(shortName) || 0) + 1);
+    }
+    const details = Array.from(warnTypes.entries()).map(([t, c]) => `${c} ${t}`).join(', ');
+    
+    console.log(`    ${AYU.dim}${'warnings'.padEnd(12, ' ')}${R} ${AYU.fg}${warnCount.toString().padEnd(3, ' ')}${R} ${AYU.dim}(${details})${R}`);
+  } else {
+    console.log(`    ${AYU.dim}${'warnings'.padEnd(12, ' ')}${R} ${AYU.fg}0${R}`);
+  }
 
   if (data.nitsResult) {
     const missingShadow = data.modules.filter(m => {
@@ -292,13 +643,13 @@ export function printSummary(data: CheckReportData): void {
     
     let identityDisplay: string;
     if (missingShadow > 0) {
-      identityDisplay = `${AYU.orange}⚠   ${missingShadow} missing .kerith${R}`;
+      identityDisplay = `${AYU.orange}⚠${R}   ${AYU.orange}${missingShadow} missing .kerith${R}`;
     } else {
-      identityDisplay = `${AYU.green}✔   all modules tracked${R}`;
+      identityDisplay = `${AYU.green}✔${R}   ${AYU.green}all modules tracked${R}`;
     }
-    console.log(`    ${AYU.dim}identity${R}   ${identityDisplay}`);
+    console.log(`    ${AYU.dim}${'identity'.padEnd(12, ' ')}${R} ${identityDisplay}`);
   } else {
-    console.log(`    ${AYU.dim}identity${R}   ${AYU.dim}— disabled${R}`);
+    console.log(`    ${AYU.dim}${'identity'.padEnd(12, ' ')}${R} ${AYU.dim}— disabled${R}`);
   }
   
   blank();
@@ -311,8 +662,18 @@ export function printNextStep(data: CheckReportData): void {
     console.log(`  ${AYU.dim}run${R} ${AYU.lime}kerith check --verbose${R} ${AYU.dim}to view IDs and resolution method${R}`);
   }
   
-  if (data.violations.length > 0) {
+  const hardViolations = data.violations.filter(v => v.severity === 'error');
+  const warnViolations = data.violations.filter(v => v.severity === 'warn');
+  const qualityWarnings = data.qualityWarnings ?? [];
+  const willBlock = data.options.strict
+    ? (hardViolations.length > 0 || warnViolations.length > 0 || qualityWarnings.length > 0)
+    : hardViolations.length > 0;
+
+  if (willBlock) {
     console.log(`  ${AYU.dim}exit 1 — violations found${R}`);
+  } else if (warnViolations.length > 0 || qualityWarnings.length > 0) {
+    const totalWarn = warnViolations.length + qualityWarnings.length;
+    console.log(`  ${AYU.dim}exit 0 — ${totalWarn} warning${totalWarn === 1 ? '' : 's'} (use --strict to block)${R}`);
   } else {
     console.log(`  ${AYU.dim}exit 0 — no violations found${R}`);
   }

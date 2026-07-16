@@ -1,9 +1,8 @@
 import fg from 'fast-glob';
 import path from 'node:path';
-import fs from 'node:fs';
+
 import { 
-  extractModuleDeclaration,
-  extractIdentifierCall
+  extractMultipleIdentifierCalls
 } from './ast-parser.js';
 import {
   buildActiveAliasesFromConfig,
@@ -11,6 +10,7 @@ import {
   type ImportFound,
 } from './import-scanner.js';
 import type { KerithConfig } from '../../config/kerith-config.types.js';
+import { scanFromConfig } from '../../bootstrap/scanner.js';
 
 export interface BaseNode {
   name: string;
@@ -25,6 +25,8 @@ export interface ModuleNode extends BaseNode {
   id?: string;
   domain?: string;
   submodules?: string[];
+  /** Identifiers explicitly listed in Module({ exports: [...] }). */
+  declaredExports: string[];
   /** How identity was resolved in the last NITS reconciliation cycle. @since v1.5.5 */
   resolvedBy?: 'shadow-file' | 'path' | 'jaccard';
 }
@@ -39,85 +41,130 @@ export interface DomainNode {
   dirPath: string;
   indexPath: string;
   modules: ModuleNode[];
+  id?: string;
 }
 
 export interface ModuleGraph {
   domains: DomainNode[];
   modules: ModuleNode[];
+  submodules: SubModuleNode[];
 }
 
 export async function buildModuleGraph(config: KerithConfig, cwd: string): Promise<ModuleGraph> {
-  const modulesGlob = config.modules || 'src/modules/*';
-  const dirs = await fg(modulesGlob, { cwd, onlyDirectories: true, absolute: true });
-  const nodes: ModuleNode[] = [];
-  const moduleNames: string[] = [];
+  const scanResult = await scanFromConfig(config, cwd);
+  const moduleNames = scanResult.modules.map(m => m.name);
+  const domainNames = scanResult.domains.map(d => d.name);
+  const activeAliases = buildActiveAliasesFromConfig(config, moduleNames, domainNames);
 
-  for (const dirPath of dirs) {
-    let indexPath = path.join(dirPath, 'index.ts');
-    if (!fs.existsSync(indexPath)) {
-      indexPath = path.join(dirPath, 'index.js');
-      if (!fs.existsSync(indexPath)) continue;
-    }
-    const declaration = extractModuleDeclaration(indexPath);
-    if (declaration) moduleNames.push(declaration.name);
+  // ─── Single global glob (O(1) filesystem traversal) ──────────────────────
+  // Collect ALL source files across the whole project once, then filter
+  // in-memory per module/submodule. This avoids the O(n) glob-per-module
+  // pattern that was hurting performance on large projects.
+  const allSourceFiles = await fg('**/*.{ts,js,mts,mjs}', {
+    cwd,
+    absolute: true,
+    onlyFiles: true,
+    ignore: ['**/*.test.*', '**/*.spec.*', '**/*.d.ts', '**/node_modules/**'],
+  });
+
+  // Pre-normalise paths once so the hot-path startsWith() comparisons are cheap.
+  const allSourceFilesNorm = allSourceFiles.map(f => ({ abs: f, norm: path.normalize(f) }));
+
+  function getFilesUnderDir(dirPath: string): string[] {
+    const normDir = path.normalize(dirPath) + path.sep;
+    return allSourceFilesNorm
+      .filter(f => f.norm.startsWith(normDir))
+      .map(f => f.abs);
   }
 
-  const activeAliases = buildActiveAliasesFromConfig(config, moduleNames);
+  const targetCallees = ['Service', 'Repository', 'Schema', 'Controller'];
 
-  for (const dirPath of dirs) {
-    let indexPath = path.join(dirPath, 'index.ts');
-    if (!fs.existsSync(indexPath)) {
-      indexPath = path.join(dirPath, 'index.js');
-      if (!fs.existsSync(indexPath)) {
-        continue;
-      }
-    }
-
-    const declaration = extractModuleDeclaration(indexPath);
-    if (!declaration) {
-      continue;
-    }
-
+  async function buildNodeData(
+    dirPath: string,
+    indexPath: string,
+  ): Promise<{ actualImports: ImportFound[]; internalIdentifiers: string[] }> {
     const actualImports: ImportFound[] = [];
     const internalIdentifiers: string[] = [];
-    // NOTE: 'Controller' excluded — its first arg is an HTTP route, not a semantic
-    // domain identifier. See BUG-1 in nits-hash.ts for full rationale.
-    const targetCallees = ['Service', 'Repository', 'Schema'];
 
-    // Also check index file for identifiers
-    for (const callee of targetCallees) {
-      const result = extractIdentifierCall(indexPath, callee);
-      if (result) internalIdentifiers.push(result.name);
+    // Index file is scanned separately for identifier calls (not for imports).
+    const indexResults = await extractMultipleIdentifierCalls(indexPath, targetCallees);
+    for (const result of indexResults) {
+      internalIdentifiers.push(result.name);
     }
 
-    const moduleFiles = await fg('**/*.{ts,js,mts,mjs}', {
-      cwd: dirPath,
-      absolute: true,
-      ignore: ['**/*.test.*', '**/*.spec.*', '**/*.d.ts', 'index.*']
+    // Filter the global file list — no extra I/O.
+    const moduleFiles = getFilesUnderDir(dirPath).filter(f => {
+      const rel = path.relative(path.normalize(dirPath), path.normalize(f));
+      // Exclude index files (same as before).
+      return !rel.match(/^index\./);
     });
 
-    for (const file of moduleFiles) {
+    const fileResults = await Promise.all(moduleFiles.map(async file => {
       const fileImports = extractModuleImports(file, activeAliases);
+      const fileIdentifiers = await extractMultipleIdentifierCalls(file, targetCallees);
+      return { fileImports, fileIdentifiers };
+    }));
+
+    for (const { fileImports, fileIdentifiers } of fileResults) {
       actualImports.push(...fileImports);
-      
-      for (const callee of targetCallees) {
-        const result = extractIdentifierCall(file, callee);
-        if (result) internalIdentifiers.push(result.name);
+      for (const result of fileIdentifiers) {
+        internalIdentifiers.push(result.name);
       }
     }
 
+    return { actualImports, internalIdentifiers };
+  }
+
+  const nodes: ModuleNode[] = [];
+  const nodeDataResults = await Promise.all(scanResult.modules.map(mod => buildNodeData(mod.dirPath, mod.indexPath)));
+  for (let i = 0; i < scanResult.modules.length; i++) {
+    const mod = scanResult.modules[i];
+    const { actualImports, internalIdentifiers } = nodeDataResults[i];
+
+    const submodules = scanResult.submodules
+      .filter(sub => sub.parentModule === mod.name && sub.domain === mod.domain)
+      .map(sub => sub.name);
+
     nodes.push({
-      name: declaration.name,
-      dirPath,
-      indexPath,
-      declaredImports: declaration.imports,
+      name: mod.name,
+      dirPath: mod.dirPath,
+      indexPath: mod.indexPath,
+      domain: mod.domain,
+      submodules: submodules.length > 0 ? submodules : undefined,
+      declaredImports: mod.imports,
+      declaredExports: mod.exports,
       actualImports,
-      internalIdentifiers
+      internalIdentifiers,
     });
   }
 
+  const subNodes: SubModuleNode[] = [];
+  const subNodeDataResults = await Promise.all(scanResult.submodules.map(sub => buildNodeData(sub.dirPath, sub.indexPath)));
+  for (let i = 0; i < scanResult.submodules.length; i++) {
+    const sub = scanResult.submodules[i];
+    const { actualImports, internalIdentifiers } = subNodeDataResults[i];
+    subNodes.push({
+      name: sub.name,
+      dirPath: sub.dirPath,
+      indexPath: sub.indexPath,
+      parentModule: sub.parentModule,
+      domain: sub.domain,
+      declaredImports: [], // SubModules do not declare imports
+      actualImports,
+      internalIdentifiers,
+    });
+  }
+
+  const domainNodes: DomainNode[] = scanResult.domains.map(d => ({
+    name: d.name,
+    dirPath: d.dirPath,
+    indexPath: d.indexPath,
+    modules: nodes.filter(m => m.domain === d.name),
+  }));
+
   return {
-    domains: [],
-    modules: nodes
+    domains: domainNodes,
+    modules: nodes,
+    submodules: subNodes,
   };
 }

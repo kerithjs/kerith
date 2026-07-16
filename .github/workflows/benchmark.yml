@@ -1,0 +1,60 @@
+name: Benchmark
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run benchmarks
+        run: npm run bench -- --save
+        working-directory: packages/core
+      
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: packages/core/benchmarks/results.json
+          retention-days: 30
+      
+      - name: Download previous results (for comparison)
+        if: github.event_name == 'pull_request'
+        uses: actions/download-artifact@v4
+        with:
+          name: benchmark-results
+          path: previous-results
+        continue-on-error: true
+      
+      - name: Compare with baseline
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -f "previous-results/results.json" ]; then
+            # Get the git hash from the previous results
+            BASELINE_HASH=$(cat previous-results/results.json | jq -r '.history[-1].gitHash')
+            echo "Comparing against baseline: $BASELINE_HASH"
+            npm run bench -- --compare $BASELINE_HASH
+          else
+            echo "No previous results found for comparison"
+          fi
+        working-directory: packages/core
+        continue-on-error: true

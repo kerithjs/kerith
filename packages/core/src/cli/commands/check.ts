@@ -4,13 +4,19 @@ import fs from 'node:fs';
 import pc from 'picocolors';
 import { loadConfig } from '../../core/config.js';
 import { buildModuleGraph } from '../lib/graph-builder.js';
-import { detectViolations, ViolationType } from '../lib/violations.js';
+import { detectViolations, ViolationType, isHardViolation } from '../lib/violations.js';
+import { runQualityRules } from '../lib/rules-engine.js';
 import { printCheckReport, AYU, type CheckReportData } from '../lib/check-reporter.js';
 import { loadNitsRegistry, saveNitsRegistry, initNitsRegistry, inferProjectName, scanShadowFiles } from '../../nits/nits-store.js';
 import { createLogger, defaultLogHandler } from '../../core/logger.js';
 import { reconcile, buildUpdatedNitsRegistry, buildNitsIdMap } from '../../nits/nits-reconciler.js';
 import { computeModuleHash } from '../../nits/nits-hash.js';
 import type { DiscoveredModule, NitsModuleRecord } from '../../types/nits.js';
+import { checkSharedAccess } from '../lib/shared-checker.js';
+import { createRegistry, registryContext } from '../../core/registry.js';
+import { registerEntitiesFromScan } from '../../bootstrap/register-from-scan.js';
+import { scanFromConfig } from '../../bootstrap/scanner.js';
+import { loadDomainRegistry } from '../../nits/domain-store.js';
 
 function resolveCorePkgVersion(): string | null {
   const depths = [
@@ -39,6 +45,7 @@ export function checkCommand(): Command {
     .description('Analyzes the project structural integrity to detect architectural violations')
     .option('--strict', 'Exit with code 1 if any violation is found', false)
     .option('--module <moduleName>', 'Filter analysis by a specific module')
+    .option('--level <level>', 'Filter output section: domain | module | submodule | flat')
     .option('--format <format>', 'Output format: text or json', 'text')
     .option('--no-circular', 'Skip circular dependency detection')
     .option('--verbose', 'Show verbose output including internal NITS IDs')
@@ -49,11 +56,11 @@ export function checkCommand(): Command {
         const logger = createLogger(defaultLogHandler, 'info', 'check');
 
         // Pre-loader verification
-        try {
-            const preloadPath = path.join(cwd, '.kerith', 'preload.js');
-            if (!fs.existsSync(preloadPath)) {
-                console.log(`\n  ${AYU.orange}⚠  Pre-loader not detected. Run "npx kerith sync-preload" to optimize alias resolution.\x1b[0m\n`);
-            } else {
+        const preloadPath = path.join(cwd, '.kerith', 'preload.js');
+        if (!fs.existsSync(preloadPath)) {
+            console.log(`\n  ${AYU.orange}⚠  Pre-loader not detected. Run "npx kerith sync-preload" to optimize alias resolution.\x1b[0m\n`);
+        } else {
+            try {
                 const content = fs.readFileSync(preloadPath, 'utf8');
                 const versionMatch = content.match(/_version:\s*'([^']+)'/);
                 if (versionMatch) {
@@ -64,12 +71,25 @@ export function checkCommand(): Command {
                         console.log(`\n  ${AYU.orange}⚠  Pre-loader version mismatch (found v${preloadVersion}, core is v${currentVersion}). Run "npx kerith sync-preload" to update.\x1b[0m\n`);
                     }
                 }
+            } catch (err: any) {
+                console.log(`\n  ${AYU.orange}⚠  Failed to read pre-loader: ${err.message}\x1b[0m\n`);
             }
-        } catch (err: any) {
-            console.log(`\n  ${AYU.orange}⚠  Failed to verify pre-loader status: ${err.message}\x1b[0m\n`);
         }
         
         const graph = await buildModuleGraph(config, cwd);
+        
+        // Load domain IDs from their registries
+        for (const domain of graph.domains) {
+          try {
+            const domainRegistry = await loadDomainRegistry(domain.dirPath);
+            if (domainRegistry) {
+              domain.id = domainRegistry.domain.id;
+            }
+          } catch (err: any) {
+            logger.warn(`Failed to load domain registry for "${domain.name}": ${err.message}`);
+          }
+        }
+        
         let nitsResult: any = null;
 
         // NITS Reconciliation (Identity Tracking)
@@ -84,7 +104,7 @@ export function checkCommand(): Command {
               discovered.push({
                 name: node.name,
                 dirPath: node.dirPath,
-                domain: undefined,
+                domain: node.domain,
                 identifiers,
                 hash,
                 shadowFile: shadowFileMap.get(node.dirPath),
@@ -93,13 +113,17 @@ export function checkCommand(): Command {
 
             const oldRegistry = await loadNitsRegistry(cwd) || initNitsRegistry(inferProjectName(cwd));
 
-            // Layer 1 Filter: Purge compilation artifacts (e.g. dist/) from registry
-            const rawGlobs = Array.isArray(config.modules) ? config.modules : 
-              (typeof config.modules === 'string' && config.modules.startsWith('{') && config.modules.endsWith('}')) 
-                ? config.modules.slice(1, -1).split(',') 
-                : [config.modules];
-                
-            const modulesRoots = rawGlobs.map(g => path.resolve(cwd, g.split('*')[0]).replace(/\\/g, '/'));
+            let modulesRoots: string[] = [];
+            if (config.origin) {
+              modulesRoots = [path.resolve(cwd, config.origin).replace(/\\/g, '/')];
+            } else if (config.modules) {
+              const rawGlobs = Array.isArray(config.modules) ? config.modules : 
+                (typeof config.modules === 'string' && config.modules.startsWith('{') && config.modules.endsWith('}')) 
+                  ? config.modules.slice(1, -1).split(',') 
+                  : [config.modules];
+                  
+              modulesRoots = rawGlobs.map(g => path.resolve(cwd, g.split('*')[0]).replace(/\\/g, '/'));
+            }
             
             for (const [id, mod] of Object.entries(oldRegistry.modules)) {
               const absPath = path.resolve(cwd, mod.path).replace(/\\/g, '/');
@@ -111,7 +135,8 @@ export function checkCommand(): Command {
             }
 
             const result = reconcile(discovered, oldRegistry, cwd, {
-              similarityThreshold: config.nits.similarityThreshold
+              similarityThreshold: config.nits.similarityThreshold,
+              stalePurgeCycles: config.resolvedRules.stalePurgeCycles
             });
             nitsResult = result;
             const updatedRegistry = buildUpdatedNitsRegistry(result, oldRegistry.project);
@@ -159,20 +184,79 @@ export function checkCommand(): Command {
           }
         }
 
-        let violations = detectViolations(graph, cwd);
+        // Build registry for shared checking
+        const registry = createRegistry();
+        const scanResult = await scanFromConfig(config, cwd);
+        registryContext.run(registry, () => {
+          registerEntitiesFromScan(registry, scanResult);
+        });
 
-        if (options.circular === false) { 
-          violations = violations.filter(v => v.type !== ViolationType.CIRCULAR_DEPENDENCY);
+        let systemViolations = detectViolations(graph, cwd);
+        
+        // Add shared access violations (system level)
+        const sharedViolations = await checkSharedAccess(graph, registry, cwd);
+        systemViolations = [...systemViolations, ...sharedViolations];
+
+        // Run all quality rules via the unified engine
+        const qualityWarnings = runQualityRules(graph, config.resolvedRules);
+
+        // Build coupling maps for reporter (fan-in/fan-out display)
+        const fanInMap = new Map<string, string[]>();
+        const fanOutMap = new Map<string, number>();
+        for (const node of graph.modules) {
+          if (!fanInMap.has(node.name)) fanInMap.set(node.name, []);
+          fanOutMap.set(node.name, node.declaredImports.length);
+          for (const imp of node.declaredImports) {
+            if (!fanInMap.has(imp)) fanInMap.set(imp, []);
+            fanInMap.get(imp)!.push(node.name);
+          }
         }
 
-        const hasBoundaryViolation = violations.some(
-          v => v.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION,
-        );
-        const hasBlockingViolations =
-          hasBoundaryViolation || (options.strict && violations.length > 0);
+        // Build sharedInfo: alias → module names that declare it in shared[]
+        const sharedInfo: Record<string, string[]> = {};
+        for (const entry of registry.getAllShared()) {
+          sharedInfo[entry.alias] = [];
+        }
+        for (const mod of graph.modules) {
+          const rawMod = registry.getRawModule(mod.name, mod.domain);
+          for (const sharedAlias of rawMod?.shared ?? []) {
+            if (sharedInfo[sharedAlias] !== undefined) {
+              sharedInfo[sharedAlias].push(mod.name);
+            }
+          }
+        }
+
+        if (options.circular === false) { 
+          // Remove circular from quality warnings if --no-circular passed
+          const filtered = qualityWarnings.filter(v => v.type !== ViolationType.CIRCULAR_DEPENDENCY);
+          if (filtered.length !== qualityWarnings.length) {
+            qualityWarnings.length = 0;
+            qualityWarnings.push(...filtered);
+          }
+        }
+
+        // System violations → always exit 1.
+        // Quality warnings  → exit 0 normally, exit 1 with --strict.
+        const hasSystemErrors = systemViolations.some(v => isHardViolation(v));
+        const hasQualityIssues = qualityWarnings.length > 0;
+        const hasBlockingViolations = hasSystemErrors || (options.strict && hasQualityIssues);
 
         if (options.format === 'json') {
-          console.log(JSON.stringify({ domains: graph.domains, modules: nodes, violations }, null, 2));
+          const couplingJson: Record<string, { fanOut: number; fanIn: number }> = {};
+          for (const node of graph.modules) {
+            couplingJson[node.name] = {
+              fanOut: fanOutMap.get(node.name) ?? 0,
+              fanIn:  (fanInMap.get(node.name) ?? []).length,
+            };
+          }
+          console.log(JSON.stringify({ 
+            domains: graph.domains, 
+            modules: nodes, 
+            violations: systemViolations,
+            qualityWarnings,
+            rules: config.resolvedRules,
+            coupling: couplingJson
+          }, null, 2));
           if (hasBlockingViolations) {
             throw new Error('Structural integrity violations found (JSON format)');
           }
@@ -182,13 +266,20 @@ export function checkCommand(): Command {
         const reportData: CheckReportData = {
           version:     resolveCorePkgVersion() ?? 'unknown',
           projectName: inferProjectName(cwd),
+          domains:     graph.domains,
           modules:     nodes,
-          violations,
+          submodules:  graph.submodules || [],
+          violations:  systemViolations,
+          qualityWarnings,
+          resolvedRules: config.resolvedRules,
           nitsResult,
+          sharedInfo,
+          coupling: { fanInMap, fanOutMap },
           options: {
             verbose:      options.verbose ?? false,
             strict:       options.strict  ?? false,
             moduleFilter: options.module,
+            levelFilter:  options.level,
           },
         };
 

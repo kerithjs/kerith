@@ -120,7 +120,7 @@ async function runCycle(
     discovered.push({ name, dirPath, identifiers, hash, shadowFile: shadowMap.get(dirPath) });
   }
 
-  const result   = reconcile(discovered, previous, cwd);
+  const result   = reconcile(discovered, previous, cwd, { stalePurgeCycles: 5 });
   const registry = buildUpdatedNitsRegistry(result, 'test');
   writeRegistry(cwd, registry);
   return { result, registry };
@@ -190,17 +190,27 @@ describe('Ciclo completo de borrado', () => {
       expect(r2.stale[0].missingCount).toBe(2);
       expect(reg2.modules[ID_PAYMENTS]).toBeDefined();
 
-      // ── Ciclo 3: missingCount≥3 → confirmed delete → purge ────────────────
+      // ── Ciclo 3: sigue ausente (missingCount→3) ───────────────────────────
       const { result: r3, registry: reg3 } = await runCycle([], reg2, cwd);
+      expect(r3.deleted).toHaveLength(0);
+      expect(r3.stale[0].missingCount).toBe(3);
 
-      expect(r3.deleted).toHaveLength(1);
-      expect(r3.deleted[0].id).toBe(ID_PAYMENTS);
-      expect(r3.deleted[0].status).toBe('deleted');
-      expect(r3.stale).toHaveLength(0);
+      // ── Ciclo 4: sigue ausente (missingCount→4) ───────────────────────────
+      const { result: r4, registry: reg4 } = await runCycle([], reg3, cwd);
+      expect(r4.deleted).toHaveLength(0);
+      expect(r4.stale[0].missingCount).toBe(4);
+
+      // ── Ciclo 5: missingCount≥5 → confirmed delete → purge ────────────────
+      const { result: r5, registry: reg5 } = await runCycle([], reg4, cwd);
+
+      expect(r5.deleted).toHaveLength(1);
+      expect(r5.deleted[0].id).toBe(ID_PAYMENTS);
+      expect(r5.deleted[0].status).toBe('deleted');
+      expect(r5.stale).toHaveLength(0);
 
       // buildUpdatedNitsRegistry excludes deleted → atomic purge
-      expect(reg3.modules[ID_PAYMENTS]).toBeUndefined();
-      expect(Object.keys(reg3.modules)).toHaveLength(0);
+      expect(reg5.modules[ID_PAYMENTS]).toBeUndefined();
+      expect(Object.keys(reg5.modules)).toHaveLength(0);
 
       // The file on disk also has no traces
       const persisted = readRegistry(cwd);
@@ -353,7 +363,7 @@ describe('Borrado accidental + Undo', () => {
       );
       expect(reg0.modules[ID_ORDERS]).toBeDefined();
 
-      // ── Ciclos 1-3: orders eliminado → stale → stale → deleted+purge ───────
+      // ── Ciclos 1-5: orders eliminado → stale x4 → deleted+purge ───────
       fs.rmSync(ordersDir, { recursive: true });
 
       const { registry: reg1 } = await runCycle([], reg0, cwd);
@@ -362,39 +372,45 @@ describe('Borrado accidental + Undo', () => {
       const { registry: reg2 } = await runCycle([], reg1, cwd);
       expect(reg2.modules[ID_ORDERS]).toBeDefined(); // grace 2
 
-      const { result: r3, registry: reg3 } = await runCycle([], reg2, cwd);
-      expect(r3.deleted).toHaveLength(1);
-      expect(r3.deleted[0].id).toBe(ID_ORDERS);
-      expect(reg3.modules[ID_ORDERS]).toBeUndefined(); // purgado
+      const { registry: reg3 } = await runCycle([], reg2, cwd);
+      expect(reg3.modules[ID_ORDERS]).toBeDefined(); // grace 3
+
+      const { registry: reg4 } = await runCycle([], reg3, cwd);
+      expect(reg4.modules[ID_ORDERS]).toBeDefined(); // grace 4
+
+      const { result: r5, registry: reg5 } = await runCycle([], reg4, cwd);
+      expect(r5.deleted).toHaveLength(1);
+      expect(r5.deleted[0].id).toBe(ID_ORDERS);
+      expect(reg5.modules[ID_ORDERS]).toBeUndefined(); // purgado
 
       // ── Undo: restaurar carpeta con el .kerith original ───────────────────
       fs.mkdirSync(ordersDir, { recursive: true });
       writeIndex(ordersDir, 'orders');
       fs.writeFileSync(path.join(ordersDir, '.kerith'), shadowBackup, 'utf8');
 
-      // ── Cycle 4: reg3 is empty (ID purged) → module is newModule ─────────────────
-      const { result: r4, registry: reg4 } = await runCycle(
+      // ── Cycle 6: reg5 is empty (ID purged) → module is newModule ─────────────────
+      const { result: r6, registry: reg6 } = await runCycle(
         [{ name: 'orders', dirPath: ordersDir }],
-        reg3,
+        reg5,
         cwd
       );
 
       // El sistema no tiene memoria del ID purgado → newModule
-      expect(r4.newModules).toHaveLength(1);
-      expect(r4.confirmed).toHaveLength(0);
-      expect(r4.moved).toHaveLength(0);
-      expect(r4.stale).toHaveLength(0);
+      expect(r6.newModules).toHaveLength(1);
+      expect(r6.confirmed).toHaveLength(0);
+      expect(r6.moved).toHaveLength(0);
+      expect(r6.stale).toHaveLength(0);
 
       // The shadow file ID is reused as the ID of the new module
       // (Step 0: shadowFile.id not in prev registry → newModule with that ID)
-      const restored = r4.newModules[0];
+      const restored = r6.newModules[0];
       expect(restored.name).toBe('orders');
       expect(restored.id).toBe(ID_ORDERS); // reutiliza el shadow-file ID
 
       // El nuevo registro es limpio: no hay missingCount heredado
-      expect(reg4.modules[ID_ORDERS]).toBeDefined();
-      expect(reg4.modules[ID_ORDERS].status).toBe('active');
-      expect(reg4.modules[ID_ORDERS].missingCount).toBeUndefined();
+      expect(reg6.modules[ID_ORDERS]).toBeDefined();
+      expect(reg6.modules[ID_ORDERS].status).toBe('active');
+      expect(reg6.modules[ID_ORDERS].missingCount).toBeUndefined();
     }
   );
 });
@@ -455,16 +471,38 @@ describe('Backward compatibility: project with no .kerith files', () => {
       expect(r2.stale).toHaveLength(1);
       expect(r2.stale[0].missingCount).toBe(2);
 
-      // ── Ciclo 3: missingCount≥3 → deleted (igual que con shadow file) ─────
-      const { result: r3 } = await runCycle(
+      // ── Ciclo 3: sigue ausente → stale missingCount=3 ────────────────────
+      const { result: r3, registry: reg3 } = await runCycle(
         [{ name: 'users-legacy', dirPath: usersDir }],
         reg2,
         cwd
       );
 
-      expect(r3.deleted).toHaveLength(1);
-      expect(r3.deleted[0].id).toBe(orderId);
-      expect(r3.stale).toHaveLength(0);
+      expect(r3.deleted).toHaveLength(0);
+      expect(r3.stale).toHaveLength(1);
+      expect(r3.stale[0].missingCount).toBe(3);
+
+      // ── Ciclo 4: sigue ausente → stale missingCount=4 ────────────────────
+      const { result: r4, registry: reg4 } = await runCycle(
+        [{ name: 'users-legacy', dirPath: usersDir }],
+        reg3,
+        cwd
+      );
+
+      expect(r4.deleted).toHaveLength(0);
+      expect(r4.stale).toHaveLength(1);
+      expect(r4.stale[0].missingCount).toBe(4);
+
+      // ── Ciclo 5: missingCount≥5 → deleted (igual que con shadow file) ─────
+      const { result: r5 } = await runCycle(
+        [{ name: 'users-legacy', dirPath: usersDir }],
+        reg4,
+        cwd
+      );
+
+      expect(r5.deleted).toHaveLength(1);
+      expect(r5.deleted[0].id).toBe(orderId);
+      expect(r5.stale).toHaveLength(0);
     }
   );
 

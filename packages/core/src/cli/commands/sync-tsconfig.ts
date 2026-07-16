@@ -6,6 +6,7 @@ import { loadConfig } from '../../core/config.js';
 import { generatePathAliases } from '../lib/tsconfig-generator.js';
 
 interface TsConfig {
+  extends?: string | string[];
   compilerOptions?: {
     paths?: Record<string, string[]>;
   };
@@ -16,6 +17,13 @@ export async function runSyncTsconfig(logger: any, tsconfigPath: string = 'tscon
         const cwd = process.cwd();
         const configPath = path.resolve(cwd, tsconfigPath);
 
+        // Defensive: create the base file if it doesn't exist so tsc never fails
+        // with TS5083 on projects created before this fix or with broken setups.
+        const kerithBasePath = path.join(path.dirname(configPath), 'tsconfig.kerith.json');
+        if (!fs.existsSync(kerithBasePath)) {
+          fs.writeFileSync(kerithBasePath, JSON.stringify({ compilerOptions: {} }, null, 2) + '\n', 'utf8');
+        }
+
         if (!fs.existsSync(configPath)) {
             if (!silent) {
                 logger.error(`Could not find ${tsconfigPath} at ${configPath}`, { _module: 'alias' });
@@ -25,10 +33,33 @@ export async function runSyncTsconfig(logger: any, tsconfigPath: string = 'tscon
         }
 
         const config = await loadConfig();
-        const pathsObj = await generatePathAliases(config, cwd);
+        const pathsObj = await generatePathAliases(config, cwd, logger);
 
         const rawContent = await fs.promises.readFile(configPath, 'utf8');
         const tsconfig = parse(rawContent) as unknown as TsConfig;
+
+        // Auto-repair extends
+        let hasExtends = false;
+        if (tsconfig.extends !== undefined) {
+            if (Array.isArray(tsconfig.extends)) {
+                if (tsconfig.extends.includes('./tsconfig.kerith.json')) {
+                    hasExtends = true;
+                } else {
+                    tsconfig.extends.push('./tsconfig.kerith.json');
+                    hasExtends = true;
+                }
+            } else if (typeof tsconfig.extends === 'string') {
+                if (tsconfig.extends === './tsconfig.kerith.json') {
+                    hasExtends = true;
+                } else {
+                    tsconfig.extends = [tsconfig.extends, './tsconfig.kerith.json'];
+                    hasExtends = true;
+                }
+            }
+        }
+        if (!hasExtends) {
+            tsconfig.extends = './tsconfig.kerith.json';
+        }
 
         if (!tsconfig.compilerOptions) tsconfig.compilerOptions = {};
         const compilerOptions = tsconfig.compilerOptions;

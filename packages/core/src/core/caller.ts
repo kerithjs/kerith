@@ -1,6 +1,6 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { KerithError } from '../core/errors.js';
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { KerithError } from "./errors.js";
 
 /**
  * Internal utility — NOT part of the public Kerith API.
@@ -35,14 +35,14 @@ function resolveCallerFile(identifierName: string): string {
 
   if (!callerFile) {
     throw new KerithError(
-      'INVALID_MODULE_DECLARATION',
+      "INVALID_MODULE_DECLARATION",
       `${identifierName} could not determine caller path. Stack trace unavailable.`,
-      'Ensure you are using Node.js >= 20.6 with ESM and no bundler obfuscation.'
+      "Ensure you are using Node.js >= 20.6 with ESM and no bundler obfuscation.",
     );
   }
 
   // Normalise ESM file:// URLs to OS-native paths
-  if (callerFile.startsWith('file://')) {
+  if (callerFile.startsWith("file://")) {
     callerFile = fileURLToPath(callerFile);
   }
 
@@ -53,9 +53,10 @@ function resolveCallerFile(identifierName: string): string {
  * Returns the caller's file path and its containing directory.
  * Used by `Module()`, which needs both pieces to enforce naming rules.
  */
-export function getModuleCallerInfo(
-  identifierName: string
-): { filePath: string; dirPath: string } {
+export function getModuleCallerInfo(identifierName: string): {
+  filePath: string;
+  dirPath: string;
+} {
   const filePath = resolveCallerFile(identifierName);
   return { filePath, dirPath: path.dirname(filePath) };
 }
@@ -64,8 +65,8 @@ export function getModuleCallerInfo(
  * Returns only the caller's absolute file path.
  * Used by all non-Module identifiers (Service, Controller, Repository, Schema).
  */
-export function getFileCallerInfo(
-  identifierName: string
-): { filePath: string } {
+export function getFileCallerInfo(identifierName: string): {
+  filePath: string;
+} {
   return { filePath: resolveCallerFile(identifierName) };
 }

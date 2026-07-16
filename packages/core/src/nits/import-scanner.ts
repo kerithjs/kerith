@@ -9,6 +9,7 @@ import {
 export type { ImportFound } from '../cli/lib/import-scanner.js';
 export {
   extractModuleImports,
+  extractModuleImportsAsync,
   extractRelativeCrossModuleImports,
   buildActiveAliasesFromConfig,
   getRegisteredAliases,

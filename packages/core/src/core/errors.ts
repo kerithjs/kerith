@@ -1,6 +1,13 @@
 export type KerithErrorCode =
   | "MODULE_NOT_FOUND"
   | "DUPLICATE_MODULE"
+  | "DUPLICATE_DOMAIN"
+  | "DUPLICATE_SUBMODULE"
+  | "SUBMODULE_NESTED"
+  | "ORIGIN_NOT_FOUND"
+  | "PARENT_MODULE_NOT_FOUND"
+  | "INVALID_DOMAIN_DECLARATION"
+  | "INVALID_SUBMODULE_DECLARATION"
   | "MISSING_IMPORT"
   | "UNDECLARED_IMPORT"
   | "CIRCULAR_DEPENDENCY"
@@ -16,6 +23,7 @@ export type KerithErrorCode =
   | "REGISTRY_MISSING_CONTEXT"
   | "INVALID_MODULE_DECLARATION"
   | "RELATIVE_BOUNDARY_VIOLATION"
+  | "MODULE_SPACE_CONFLICT"
   | "DUPLICATE_SERVICE"
   | "DUPLICATE_REPOSITORY"
   | "DUPLICATE_SCHEMA"
@@ -32,7 +40,33 @@ export type KerithErrorCode =
    * the current cycle). Used for observability only — never passed to `new KerithError()`.
    * @since v1.5.5
    */
-  | "NITS_DELETE_CONFIRMED";
+  | "NITS_DELETE_CONFIRMED"
+  // ─── Part 2 — Shared system violation codes ───────────────────────────────
+  /**
+   * Module imports `@shared` (or a subpath) without declaring it in `shared[]`.
+   * @since v2.0.0
+   */
+  | "UNDECLARED_SHARED"
+  /**
+   * Module declares `@shared` in `shared[]` but no source file imports it.
+   * @since v2.0.0 (detected via kerith check, not thrown at runtime)
+   */
+  | "UNUSED_SHARED"
+  /**
+   * Module from a foreign domain imports `@{domain}/shared`.
+   * @since v2.0.0 (detected via kerith check, not thrown at runtime)
+   */
+  | "SHARED_SCOPE_VIOLATION"
+  /**
+   * A shared alias was placed in `imports[]` instead of `shared[]`.
+   * @since v2.0.0
+   */
+  | "SHARED_IN_IMPORTS"
+  /**
+   * A module name was placed in `shared[]` instead of `imports[]`.
+   * @since v2.0.0
+   */
+  | "MODULE_IN_SHARED";
 
 export class KerithError extends Error {
   readonly code: KerithErrorCode;

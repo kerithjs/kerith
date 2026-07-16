@@ -31,14 +31,27 @@ export function cleanCommand(): Command {
       'Delete all .kerith identity files from module directories. IDs will be regenerated on next bootstrap.',
       false
     )
-    .action(async (options: { shadowFiles?: boolean }) => {
+    .option(
+      '--cache',
+      'Delete the bootstrap cache file (.kerith/bootstrap-cache.json)',
+      false
+    )
+    .action(async (options: { shadowFiles?: boolean; cache?: boolean }) => {
       const cwd = process.cwd();
 
-      if (!options.shadowFiles) {
+      if (!options.shadowFiles && !options.cache) {
         console.log(pc.yellow('\nNo clean target specified. Available options:\n'));
-        console.log(`  ${pc.cyan('--shadow-files')}   Delete all .kerith module identity files\n`);
+        console.log(`  ${pc.cyan('--shadow-files')}   Delete all .kerith module identity files`);
+        console.log(`  ${pc.cyan('--cache')}          Delete the bootstrap cache file\n`);
         console.log(`Run ${pc.white('kerith clean --help')} for usage.\n`);
         return;
+      }
+
+      // ── --cache ──────────────────────────────────────────────────────────────
+      if (options.cache) {
+        const { CacheManager } = await import('../../cache/bootstrap-cache.js');
+        CacheManager.invalidate();
+        console.log(pc.green('✔ Bootstrap cache cleared.\n'));
       }
 
       // ── --shadow-files ───────────────────────────────────────────────────────
@@ -47,14 +60,12 @@ export function cleanCommand(): Command {
         try {
           config = await loadConfig();
         } catch {
-          // Fallback glob if config can't be read
-          config = { modules: 'src/modules/*' } as any;
+          // Fallback if config can't be read
+          config = { origin: 'src' } as any;
         }
 
-        const modulesGlob = (config as any).modules ?? 'src/modules/*';
-
-        // Discover all .kerith files under the modules root
-        const shadowPattern = modulesGlob.replace(/\/\*$/, '') + `/**/${SHADOW_FILE_NAME}`;
+        const scanRoot = (config as any).origin ?? (config as any).modules?.replace(/\/\*$/, '') ?? 'src';
+        const shadowPattern = `${scanRoot}/**/${SHADOW_FILE_NAME}`;
         const found = await fg(shadowPattern, { cwd, absolute: true, dot: true });
 
         if (found.length === 0) {

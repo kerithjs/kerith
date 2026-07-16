@@ -112,7 +112,7 @@ describe("Integration Tests", () => {
     it("throws MISSING_IMPORT when imports references a non-existent module", async () => {
       await runInTmpApp(
         {
-          "kerith.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/users/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('users', { imports: ['nonExistentModule'] });
@@ -130,7 +130,7 @@ describe("Integration Tests", () => {
     it("MISSING_IMPORT details references the missing module name", async () => {
       await runInTmpApp(
         {
-          "kerith.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/consumers/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('consumers', { imports: ['phantomModule'] });
@@ -147,7 +147,7 @@ describe("Integration Tests", () => {
     it("silently filters out empty strings and does not throw MISSING_IMPORT", async () => {
       await runInTmpApp(
         {
-          "kerith.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { strict: true };",
           "src/modules/clean/index.ts": `
           import { Module } from '{{SOURCE}}';
           Module('clean', { imports: ['', '  '] });
@@ -968,7 +968,7 @@ describe("Integration Tests", () => {
       createDefaultPinoSpy.mockRestore();
     });
 
-    it("verifies that bootstrap with 0 routes emits warn (not info) with alert message", async () => {
+    it("verifies that bootstrap with 0 routes emits info (not warn)", async () => {
       await runInTmpApp(
         {
           "kerith.config.js": "export default { strict: false };",
@@ -980,21 +980,21 @@ describe("Integration Tests", () => {
         async (_, app) => {
           await createApp(app as any);
 
-          // Find calls to warn
-          const warnCalls = pinoMock.warn.mock.calls;
+          // Find calls to info
+          const infoCalls = pinoMock.info.mock.calls;
           
-          // Verify 0 routes warning was emitted
-          const zeroRoutesWarn = warnCalls.find((call: any[]) => 
+          // Verify 0 routes info was emitted
+          const zeroRoutesInfo = infoCalls.find((call: any[]) => 
             call[0] && 
             typeof call[0] === 'object' && 
             call[0].module === 'router' && 
             typeof call[1] === 'string' &&
             call[1].includes('Mounted 0 route(s)')
           );
-          expect(zeroRoutesWarn).toBeDefined();
+          expect(zeroRoutesInfo).toBeDefined();
           
-          // Verify Bootstrap complete summary warning
-          const bootstrapCompleteWarn = warnCalls.find((call: any[]) => 
+          // Verify Bootstrap complete summary info
+          const bootstrapCompleteInfo = infoCalls.find((call: any[]) => 
             call[0] && 
             typeof call[0] === 'object' && 
             call[0].module === 'boot' && 
@@ -1002,7 +1002,7 @@ describe("Integration Tests", () => {
             call[1].includes('Bootstrap complete') && 
             call[0] && call[0].routeCount === 0 && call[0].moduleCount === 1
           );
-          expect(bootstrapCompleteWarn).toBeDefined();
+          expect(bootstrapCompleteInfo).toBeDefined();
         },
       );
     });
@@ -1054,16 +1054,17 @@ describe("Integration Tests", () => {
   // SubModule & INVALID_ESM_ENV tests
   // -----------------------------------------------------------------------
   describe("SubModule and INVALID_ESM_ENV (Blockers)", () => {
-    it("processes SubModule() without crash if it exists (reserved for v2.0.0)", async () => {
+    it("processes SubModule() without crash when discovered under origin", async () => {
       await runInTmpApp(
         {
-          "kerith.config.js": "export default { strict: false };",
+          "kerith.config.js": "export default { origin: 'src', strict: false };",
           "src/modules/parent/index.ts": `
-          import * as api from '{{SOURCE}}';
-          api.Module('parent');
-          if ('SubModule' in api) {
-            (api as any).SubModule('parent', 'child');
-          }
+          import { Module } from '{{SOURCE}}';
+          Module('parent');
+        `,
+          "src/modules/parent/child/index.ts": `
+          import { SubModule } from '{{SOURCE}}';
+          SubModule('child');
         `,
         },
         async (_, app) => {

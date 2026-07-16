@@ -148,12 +148,13 @@ describe('createApp', () => {
     });
   });
 
-  it('should maintain atomic failure and prevent any route mount if a module is invalid', async () => {
+  it('should maintain atomic failure and prevent any route mount if a module is invalid (legacy mode)', async () => {
     const invalidAppStructure: Record<string, string> = { ...validAppStructure };
     // This file deliberately fails validation!
     invalidAppStructure['src/modules/auth/index.ts'] = `
       // Missing Module() call!
     `;
+    invalidAppStructure['kerith.config.js'] = `export default { modules: 'src/modules/*' };`;
 
     await runInTmpApp(invalidAppStructure, async (_, app) => {
       await expect(createApp(app as any)).rejects.toMatchObject({
@@ -301,7 +302,7 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(appWithHangingModule, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 100 };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { rules: { moduleLoadTimeout: 100 } };');
         await expect(createApp(app as any)).rejects.toMatchObject({
           code: 'MODULE_LOAD_TIMEOUT'
         });
@@ -320,7 +321,7 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(appWithHangingController, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 100 };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { rules: { moduleLoadTimeout: 100 } };');
         await expect(createApp(app as any)).rejects.toMatchObject({
           code: 'MODULE_LOAD_TIMEOUT'
         });
@@ -337,7 +338,7 @@ describe('createApp', () => {
       };
 
       await runInTmpApp(appWithSlowModule, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { moduleLoadTimeoutMs: 200, strict: false };');
+        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { rules: { moduleLoadTimeout: 500 }, strict: false, modules: "src/modules/*" };');
         const KerithApp = await createApp(app as any);
         expect(KerithApp.modules).toHaveLength(1);
         expect(KerithApp.modules[0].name).toBe('slow');
@@ -368,18 +369,6 @@ describe('createApp', () => {
   // ── §1.4: createApp - missing coverage branches ────────────────────────────
 
   describe('§1.4: createApp - missing coverage branches', () => {
-    it('§1.4-1: logs a warning if config.domains or config.shared is provided', async () => {
-      const logger = vi.fn();
-      await runInTmpApp(validAppStructure, async (tmpDir, app) => {
-        fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { domains: ["src/domains/*"] };');
-        await createApp(app as any, { logger });
-        expect(logger).toHaveBeenCalledWith(
-          'warn',
-          expect.stringContaining('Infrastructure (domains/shared) is not yet supported'),
-          expect.any(Object)
-        );
-      });
-    });
 
     it('§1.4-2: throws INVALID_ALIAS_KEY if alias config key contains a wildcard', async () => {
       const logger = vi.fn();
@@ -430,7 +419,7 @@ describe('createApp', () => {
       });
     });
 
-    it('§1.4-5: logs a warning if a module mounts 0 controllers', async () => {
+    it('§1.4-5: logs an info if a module mounts 0 controllers', async () => {
       const logger = vi.fn();
       const noControllersApp = {
         'src/modules/empty/index.ts': `
@@ -442,7 +431,7 @@ describe('createApp', () => {
       await runInTmpApp(noControllersApp, async (_, app) => {
         await createApp(app as any, { logger } as any);
         expect(logger).toHaveBeenCalledWith(
-          'warn',
+          'info',
           expect.stringContaining('Mounted 0 route(s)'),
           expect.any(Object)
         );

@@ -1,0 +1,39 @@
+name: Benchmark Scaling
+
+on:
+  workflow_dispatch:
+    inputs:
+      sizes:
+        description: 'Fixture sizes (comma separated)'
+        required: false
+        default: '5,10,20,30,40'
+      samples:
+        description: 'Number of samples per scenario'
+        required: false
+        default: '15'
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Scaling Benchmark
+        working-directory: packages/core
+        run: npm run bench:scaling -- --sizes=${{ github.event.inputs.sizes }} --samples=${{ github.event.inputs.samples }}
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: scaling-results
+          path: packages/core/benchmarks/scaling-results.json

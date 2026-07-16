@@ -1,0 +1,113 @@
+{
+  "version": "2.0.0-alpha.1",
+  "status": "ok",
+  "savedAt": "2026-07-15T17:15:02.447Z",
+  "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app",
+  "configHash": "79329199",
+  "data": {
+    "domains": [],
+    "modules": [
+      {
+        "name": "auth",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/auth",
+        "indexPath": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app\\src\\modules\\auth\\index.ts",
+        "imports": [],
+        "exports": [
+          "AuthService"
+        ],
+        "shared": [],
+        "options": {
+          "exports": [
+            "AuthService"
+          ]
+        },
+        "id": "mod_8362dd1a",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/auth/auth.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/auth/auth.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 392,
+        "cachedMtime": 1775940391830.9624
+      },
+      {
+        "name": "core",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/core",
+        "indexPath": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app\\src\\modules\\core\\index.ts",
+        "imports": [],
+        "exports": [
+          "CoreService"
+        ],
+        "shared": [],
+        "options": {
+          "exports": [
+            "CoreService"
+          ]
+        },
+        "id": "mod_7b775abe",
+        "files": [],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 0,
+        "cachedMtime": 0
+      },
+      {
+        "name": "notifications",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/notifications",
+        "indexPath": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app\\src\\modules\\notifications\\index.ts",
+        "imports": [],
+        "exports": [
+          "notify"
+        ],
+        "shared": [],
+        "options": {
+          "exports": [
+            "notify"
+          ]
+        },
+        "id": "mod_965281db",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/notifications/notifications.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 67,
+        "cachedMtime": 1775940391834.5027
+      },
+      {
+        "name": "users",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/users",
+        "indexPath": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app\\src\\modules\\users\\index.ts",
+        "imports": [
+          "notifications"
+        ],
+        "exports": [
+          "UsersService"
+        ],
+        "shared": [],
+        "options": {
+          "imports": [
+            "notifications"
+          ],
+          "exports": [
+            "UsersService"
+          ]
+        },
+        "id": "mod_73d7f06b",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/users/users.routes.ts",
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/users/users.service.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 581,
+        "cachedMtime": 1779028768394.0388
+      }
+    ],
+    "submodules": [],
+    "shared": [],
+    "identifiers": [],
+    "aliases": []
+  }
+}

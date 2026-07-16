@@ -174,10 +174,15 @@ describe("NITS App Lifecycle (Shadow File Integration)", () => {
   });
 
   it("Cloning", async () => {
+    // Use a custom logger handler so we can capture framework-level warnings.
+    // The "Duplicate module identity detected" warning is emitted via
+    // options.log.warn() (not console.warn), so we must intercept it here.
+    const loggerHandler = vi.fn();
+
     // Bootstrap first to establish baseline
     const dir1 = createCycleDir();
     cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(dir1);
-    await createApp(makeMockApp() as any);
+    await createApp(makeMockApp() as any, { logger: loggerHandler });
 
     // 1. Duplicar carpeta users/ como users-copy/ (mismo .kerith)
     const dir2 = createCycleDir(dir1);
@@ -198,12 +203,9 @@ describe("NITS App Lifecycle (Shadow File Integration)", () => {
     copySvcContent = copySvcContent.replace(/UserService/g, "UserServiceCopy").replace(/module:\s*'users'/g, "module: 'users-copy'");
     fs.writeFileSync(copySvcPath, copySvcContent);
 
-    // Mock console.warn to check for warnings
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     // 2. Reconciliar
     try {
-      await createApp(makeMockApp() as any);
+      await createApp(makeMockApp() as any, { logger: loggerHandler });
     } catch (e: any) {
       console.error(e.details);
       throw e;
@@ -225,9 +227,12 @@ describe("NITS App Lifecycle (Shadow File Integration)", () => {
     const copyShadowContent = JSON.parse(fs.readFileSync(path.join(copyPath, ".kerith"), "utf8"));
     expect(copyShadowContent.id).toBe(copyRecord.id);
 
-    // Verify cloning warning
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Duplicate module identity detected")
+    // Verify cloning warning. The reconciler emits this via options.log.warn(),
+    // which calls the LogHandler as: handler('warn', message, { _module: 'nits' })
+    expect(loggerHandler).toHaveBeenCalledWith(
+      'warn',
+      expect.stringContaining("Duplicate module identity detected"),
+      expect.objectContaining({ _module: 'nits' })
     );
   });
 });

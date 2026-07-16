@@ -23,3 +23,34 @@ export function normalizePath(filePath: string): string {
   
   return normalized;
 }
+
+/**
+ * Groups an array of absolute file paths into their closest matching module directories.
+ * It automatically sorts module paths by length descending to ensure nested sub-modules match correctly.
+ * 
+ * @param files Array of absolute file paths
+ * @param modulePaths Array of absolute module directory paths
+ * @returns A Map linking each module path to the array of files that fall under it
+ */
+export function groupFilesByModulePath(files: string[], modulePaths: string[]): Map<string, string[]> {
+  const result = new Map<string, string[]>();
+  
+  // Sort paths by length descending so that 'src/modules/users/orders' matches before 'src/modules/users'
+  const sortedModPaths = [...modulePaths].map(normalizePath).sort((a, b) => b.length - a.length);
+
+  for (const modPath of sortedModPaths) {
+    result.set(modPath, []);
+  }
+
+  for (const file of files) {
+    const normalizedFile = normalizePath(file);
+    for (const modPath of sortedModPaths) {
+      if (normalizedFile.startsWith(modPath + '/')) {
+        result.get(modPath)!.push(file);
+        break;
+      }
+    }
+  }
+
+  return result;
+}

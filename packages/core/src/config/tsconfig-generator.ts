@@ -136,7 +136,7 @@ export async function writeTsconfigKerith(
 export async function ensureTsconfigExtends(cwd: string, log?: Logger): Promise<void> {
   const tsconfigPath = path.join(cwd, 'tsconfig.json');
   const hint =
-    `[kerith] Add "extends": "./tsconfig.kerith.json" to your tsconfig.json to enable TypeScript aliases.`;
+    `Add "extends": "./tsconfig.kerith.json" to your tsconfig.json to enable TypeScript aliases.`;
 
   if (!fs.existsSync(tsconfigPath)) {
     log?.debug(`[kerith] tsconfig.json not found. ${hint}`, { _module: 'config' });
@@ -159,6 +159,20 @@ export async function ensureTsconfigExtends(cwd: string, log?: Logger): Promise<
       extendsVal.includes('./tsconfig.kerith.json'));
 
   if (!alreadyExtends) {
-    log?.info(hint, { _module: 'config' });
+    const kerithDir = path.join(cwd, '.kerith');
+    const dedupFile = path.join(kerithDir, 'tsconfig-extends-warned');
+    const hasWarned = fs.existsSync(dedupFile);
+
+    if (!hasWarned) {
+      log?.warn(hint, { _module: 'config' });
+      try {
+        if (!fs.existsSync(kerithDir)) {
+          fs.mkdirSync(kerithDir, { recursive: true });
+        }
+        fs.writeFileSync(dedupFile, '1');
+      } catch {
+        // ignore errors (e.g. read-only filesystem)
+      }
+    }
   }
 }

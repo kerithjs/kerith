@@ -49,8 +49,12 @@ This plugin provides two foundational architectural guards:
 
 | Rule | Description | Recommended |
 |------|-------------|-------------|
-| **`Kerith/no-private-imports`** | Forbids importing private internals of other modules (e.g., `@modules/auth/auth.service`). Forces consumers to only import from the cross-module public entrypoint (`@modules/auth`). | ❌ `error` |
-| **`Kerith/no-undeclared-imports`** | Guarantees transparent dependency tracing. Ensures a module explicitly declares another module in its `Module({ imports: [...] })` before importing from it. | ⚠️ `warn` |
+| **`kerith/no-private-imports`** | Forbids importing private internals of other modules (e.g., `@modules/auth/auth.service`). Forces consumers to only import from the cross-module public entrypoint (`@modules/auth`). | ❌ `error` |
+| **`kerith/no-undeclared-imports`** | Guarantees transparent dependency tracing. Ensures a module explicitly declares another module in its `Module({ imports: [...] })` before importing from it. | ⚠️ `warn` |
+| **`kerith/no-undeclared-shared`** | Detects imports from `@shared` that are not declared in `Module({ shared: ['@shared'] })`. | ⚠️ `warn` |
+| **`kerith/no-shared-scope-violation`** | Prevents accessing domain-scoped shared modules from outside the domain (e.g., importing `@billing/shared` from the `users` domain). | ❌ `error` |
+| **`kerith/no-domain-boundary-violations`** | Enforces that modules do not import across domain boundaries directly. | ❌ `error` |
+| **`kerith/no-relative-boundary-violations`** | Detects relative imports that cross module/submodule boundaries. | ❌ `error` |
 
 ## 📄 License
 

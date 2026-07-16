@@ -11,6 +11,61 @@ For full technical details, see the individual package changelogs:
 > **Note:** v1.0.0 - v1.8.1 were developed under the `Nodulus` repository
 > prior to the KerithJS rebranding. Full history is preserved below for reference.
 
+## [2.0.0-alpha.1] - 2026-06-04
+
+### Fixed
+
+- `stalePurgeCycles`: default corrected from `3` to `5`, aligned with the actual
+  configured value (`3` was a hardcoded bug detected during code audit,
+  not the intentional value).
+
+### Bootstrap
+
+- **Bootstrap Pipeline**: Refactored `createApp()` into an explicit step-based pipeline (`step-00` → `step-09`) with isolated bootstrap stages.
+- **Bootstrap Context**: Introduced shared `BootstrapContext` passed across all bootstrap steps, replacing the previous monolithic bootstrap state.
+- **Architecture**: Bootstrap internals reorganized into dedicated step modules, significantly improving maintainability and future extensibility without changing runtime behavior.
+
+### Added — Shared System
+
+- Global shared (`@shared`): place shared code in `src/shared/`, declare with `shared: ['@shared']` in Module()
+- Domain-scoped shared (`@{domain}/shared`): place code in `src/{domain}/_shared/`, implicit access for domain modules
+- `kerith check` detects UNDECLARED_SHARED, UNUSED_SHARED, SHARED_SCOPE_VIOLATION
+- `kerith create-shared --domain <name>` scaffolds domain shared directory
+- `kerith create-shared --global` scaffolds global shared directory
+- ESLint rules: `kerith/no-undeclared-shared`, `kerith/no-shared-scope-violation`
+- `sync-tsconfig` generates aliases for @shared and @{domain}/shared automatically
+
+### Added — Runtime Zero & Bootstrap Cache
+
+- Bootstrap cache (`.kerith/bootstrap-cache.json`) for near-zero startup times in development
+- Intelligent `mtime` and file-size validation for partial cache invalidation
+- Partial scanning optimizations (only invalidated domains are rescanned)
+- `kerith dev --force` flag to explicitly invalidate cache
+- Enhanced `chokidar` watcher that coordinates smoothly with caching and ignores internal state
+
+### @kerith/core
+
+- **Domain Hierarchy**: Introduced `Domain → Module → SubModule` architecture inferred from filesystem
+- **New Identifiers**: `Domain()` and `SubModule()` for semantic boundary marking
+- **Automatic Aliases**: `@{domain}` and `@{domain}/{module}` generated from filesystem structure
+- **New CLI Commands**: `kerith create-domain`, `kerith create-submodule`, `create-module --domain`
+- **Enhanced Check**: `kerith check` groups output by Domains / Modules / SubModules
+- **New Violations**: Domain boundary violations, relative boundary violations, module space conflicts
+- **ESLint Rules**: `no-domain-boundary-violations`, `no-relative-boundary-violations`
+- **Coupling Rules**: Detects `FAN_OUT_HIGH` and `FAN_IN_HIGH` based on configurable thresholds (`kerith.config.ts`)
+- **Strict Mode Checks**: `kerith check` exit-code logic refactored; warnings like coupling or circular dependencies only block in `--strict` mode
+- **Config Simplification**: `origin` config key replaces separate `domains`/`modules` config
+- **Optional Express App**: `createApp(app?)` now accepts optional Express app (REGLA-02)
+- **Performance**: Single fg() call instead of O(n) per-module globs (N-32 fix)
+- **Migration**: v1.x projects work without changes — see MIGRATION.md for adoption guide
+
+### @kerith/eslint-plugin
+
+- **New Rules**: `no-domain-boundary-violations`, `no-relative-boundary-violations`
+- **Version Sync**: Synchronized with `@kerith/core@2.0.0-alpha.1`
+
+---
+
 ## [1.8.2] - 2026-06-03
 
 ### @kerith/core

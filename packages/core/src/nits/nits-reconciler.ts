@@ -53,6 +53,13 @@ export function reconcile(
   cwd: string = process.cwd(),
   options: ReconcileOptions = {}
 ): ReconciliationResult {
+  // Internal log helper — routes through the framework logger when available,
+  // falls back to console.* so calls from CLI/tests without a logger still work.
+  const nitsWarn = (msg: string) =>
+    options.log ? options.log.warn(msg, { _module: 'nits' }) : console.warn(msg);
+  const nitsInfo = (msg: string) =>
+    options.log ? options.log.info(msg, { _module: 'nits' }) : console.info(msg);
+
   const result: ReconciliationResult = {
     confirmed: [],
     moved: [],
@@ -147,7 +154,7 @@ export function reconcile(
           // the existing (wrong) file passes validation — causing an infinite loop
           // of warnings on every subsequent boot.
           const newId = generateShadowId();
-          console.warn(
+          nitsWarn(
             `[NITS] Duplicate module identity detected. "${disc.dirPath}" was assigned a new ID (${newId}). Was it copied from "${originalPath}"?`
           );
           deleteShadowFile(disc.dirPath);  // remove the cloned ID
@@ -182,7 +189,7 @@ export function reconcile(
       if (pathChanged) {
         // Module moved — shadow file proves it's the same module
         if (prev.name !== disc.name) {
-          console.info(`[NITS] Module rename detected via shadow file: "${prev.name}" -> "${disc.name}" (${shadowId})`);
+          nitsInfo(`[NITS] Module rename detected via shadow file: "${prev.name}" -> "${disc.name}" (${shadowId})`);
         }
         const record = createRecord(prev.id, disc, 'moved', 'shadow-file', prev.createdAt);
         result.moved.push({
@@ -194,7 +201,7 @@ export function reconcile(
       } else {
         // Same path — confirmed (may have been renamed or refactored)
         if (prev.name !== disc.name) {
-          console.info(`[NITS] Module rename detected: "${prev.name}" -> "${disc.name}" at ${discNormPath}`);
+          nitsInfo(`[NITS] Module rename detected: "${prev.name}" -> "${disc.name}" at ${discNormPath}`);
         }
         const record = createRecord(prev.id, disc, 'active', 'shadow-file', prev.createdAt);
         result.confirmed.push(record);
@@ -226,7 +233,7 @@ export function reconcile(
 
       // LOG BORDER CASE: Name change
       if (prev.name !== disc.name) {
-        console.info(`[NITS] Module rename detected: "${prev.name}" -> "${disc.name}" at ${relPath}`);
+        nitsInfo(`[NITS] Module rename detected: "${prev.name}" -> "${disc.name}" at ${relPath}`);
       }
 
       // Even if hash changed, if path is same, it's the same module (Confirmed)
@@ -243,14 +250,17 @@ export function reconcile(
   }
 
   // ── STEP 2: Match by Hash (High Confidence, Similarity >= 0.9) ─────────────
+  const prevIdSets = unmatchedPrev.map((p) => new Set(p.identifiers));
+
   for (let i = unmatchedDiscovered.length - 1; i >= 0; i--) {
     const disc = unmatchedDiscovered[i];
+    const discSet = new Set(disc.identifiers);
 
-    const matchesForThisDisc: { sim: number, idx: number }[] = [];
+    const matchesForThisDisc: { sim: number; idx: number }[] = [];
 
     for (let j = 0; j < unmatchedPrev.length; j++) {
       const prev = unmatchedPrev[j];
-      const sim = hashSimilarity(prev.identifiers, disc.identifiers);
+      const sim = hashSimilarity(prevIdSets[j], discSet);
 
       const threshold = options.similarityThreshold ?? 0.9;
       if (sim >= threshold) {
@@ -277,6 +287,7 @@ export function reconcile(
 
       unmatchedDiscovered.splice(i, 1);
       unmatchedPrev.splice(bestMatchIdx, 1);
+      prevIdSets.splice(bestMatchIdx, 1);
     }
   }
 
@@ -343,7 +354,8 @@ export function reconcile(
       // Its absence here means the directory — and its .kerith file — are
       // genuinely gone. We implement a 3-cycle grace period before confirming a delete.
       const missingCount = (prev.missingCount || 0) + 1;
-      if (missingCount >= 3) {
+      const purgeCycles = options.stalePurgeCycles ?? 5;
+      if (missingCount >= purgeCycles) {
         result.deleted.push({ ...prev, status: 'deleted', missingCount });
       } else {
         result.stale.push({ ...prev, status: 'stale', missingCount });
@@ -353,7 +365,8 @@ export function reconcile(
       // last cycle. Without a shadow ID we cannot distinguish delete from a
       // missed move. Fall back to a 3-cycle grace period too.
       const missingCount = (prev.missingCount || 0) + 1;
-      if (missingCount >= 3) {
+      const purgeCycles = options.stalePurgeCycles ?? 5;
+      if (missingCount >= purgeCycles) {
         result.deleted.push({ ...prev, status: 'deleted', missingCount });
       } else {
         result.stale.push({ ...prev, status: 'stale', missingCount });
@@ -400,6 +413,31 @@ export function buildUpdatedNitsRegistry(
     // field consumed only by `check --verbose`. It must never leak into
     // registry.json (it would grow stale immediately and mislead future reads).
     const { resolvedBy: _drop, ...persistedRecord } = record;
+    modules[record.id] = persistedRecord as NitsModuleRecord;
+  }
+
+  return {
+    project: projectName,
+    version: NITS_REGISTRY_VERSION,
+    lastCheck: new Date().toISOString(),
+    modules
+  };
+}
+
+/**
+ * Like buildUpdatedNitsRegistry(), but takes an already-filtered list of
+ * records instead of a full ReconciliationResult. Used by step-04-nits.ts
+ * once domain-owned records have been routed to their domain registry —
+ * this function only ever sees flat (domain-less) records.
+ */
+export function buildUpdatedNitsRegistryFromRecords(
+  records: NitsModuleRecord[],
+  projectName: string
+): NitsRegistry {
+  const modules: Record<string, NitsModuleRecord> = {};
+
+  for (const record of records) {
+    const { resolvedBy: _drop, ...persistedRecord } = record as any;
     modules[record.id] = persistedRecord as NitsModuleRecord;
   }
 

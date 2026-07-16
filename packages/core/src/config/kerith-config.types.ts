@@ -1,16 +1,17 @@
 import type { LogLevel, LogFormat, NitsConfig } from '../types/index.js';
+import type { QualityRulesConfig } from './rules.types.js';
 
 export interface AliasMap {
   [alias: string]: string;
 }
 
+
+
 export interface KerithConfig {
-  /** Glob pointing to module folders. Default: 'src/modules/*'. */
+  /** @deprecated Replaced by \`origin\` in v2.0.0. Glob pointing to module folders. Default: 'src/modules/*'. */
   modules?: string;
-  /** Glob pointing to domain folders (v2.0.0+). Default: undefined. */
-  domains?: string;
-  /** Glob pointing to shared global folders (v2.0.0+). Default: undefined. */
-  shared?: string;
+  /** Root directory to scan for domains/modules (v2.0.0+). Default: 'src'. */
+  origin?: string;
   /** Global route prefix. Example: '/api/v1'. Default: ''. */
   prefix?: string;
   /**
@@ -43,18 +44,14 @@ export interface KerithConfig {
    * @since v1.5.0
    */
   requirePreloader?: boolean;
-  /**
-   * Maximum time (in milliseconds) allowed for a module to load via dynamic import().
-   * If the module exceeds this limit, a MODULE_LOAD_TIMEOUT error is thrown.
-   * Helps prevent silent deadlocks from top-level await tasks (e.g. infinite DB connections).
-   * @default 30000 (30 seconds)
-   * @since v1.6.0
-   */
-  moduleLoadTimeoutMs?: number;
+  /** Architectural and quality rules. */
+  rules?: QualityRulesConfig;
   /**
    * Alias configuration.
    */
   aliases?: AliasMap;
+
+
 }
 
 export function defineConfig(config: KerithConfig): KerithConfig {

@@ -1,7 +1,14 @@
 export * from './core/registry.js';
+export type {
+  DomainRegistration,
+  SubModuleRegistration,
+  ModuleRegistration,
+} from './core/types/registry.js';
 export * from './core/errors.js';
 
 export * from './identifiers/module.js';
+export * from './core/identifiers/domain.js';
+export * from './core/identifiers/submodule.js';
 export * from './identifiers/controller.js';
 export * from './identifiers/service.js';
 export * from './identifiers/repository.js';
@@ -29,6 +36,9 @@ export type {
   RegisteredModule,
   MountedRoute,
   ModuleOptions,
+  DomainOptions,
+  SubModuleOptions,
+  HierarchyLevel,
   ControllerOptions,
   ServiceOptions,
   RepositoryOptions,

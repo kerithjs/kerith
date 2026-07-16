@@ -1,5 +1,6 @@
 import type { RequestHandler, ErrorRequestHandler, Router } from 'express';
 
+
 // ─── Internal registry entries ───────────────────────────────────────────────
 // These types are NOT part of the public API. They represent the shape of data
 // stored in the registry during bootstrap.
@@ -13,14 +14,35 @@ export interface ControllerEntry {
   enabled: boolean;
 }
 
+export type {
+  DomainRegistration,
+  SubModuleRegistration,
+  ModuleRegistration,
+} from '../core/types/registry.js';
+
+import type { DomainRegistration } from '../core/types/registry.js';
+
 export interface ModuleEntry {
   nitsId: string;     // NITS specific assigned ID
   name: string;
+  domain?: string;
   path: string;       // absolute path to the module directory
   indexPath: string;  // absolute path to the module's index.ts / index.js
   imports: string[];
   exports: string[];
+  shared: string[];
   controllers: ControllerEntry[];
+}
+
+/** Internal registry entry for a detected shared root (global or domain-scoped). */
+export interface SharedEntry {
+  type: 'global' | 'domain-scoped';
+  /** Alias resolved at runtime — e.g. `'@shared'` or `'@billing/shared'`. */
+  alias: string;
+  /** Absolute path to the shared directory. */
+  path: string;
+  /** Present only for domain-scoped shared roots. */
+  domain?: string;
 }
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -69,6 +91,33 @@ export interface HttpLoggerOptions {
    * @default false 
    */
   logBody?: boolean;
+
+  /**
+   * In production (`NODE_ENV=production`), replaces the error message exposed to the client
+   * with a generic text. The real message is always logged internally in Pino.
+   * Set to `false` to expose the real message (useful in staging).
+   * @default true
+   */
+  sanitizeErrors?: boolean;
+
+  /**
+   * If `true`, generates a UUID v4 per request and stores it in `res.locals.requestId`.
+   * In JSON mode (production) it's included in each request log entry.
+   * The ID is generated before the ignore check, so it's available even for ignored routes.
+   * This allows users to access the ID in their own middlewares regardless of log suppression.
+   * @default false
+   */
+  requestId?: boolean;
+
+  /**
+   * Function to get or generate the ID. Useful if a gateway already provides the ID
+   * in a header (e.g. `X-Request-Id`).
+   * Only used if `requestId: true`.
+   * @default () => crypto.randomUUID()
+   * @example
+   *   getRequestId: (req) => req.headers['x-request-id'] as string ?? crypto.randomUUID()
+   */
+  getRequestId?: (req: import('express').Request) => string;
 }
 
 /**
@@ -94,18 +143,12 @@ export interface HttpLogger {
 // Exported as part of the public surface. Stable between minor versions unless
 // documented otherwise.
 
-export interface ModuleOptions {
-  /** Modules this module depends on. */
-  imports?: string[];
-  /**
-   * Names of exports that form the public API of this module.
-   * Kerith validates that each name exists as a real export of index.ts.
-   * Error EXPORT_MISMATCH if a name is missing.
-   */
-  exports?: string[];
-  /** Description — for documentation and future tooling. */
-  description?: string;
-}
+export type {
+  HierarchyLevel,
+  DomainOptions,
+  SubModuleOptions,
+  ModuleOptions,
+} from '../core/types/hierarchy.js';
 
 export interface ControllerOptions {
   /** Middlewares applied to all routes. Mounted before the router. Default: []. */
@@ -209,9 +252,8 @@ export interface CreateAppOptions {
 
 /** Resolved configuration used internally (defaults applied). */
 export interface ResolvedConfig {
-  modules: string;
-  domains?: string;
-  shared?: string;
+  modules?: string;
+  origin?: string;
   prefix: string;
   strict: boolean;
   resolveAliases: boolean;
@@ -223,14 +265,19 @@ export interface ResolvedConfig {
     enabled: boolean;
     similarityThreshold?: number;
   };
+
   requirePreloader: boolean;
-  moduleLoadTimeoutMs: number;
+  rules: {
+    moduleLoadTimeout: number;
+    stalePurgeCycles: number;
+  };
 }
 
 /** A module as it appears in the NodularApp result after bootstrap. */
 export interface RegisteredModule {
   id: string;
   name: string;
+  domain?: string;
   path: string;         // absolute path to the module directory
   imports: string[];    // names of modules this module depends on
   exports: string[];    // declared and validated export names
@@ -246,9 +293,12 @@ export interface MountedRoute {
 
 /** Stable registry interface — guaranteed across minor versions. */
 export interface KerithRegistry {
-  hasModule(name: string): boolean;
-  getModule(name: string): RegisteredModule | undefined;
+  hasModule(name: string, domain?: string): boolean;
+  getModule(name: string, domain?: string): RegisteredModule | undefined;
   getAllModules(): RegisteredModule[];
+  hasDomain(name: string): boolean;
+  getDomain(name: string): DomainRegistration | undefined;
+  getAllDomains(): DomainRegistration[];
   resolveAlias(alias: string): string | undefined;
   getAllAliases(): Record<string, string>;
   /** Bare alias keys (no `/*` wildcards) used for import scanning (REGLA-22). */
@@ -316,14 +366,27 @@ export interface KerithApp {
    *
    * Also returns a `shutdown()` function you can call programmatically.
    *
-   * @param server  - The http.Server returned by app.listen().
+   * > **Independent of the Express `app` argument.**
+   * > `listen()` operates on the `http.Server` created by `app.listen(port)` —
+   * > not on the Express application itself. It is therefore valid to call
+   * > `createApp()` *without* an Express app (e.g. for background workers or
+   * > scheduled-job services) and still wire up graceful shutdown via
+   * > `kerith.listen(server)`.
+   *
+   * @param server  - The http.Server returned by `expressApp.listen()`.
    * @param options - Optional shutdown hook and configuration.
    * @returns A function that triggers the shutdown sequence manually.
    *
    * @example
    * ```ts
+   * // With Express:
    * const server = app.listen(3000);
-   * Kerith.listen(server, { onShutdown: async () => { await db.close(); } });
+   * kerith.listen(server, { onShutdown: async () => { await db.close(); } });
+   *
+   * // Without Express (worker mode):
+   * const kerith = await createApp();       // no app argument
+   * const server = http.createServer(...);
+   * kerith.listen(server);
    * ```
    * @since v1.5.1
    */

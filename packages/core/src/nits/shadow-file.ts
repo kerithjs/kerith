@@ -40,7 +40,7 @@ export function generateModuleId(): string {
 export function readShadowFile(moduleDirPath: string): ShadowFileRecord | null {
   const filePath = path.join(moduleDirPath, SHADOW_FILE_NAME);
 
-  if (!fs.existsSync(filePath)) {
+  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
     return null;
   }
 
