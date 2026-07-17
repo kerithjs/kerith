@@ -5,6 +5,7 @@ export type {
   ModuleRegistration,
 } from './core/types/registry.js';
 export * from './core/errors.js';
+export { getFileCallerInfo } from './core/caller.js';
 
 export * from './identifiers/module.js';
 export * from './core/identifiers/domain.js';

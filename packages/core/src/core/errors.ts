@@ -66,7 +66,65 @@ export type KerithErrorCode =
    * A module name was placed in `shared[]` instead of `imports[]`.
    * @since v2.0.0
    */
-  | "MODULE_IN_SHARED";
+  | "MODULE_IN_SHARED"
+  // ─── Extension API — identifier registration codes ────────────────────────
+  /**
+   * An identifier registered via `@kerith/identifiers` (or any third-party
+   * extension) has an invalid name: empty string, non-string value, or a value
+   * that does not match the allowed identifier name pattern.
+   *
+   * Hard error — thrown unconditionally regardless of `--strict` mode.
+   * @since v2.0.0-alpha.1
+   */
+  | "INVALID_IDENTIFIER_NAME"
+  /**
+   * Two identifiers in the **Alias channel** (`Client`, `Config`, `Provider`,
+   * `Store`, `Vault`, `Publisher`, `Tracer`, `Gateway`) were registered with
+   * the same name inside the same module.
+   * @since v2.0.0-alpha.1
+   */
+  | "DUPLICATE_ALIAS_IDENTIFIER"
+  /**
+   * Two identifiers in the **Middleware channel** (`Guard`, `RateLimit`,
+   * `Firewall`, `Middleware`, `Interceptor`, `Pipe`, `Filter`, `Webhook`) were
+   * registered with the same name inside the same module.
+   * @since v2.0.0-alpha.1
+   */
+  | "DUPLICATE_MIDDLEWARE_IDENTIFIER"
+  /**
+   * Two identifiers in the **Schedule channel** (`Cron`, `Daemon`,
+   * `HealthCheck`, `Probe`) were registered with the same name inside the same
+   * module.
+   * @since v2.0.0-alpha.1
+   */
+  | "DUPLICATE_SCHEDULE_IDENTIFIER"
+  /**
+   * Two identifiers in the **Binding channel** (`Worker`, `Processor`,
+   * `Batch`, `Message`, `Subscriber`, `Saga`, `Choreography`, `SSE`,
+   * `Metric`) were registered with the same name inside the same module.
+   * @since v2.0.0-alpha.1
+   */
+  | "DUPLICATE_BINDING_IDENTIFIER"
+  /**
+   * A peer dependency required by a `@kerith/app` adapter (e.g. `bullmq` for
+   * queue support, `node-cron` for scheduling, `socket.io` for real-time,
+   * `@opentelemetry/api` for tracing) is not installed in the user's project.
+   *
+   * The code lives in `@kerith/core` so that `KerithError` can carry it;
+   * the error is always thrown by the adapter layer in `@kerith/app`.
+   * @since v2.0.0-alpha.1
+   */
+  | "MISSING_PEER_DEPENDENCY"
+  /**
+   * A `Cron()` identifier was declared with a syntactically invalid cron
+   * expression (wrong number of fields, illegal characters, out-of-range
+   * values).
+   *
+   * The code lives in `@kerith/core` so that `KerithError` can carry it;
+   * the error is thrown by the Cron executor in `@kerith/app` at bootstrap.
+   * @since v2.0.0-alpha.1
+   */
+  | "INVALID_CRON_EXPRESSION";
 
 export class KerithError extends Error {
   readonly code: KerithErrorCode;
