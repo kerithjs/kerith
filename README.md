@@ -45,11 +45,12 @@ kerith/
 │   ├── core/                        # @kerith/core
 │   │   ├── src/
 │   │   │   ├── bootstrap/           # createApp() — 11-step deterministic pipeline
-│   │   │   ├── identifiers/         # Module(), Controller(), Service(), ...
+│   │   │   ├── identifiers/         # Module() (re-export), Controller(), Service(), Repository(), Schema()
 │   │   │   ├── aliases/             # ESM hook — runtime alias resolution
 │   │   │   ├── nits/                # NITS — Node Identity Tracking System
 │   │   │   ├── cli/                 # kerith check, create-module, sync-*
 │   │   │   ├── core/                # Registry, state, logger, http-logger, errors
+│   │   │   │   └── identifiers/     # Module(), Domain(), SubModule() — real implementations + validation
 │   │   │   ├── preload/             # Runtime pre-loader hook
 │   │   │   └── types/               # Public TypeScript types
 │   │   └── tests/
@@ -59,7 +60,7 @@ kerith/
 │   │
 │   ├── eslint-plugin/               # @kerith/eslint-plugin
 │   │   └── src/
-│   │       └── rules/               # no-private-imports, no-undeclared-imports, no-domain-boundary-violations, no-relative-boundary-violations
+│   │       └── rules/               # no-private-imports, no-undeclared-imports, no-undeclared-shared, no-shared-scope-violation, no-deep-imports
 │   │
 │   ├── app/                         # @kerith/app
 │   │   └── src/                     # Generic channel loops — new identifiers never require touching this layer
@@ -70,6 +71,8 @@ kerith/
 ├── package.json                     # Workspace root
 └── tsconfig.json                    # Shared TypeScript base config
 ```
+
+> Note: `Module()` has two locations by design — the real implementation (registry validation, name/folder matching, caller checks) lives in `core/identifiers/module.ts`; the top-level `identifiers/module.ts` is a one-line re-export barrel that also holds `Controller()`, `Service()`, `Repository()`, and `Schema()`. `Domain()` and `SubModule()` live only under `core/identifiers/`.
 
 ---
 
@@ -124,6 +127,7 @@ Install manually:
 ```bash
 npm install @kerith/core@alpha express
 ```
+
 > **Note**: During the v2 alpha cycle, please use the `@alpha` tag to install the latest pre-release versions.
 
 ```ts
@@ -131,11 +135,11 @@ npm install @kerith/core@alpha express
 import { defineConfig } from "@kerith/core";
 
 export default defineConfig({
-  modules: "src/modules/*",
+  origin: "src",
   prefix: "/api/v1",
-  coupling: {
-    fanOut: { threshold: 8 }, // large monolith: higher threshold
-    fanIn: { threshold: 5 }, // shared remains strict
+  rules: {
+    fanOutThreshold: 8, // large monolith: higher threshold
+    fanInThreshold: 5, // shared remains strict
   },
   aliases: {
     "@config": "./src/config",
@@ -215,6 +219,8 @@ export default defineConfig({
   },
 });
 ```
+
+Any rule above can be disabled explicitly by setting it to `false` instead of omitting it.
 
 ---
 
@@ -301,6 +307,7 @@ The `@kerith/eslint-plugin` enforces the same rules at edit time:
 ```bash
 npm install --save-dev @kerith/eslint-plugin@alpha
 ```
+
 > **Note**: During the v2 alpha cycle, use the `@alpha` tag.
 
 ```js
@@ -310,16 +317,15 @@ import kerith from "@kerith/eslint-plugin";
 export default [kerith.configs.recommended];
 ```
 
-Ships six rules out of the box:
+Ships five rules out of the box:
 
-| Rule                              | Severity | Description                                             |
-| --------------------------------- | -------- | ------------------------------------------------------- |
-| `no-private-imports`              | error    | Prevents deep internal path imports                     |
-| `no-undeclared-imports`           | warn     | Module uses another without declaring it in `imports[]` |
-| `no-domain-boundary-violations`   | error    | Cross-domain internal alias access                      |
-| `no-relative-boundary-violations` | error    | Relative imports that escape the module boundary        |
-| `no-undeclared-shared`            | warn     | `@shared` imported without declaring it in `shared[]`   |
-| `no-shared-scope-violation`       | error    | `@{domain}/shared` accessed from another domain         |
+| Rule                        | Severity | Description                                                      |
+| --------------------------- | -------- | ---------------------------------------------------------------- |
+| `no-private-imports`        | error    | Prevents deep internal path imports                              |
+| `no-undeclared-imports`     | warn     | Module uses another without declaring it in `imports[]`          |
+| `no-undeclared-shared`      | warn     | `@shared` imported without declaring it in `shared[]`            |
+| `no-shared-scope-violation` | error    | `@{domain}/shared` accessed from another domain                  |
+| `no-deep-imports`           | warn     | Import path exceeds the configured depth (default `maxDepth: 3`) |
 
 For full configuration details, see the [`@kerith/eslint-plugin` README](./packages/eslint-plugin/README.md).
 
