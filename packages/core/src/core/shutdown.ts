@@ -1,5 +1,6 @@
 import type { Server } from 'node:http';
 import type { Logger } from '../types/index.js';
+import { getRegisteredScheduleProviders } from '../extension/store.js';
 
 // ─── Shutdown Manager ─────────────────────────────────────────────────────────
 //
@@ -55,6 +56,17 @@ export function registerShutdown(options: ShutdownManagerOptions): import('../ty
           resolve();
         });
       });
+    }
+
+    // ─── Step 1.5: Extension API on-shutdown hooks ────────────────────────────
+    const onShutdownSchedules = getRegisteredScheduleProviders().filter(s => s.timing === 'on-shutdown');
+    for (const schedule of onShutdownSchedules) {
+      try {
+        await schedule.execute();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`Extension schedule ${schedule.name} threw an error during shutdown: ${message}`, { _module: 'shutdown' });
+      }
     }
 
     // ─── Step 2: User cleanup hook ────────────────────────────────────────────

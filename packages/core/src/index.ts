@@ -23,6 +23,7 @@ export * from './core/config.js';
 export * from './core/logger.js';
 export * from './core/http-logger.js';
 export * from './preload/index.js';
+export * from './extension/index.js';
 
 export * from './config/kerith-config.types.js';
 export type * from './config/kerith-config.types.js';

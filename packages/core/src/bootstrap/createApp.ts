@@ -8,6 +8,9 @@ import type { Application } from "express";
 import { CacheManager } from "../cache/bootstrap-cache.js";
 import { createRegistry, registryContext } from "../core/registry.js";
 import { registerShutdown } from "../core/shutdown.js";
+import { getRegisteredScheduleProviders, getRegisteredAliasProviders } from "../extension/store.js";
+import { activateAliasResolver } from "../aliases/resolver.js";
+import { updateAliasCache } from "../aliases/cache.js";
 import type { CreateAppOptions, KerithApp } from "../types/index.js";
 
 // Bootstrap
@@ -76,6 +79,23 @@ export async function createApp(
       // Step 06 — Dynamic Imports
       await runDynamicImports(ctx);
 
+      // --- Extension API: Alias Providers ---
+      // At this point, modules have been evaluated, meaning Client(), Store(), etc. have executed
+      // and registered their AliasProviders. We must now inject them into the ESM hook so that
+      // subsequent steps (like Step 08, which imports controllers) can resolve them.
+      const extensionAliases = getRegisteredAliasProviders();
+      if (extensionAliases.length > 0) {
+        const pureExtensionAliases: Record<string, string> = {};
+        for (const provider of extensionAliases) {
+          const fullAlias = `@${provider.prefix}/${provider.name}`;
+          registry.registerAlias(fullAlias, provider.filePath);
+          pureExtensionAliases[fullAlias] = provider.filePath;
+        }
+        
+        await activateAliasResolver(pureExtensionAliases, {}, log);
+        updateAliasCache(registry.getAllAliases());
+      }
+
       // Step 07 — Validate dependencies (strict mode only)
       await runValidations(ctx);
 
@@ -123,6 +143,16 @@ export async function createApp(
       // Step 09 — Bootstrap Cache Write
       runCacheWrite(ctx);
 
+      // Execute 'after-bootstrap' schedules
+      const schedules = getRegisteredScheduleProviders();
+      const afterBootstrapSchedules = schedules.filter(s => s.timing === 'after-bootstrap');
+      for (const schedule of afterBootstrapSchedules) {
+        // Ejecutamos secuencialmente sin bloquear el loop de express, pero asegurando
+        // que no arrojamos excepciones unhandled, o con await si queremos que sea bloqueante.
+        // El doc implica que es Promise<void> | void. Kerith es determinista, usaremos await.
+        await schedule.execute();
+      }
+
       return {
         modules: safeRegisteredModules,
         routes: mountedRoutes,
@@ -132,7 +162,13 @@ export async function createApp(
           preloaderVersion: preloadConfig?._version ?? null,
           aliasesAtBoot: preloadConfig?.aliases ?? {},
         },
-        listen(server, listenOptions) {
+        async listen(server, listenOptions) {
+          // Execute 'on-listen' schedules
+          const onListenSchedules = getRegisteredScheduleProviders().filter(s => s.timing === 'on-listen');
+          for (const schedule of onListenSchedules) {
+            await schedule.execute();
+          }
+
           return registerShutdown({
             server,
             onShutdown: listenOptions?.onShutdown,

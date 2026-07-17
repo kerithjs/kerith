@@ -390,7 +390,7 @@ export interface KerithApp {
    * ```
    * @since v1.5.1
    */
-  listen(server: import('node:http').Server, options?: ListenOptions): ShutdownHook;
+  listen(server: import('node:http').Server, options?: ListenOptions): Promise<ShutdownHook>;
 }
 
 export interface GetAliasesOptions {

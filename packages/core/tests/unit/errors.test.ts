@@ -70,6 +70,12 @@ describe('KerithErrorCode — Part 3 (Extension API)', () => {
     expect(err instanceof KerithError).toBe(true)
   })
 
+  it('accepts DUPLICATE_EXTENSION_PROVIDER', () => {
+    const err = new KerithError('DUPLICATE_EXTENSION_PROVIDER', 'duplicate ScheduleProvider "cron-scheduler"')
+    expect(err.code).toBe('DUPLICATE_EXTENSION_PROVIDER')
+    expect(err instanceof KerithError).toBe(true)
+  })
+
   it('accepts MISSING_PEER_DEPENDENCY', () => {
     const err = new KerithError(
       'MISSING_PEER_DEPENDENCY',

@@ -16,6 +16,7 @@ import pc from "picocolors";
 import { importIndexEntry } from "../import-index.js";
 import { normalizePath } from "../../core/utils/paths.js";
 import { KerithError } from "../../core/errors.js";
+import { getRegisteredBindingProviders } from "../../extension/store.js";
 import type { BootstrapContext } from "../context.js";
 
 export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
@@ -192,4 +193,17 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
 
   // Mutate context
   ctx.allModules = allModules;
+
+  // Execute bindings sequentially to guarantee predictability
+  const bindings = getRegisteredBindingProviders();
+  for (const provider of bindings) {
+    const bindStart = performance.now();
+    await provider.bind();
+    if (process.env.KERITH_PROFILE === "true") {
+      log.debug(
+        `[perf] binding ${provider.name} took ${Math.round(performance.now() - bindStart)}ms`,
+        { _module: "boot" },
+      );
+    }
+  }
 }

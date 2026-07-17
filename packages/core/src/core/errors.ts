@@ -106,6 +106,13 @@ export type KerithErrorCode =
    */
   | "DUPLICATE_BINDING_IDENTIFIER"
   /**
+   * Two extension providers (AliasProvider, MiddlewareResolver, ScheduleProvider,
+   * or BindingProvider) were registered with the same name. Providers are global
+   * and their names must be unique.
+   * @since v2.0.0-alpha.1
+   */
+  | "DUPLICATE_EXTENSION_PROVIDER"
+  /**
    * A peer dependency required by a `@kerith/app` adapter (e.g. `bullmq` for
    * queue support, `node-cron` for scheduling, `socket.io` for real-time,
    * `@opentelemetry/api` for tracing) is not installed in the user's project.

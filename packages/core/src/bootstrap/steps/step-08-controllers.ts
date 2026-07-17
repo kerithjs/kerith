@@ -18,6 +18,7 @@ import { KerithError } from "../../core/errors.js";
 import { normalizePath, groupFilesByModulePath } from "../../core/utils/paths.js";
 import { withTimeout } from "../../core/utils/timeout.js";
 import { buildModuleKey } from "../../core/registry.js";
+import { getRegisteredMiddlewareResolvers } from "../../extension/store.js";
 import type { BootstrapContext } from "../context.js";
 import type { Application } from "express";
 import type { MountedRoute } from "../../types/index.js";
@@ -183,6 +184,11 @@ export async function runControllersAndMount(
   let logMs = 0;
   const routeLogGate = new BootLogGate(config.logLevel);
 
+  // Get extension middlewares and sort them by priority (descending: higher runs first)
+  const allResolvers = getRegisteredMiddlewareResolvers();
+  const preResolvers = allResolvers.filter(r => r.phase === 'pre').sort((a, b) => b.priority - a.priority);
+  const postResolvers = allResolvers.filter(r => r.phase === 'post').sort((a, b) => b.priority - a.priority);
+
   for (const mod of allModules) {
     const rawMod = registry.getRawModule(mod.name, mod.domain);
     if (!rawMod) continue;
@@ -206,11 +212,19 @@ export async function runControllersAndMount(
           .replace(/\/$/, "") || "/";
       if (ctrl.router) {
         const tMount = performance.now();
-        if (ctrl.middlewares && ctrl.middlewares.length > 0) {
-          app.use(fullPath, ...ctrl.middlewares, ctrl.router);
-        } else {
-          app.use(fullPath, ctrl.router);
-        }
+        
+        // Execute extension resolvers for this specific controller
+        const preMiddlewares = preResolvers.flatMap(r => r.resolve(ctrl));
+        const postMiddlewares = postResolvers.flatMap(r => r.resolve(ctrl));
+
+        const allMiddlewares = [
+          ...preMiddlewares,
+          ...(ctrl.middlewares || []),
+          ctrl.router,
+          ...postMiddlewares
+        ];
+
+        app.use(fullPath, ...(allMiddlewares as any[]));
         mountMs += performance.now() - tMount;
 
         let foundRoutes = false;

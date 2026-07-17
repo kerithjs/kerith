@@ -18,6 +18,10 @@
     },
     "./preload-hook": {
       "import": "./dist/preload/preload-hook.js"
+    },
+    "./extension": {
+      "types": "./dist/extension/index.d.ts",
+      "import": "./dist/extension/index.js"
     }
   },
   "files": [

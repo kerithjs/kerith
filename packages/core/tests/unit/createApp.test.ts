@@ -116,7 +116,7 @@ describe('createApp', () => {
       };
 
       const shutdownHook = vi.fn();
-      const triggerShutdown = KerithApp.listen(mockServer as any, { onShutdown: shutdownHook });
+      const triggerShutdown = await KerithApp.listen(mockServer as any, { onShutdown: shutdownHook });
       
       expect(typeof triggerShutdown).toBe('function');
       
@@ -139,7 +139,7 @@ describe('createApp', () => {
         emit: vi.fn()
       };
 
-      const triggerShutdown = KerithApp.listen(mockServer as any);
+      const triggerShutdown = await KerithApp.listen(mockServer as any);
       
       vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
       await triggerShutdown();

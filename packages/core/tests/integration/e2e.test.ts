@@ -115,7 +115,7 @@ describe("E2E Integration", () => {
     };
     const shutdownHook = vi.fn();
 
-    const triggerShutdown = KerithInfo.listen(mockServer as any, {
+    const triggerShutdown = await KerithInfo.listen(mockServer as any, {
       onShutdown: shutdownHook,
     });
 
