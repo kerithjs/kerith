@@ -127,7 +127,7 @@ describe('RateLimit() — handler rejects request when check() returns false', (
   })
 
   it('uses custom message when options.message is set', async () => {
-    RateLimit('api', () => false, { message: 'Límite excedido' })
+    RateLimit('api', () => false, { message: 'Rate limit exceeded' })
     const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as Function[]
 
     const jsonMock   = vi.fn()
@@ -135,7 +135,7 @@ describe('RateLimit() — handler rejects request when check() returns false', (
 
     await handler({}, { status: statusMock }, vi.fn())
 
-    expect(jsonMock).toHaveBeenCalledWith({ error: 'Límite excedido' })
+    expect(jsonMock).toHaveBeenCalledWith({ error: 'Rate limit exceeded' })
   })
 
   it('does NOT call next() when check returns false', async () => {

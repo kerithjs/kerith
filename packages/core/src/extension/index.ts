@@ -76,3 +76,10 @@ export function registerIdentifierMetadata(meta: MetadataType): void {
 
 export type * from './types.js';
 
+export {
+  getRegisteredAliasProviders,
+  getRegisteredBindingProviders,
+  getRegisteredScheduleProviders,
+  getRegisteredMiddlewareResolvers,
+  getRegisteredIdentifierMetadata,
+} from './store.js';

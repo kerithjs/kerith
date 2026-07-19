@@ -146,7 +146,7 @@ describe('Guard() — handler rejects request when check() returns false', () =>
   })
 
   it('responds with custom message when options.message is set', async () => {
-    Guard('jwt', () => false, { message: 'Token inválido' })
+    Guard('jwt', () => false, { message: 'Invalid token' })
     const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as Function[]
 
     const jsonMock   = vi.fn()
@@ -154,7 +154,7 @@ describe('Guard() — handler rejects request when check() returns false', () =>
 
     await handler({}, { status: statusMock }, vi.fn())
 
-    expect(jsonMock).toHaveBeenCalledWith({ error: 'Token inválido' })
+    expect(jsonMock).toHaveBeenCalledWith({ error: 'Invalid token' })
   })
 
   it('does NOT call next() when check returns false', async () => {
