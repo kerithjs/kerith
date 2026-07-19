@@ -19,3 +19,13 @@ export { Provider } from './infrastructure/provider.js'
 export { Store } from './infrastructure/store.js'
 export { Adapter } from './infrastructure/adapter.js'
 export type { AliasIdentifierOptions } from './infrastructure/_alias-factory.js'
+
+// ─── Security — Middleware channel ────────────────────────────────────────────
+export { Guard } from './security/guard.js'
+export type { GuardOptions } from './security/guard.js'
+export { RateLimit } from './security/rate-limit.js'
+export type { RateLimitOptions } from './security/rate-limit.js'
+
+// ─── HTTP — Middleware channel ─────────────────────────────────────────────────
+export { Middleware } from './http/middleware.js'
+export { Filter } from './http/filter.js'
