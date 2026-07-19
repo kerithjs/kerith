@@ -9,8 +9,10 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "build:identifiers": "npm run build -w @kerith/identifiers",
+    "build:app": "npm run build -w @kerith/app",
     "test": "npm test --workspaces --if-present",
     "test:identifiers": "npm test -w @kerith/identifiers",
+    "test:app": "npm test -w @kerith/app",
     "lint": "eslint \"packages/**/src/**/*.ts\" \"packages/**/tests/**/*.ts\"",
     "lint:fix": "eslint \"packages/**/src/**/*.ts\" \"packages/**/tests/**/*.ts\" --fix",
     "typecheck": "npm run typecheck --workspaces --if-present",
