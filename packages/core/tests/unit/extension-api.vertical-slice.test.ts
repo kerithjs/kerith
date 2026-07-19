@@ -202,7 +202,7 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
     registerMiddlewareResolver({
       phase: 'pre',
       priority: 10,
-      resolve: (_ctrl) => [preMiddlewareSpy],
+      getHandlers: (_ctrl) => [preMiddlewareSpy],
     });
 
     await runInTmpApp(baseAppStructure, async (_tmpDir, app) => {
@@ -221,7 +221,7 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
     registerMiddlewareResolver({
       phase: 'post',
       priority: 5,
-      resolve: (_ctrl) => [postMiddlewareSpy],
+      getHandlers: (_ctrl) => [postMiddlewareSpy],
     });
 
     await runInTmpApp(baseAppStructure, async (_tmpDir, app) => {
@@ -229,14 +229,16 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
 
       expect(app.use).toHaveBeenCalled();
 
-      const callArgs: any[] = app.use.mock.calls[0];
-      const routerIndex = callArgs.findIndex(
-        (arg: any) => arg && typeof arg.use === 'function' && Array.isArray(arg.stack),
+      const routerCallIdx = app.use.mock.calls.findIndex((args: any[]) => 
+        args.some((arg: any) => arg && typeof arg.use === 'function' && Array.isArray(arg.stack))
       );
-      const postIndex = callArgs.indexOf(postMiddlewareSpy);
+      const postMwCallIdx = app.use.mock.calls.findIndex((args: any[]) =>
+        args.includes(postMiddlewareSpy)
+      );
 
-      expect(postIndex).toBeGreaterThan(-1);
-      expect(postIndex).toBeGreaterThan(routerIndex);
+      expect(routerCallIdx).toBeGreaterThan(-1);
+      expect(postMwCallIdx).toBeGreaterThan(-1);
+      expect(postMwCallIdx).toBeGreaterThan(routerCallIdx);
     });
   });
 
@@ -247,13 +249,13 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
     registerMiddlewareResolver({
       phase: 'pre',
       priority: 1,
-      resolve: (_ctrl) => [lowPriorityMw],
+      getHandlers: (_ctrl) => [lowPriorityMw],
     });
 
     registerMiddlewareResolver({
       phase: 'pre',
       priority: 100,
-      resolve: (_ctrl) => [highPriorityMw],
+      getHandlers: (_ctrl) => [highPriorityMw],
     });
 
     await runInTmpApp(baseAppStructure, async (_tmpDir, app) => {

@@ -24,10 +24,10 @@ const makeAliasProvider = (name = 'db') => ({
   resolve: () => ({ query: () => {} }),
 });
 
-const makeMiddlewareResolver = (phase: 'pre' | 'post' = 'pre', priority = 10) => ({
+const makeMiddlewareResolver = (phase: 'pre' | 'post' | 'error' = 'pre', priority = 10) => ({
   phase,
   priority,
-  resolve: (_ctrl: any) => [],
+  getHandlers: (_ctrl: any) => [],
 });
 
 const makeScheduleProvider = (name = 'cleanup', timing: 'after-bootstrap' | 'on-listen' | 'on-shutdown' = 'after-bootstrap') => ({

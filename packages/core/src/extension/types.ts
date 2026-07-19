@@ -8,9 +8,22 @@ export interface AliasProvider {
 }
 
 export interface MiddlewareResolver {
-  phase: 'pre' | 'post';
+  phase: 'pre' | 'post' | 'error';
+  /**
+   * Order within the phase. Higher priority runs first — Core sorts
+   * descending (`sort((a, b) => b.priority - a.priority)`), fixed by the
+   * vertical-slice test suite. `@kerith/identifiers`' `MiddlewarePlugin.priority`
+   * must be translated 1:1 into this field without inverting it.
+   */
   priority: number;
-  resolve(controller: ControllerEntry): unknown[];
+  /**
+   * For `phase: 'error'`, must return the SAME function reference on every
+   * call if the resolver is meant to be mounted once globally — Core
+   * deduplicates error handlers by identity (`Set`), called once per
+   * mounted controller. A resolver that builds a new closure per call will
+   * be mounted once per controller instead of once total.
+   */
+  getHandlers(controller: ControllerEntry): unknown[];
 }
 
 export interface ScheduleProvider {

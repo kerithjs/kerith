@@ -36,23 +36,23 @@ export function addIdentifierMetadata(metadata: IdentifierMetadata): void {
 
 // Internal getters
 export function getRegisteredAliasProviders(): ReadonlyArray<AliasProvider> {
-  return aliasProviders;
+  return [...aliasProviders];
 }
 
 export function getRegisteredMiddlewareResolvers(): ReadonlyArray<MiddlewareResolver> {
-  return middlewareResolvers;
+  return [...middlewareResolvers];
 }
 
 export function getRegisteredScheduleProviders(): ReadonlyArray<ScheduleProvider> {
-  return scheduleProviders;
+  return [...scheduleProviders];
 }
 
 export function getRegisteredBindingProviders(): ReadonlyArray<BindingProvider> {
-  return bindingProviders;
+  return [...bindingProviders];
 }
 
 export function getRegisteredIdentifierMetadata(): ReadonlyArray<IdentifierMetadata> {
-  return identifierMetadata;
+  return [...identifierMetadata];
 }
 
 // Test utility

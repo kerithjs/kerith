@@ -188,6 +188,37 @@ export async function runControllersAndMount(
   const allResolvers = getRegisteredMiddlewareResolvers();
   const preResolvers = allResolvers.filter(r => r.phase === 'pre').sort((a, b) => b.priority - a.priority);
   const postResolvers = allResolvers.filter(r => r.phase === 'post').sort((a, b) => b.priority - a.priority);
+  const errorResolvers = allResolvers.filter(r => r.phase === 'error').sort((a, b) => b.priority - a.priority);
+
+  const postMounts: { path: string; handlers: any[] }[] = [];
+  const globalErrorHandlers = new Set<any>();
+
+  // 2.2 fix: error handlers are global and must be mounted exactly once.
+  // getHandlers() is called ONCE PER RESOLVER here (not once per controller
+  // as pre/post resolvers are below) — this avoids the identity-dedup Set
+  // multi-mounting a logically-single Filter whose getHandlers() happens to
+  // return a fresh closure on every call. Error handlers are assumed not to
+  // need per-controller context (see extension/types.ts JSDoc for phase 'error').
+  const anyControllerForErrorContext = allModules
+    .map((mod) => registry.getRawModule(mod.name, mod.domain))
+    .flatMap((rawMod) => rawMod?.controllers ?? [])[0];
+
+  for (const resolver of errorResolvers) {
+    const handlers = resolver.getHandlers(anyControllerForErrorContext as any);
+    for (const handler of handlers) {
+      // 2.3 fix: Express only treats a middleware as an error handler if it
+      // declares exactly 4 parameters (err, req, res, next). A resolver that
+      // gets this wrong would otherwise fail silently in production —
+      // Express would mount it as normal middleware, never invoked on error.
+      if (typeof handler === "function" && handler.length !== 4) {
+        log.warn(
+          `A MiddlewareResolver with phase 'error' returned a handler with ${handler.length} parameter(s) instead of 4 — Express will not treat it as an error handler and it will never run on error.`,
+          { _module: "router" },
+        );
+      }
+      globalErrorHandlers.add(handler);
+    }
+  }
 
   for (const mod of allModules) {
     const rawMod = registry.getRawModule(mod.name, mod.domain);
@@ -213,18 +244,23 @@ export async function runControllersAndMount(
       if (ctrl.router) {
         const tMount = performance.now();
         
-        // Execute extension resolvers for this specific controller
-        const preMiddlewares = preResolvers.flatMap(r => r.resolve(ctrl));
-        const postMiddlewares = postResolvers.flatMap(r => r.resolve(ctrl));
+        // Execute extension resolvers for this specific controller.
+        // Error-phase resolvers are handled once, above, outside this loop.
+        const preMiddlewares = preResolvers.flatMap(r => r.getHandlers(ctrl));
+        const postMiddlewares = postResolvers.flatMap(r => r.getHandlers(ctrl));
 
-        const allMiddlewares = [
+        const allPreMiddlewares = [
           ...preMiddlewares,
           ...(ctrl.middlewares || []),
-          ctrl.router,
-          ...postMiddlewares
+          ctrl.router
         ];
 
-        app.use(fullPath, ...(allMiddlewares as any[]));
+        app.use(fullPath, ...(allPreMiddlewares as any[]));
+        
+        if (postMiddlewares.length > 0) {
+          postMounts.push({ path: fullPath, handlers: postMiddlewares });
+        }
+
         mountMs += performance.now() - tMount;
 
         let foundRoutes = false;
@@ -296,6 +332,16 @@ export async function runControllersAndMount(
       }
     }
 
+  }
+
+  // Mount post middlewares after all routers
+  for (const mount of postMounts) {
+    app.use(mount.path, ...mount.handlers);
+  }
+
+  // Mount error handlers exactly once at the end of the app
+  if (globalErrorHandlers.size > 0) {
+    app.use(...Array.from(globalErrorHandlers));
   }
 
   if (routeLogGate.hasOverflow) {
