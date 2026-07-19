@@ -29,3 +29,13 @@ export type { RateLimitOptions } from './security/rate-limit.js'
 // ─── HTTP — Middleware channel ─────────────────────────────────────────────────
 export { Middleware } from './http/middleware.js'
 export { Filter } from './http/filter.js'
+
+// ─── Workers — Schedule channel ───────────────────────────────────────────────
+export { Cron } from './workers/cron.js'
+export type { CronOptions } from './workers/cron.js'
+
+// ─── Observability — Schedule channel ─────────────────────────────────────────
+export { HealthCheck } from './observability/health-check.js'
+export type { HealthCheckResult } from './observability/health-check.js'
+export { Probe } from './observability/probe.js'
+
