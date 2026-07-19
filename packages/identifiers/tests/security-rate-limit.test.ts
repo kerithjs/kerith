@@ -9,10 +9,10 @@ vi.mock('@kerith/core', () => ({
 const { RateLimit } = await import('../src/security/rate-limit.js')
 
 // ─── Fake ControllerEntry shapes ──────────────────────────────────────────────
-const controllerWithApi    = { name: 'public',   rateLimit: 'api' }
-const controllerWithStrict = { name: 'admin',    rateLimit: 'strict' }
+const controllerWithApi    = { name: 'public',   metadata: { rateLimit: 'api' } }
+const controllerWithStrict = { name: 'admin',    metadata: { rateLimit: 'strict' } }
 const controllerNoLimit    = { name: 'internal'  }            // field missing
-const controllerNullLimit  = { name: 'open', rateLimit: null } // null — not a match
+const controllerNullLimit  = { name: 'open', metadata: { rateLimit: null } } // null — not a match
 
 beforeEach(() => {
   _resetAllChannels()

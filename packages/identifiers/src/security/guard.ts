@@ -48,11 +48,11 @@ export function Guard(
     phase: 'pre' as const,
     priority: 1,
     getHandlers(controller: unknown): unknown[] {
-      // Requires controller.guards (ControllerEntry extension — §0.3 resolved in Core).
-      // If the field is absent, no handler is returned — the guard is effectively a no-op
+      // Requires controller.metadata?.guards (ControllerEntry extension — §0.3 resolved in Core).
+      // If missing, no guards are requested and thus we return NO handlers
       // for that controller, which is the safe default.
-      const entry = controller as { guards?: string[] } | null | undefined;
-      if (!entry?.guards?.includes(name)) return [];
+      const entry = controller as { metadata?: { guards?: string[] } } | null | undefined;
+      if (!entry?.metadata?.guards?.includes(name)) return [];
 
       return [
         async (req: unknown, res: unknown, next: unknown) => {

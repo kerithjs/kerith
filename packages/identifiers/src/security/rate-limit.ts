@@ -53,10 +53,10 @@ export function RateLimit(
     phase: 'pre' as const,
     priority: 2,
     getHandlers(controller: unknown): unknown[] {
-      // Requires controller.rateLimit (ControllerEntry extension — §0.3 resolved in Core).
-      // rateLimit is a single string, not an array.
-      const entry = controller as { rateLimit?: string } | null | undefined;
-      if (entry?.rateLimit !== name) return [];
+      // Requires controller.metadata?.rateLimit (ControllerEntry extension — §0.3 resolved in Core).
+      // If missing, it does not apply.
+      const entry = controller as { metadata?: { rateLimit?: string } } | null | undefined;
+      if (entry?.metadata?.rateLimit !== name) return [];
 
       return [
         async (req: unknown, res: unknown, next: unknown) => {

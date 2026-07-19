@@ -37,10 +37,10 @@ export function Middleware(
     phase: 'pre' as const,
     priority: 0,
     getHandlers(controller: unknown): unknown[] {
-      // Requires controller.middlewareNames (ControllerEntry extension — §0.3 resolved in Core).
-      // Uses middlewareNames (string[]) — separate from middlewares (RequestHandler[]).
-      const entry = controller as { middlewareNames?: string[] } | null | undefined;
-      if (!entry?.middlewareNames?.includes(name)) return [];
+      // Requires controller.metadata?.middlewareNames (ControllerEntry extension — §0.3 resolved in Core).
+      // If missing, it does not apply.
+      const entry = controller as { metadata?: { middlewareNames?: string[] } } | null | undefined;
+      if (!entry?.metadata?.middlewareNames?.includes(name)) return [];
       return [handler];
     },
   };

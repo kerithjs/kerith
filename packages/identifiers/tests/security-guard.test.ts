@@ -9,9 +9,9 @@ vi.mock('@kerith/core', () => ({
 const { Guard } = await import('../src/security/guard.js')
 
 // ─── Fake ControllerEntry shapes ──────────────────────────────────────────────
-const controllerWithJwt       = { name: 'users',   guards: ['jwt'] }
-const controllerWithOtherGuard = { name: 'products', guards: ['other'] }
-const controllerWithNoGuards  = { name: 'public',  guards: [] }
+const controllerWithJwt       = { name: 'users',   metadata: { guards: ['jwt'] } }
+const controllerWithOtherGuard = { name: 'products', metadata: { guards: ['other'] } }
+const controllerWithNoGuards  = { name: 'public',  metadata: { guards: [] } }
 const controllerWithoutField  = { name: 'legacy'  }  // guards field missing entirely
 
 beforeEach(() => {
@@ -80,7 +80,7 @@ describe('Guard() — getHandlers() filtering', () => {
     const [jwtPlugin, rolesPlugin] = getMiddlewarePlugins()
 
     // controller declares both — both return a handler
-    const bothController = { guards: ['jwt', 'roles'] }
+    const bothController = { metadata: { guards: ['jwt', 'roles'] } }
     expect(jwtPlugin.getHandlers(bothController)).toHaveLength(1)
     expect(rolesPlugin.getHandlers(bothController)).toHaveLength(1)
 

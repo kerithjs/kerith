@@ -12,12 +12,7 @@ export interface ControllerEntry {
   middlewares: RequestHandler[];
   router?: Router;
   enabled: boolean;
-  /** Guard identifier names requested by this controller (e.g. `['jwt']`). */
-  guards?: string[];
-  /** Rate-limit identifier name requested by this controller (e.g. `'api'`). */
-  rateLimit?: string;
-  /** Named middleware identifier strings — separate from direct `middlewares` handlers. */
-  middlewareNames?: string[];
+  metadata?: Record<string, unknown>;
 }
 
 export type {
@@ -161,24 +156,7 @@ export interface ControllerOptions {
   middlewares?: RequestHandler[];
   /** If false, createApp() ignores this controller entirely. Default: true. */
   enabled?: boolean;
-  /**
-   * Guard identifier names that protect this controller.
-   * Resolved at bootstrap by the matching `Guard(name, handler)` plugin.
-   * @example `['jwt', 'roles']`
-   */
-  guards?: string[];
-  /**
-   * Rate-limit identifier name applied to this controller.
-   * Resolved at bootstrap by the matching `RateLimit(name, handler)` plugin.
-   * @example `'api'`
-   */
-  rateLimit?: string;
-  /**
-   * Named middleware identifier strings applied to this controller.
-   * Separate from `middlewares` (direct handlers) — resolved by `Middleware(name, handler)` plugins.
-   * @example `['logger', 'cors']`
-   */
-  middlewareNames?: string[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface ServiceOptions {

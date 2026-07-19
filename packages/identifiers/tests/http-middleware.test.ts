@@ -9,11 +9,11 @@ vi.mock('@kerith/core', () => ({
 const { Middleware } = await import('../src/http/middleware.js')
 
 // ─── Fake ControllerEntry shapes ──────────────────────────────────────────────
-const controllerWithLogger = { name: 'users',   middlewareNames: ['logger'] }
-const controllerWithCors   = { name: 'public',  middlewareNames: ['cors'] }
-const controllerWithBoth   = { name: 'api',     middlewareNames: ['logger', 'cors'] }
+const controllerWithLogger = { name: 'users',   metadata: { middlewareNames: ['logger'] } }
+const controllerWithCors   = { name: 'public',  metadata: { middlewareNames: ['cors'] } }
+const controllerWithBoth   = { name: 'api',     metadata: { middlewareNames: ['logger', 'cors'] } }
 const controllerNoNames    = { name: 'internal' }           // field missing
-const controllerEmptyNames = { name: 'bare',    middlewareNames: [] }
+const controllerEmptyNames = { name: 'bare',    metadata: { middlewareNames: [] } }
 
 beforeEach(() => {
   _resetAllChannels()
