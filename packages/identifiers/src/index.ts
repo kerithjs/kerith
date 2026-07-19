@@ -12,5 +12,10 @@ export {
 export { IDENTIFIER_CATALOG } from './catalog/metadata.js'
 export type { IdentifierMetadata, IdentifierCategory } from './catalog/metadata.js'
 
-// Individual identifiers are exported here as they are implemented.
-// See PHASE 5+ checklist.
+// ─── Infrastructure — Alias channel ───────────────────────────────────────────
+export { Client } from './infrastructure/client.js'
+export { Config } from './infrastructure/config.js'
+export { Provider } from './infrastructure/provider.js'
+export { Store } from './infrastructure/store.js'
+export { Adapter } from './infrastructure/adapter.js'
+export type { AliasIdentifierOptions } from './infrastructure/_alias-factory.js'
