@@ -12,6 +12,12 @@ export interface ControllerEntry {
   middlewares: RequestHandler[];
   router?: Router;
   enabled: boolean;
+  /** Guard identifier names requested by this controller (e.g. `['jwt']`). */
+  guards?: string[];
+  /** Rate-limit identifier name requested by this controller (e.g. `'api'`). */
+  rateLimit?: string;
+  /** Named middleware identifier strings — separate from direct `middlewares` handlers. */
+  middlewareNames?: string[];
 }
 
 export type {
@@ -151,10 +157,28 @@ export type {
 } from '../core/types/hierarchy.js';
 
 export interface ControllerOptions {
-  /** Middlewares applied to all routes. Mounted before the router. Default: []. */
+  /** Direct middleware handlers applied to all routes. Mounted before the router. Default: []. */
   middlewares?: RequestHandler[];
   /** If false, createApp() ignores this controller entirely. Default: true. */
   enabled?: boolean;
+  /**
+   * Guard identifier names that protect this controller.
+   * Resolved at bootstrap by the matching `Guard(name, handler)` plugin.
+   * @example `['jwt', 'roles']`
+   */
+  guards?: string[];
+  /**
+   * Rate-limit identifier name applied to this controller.
+   * Resolved at bootstrap by the matching `RateLimit(name, handler)` plugin.
+   * @example `'api'`
+   */
+  rateLimit?: string;
+  /**
+   * Named middleware identifier strings applied to this controller.
+   * Separate from `middlewares` (direct handlers) — resolved by `Middleware(name, handler)` plugins.
+   * @example `['logger', 'cors']`
+   */
+  middlewareNames?: string[];
 }
 
 export interface ServiceOptions {
