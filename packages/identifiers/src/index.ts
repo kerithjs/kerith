@@ -34,8 +34,21 @@ export { Filter } from './http/filter.js'
 export { Cron } from './workers/cron.js'
 export type { CronOptions } from './workers/cron.js'
 
+// ─── Workers — Binding channel ────────────────────────────────────────────────
+export { Worker } from './workers/worker.js'
+export type { WorkerOptions } from './workers/worker.js'
+
 // ─── Observability — Schedule channel ─────────────────────────────────────────
 export { HealthCheck } from './observability/health-check.js'
 export type { HealthCheckResult } from './observability/health-check.js'
 export { Probe } from './observability/probe.js'
+
+// ─── Events — Binding channel ─────────────────────────────────────────────────
+export { Message } from './events/message.js'
+export type { MessageOptions } from './events/message.js'
+
+// ─── Realtime — Binding channel ───────────────────────────────────────────────
+export { Stream } from './realtime/stream.js'
+export type { StreamOptions } from './realtime/stream.js'
+
 
