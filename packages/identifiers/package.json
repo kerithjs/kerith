@@ -1,6 +1,6 @@
 {
   "name": "@kerith/identifiers",
-  "version": "2.0.0-alpha.1",
+  "version": "1.0.0-alpha.1",
   "description": "Extended identifier catalog for the Kerith framework.",
   "author": "Vlynk Studios & Keiver-dev",
   "license": "MIT",
