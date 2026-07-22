@@ -52,6 +52,7 @@ export function Guard(
       // If missing, no guards are requested and thus we return NO handlers
       // for that controller, which is the safe default.
       const entry = controller as { metadata?: { guards?: string[] } } | null | undefined;
+      console.log('GUARD GET_HANDLERS CALLED FOR:', (controller as any)?.name, 'ENTRY METADATA:', entry?.metadata)
       if (!entry?.metadata?.guards?.includes(name)) return [];
 
       return [

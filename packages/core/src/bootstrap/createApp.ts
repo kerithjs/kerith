@@ -8,7 +8,7 @@ import type { Application } from "express";
 import { CacheManager } from "../cache/bootstrap-cache.js";
 import { createRegistry, registryContext } from "../core/registry.js";
 import { registerShutdown } from "../core/shutdown.js";
-import { getRegisteredScheduleProviders, getRegisteredAliasProviders } from "../extension/store.js";
+import { getRegisteredScheduleProviders, getRegisteredAliasProviders, getRegisteredBindingProviders } from "../extension/store.js";
 import { activateAliasResolver } from "../aliases/resolver.js";
 import { updateAliasCache } from "../aliases/cache.js";
 import type { CreateAppOptions, KerithApp } from "../types/index.js";
@@ -78,6 +78,24 @@ export async function createApp(
 
       // Step 06 — Dynamic Imports
       await runDynamicImports(ctx);
+
+      // Invoke the internal hook for @kerith/app so it can map plugins to providers
+      if (options?._onDynamicImportsComplete) {
+        await options._onDynamicImportsComplete();
+      }
+
+      // Execute bindings sequentially to guarantee predictability
+      const bindings = getRegisteredBindingProviders();
+      for (const provider of bindings) {
+        const bindStart = performance.now();
+        await provider.bind();
+        if (process.env.KERITH_PROFILE === "true") {
+          log.debug(
+            `[perf] binding ${provider.name} took ${Math.round(performance.now() - bindStart)}ms`,
+            { _module: "boot" },
+          );
+        }
+      }
 
       // --- Extension API: Alias Providers ---
       // At this point, modules have been evaluated, meaning Client(), Store(), etc. have executed

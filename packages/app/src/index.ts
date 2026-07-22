@@ -2,28 +2,49 @@
 
 import { registerIdentifierMetadata } from '@kerith/core/extension'
 import { IDENTIFIER_CATALOG } from '@kerith/identifiers'
+import { createApp as coreCreateApp, type CreateAppOptions, type KerithApp } from '@kerith/core'
+
+// Channel executors
+import { executeMiddlewareChannel } from './runtime/middleware-channel-executor.js'
+import { executeCronChannel } from './runtime/cron-executor.js'
+import { executeSchedulePassthroughChannel } from './runtime/schedule-passthrough-executor.js'
+import { executeWorkerChannel } from './runtime/worker-executor.js'
+import { executeMessageChannel } from './runtime/message-executor.js'
+import { executeStreamChannel } from './runtime/stream-executor.js'
+import { executeAliasChannel } from './runtime/alias-channel-executor.js'
 
 // Registers the full catalog metadata into core.
-// registerIdentifierMetadata() deduplicates by `name` internally
-// (throws DUPLICATE_EXTENSION_PROVIDER if called twice with the same name) —
-// confirmed in Core's extension/index.ts. This loop is safe to run only once.
 for (const meta of IDENTIFIER_CATALOG) {
   registerIdentifierMetadata(meta)
 }
 
-// Channel executors are imported here as they are implemented.
-// See PHASE 4+ checklist and the corrected package document, section 7.
-// import './runtime/middleware-channel-executor.js'
-// import './runtime/cron-executor.js'
-// import './runtime/schedule-passthrough-executor.js'
-// import './runtime/worker-executor.js'
-// import './runtime/message-executor.js'
-// import './runtime/stream-executor.js'
-// import './runtime/alias-channel-executor.js'  ← blocked, see Notes at the end
+/**
+ * Wraps @kerith/core's createApp to inject the channel translation hook.
+ * This ensures that identifier decorators executed during dynamic imports
+ * are properly mapped to core extensions right before core resolves them.
+ */
+export async function createApp(app: any, options: CreateAppOptions = {}): Promise<KerithApp> {
+  const originalHook = options._onDynamicImportsComplete;
+  
+  options._onDynamicImportsComplete = async () => {
+    executeAliasChannel();
+    executeMiddlewareChannel();
+    executeSchedulePassthroughChannel();
+    await executeCronChannel();
+    await executeWorkerChannel();
+    await executeMessageChannel();
+    await executeStreamChannel();
+    
+    if (originalHook) {
+      await originalHook();
+    }
+  };
+  
+  return coreCreateApp(app, options);
+}
 
 // Re-export the full public surface.
+// Note: our explicit createApp export above overrides the one from @kerith/core.
 export * from '@kerith/core'
 export * from '@kerith/identifiers'
-// Disambiguate: IdentifierMetadata and IdentifierCategory exist in both packages.
-// The explicit export takes precedence over export * and resolves TS2308.
 export type { IdentifierCategory, IdentifierMetadata } from '@kerith/core'

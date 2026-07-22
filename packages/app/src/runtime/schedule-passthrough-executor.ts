@@ -1,5 +1,14 @@
-// src/runtime/schedule-passthrough-executor.ts
-// Schedule passthrough executor — PLACEHOLDER
-// Implementation: see corrected package document §8.3
-// Reads getSchedulePlugins() from @kerith/identifiers, filters by timing === 'on-listen',
-// and registers each as a ScheduleProvider in @kerith/core/extension via registerScheduleProvider().
+import { registerScheduleProvider } from '@kerith/core'
+import { getSchedulePlugins } from '@kerith/identifiers'
+
+export function executeSchedulePassthroughChannel() {
+  for (const plugin of getSchedulePlugins()) {
+    if (!plugin.expression) {
+      registerScheduleProvider({
+        name: plugin.name,
+        timing: plugin.timing,
+        execute: plugin.execute,
+      })
+    }
+  }
+}

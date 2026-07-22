@@ -193,17 +193,4 @@ export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {
 
   // Mutate context
   ctx.allModules = allModules;
-
-  // Execute bindings sequentially to guarantee predictability
-  const bindings = getRegisteredBindingProviders();
-  for (const provider of bindings) {
-    const bindStart = performance.now();
-    await provider.bind();
-    if (process.env.KERITH_PROFILE === "true") {
-      log.debug(
-        `[perf] binding ${provider.name} took ${Math.round(performance.now() - bindStart)}ms`,
-        { _module: "boot" },
-      );
-    }
-  }
 }

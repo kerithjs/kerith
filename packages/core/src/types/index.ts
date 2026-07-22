@@ -250,6 +250,13 @@ export interface CreateAppOptions {
    * configured via `logLevel` and `logFormat` in `kerith.config.ts`.
    */
   logger?: LogHandler;
+  
+  /**
+   * Internal hook for `@kerith/app` to inject the channel translation
+   * exactly when dynamic imports finish and before alias resolution.
+   * @internal
+   */
+  _onDynamicImportsComplete?: () => void | Promise<void>;
 }
 
 /** Resolved configuration used internally (defaults applied). */

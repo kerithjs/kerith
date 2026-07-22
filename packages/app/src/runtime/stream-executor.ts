@@ -1,6 +1,27 @@
-// src/runtime/stream-executor.ts
-// Stream executor — PLACEHOLDER
-// Implementation: see corrected package document §8.4
-// Reads getBindingPlugins() from @kerith/identifiers, filters by kind === 'stream',
-// and registers each as a BindingProvider in @kerith/core/extension via registerBindingProvider().
-// NOTE: the actual streaming engine (WebSockets, SSE, Kafka Streams, etc.) is a pending design decision.
+import { registerBindingProvider } from '@kerith/core'
+import { getBindingPlugins } from '@kerith/identifiers'
+
+async function loadStreamTransport() {
+  return {
+    bind: (name: string, handler: any, options: any) => {
+      console.log(`[Kerith] Stream transport binding placeholder for: ${name}`)
+    }
+  }
+}
+
+export async function executeStreamChannel() {
+  for (const plugin of getBindingPlugins()) {
+    if (plugin.kind === 'stream') {
+      registerBindingProvider({
+        name: plugin.name,
+        kind: plugin.kind,
+        bind: async () => {
+          const transport = await loadStreamTransport()
+          const { handler, options } = plugin.bind as any
+          
+          transport.bind(plugin.name, handler, options)
+        }
+      })
+    }
+  }
+}
