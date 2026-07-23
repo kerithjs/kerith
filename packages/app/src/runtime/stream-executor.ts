@@ -1,12 +1,10 @@
 import { registerBindingProvider } from '@kerith/core'
 import { getBindingPlugins } from '@kerith/identifiers'
+import { loadStreamTransport } from '../adapters/stream.js'
 
-async function loadStreamTransport() {
-  return {
-    bind: (name: string, handler: any, options: any) => {
-      console.log(`[Kerith] Stream transport binding placeholder for: ${name}`)
-    }
-  }
+interface StreamBinding {
+  handler: (chunk: unknown) => Promise<void> | void;
+  options?: Record<string, unknown>;
 }
 
 export async function executeStreamChannel() {
@@ -17,7 +15,7 @@ export async function executeStreamChannel() {
         kind: plugin.kind,
         bind: async () => {
           const transport = await loadStreamTransport()
-          const { handler, options } = plugin.bind as any
+          const { handler, options } = plugin.bind as StreamBinding
           
           transport.bind(plugin.name, handler, options)
         }

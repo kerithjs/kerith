@@ -1,12 +1,10 @@
 import { registerBindingProvider } from '@kerith/core'
 import { getBindingPlugins } from '@kerith/identifiers'
+import { loadMessageTransport } from '../adapters/message.js'
 
-async function loadMessageTransport() {
-  return {
-    bind: (name: string, handler: any, options: any) => {
-      console.log(`[Kerith] Message transport binding placeholder for: ${name}`)
-    }
-  }
+interface MessageBinding {
+  handler: (message: unknown) => Promise<void> | void;
+  options?: Record<string, unknown>;
 }
 
 export async function executeMessageChannel() {
@@ -17,7 +15,7 @@ export async function executeMessageChannel() {
         kind: plugin.kind,
         bind: async () => {
           const transport = await loadMessageTransport()
-          const { handler, options } = plugin.bind as any
+          const { handler, options } = plugin.bind as MessageBinding
           
           transport.bind(plugin.name, handler, options)
         }

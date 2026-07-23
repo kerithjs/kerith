@@ -26,21 +26,24 @@ for (const meta of IDENTIFIER_CATALOG) {
 export async function createApp(app: any, options: CreateAppOptions = {}): Promise<KerithApp> {
   const originalHook = options._onDynamicImportsComplete;
   
-  options._onDynamicImportsComplete = async () => {
-    executeAliasChannel();
-    executeMiddlewareChannel();
-    executeSchedulePassthroughChannel();
-    await executeCronChannel();
-    await executeWorkerChannel();
-    await executeMessageChannel();
-    await executeStreamChannel();
-    
-    if (originalHook) {
-      await originalHook();
+  const internalOptions: CreateAppOptions = {
+    ...options,
+    _onDynamicImportsComplete: async () => {
+      executeAliasChannel();
+      executeMiddlewareChannel();
+      executeSchedulePassthroughChannel();
+      await executeCronChannel();
+      await executeWorkerChannel();
+      await executeMessageChannel();
+      await executeStreamChannel();
+      
+      if (originalHook) {
+        await originalHook();
+      }
     }
   };
   
-  return coreCreateApp(app, options);
+  return coreCreateApp(app, internalOptions);
 }
 
 // Re-export the full public surface.
