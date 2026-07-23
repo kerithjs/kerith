@@ -12,6 +12,7 @@ export async function executeMessageChannel() {
     if (plugin.kind === 'message') {
       registerBindingProvider({
         name: plugin.name,
+        filePath: plugin.filePath,
         kind: plugin.kind,
         bind: async () => {
           const transport = await loadMessageTransport()

@@ -6,6 +6,7 @@ export function executeSchedulePassthroughChannel() {
     if (!plugin.expression) {
       registerScheduleProvider({
         name: plugin.name,
+        filePath: plugin.filePath,
         timing: plugin.timing,
         execute: plugin.execute,
       })

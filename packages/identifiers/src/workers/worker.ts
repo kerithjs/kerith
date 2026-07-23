@@ -32,10 +32,11 @@ export function Worker(
   handler: (job: unknown) => void | Promise<void>,
   options: WorkerOptions = {},
 ): void {
-  getFileCallerInfo('Worker()');
+  const { filePath } = getFileCallerInfo('Worker()');
 
   registerBindingPlugin({
     name,
+    filePath,
     kind: 'worker',
     // Opaque data — @kerith/app decides how to pass this to the queue engine.
     bind: { handler, options },

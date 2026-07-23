@@ -46,10 +46,11 @@ export function RateLimit(
   check: (req: unknown) => boolean | Promise<boolean>,
   options: RateLimitOptions = {},
 ): void {
-  // Called for future traceability — filePath not yet part of MiddlewarePlugin.
-  getFileCallerInfo('RateLimit()');
+  const { filePath } = getFileCallerInfo('RateLimit()');
 
   const plugin = {
+    name,
+    filePath,
     phase: 'pre' as const,
     priority: 2,
     getHandlers(controller: unknown): unknown[] {

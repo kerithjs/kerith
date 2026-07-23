@@ -40,11 +40,11 @@ export function Guard(
   check: (req: unknown) => boolean | Promise<boolean>,
   options: GuardOptions = {},
 ): void {
-  // Called for future traceability — filePath is not yet part of MiddlewarePlugin
-  // (tracked in Extension API §5 "sin name/filePath para trazabilidad").
-  getFileCallerInfo('Guard()');
+  const { filePath } = getFileCallerInfo('Guard()');
 
   const plugin = {
+    name,
+    filePath,
     phase: 'pre' as const,
     priority: 1,
     getHandlers(controller: unknown): unknown[] {

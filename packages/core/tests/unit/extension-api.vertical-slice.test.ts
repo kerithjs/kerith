@@ -200,6 +200,8 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
     const preMiddlewareSpy = vi.fn((_req: any, _res: any, next: any) => next());
 
     registerMiddlewareResolver({
+      name: 'test-mw1',
+      filePath: '/fake/test-mw1.ts',
       phase: 'pre',
       priority: 10,
       getHandlers: (_ctrl) => [preMiddlewareSpy],
@@ -219,6 +221,8 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
     const postMiddlewareSpy = vi.fn((_req: any, _res: any, next: any) => next());
 
     registerMiddlewareResolver({
+      name: 'test-mw2',
+      filePath: '/fake/test-mw2.ts',
       phase: 'post',
       priority: 5,
       getHandlers: (_ctrl) => [postMiddlewareSpy],
@@ -247,12 +251,16 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
     const highPriorityMw = vi.fn((_req: any, _res: any, next: any) => next());
 
     registerMiddlewareResolver({
+      name: 'test-mw-low',
+      filePath: '/fake/test-mw-low.ts',
       phase: 'pre',
       priority: 1,
       getHandlers: (_ctrl) => [lowPriorityMw],
     });
 
     registerMiddlewareResolver({
+      name: 'test-mw-high',
+      filePath: '/fake/test-mw-high.ts',
       phase: 'pre',
       priority: 100,
       getHandlers: (_ctrl) => [highPriorityMw],

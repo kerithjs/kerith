@@ -35,13 +35,11 @@ export function Filter<E extends Error>(
   errorType: new (...args: any[]) => E,
   handler: (err: E) => { status: number; error: string; [key: string]: unknown },
 ): void {
-  // Called for future traceability — filePath not yet part of MiddlewarePlugin.
-  getFileCallerInfo('Filter()');
-
-  // `name` is captured for catalog / tracing — not used in runtime logic today.
-  void name;
+  const { filePath } = getFileCallerInfo('Filter()');
 
   const plugin = {
+    name,
+    filePath,
     phase: 'error' as const,
     priority: 1,
     getHandlers(_controller: unknown): unknown[] {

@@ -20,6 +20,10 @@ export interface AliasPlugin {
  * Registered ONCE when importing the identifier module (not per instance).
  */
 export interface MiddlewarePlugin {
+  /** Name of the resource declared by the user */
+  name: string;
+  /** Absolute path to the file that declared the identifier */
+  filePath: string;
   /** Execution phase in the Express chain */
   phase: "pre" | "post" | "error";
   /**
@@ -43,6 +47,8 @@ export interface MiddlewarePlugin {
 export interface SchedulePlugin {
   /** Unique identifier — e.g. 'cron:0 2 * * *:/abs/path/to/file.ts' */
   name: string;
+  /** Absolute path to the file that declared the identifier */
+  filePath: string;
   /** When it should be executed */
   timing: "after-bootstrap" | "on-listen" | "on-shutdown";
   /** Only present in Cron type plugins */
@@ -58,6 +64,8 @@ export interface SchedulePlugin {
 export interface BindingPlugin {
   /** Unique identifier of the binding */
   name: string;
+  /** Absolute path to the file that declared the identifier */
+  filePath: string;
   /** Binding type — used by @kerith/app to choose the correct executor */
   kind:
     | "worker"

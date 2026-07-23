@@ -31,10 +31,11 @@ export function Stream(
   handler: (chunk: unknown) => void | Promise<void>,
   options: StreamOptions = {},
 ): void {
-  getFileCallerInfo('Stream()');
+  const { filePath } = getFileCallerInfo('Stream()');
 
   registerBindingPlugin({
     name,
+    filePath,
     kind: 'stream',
     // Opaque data — @kerith/app decides how to bind this to a streaming source.
     bind: { handler, options },

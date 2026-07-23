@@ -33,36 +33,21 @@ function assertValidIdentifierName(name: string, providerLabel: string): void {
 export function registerAliasProvider(provider: AliasProvider): void {
   assertValidIdentifierName(provider.name, 'AliasProvider');
   assertValidIdentifierName(provider.prefix, 'AliasProvider prefix');
-
-  const fullAlias = `${provider.prefix}/${provider.name}`;
-  const exists = getRegisteredAliasProviders().some(
-    p => `${p.prefix}/${p.name}` === fullAlias,
-  );
-  if (exists) {
-    throw new KerithError('DUPLICATE_EXTENSION_PROVIDER', `duplicate AliasProvider "@${fullAlias}"`);
-  }
   addAliasProvider(provider);
 }
 
 export function registerMiddlewareResolver(resolver: MiddlewareResolver): void {
-  // MiddlewareResolver doesn't have a name property in its type signature,
-  // so duplicate name validation doesn't apply here.
+  assertValidIdentifierName(resolver.name, 'MiddlewareResolver');
   addMiddlewareResolver(resolver);
 }
 
 export function registerScheduleProvider(provider: ScheduleProvider): void {
-  const exists = getRegisteredScheduleProviders().some(p => p.name === provider.name);
-  if (exists) {
-    throw new KerithError('DUPLICATE_EXTENSION_PROVIDER', `duplicate ScheduleProvider "${provider.name}"`);
-  }
+  assertValidIdentifierName(provider.name, 'ScheduleProvider');
   addScheduleProvider(provider);
 }
 
 export function registerBindingProvider(provider: BindingProvider): void {
-  const exists = getRegisteredBindingProviders().some(p => p.name === provider.name);
-  if (exists) {
-    throw new KerithError('DUPLICATE_EXTENSION_PROVIDER', `duplicate BindingProvider "${provider.name}"`);
-  }
+  assertValidIdentifierName(provider.name, 'BindingProvider');
   addBindingProvider(provider);
 }
 

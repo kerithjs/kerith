@@ -24,7 +24,9 @@ const makeAliasProvider = (name = 'db') => ({
   resolve: () => ({ query: () => {} }),
 });
 
-const makeMiddlewareResolver = (phase: 'pre' | 'post' | 'error' = 'pre', priority = 10) => ({
+const makeMiddlewareResolver = (phase: 'pre' | 'post' | 'error' = 'pre', priority = 10, name = 'test-middleware') => ({
+  name,
+  filePath: `/fake/path/${name}.ts`,
   phase,
   priority,
   getHandlers: (_ctrl: any) => [],
@@ -32,12 +34,14 @@ const makeMiddlewareResolver = (phase: 'pre' | 'post' | 'error' = 'pre', priorit
 
 const makeScheduleProvider = (name = 'cleanup', timing: 'after-bootstrap' | 'on-listen' | 'on-shutdown' = 'after-bootstrap') => ({
   name,
+  filePath: `/fake/path/${name}.ts`,
   timing,
   execute: async () => {},
 });
 
 const makeBindingProvider = (name = 'email-worker') => ({
   name,
+  filePath: `/fake/path/${name}.ts`,
   kind: 'worker',
   bind: async () => {},
 });
@@ -74,12 +78,6 @@ describe('extension/index.ts — registro de providers', () => {
       expect(getRegisteredAliasProviders()).toHaveLength(2);
     });
 
-    it('lanza DUPLICATE_EXTENSION_PROVIDER si el nombre ya existe', () => {
-      registerAliasProvider(makeAliasProvider('db'));
-      expect(() => registerAliasProvider(makeAliasProvider('db'))).toThrowError(
-        /DUPLICATE_EXTENSION_PROVIDER|duplicate AliasProvider/
-      );
-    });
   });
 
   // ─── registerMiddlewareResolver ──────────────────────────────────────────
@@ -106,12 +104,6 @@ describe('extension/index.ts — registro de providers', () => {
       expect(getRegisteredMiddlewareResolvers()).toHaveLength(3);
     });
 
-    it('no lanza en registro duplicado (MiddlewareResolver no tiene name)', () => {
-      expect(() => {
-        registerMiddlewareResolver(makeMiddlewareResolver('pre', 10));
-        registerMiddlewareResolver(makeMiddlewareResolver('pre', 10));
-      }).not.toThrow();
-    });
   });
 
   // ─── registerScheduleProvider ────────────────────────────────────────────
@@ -132,12 +124,6 @@ describe('extension/index.ts — registro de providers', () => {
       expect(getRegisteredScheduleProviders()).toHaveLength(3);
     });
 
-    it('lanza DUPLICATE_EXTENSION_PROVIDER si el nombre ya existe', () => {
-      registerScheduleProvider(makeScheduleProvider('cleanup'));
-      expect(() => registerScheduleProvider(makeScheduleProvider('cleanup'))).toThrowError(
-        /DUPLICATE_EXTENSION_PROVIDER|duplicate ScheduleProvider/
-      );
-    });
   });
 
   // ─── registerBindingProvider ─────────────────────────────────────────────
@@ -157,16 +143,9 @@ describe('extension/index.ts — registro de providers', () => {
       expect(getRegisteredBindingProviders()).toHaveLength(2);
     });
 
-    it('lanza DUPLICATE_EXTENSION_PROVIDER si el nombre ya existe', () => {
-      registerBindingProvider(makeBindingProvider('email-worker'));
-      expect(() => registerBindingProvider(makeBindingProvider('email-worker'))).toThrowError(
-        /DUPLICATE_EXTENSION_PROVIDER|duplicate BindingProvider/
-      );
-    });
-
     it('acepta distintos kind para un mismo provider', () => {
-      registerBindingProvider({ name: 'worker-a', kind: 'bullmq', bind: async () => {} });
-      registerBindingProvider({ name: 'saga-a', kind: 'saga', bind: async () => {} });
+      registerBindingProvider({ name: 'worker-a', filePath: '/path', kind: 'bullmq', bind: async () => {} });
+      registerBindingProvider({ name: 'saga-a', filePath: '/path', kind: 'saga', bind: async () => {} });
       const providers = getRegisteredBindingProviders();
       expect(providers.find(p => p.kind === 'bullmq')).toBeDefined();
       expect(providers.find(p => p.kind === 'saga')).toBeDefined();

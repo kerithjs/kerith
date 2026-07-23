@@ -8,6 +8,8 @@ export interface AliasProvider {
 }
 
 export interface MiddlewareResolver {
+  name: string;
+  filePath: string;
   phase: 'pre' | 'post' | 'error';
   /**
    * Order within the phase. Higher priority runs first — Core sorts
@@ -28,12 +30,14 @@ export interface MiddlewareResolver {
 
 export interface ScheduleProvider {
   name: string;
+  filePath: string;
   timing: 'after-bootstrap' | 'on-listen' | 'on-shutdown';
   execute(): Promise<void> | void;
 }
 
 export interface BindingProvider {
   name: string;
+  filePath: string;
   kind: string;
   bind(): Promise<void> | void;
 }

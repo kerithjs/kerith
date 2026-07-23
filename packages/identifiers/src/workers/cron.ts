@@ -42,7 +42,7 @@ export function Cron(
   fn: () => void | Promise<void>,
   options: CronOptions = {},
 ): void {
-  getFileCallerInfo('Cron()');
+  const { filePath } = getFileCallerInfo('Cron()');
 
   // `options` are silently accepted but unused in this plugin shape
   // per the Extension API §7. If they need to be passed down later,
@@ -51,6 +51,7 @@ export function Cron(
 
   registerSchedulePlugin({
     name: `cron:${name}`,
+    filePath,
     timing: 'after-bootstrap',
     expression,
     execute: fn,

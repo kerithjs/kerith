@@ -24,10 +24,11 @@ export function Probe(
   name: string,
   check: () => boolean | Promise<boolean>,
 ): void {
-  getFileCallerInfo('Probe()');
+  const { filePath } = getFileCallerInfo('Probe()');
 
   registerSchedulePlugin({
     name: `probe:${name}`,
+    filePath,
     timing: 'on-listen',
     execute: async () => {
       // Current scope: execute the check.

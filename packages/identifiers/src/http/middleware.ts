@@ -30,10 +30,11 @@ export function Middleware(
   name: string,
   handler: (req: unknown, res: unknown, next: unknown) => void,
 ): void {
-  // Called for future traceability — filePath not yet part of MiddlewarePlugin.
-  getFileCallerInfo('Middleware()');
+  const { filePath } = getFileCallerInfo('Middleware()');
 
   const plugin = {
+    name,
+    filePath,
     phase: 'pre' as const,
     priority: 0,
     getHandlers(controller: unknown): unknown[] {

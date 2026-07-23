@@ -31,10 +31,11 @@ export function Message(
   handler: (message: unknown) => void | Promise<void>,
   options: MessageOptions = {},
 ): void {
-  getFileCallerInfo('Message()');
+  const { filePath } = getFileCallerInfo('Message()');
 
   registerBindingPlugin({
     name: topic,
+    filePath,
     kind: 'message',
     bind: { handler, options },
   });

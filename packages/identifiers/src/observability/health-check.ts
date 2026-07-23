@@ -30,10 +30,11 @@ export function HealthCheck(
   name: string,
   check: () => HealthCheckResult | Promise<HealthCheckResult>,
 ): void {
-  getFileCallerInfo('HealthCheck()');
+  const { filePath } = getFileCallerInfo('HealthCheck()');
 
   registerSchedulePlugin({
     name: `health-check:${name}`,
+    filePath,
     timing: 'after-bootstrap',
     execute: async () => {
       // Current scope: execute the check.

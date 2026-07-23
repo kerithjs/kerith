@@ -9,6 +9,7 @@ export async function executeCronChannel() {
     if (expression) {
       registerScheduleProvider({
         name: plugin.name,
+        filePath: plugin.filePath,
         timing: 'after-bootstrap',
         execute: async () => {
           const cron = await loadNodeCron()

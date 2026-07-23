@@ -12,6 +12,7 @@ export async function executeStreamChannel() {
     if (plugin.kind === 'stream') {
       registerBindingProvider({
         name: plugin.name,
+        filePath: plugin.filePath,
         kind: plugin.kind,
         bind: async () => {
           const transport = await loadStreamTransport()

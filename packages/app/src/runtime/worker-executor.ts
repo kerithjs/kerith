@@ -14,6 +14,7 @@ export async function executeWorkerChannel() {
     if (plugin.kind === 'worker') {
       registerBindingProvider({
         name: plugin.name,
+        filePath: plugin.filePath,
         kind: plugin.kind,
         bind: async () => {
           const bullmq = await loadBullMQ()
