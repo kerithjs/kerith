@@ -9,11 +9,11 @@ import { registerMiddlewarePlugin } from '../channels/index.js';
  * closest to the actual route handler.
  *
  * The middleware is applied only to controllers that declare it by name in
- * `ControllerOptions.middlewareNames` — e.g. `Controller('/users', { middlewareNames: ['logger'] })`.
- * This uses the `middlewareNames` field (§0.3) to avoid conflicting with `middlewares`
+ * `ControllerOptions.metadata.middlewareNames` — e.g. `Controller('/users', { metadata: { middlewareNames: ['logger'] } })`.
+ * This uses the `metadata.middlewareNames` field (§0.3) to avoid conflicting with `middlewares`
  * (direct `RequestHandler[]` references already supported by `ControllerEntry`).
  *
- * @param name    Middleware identifier — must match the string in `ControllerOptions.middlewareNames`.
+ * @param name    Middleware identifier — must match the string in `ControllerOptions.metadata.middlewareNames`.
  * @param handler Express-compatible handler function (typed `unknown` to avoid Express coupling).
  *
  * @example

@@ -17,7 +17,8 @@ export async function executeMessageChannel() {
         bind: async () => {
           const transport = await loadMessageTransport()
           const { handler, options } = plugin.bind as MessageBinding
-          
+
+          // Ignore cleanup function in production (not needed for app lifecycle)
           transport.bind(plugin.name, handler, options)
         }
       })

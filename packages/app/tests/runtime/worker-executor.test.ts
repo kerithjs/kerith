@@ -30,9 +30,24 @@ describe('Worker Channel Executor', () => {
             constructor(name: string, processor: Function, options: any) {
               expect(name).toBe('test-worker')
               expect(options.concurrency).toBe(5)
+              // Verify that connection comes from getRedisConnection(), not hardcoded
+              expect(options.connection).toEqual({
+                host: 'redis.example.com',
+                port: 6380,
+                password: 'secret123'
+              })
               setTimeout(() => processor({ data: jobPayload }), 10)
             }
           }
+        })
+      }
+    })
+    vi.doMock('../../src/adapters/redis-connection.js', () => {
+      return {
+        getRedisConnection: () => ({
+          host: 'redis.example.com',
+          port: 6380,
+          password: 'secret123'
         })
       }
     })

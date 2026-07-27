@@ -50,5 +50,7 @@ export type { MessageOptions } from './events/message.js'
 // ─── Realtime — Binding channel ───────────────────────────────────────────────
 export { Stream } from './realtime/stream.js'
 export type { StreamOptions } from './realtime/stream.js'
+export { Gateway } from './realtime/gateway.js'
+export type { GatewayOptions } from './realtime/gateway.js'
 
 

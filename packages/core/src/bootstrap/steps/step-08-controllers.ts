@@ -204,7 +204,17 @@ export async function runControllersAndMount(
     .flatMap((rawMod) => rawMod?.controllers ?? [])[0];
 
   for (const resolver of errorResolvers) {
-    const handlers = resolver.getHandlers(anyControllerForErrorContext as any);
+    let handlers: unknown[];
+    try {
+      handlers = resolver.getHandlers(anyControllerForErrorContext as any);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new KerithError(
+        'MIDDLEWARE_RESOLUTION_FAILED',
+        `Middleware resolver "${resolver.name}" failed during getHandlers() execution`,
+        `File: ${resolver.filePath} — ${message}`
+      );
+    }
     for (const handler of handlers) {
       // 2.3 fix: Express only treats a middleware as an error handler if it
       // declares exactly 4 parameters (err, req, res, next). A resolver that
@@ -243,11 +253,48 @@ export async function runControllersAndMount(
           .replace(/\/$/, "") || "/";
       if (ctrl.router) {
         const tMount = performance.now();
-        
+
         // Execute extension resolvers for this specific controller.
         // Error-phase resolvers are handled once, above, outside this loop.
-        const preMiddlewares = preResolvers.flatMap(r => r.getHandlers(ctrl));
-        const postMiddlewares = postResolvers.flatMap(r => r.getHandlers(ctrl));
+        let preMiddlewares: unknown[];
+        try {
+          preMiddlewares = preResolvers.flatMap(r => r.getHandlers(ctrl));
+        } catch (err: unknown) {
+          const resolver = preResolvers.find(r => {
+            try {
+              r.getHandlers(ctrl);
+              return false;
+            } catch {
+              return true;
+            }
+          });
+          const message = err instanceof Error ? err.message : String(err);
+          throw new KerithError(
+            'MIDDLEWARE_RESOLUTION_FAILED',
+            `Middleware resolver "${resolver?.name || 'unknown'}" failed during getHandlers() execution`,
+            `File: ${resolver?.filePath || 'unknown'} — ${message}`
+          );
+        }
+
+        let postMiddlewares: unknown[];
+        try {
+          postMiddlewares = postResolvers.flatMap(r => r.getHandlers(ctrl));
+        } catch (err: unknown) {
+          const resolver = postResolvers.find(r => {
+            try {
+              r.getHandlers(ctrl);
+              return false;
+            } catch {
+              return true;
+            }
+          });
+          const message = err instanceof Error ? err.message : String(err);
+          throw new KerithError(
+            'MIDDLEWARE_RESOLUTION_FAILED',
+            `Middleware resolver "${resolver?.name || 'unknown'}" failed during getHandlers() execution`,
+            `File: ${resolver?.filePath || 'unknown'} — ${message}`
+          );
+        }
 
         const allPreMiddlewares = [
           ...preMiddlewares,

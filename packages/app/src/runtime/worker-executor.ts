@@ -1,6 +1,7 @@
 import { registerBindingProvider } from '@kerith/core'
 import { getBindingPlugins } from '@kerith/identifiers'
 import { loadBullMQ } from '../adapters/bullmq.js'
+import { getRedisConnection } from '../adapters/redis-connection.js'
 
 interface WorkerBinding {
   handler: (job: unknown) => Promise<void> | void;
@@ -19,14 +20,15 @@ export async function executeWorkerChannel() {
         bind: async () => {
           const bullmq = await loadBullMQ()
           const { handler, options } = plugin.bind as WorkerBinding
-          
+
           const opts = options || {}
-          
+          const redisConnection = getRedisConnection()
+
           new bullmq.Worker(plugin.name, async (job) => {
             return handler(job)
           }, {
             concurrency: opts.concurrency,
-            connection: { host: 'localhost', port: 6379 } // Required by BullMQ v5+, will be overridden by real config later
+            connection: redisConnection
           })
         }
       })

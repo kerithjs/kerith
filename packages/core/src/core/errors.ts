@@ -131,7 +131,39 @@ export type KerithErrorCode =
    * the error is thrown by the Cron executor in `@kerith/app` at bootstrap.
    * @since v2.0.0-alpha.1
    */
-  | "INVALID_CRON_EXPRESSION";
+  | "INVALID_CRON_EXPRESSION"
+  /**
+   * A BindingProvider (e.g., Worker, Message, Subscriber) failed during
+   * its `bind()` execution. This is a fail-fast error that aborts the
+   * bootstrap process to prevent the application from running with a
+   * critical integration (e.g., queue, database) in a broken state.
+   *
+   * The error wraps the underlying engine error (BullMQ, Redis, etc.)
+   * with the provider name for clear attribution.
+   * @since v2.0.0-alpha.1
+   */
+  | "BINDING_EXECUTION_FAILED"
+  /**
+   * A MiddlewareResolver (e.g., Guard, RateLimit, Middleware) failed during
+   * its `getHandlers()` execution during controller mounting. This is a fail-fast
+   * error that aborts the bootstrap process to prevent the application from
+   * running with a misconfigured middleware (e.g., a guard that throws during
+   * handler resolution).
+   *
+   * The error wraps the underlying error with the resolver name and file path
+   * for clear attribution.
+   * @since v2.0.0-alpha.1
+   */
+  | "MIDDLEWARE_RESOLUTION_FAILED"
+  /**
+   * An environment variable required by an adapter (e.g., Redis connection
+   * settings for BullMQ) has an invalid value. This is a configuration error
+   * that prevents the application from starting with a malformed environment.
+   *
+   * The error message includes the variable name and the invalid value received.
+   * @since v2.0.0-alpha.1
+   */
+  | "INVALID_ENV_CONFIG";
 
 export class KerithError extends Error {
   readonly code: KerithErrorCode;

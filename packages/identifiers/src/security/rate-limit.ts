@@ -26,11 +26,11 @@ export interface RateLimitOptions {
  * Priority 2 means it runs before `Guard` (priority 1) and `Middleware` (priority 0).
  *
  * The rate-limiter is applied only to controllers that declare it by name in
- * `ControllerOptions.rateLimit` — e.g. `Controller('/public', { rateLimit: 'api' })`.
- * One rate-limiter per controller (string, not array). Requires `ControllerEntry.rateLimit`
+ * `ControllerOptions.metadata.rateLimit` — e.g. `Controller('/public', { metadata: { rateLimit: 'api' } })`.
+ * One rate-limiter per controller (string, not array). Requires `ControllerEntry.metadata.rateLimit`
  * to be present (resolved in Core — §0.3).
  *
- * @param name    Rate-limiter identifier — must match the string in `ControllerOptions.rateLimit`.
+ * @param name    Rate-limiter identifier — must match the string in `ControllerOptions.metadata.rateLimit`.
  * @param check   Predicate that returns `true` when the request is within the limit.
  * @param options Optional configuration (windowMs, max, message).
  *

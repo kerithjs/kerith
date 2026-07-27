@@ -1,26 +1,60 @@
 // src/adapters/stream.ts
-// Lazy-loaded adapter for the stream transport.
-// Follows the same pattern as loadBullMQ() and loadNodeCron().
-// Replace the stub body with a real import (Kafka Streams, Redis Streams, etc.)
-// once the engine is decided — see section 5.3 of the design backlog.
+import { createRedisClient } from './redis-streams.js'
 
 export interface StreamTransport {
   bind(
     name: string,
     handler: (chunk: unknown) => Promise<void> | void,
     options?: Record<string, unknown>,
-  ): void
+  ): () => void // Returns cleanup function
 }
 
 export async function loadStreamTransport(): Promise<StreamTransport> {
-  // TODO (5.3): swap this stub for a real peer import once the stream engine is chosen.
-  //   Kafka Streams → await import('kafkajs')
-  //   Redis Streams → await import('ioredis')
-  // Throw KerithError('MISSING_PEER_DEPENDENCY', ...) if the import fails,
-  // exactly like loadBullMQ() does.
   return {
-    bind(name, _handler, _options) {
-      console.log(`[Kerith] Stream transport not yet configured for: ${name}`)
+    bind(name, handler, options) {
+      const batchSize = (options?.batchSize as number) ?? 1 // backpressure: 1 = procesa antes de pedir más
+      let running = true
+
+      void (async () => {
+        let client = await createRedisClient()
+        let lastId = '$' // arranca desde "ahora", no desde el principio del stream
+
+        while (running) {
+          try {
+            const res = await client.xread('BLOCK', 5000, 'COUNT', batchSize, 'STREAMS', name, lastId)
+            if (!res) continue
+            for (const [, entries] of res as any[]) {
+              for (const [id, fields] of entries) {
+                await handler({ id, fields }) // no pide el siguiente batch hasta terminar — backpressure real
+                lastId = id
+              }
+            }
+          } catch (err: any) {
+            if (!running) break // Exit if stopped during error handling
+            console.error(`[Kerith] Stream consumption error for stream "${name}":`, err)
+            // Backoff before retry
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            // Reconnect on next iteration
+            try {
+              await client.quit()
+            } catch {
+              // Ignore quit errors
+            }
+            client = await createRedisClient()
+          }
+        }
+        // Cleanup when loop stops
+        try {
+          await client.quit()
+        } catch {
+          // Ignore quit errors
+        }
+      })()
+
+      // Return cleanup function for tests
+      return () => {
+        running = false
+      }
     },
   }
 }

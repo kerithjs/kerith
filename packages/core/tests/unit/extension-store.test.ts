@@ -97,10 +97,10 @@ describe('extension/index.ts — registro de providers', () => {
       expect(resolvers[0].phase).toBe('post');
     });
 
-    it('acepta multiples resolvers sin requerir nombre unico (no hay colision)', () => {
-      registerMiddlewareResolver(makeMiddlewareResolver('pre', 10));
-      registerMiddlewareResolver(makeMiddlewareResolver('pre', 20));
-      registerMiddlewareResolver(makeMiddlewareResolver('post', 1));
+    it('acepta multiples resolvers con nombres distintos', () => {
+      registerMiddlewareResolver(makeMiddlewareResolver('pre', 10, 'middleware-1'));
+      registerMiddlewareResolver(makeMiddlewareResolver('pre', 20, 'middleware-2'));
+      registerMiddlewareResolver(makeMiddlewareResolver('post', 1, 'middleware-3'));
       expect(getRegisteredMiddlewareResolvers()).toHaveLength(3);
     });
 

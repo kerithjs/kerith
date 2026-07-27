@@ -1,5 +1,6 @@
 // src/adapters/bullmq.ts
 import { KerithError } from '@kerith/core'
+import { getRedisConnection } from './redis-connection.js'
 
 export async function loadBullMQ(): Promise<typeof import('bullmq')> {
   try {
@@ -11,3 +12,5 @@ export async function loadBullMQ(): Promise<typeof import('bullmq')> {
     )
   }
 }
+
+export { getRedisConnection } from './redis-connection.js'

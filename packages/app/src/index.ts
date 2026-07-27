@@ -11,6 +11,7 @@ import { executeSchedulePassthroughChannel } from './runtime/schedule-passthroug
 import { executeWorkerChannel } from './runtime/worker-executor.js'
 import { executeMessageChannel } from './runtime/message-executor.js'
 import { executeStreamChannel } from './runtime/stream-executor.js'
+import { executeGatewayChannel } from './runtime/gateway-executor.js'
 import { executeAliasChannel } from './runtime/alias-channel-executor.js'
 
 // Registers the full catalog metadata into core.
@@ -36,7 +37,8 @@ export async function createApp(app: any, options: CreateAppOptions = {}): Promi
       await executeWorkerChannel();
       await executeMessageChannel();
       await executeStreamChannel();
-      
+      await executeGatewayChannel();
+
       if (originalHook) {
         await originalHook();
       }

@@ -343,7 +343,7 @@ export const IDENTIFIER_CATALOG: IdentifierMetadata[] = [
     name: "Gateway",
     category: "realtime",
     kind: "logical",
-    channel: "alias",
+    channel: "binding",
     trackable: true,
   },
   { name: "Room", category: "realtime", kind: "structural", trackable: true },

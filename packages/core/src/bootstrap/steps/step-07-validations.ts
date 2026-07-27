@@ -250,61 +250,6 @@ export async function runValidations(ctx: BootstrapContext): Promise<void> {
     }
   }
 
-  // Step 7.6 — Validate Duplicate Identifiers (Alias, Middleware, Schedule, Binding)
-  const validateUniqueIdentifiers = (
-    providers: { name: string; filePath?: string; prefix?: string }[],
-    duplicateSameModuleCode: import("../../core/errors.js").KerithErrorCode,
-    identifierType: string
-  ) => {
-    // Map to group by name (or prefix/name for Alias)
-    const seen = new Map<string, { moduleId: string; filePath: string }>();
-
-    for (const provider of providers) {
-      if (!provider.name || !provider.filePath) continue;
-
-      let moduleId = "unknown";
-      const normalizedFilePath = normalizePath(provider.filePath);
-      
-      for (const modPath of sortedModulePaths) {
-        if (normalizedFilePath === modPath || normalizedFilePath.startsWith(modPath + "/")) {
-          const modRef = modulePathMap.get(modPath);
-          if (modRef) {
-            moduleId = buildModuleKey(modRef.name, modRef.domain);
-          }
-          break;
-        }
-      }
-
-      const uniqueKey = provider.prefix ? `${provider.prefix}/${provider.name}` : provider.name;
-      
-      if (seen.has(uniqueKey)) {
-        const existing = seen.get(uniqueKey)!;
-        
-        if (existing.moduleId === moduleId) {
-          throw new KerithError(
-            duplicateSameModuleCode,
-            `duplicate ${identifierType} "${uniqueKey}" inside the same module "${moduleId}"`,
-            `Conflicts between ${existing.filePath} and ${provider.filePath}`
-          );
-        } else {
-          throw new KerithError(
-            "DUPLICATE_EXTENSION_PROVIDER",
-            `duplicate ${identifierType} "${uniqueKey}" across different modules`,
-            `Conflicts between ${existing.filePath} (${existing.moduleId}) and ${provider.filePath} (${moduleId})`
-          );
-        }
-      }
-      
-      seen.set(uniqueKey, { moduleId, filePath: provider.filePath });
-    }
-  };
-
-  validateUniqueIdentifiers(getRegisteredAliasProviders(), "DUPLICATE_ALIAS_IDENTIFIER", "AliasProvider");
-  // Filter out any resolvers without a name (e.g., manually registered internal ones if any)
-  validateUniqueIdentifiers(getRegisteredMiddlewareResolvers().filter(r => r.name), "DUPLICATE_MIDDLEWARE_IDENTIFIER", "MiddlewareResolver");
-  validateUniqueIdentifiers(getRegisteredScheduleProviders(), "DUPLICATE_SCHEDULE_IDENTIFIER", "ScheduleProvider");
-  validateUniqueIdentifiers(getRegisteredBindingProviders(), "DUPLICATE_BINDING_IDENTIFIER", "BindingProvider");
-
   // Mutate context
   ctx.modulePathMap = modulePathMap;
   ctx.sortedModulePaths = sortedModulePaths;

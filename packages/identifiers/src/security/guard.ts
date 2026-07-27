@@ -19,10 +19,10 @@ export interface GuardOptions {
  * Registers a named guard as a middleware plugin (phase: 'pre', priority: 1).
  *
  * The guard is applied only to controllers that declare it by name in
- * `ControllerOptions.guards` — e.g. `Controller('/users', { guards: ['jwt'] })`.
- * This requires `ControllerEntry.guards` to be present (resolved in Core — see §0.3).
+ * `ControllerOptions.metadata.guards` — e.g. `Controller('/users', { metadata: { guards: ['jwt'] } })`.
+ * This requires `ControllerEntry.metadata.guards` to be present (resolved in Core — see §0.3).
  *
- * @param name    Guard identifier — must match the string used in `ControllerOptions.guards`.
+ * @param name    Guard identifier — must match the string used in `ControllerOptions.metadata.guards`.
  * @param check   Predicate that receives the raw Express request (typed `unknown` to avoid
  *                Express coupling in this package). Return `true` to allow, `false` to reject.
  * @param options Optional status code / message overrides.
@@ -52,7 +52,6 @@ export function Guard(
       // If missing, no guards are requested and thus we return NO handlers
       // for that controller, which is the safe default.
       const entry = controller as { metadata?: { guards?: string[] } } | null | undefined;
-      console.log('GUARD GET_HANDLERS CALLED FOR:', (controller as any)?.name, 'ENTRY METADATA:', entry?.metadata)
       if (!entry?.metadata?.guards?.includes(name)) return [];
 
       return [

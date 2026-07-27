@@ -8,6 +8,7 @@ import type { Application } from "express";
 import { CacheManager } from "../cache/bootstrap-cache.js";
 import { createRegistry, registryContext } from "../core/registry.js";
 import { registerShutdown } from "../core/shutdown.js";
+import { KerithError } from "../core/errors.js";
 import { getRegisteredScheduleProviders, getRegisteredAliasProviders, getRegisteredBindingProviders } from "../extension/store.js";
 import { activateAliasResolver } from "../aliases/resolver.js";
 import { updateAliasCache } from "../aliases/cache.js";
@@ -88,11 +89,20 @@ export async function createApp(
       const bindings = getRegisteredBindingProviders();
       for (const provider of bindings) {
         const bindStart = performance.now();
-        await provider.bind();
-        if (process.env.KERITH_PROFILE === "true") {
-          log.debug(
-            `[perf] binding ${provider.name} took ${Math.round(performance.now() - bindStart)}ms`,
-            { _module: "boot" },
+        try {
+          await provider.bind();
+          if (process.env.KERITH_PROFILE === "true") {
+            log.debug(
+              `[perf] binding ${provider.name} took ${Math.round(performance.now() - bindStart)}ms`,
+              { _module: "boot" },
+            );
+          }
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          throw new KerithError(
+            'BINDING_EXECUTION_FAILED',
+            `Binding provider "${provider.name}" failed during bind() execution`,
+            message
           );
         }
       }
@@ -165,10 +175,12 @@ export async function createApp(
       const schedules = getRegisteredScheduleProviders();
       const afterBootstrapSchedules = schedules.filter(s => s.timing === 'after-bootstrap');
       for (const schedule of afterBootstrapSchedules) {
-        // Ejecutamos secuencialmente sin bloquear el loop de express, pero asegurando
-        // que no arrojamos excepciones unhandled, o con await si queremos que sea bloqueante.
-        // El doc implica que es Promise<void> | void. Kerith es determinista, usaremos await.
-        await schedule.execute();
+        try {
+          await schedule.execute();
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          log.error(`Extension schedule ${schedule.name} threw an error during after-bootstrap: ${message}`, { _module: 'boot' });
+        }
       }
 
       return {
@@ -184,7 +196,12 @@ export async function createApp(
           // Execute 'on-listen' schedules
           const onListenSchedules = getRegisteredScheduleProviders().filter(s => s.timing === 'on-listen');
           for (const schedule of onListenSchedules) {
-            await schedule.execute();
+            try {
+              await schedule.execute();
+            } catch (err: unknown) {
+              const message = err instanceof Error ? err.message : String(err);
+              log.error(`Extension schedule ${schedule.name} threw an error during on-listen: ${message}`, { _module: 'boot' });
+            }
           }
 
           return registerShutdown({

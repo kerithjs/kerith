@@ -1,26 +1,73 @@
 // src/adapters/message.ts
-// Lazy-loaded adapter for the message transport.
-// Follows the same pattern as loadBullMQ() and loadNodeCron().
-// Replace the stub body with a real import (Kafka, RabbitMQ, etc.)
-// once the transport is decided — see section 5.3 of the design backlog.
+import { createRedisClient } from './redis-streams.js'
 
 export interface MessageTransport {
   bind(
     name: string,
     handler: (message: unknown) => Promise<void> | void,
     options?: Record<string, unknown>,
-  ): void
+  ): () => void // Returns cleanup function
 }
 
 export async function loadMessageTransport(): Promise<MessageTransport> {
-  // TODO (5.3): swap this stub for a real peer import once the transport is chosen.
-  //   Kafka  → await import('kafkajs')
-  //   RabbitMQ → await import('amqplib')
-  // Throw KerithError('MISSING_PEER_DEPENDENCY', ...) if the import fails,
-  // exactly like loadBullMQ() does.
   return {
-    bind(name, _handler, _options) {
-      console.log(`[Kerith] Message transport not yet configured for: ${name}`)
+    bind(name, handler, options) {
+      const group = (options?.group as string) ?? 'kerith'
+      const consumer = (options?.consumer as string) ?? `${name}-${process.pid}`
+      let running = true
+
+      void (async () => {
+        let client = await createRedisClient()
+
+        // Consumption loop with error handling and retry
+        while (running) {
+          try {
+            // Create consumer group if it doesn't exist
+            try {
+              await client.xgroup('CREATE', name, group, '$', 'MKSTREAM')
+            } catch (err: any) {
+              if (!String(err?.message).includes('BUSYGROUP')) throw err // group already exists, ok
+            }
+
+            // Consumption loop
+            while (running) {
+              const res = await client.xreadgroup(
+                'GROUP', group, consumer, 'BLOCK', 5000, 'COUNT', 10, 'STREAMS', name, '>'
+              )
+              if (!res) continue
+              for (const [, entries] of res as any[]) {
+                for (const [id, fields] of entries) {
+                  await handler({ id, fields })
+                  await client.xack(name, group, id)
+                }
+              }
+            }
+          } catch (err: any) {
+            if (!running) break // Exit if stopped during error handling
+            console.error(`[Kerith] Message consumption error for stream "${name}":`, err)
+            // Exponential backoff before retry
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            // Reconnect on next iteration
+            try {
+              await client.quit()
+            } catch {
+              // Ignore quit errors
+            }
+            client = await createRedisClient()
+          }
+        }
+        // Cleanup when loop stops
+        try {
+          await client.quit()
+        } catch {
+          // Ignore quit errors
+        }
+      })()
+
+      // Return cleanup function for tests
+      return () => {
+        running = false
+      }
     },
   }
 }
