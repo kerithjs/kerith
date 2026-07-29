@@ -108,7 +108,7 @@ This package provides adapters for:
 
 ## Gateway Binding
 
-The `Gateway()` identifier provides Socket.io integration for real-time communication. It is implemented as a Binding channel provider, meaning it establishes WebSocket connections during bootstrap and follows fail-fast behavior.
+The `Gateway()` identifier provides Socket.io integration for real-time communication. It is implemented as a Binding channel provider, meaning it is registered during bootstrap but establishes WebSocket connections during `.listen()` and follows fail-fast behavior.
 
 **Usage:**
 ```typescript
@@ -121,10 +121,15 @@ Gateway('chat', (socket) => {
 }, { namespace: '/chat' });
 ```
 
+**Lifecycle:**
+- **Bootstrap**: `Gateway()` declarations are registered as BindingProviders
+- **Listen**: When `kerithApp.listen(server)` is called, Socket.io attaches to the HTTP server and processes pending connections
+
 **Implementation Status:**
 - Identifier: ✅ Implemented in `@kerith/identifiers`
-- Executor: ✅ Implemented in `@kerith/app` (calls `loadSocketIOTransport()`)
+- Executor: ✅ Implemented in `@kerith/app` (calls `loadSocketIOTransport()` in `executeGatewayChannel()`)
 - Socket.io Adapter: ✅ Implemented in `@kerith/app` (lazy-loaded via `loadSocketIOTransport()`, requires `socket.io` as optional peer dependency)
+- Gateway Bridge: ✅ Implemented in `@kerith/app` (wraps `kerithApp.listen()` to call `attach(server)` when Gateway() is declared)
 
 ## Version
 

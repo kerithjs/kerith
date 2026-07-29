@@ -35,6 +35,7 @@ let pending: Array<{
   handler: (socket: unknown) => void
   options: Record<string, unknown>
 }> = []
+let socketIOModule: { Server: new (server: HTTPServer) => SocketIOServer } | null = null
 
 function resolveNamespace(server: SocketIOServer, options: Record<string, unknown>): SocketIOServer | SocketIONamespace {
   const namespace = (options as any)?.namespace
@@ -45,14 +46,16 @@ function resolveNamespace(server: SocketIOServer, options: Record<string, unknow
 }
 
 export async function loadSocketIOTransport(): Promise<SocketIOTransport> {
-  try {
-    // @ts-expect-error — optional peer dep, runtime import guarded by catch
-    await import('socket.io')
-  } catch {
-    throw new KerithError(
-      'MISSING_PEER_DEPENDENCY',
-      `Gateway identifier requires 'socket.io' to be installed.\nRun: pnpm add socket.io`,
-    )
+  if (!socketIOModule) {
+    try {
+      // @ts-ignore — optional peer dep, runtime import guarded by catch
+      socketIOModule = (await import('socket.io')) as { Server: new (server: HTTPServer) => SocketIOServer }
+    } catch {
+      throw new KerithError(
+        'MISSING_PEER_DEPENDENCY',
+        `Gateway identifier requires 'socket.io' to be installed.\nRun: pnpm add socket.io`,
+      )
+    }
   }
 
   return {
@@ -70,9 +73,13 @@ export async function loadSocketIOTransport(): Promise<SocketIOTransport> {
     },
     async attach(server: HTTPServer) {
       if (io) return
-      // @ts-expect-error — optional peer dep, runtime import guarded by catch
-      const { Server } = (await import('socket.io')) as { Server: new (server: HTTPServer) => SocketIOServer }
-      io = new Server(server)
+      if (!socketIOModule) {
+        throw new KerithError(
+          'MISSING_PEER_DEPENDENCY',
+          `Gateway identifier requires 'socket.io' to be installed.\nRun: pnpm add socket.io`,
+        )
+      }
+      io = new socketIOModule.Server(server)
       for (const p of pending) {
         const nsp = resolveNamespace(io, p.options)
         const middleware = (p.options as any)?.middleware

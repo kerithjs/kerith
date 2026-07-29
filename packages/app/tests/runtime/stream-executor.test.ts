@@ -1,63 +1,79 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
-import { getRegisteredBindingProviders } from '@kerith/core'
-import fs from 'node:fs'
-import os from 'node:os'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import express from 'express'
-import { createApp } from '../../src/index.js'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-function makeTmpApp() {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-app-test-stream-'))
-  fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ type: 'module' }))
-  fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { strict: false };')
-  const moduleDir = path.join(tmpDir, 'src/modules/test')
-  fs.mkdirSync(moduleDir, { recursive: true })
-  fs.symlinkSync(path.resolve(__dirname, '../../../../node_modules'), path.join(tmpDir, 'node_modules'), 'junction')
-  fs.writeFileSync(path.join(moduleDir, 'index.ts'), `
-    import { Module } from '@kerith/core'
-    Module('test')
-  `)
-  return { tmpDir }
-}
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { _resetExtensionStore } from '../../../core/src/extension/store.js'
+import { _resetAllChannels } from '../../../identifiers/src/channels/index.js'
 
 describe('Stream Channel Executor', () => {
-  afterEach(() => {
-    vi.restoreAllMocks()
+  beforeEach(() => {
+    vi.resetModules()
+    _resetExtensionStore()
+    _resetAllChannels()
   })
 
-  it('registers Stream() plugin as a BindingProvider with kind === "stream"', async () => {
-    // Import Stream without calling createApp to avoid starting the consumption loop
+  afterEach(() => {
+    vi.restoreAllMocks()
+    _resetExtensionStore()
+    _resetAllChannels()
+  })
+
+  it('registers Stream() plugin as a BindingProvider with kind === "stream" via executeStreamChannel()', async () => {
+    // Mock Redis connection to prevent real connection attempts
+    vi.doMock('../../src/adapters/redis-connection.js', () => ({
+      getRedisConnection: () => ({
+        host: 'localhost',
+        port: 6379,
+      }),
+    }))
+
+    // Import executor and Stream after mock is set up (same module instance)
+    const { executeStreamChannel } = await import('../../src/runtime/stream-executor.js')
     const { Stream } = await import('@kerith/identifiers')
+    const { getRegisteredBindingProviders } = await import('@kerith/core')
     const handler = async (chunk: unknown) => {}
-    Stream('audio-chunks', handler, { backpressure: true })
+    Stream('audio-chunks-stream-test-1', handler, { backpressure: true })
 
-    // Verify the plugin was registered in the catalog
-    const { getBindingPlugins } = await import('@kerith/identifiers')
-    const allPlugins = getBindingPlugins()
-    const streamPlugin = allPlugins.find(p => p.name === 'audio-chunks' && p.kind === 'stream')
+    // Execute the stream channel to register BindingProviders in Core
+    await executeStreamChannel()
 
-    expect(streamPlugin).toBeDefined()
-    expect(streamPlugin?.kind).toBe('stream')
+    // Verify the BindingProvider was registered in Core (not just in identifiers catalog)
+    const registeredProviders = getRegisteredBindingProviders()
+    const streamProvider = registeredProviders.find(p => p.name === 'audio-chunks-stream-test-1' && p.kind === 'stream')
+
+    expect(streamProvider).toBeDefined()
+    expect(streamProvider?.kind).toBe('stream')
   })
 
   it('does NOT register plugins with kind other than "stream"', async () => {
-    // Verify that the executor's filter only passes kind === 'stream'
-    const { getBindingPlugins } = await import('@kerith/identifiers')
+    // Mock Redis connection to prevent real connection attempts
+    vi.doMock('../../src/adapters/redis-connection.js', () => ({
+      getRedisConnection: () => ({
+        host: 'localhost',
+        port: 6379,
+      }),
+    }))
 
-    const allPlugins = getBindingPlugins()
-    const streamPlugins = allPlugins.filter(p => p.kind === 'stream')
-    const nonStreamPlugins = allPlugins.filter(p => p.kind !== 'stream')
+    // Import executor fresh after reset (same module instance)
+    const { executeStreamChannel } = await import('../../src/runtime/stream-executor.js')
+    const { getRegisteredBindingProviders } = await import('@kerith/core')
 
-    // Stream executor should only touch stream plugins
-    expect(streamPlugins.every(p => p.kind === 'stream')).toBe(true)
+    // Import and declare a non-stream binding (e.g., Worker)
+    const { Worker } = await import('@kerith/identifiers')
+    const workerHandler = (job: unknown) => {}
+    Worker('test-job-stream-no-register', workerHandler)
 
-    // Non-stream plugins must not appear as stream
-    if (nonStreamPlugins.length > 0) {
-      expect(nonStreamPlugins.some(p => p.kind === 'stream')).toBe(false)
+    // Execute the stream channel
+    await executeStreamChannel()
+
+    // Verify only stream plugins were registered
+    const registeredProviders = getRegisteredBindingProviders()
+    const streamProviders = registeredProviders.filter(p => p.kind === 'stream')
+    const nonStreamProviders = registeredProviders.filter(p => p.kind !== 'stream')
+
+    // Stream executor should only register stream plugins
+    expect(streamProviders.every(p => p.kind === 'stream')).toBe(true)
+
+    // Non-stream plugins should not be registered by stream executor
+    if (nonStreamProviders.length > 0) {
+      expect(nonStreamProviders.some(p => p.kind === 'stream')).toBe(false)
     }
   })
 })

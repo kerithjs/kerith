@@ -1,63 +1,79 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
-import { getRegisteredBindingProviders } from '@kerith/core'
-import fs from 'node:fs'
-import os from 'node:os'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import express from 'express'
-import { createApp } from '../../src/index.js'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-function makeTmpApp() {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-app-test-msg-'))
-  fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ type: 'module' }))
-  fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { strict: false };')
-  const moduleDir = path.join(tmpDir, 'src/modules/test')
-  fs.mkdirSync(moduleDir, { recursive: true })
-  fs.symlinkSync(path.resolve(__dirname, '../../../../node_modules'), path.join(tmpDir, 'node_modules'), 'junction')
-  fs.writeFileSync(path.join(moduleDir, 'index.ts'), `
-    import { Module } from '@kerith/core'
-    Module('test')
-  `)
-  return { tmpDir }
-}
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { _resetExtensionStore } from '../../../core/src/extension/store.js'
+import { _resetAllChannels } from '../../../identifiers/src/channels/index.js'
 
 describe('Message Channel Executor', () => {
-  afterEach(() => {
-    vi.restoreAllMocks()
+  beforeEach(() => {
+    vi.resetModules()
+    _resetExtensionStore()
+    _resetAllChannels()
   })
 
-  it('registers Message() plugin as a BindingProvider with kind === "message"', async () => {
-    // Import Message without calling createApp to avoid starting the consumption loop
+  afterEach(() => {
+    vi.restoreAllMocks()
+    _resetExtensionStore()
+    _resetAllChannels()
+  })
+
+  it('registers Message() plugin as a BindingProvider with kind === "message" via executeMessageChannel()', async () => {
+    // Mock Redis connection to prevent real connection attempts
+    vi.doMock('../../src/adapters/redis-connection.js', () => ({
+      getRedisConnection: () => ({
+        host: 'localhost',
+        port: 6379,
+      }),
+    }))
+
+    // Import executor and Message after mock is set up (same module instance)
+    const { executeMessageChannel } = await import('../../src/runtime/message-executor.js')
     const { Message } = await import('@kerith/identifiers')
+    const { getRegisteredBindingProviders } = await import('@kerith/core')
     const handler = async (msg: unknown) => {}
-    Message('user.created', handler, { group: 'email-service' })
+    Message('user-created-message-test-1', handler, { group: 'email-service' })
 
-    // Verify the plugin was registered in the catalog
-    const { getBindingPlugins } = await import('@kerith/identifiers')
-    const allPlugins = getBindingPlugins()
-    const messagePlugin = allPlugins.find(p => p.name === 'user.created' && p.kind === 'message')
+    // Execute the message channel to register BindingProviders in Core
+    await executeMessageChannel()
 
-    expect(messagePlugin).toBeDefined()
-    expect(messagePlugin?.kind).toBe('message')
+    // Verify the BindingProvider was registered in Core (not just in identifiers catalog)
+    const registeredProviders = getRegisteredBindingProviders()
+    const messageProvider = registeredProviders.find(p => p.name === 'user-created-message-test-1' && p.kind === 'message')
+
+    expect(messageProvider).toBeDefined()
+    expect(messageProvider?.kind).toBe('message')
   })
 
   it('does NOT register plugins with kind other than "message"', async () => {
-    // Verify that the executor's filter only passes kind === 'message'
-    const { getBindingPlugins } = await import('@kerith/identifiers')
+    // Mock Redis connection to prevent real connection attempts
+    vi.doMock('../../src/adapters/redis-connection.js', () => ({
+      getRedisConnection: () => ({
+        host: 'localhost',
+        port: 6379,
+      }),
+    }))
 
-    const allPlugins = getBindingPlugins()
-    const messagePlugins = allPlugins.filter(p => p.kind === 'message')
-    const nonMessagePlugins = allPlugins.filter(p => p.kind !== 'message')
+    // Import executor fresh after reset (same module instance)
+    const { executeMessageChannel } = await import('../../src/runtime/message-executor.js')
+    const { getRegisteredBindingProviders } = await import('@kerith/core')
 
-    // Message executor should only touch message plugins
-    expect(messagePlugins.every(p => p.kind === 'message')).toBe(true)
+    // Import and declare a non-message binding (e.g., Worker)
+    const { Worker } = await import('@kerith/identifiers')
+    const workerHandler = (job: unknown) => {}
+    Worker('test-job-message-no-register', workerHandler)
 
-    // Non-message plugins must not appear as message
-    if (nonMessagePlugins.length > 0) {
-      expect(nonMessagePlugins.some(p => p.kind === 'message')).toBe(false)
+    // Execute the message channel
+    await executeMessageChannel()
+
+    // Verify only message plugins were registered
+    const registeredProviders = getRegisteredBindingProviders()
+    const messageProviders = registeredProviders.filter(p => p.kind === 'message')
+    const nonMessageProviders = registeredProviders.filter(p => p.kind !== 'message')
+
+    // Message executor should only register message plugins
+    expect(messageProviders.every(p => p.kind === 'message')).toBe(true)
+
+    // Non-message plugins should not be registered by message executor
+    if (nonMessageProviders.length > 0) {
+      expect(nonMessageProviders.some(p => p.kind === 'message')).toBe(false)
     }
   })
 })

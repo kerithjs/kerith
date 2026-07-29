@@ -1,7 +1,7 @@
 // src/index.ts
 
 import { registerIdentifierMetadata } from '@kerith/core/extension'
-import { IDENTIFIER_CATALOG } from '@kerith/identifiers'
+import { IDENTIFIER_CATALOG, getBindingPlugins } from '@kerith/identifiers'
 import { createApp as coreCreateApp, type CreateAppOptions, type KerithApp } from '@kerith/core'
 
 // Channel executors
@@ -13,6 +13,9 @@ import { executeMessageChannel } from './runtime/message-executor.js'
 import { executeStreamChannel } from './runtime/stream-executor.js'
 import { executeGatewayChannel } from './runtime/gateway-executor.js'
 import { executeAliasChannel } from './runtime/alias-channel-executor.js'
+
+// Adapters
+import { loadSocketIOTransport } from './adapters/socket-io.js'
 
 // Registers the full catalog metadata into core.
 for (const meta of IDENTIFIER_CATALOG) {
@@ -26,7 +29,7 @@ for (const meta of IDENTIFIER_CATALOG) {
  */
 export async function createApp(app: any, options: CreateAppOptions = {}): Promise<KerithApp> {
   const originalHook = options._onDynamicImportsComplete;
-  
+
   const internalOptions: CreateAppOptions = {
     ...options,
     _onDynamicImportsComplete: async () => {
@@ -44,8 +47,22 @@ export async function createApp(app: any, options: CreateAppOptions = {}): Promi
       }
     }
   };
-  
-  return coreCreateApp(app, internalOptions);
+
+  const kerithApp = await coreCreateApp(app, internalOptions);
+
+  // ── Gateway bridge: conecta Socket.io al servidor HTTP real recién acá,
+  // que es el único punto del ciclo de vida donde el servidor existe. ──
+  const originalListen = kerithApp.listen.bind(kerithApp);
+  kerithApp.listen = async (server, listenOptions) => {
+    const hasGateways = getBindingPlugins().some(p => p.kind === 'gateway');
+    if (hasGateways) {
+      const transport = await loadSocketIOTransport();
+      await transport.attach(server);
+    }
+    return originalListen(server, listenOptions);
+  };
+
+  return kerithApp;
 }
 
 // Re-export the full public surface.
