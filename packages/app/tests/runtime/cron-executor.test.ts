@@ -1,4 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+
+vi.mock('node-cron', () => ({
+  default: {
+    validate: (expr: string) => expr !== 'this is not a cron',
+    schedule: vi.fn()
+  },
+  validate: (expr: string) => expr !== 'this is not a cron',
+  schedule: vi.fn()
+}))
 import { createApp } from '../../src/index.js'
 import { KerithError } from '@kerith/core'
 import { Cron } from '@kerith/identifiers'
