@@ -28,7 +28,7 @@ describe('Stream Channel Executor', () => {
     const { executeStreamChannel } = await import('../../src/runtime/stream-executor.js')
     const { Stream } = await import('@kerith/identifiers')
     const { getRegisteredBindingProviders } = await import('@kerith/core')
-    const handler = async (chunk: unknown) => {}
+    const handler = async (_chunk: unknown) => {}
     Stream('audio-chunks-stream-test-1', handler, { backpressure: true })
 
     // Execute the stream channel to register BindingProviders in Core
@@ -57,7 +57,7 @@ describe('Stream Channel Executor', () => {
 
     // Import and declare a non-stream binding (e.g., Worker)
     const { Worker } = await import('@kerith/identifiers')
-    const workerHandler = (job: unknown) => {}
+    const workerHandler = (_job: unknown) => {}
     Worker('test-job-stream-no-register', workerHandler)
 
     // Execute the stream channel

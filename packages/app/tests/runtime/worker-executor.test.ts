@@ -27,7 +27,7 @@ describe('Worker Channel Executor', () => {
       return {
         loadBullMQ: async () => ({
           Worker: class MockWorker {
-            constructor(name: string, processor: Function, options: any) {
+            constructor(name: string, processor: (...args: any[]) => any, options: any) {
               expect(name).toBe('test-worker')
               expect(options.concurrency).toBe(5)
               // Verify that connection comes from getRedisConnection(), not hardcoded
@@ -72,7 +72,7 @@ describe('Worker Channel Executor', () => {
 
     try {
       const app = express()
-      const kerithApp = await createApp(app as any, { logger: () => {} })
+      const _kerithApp = await createApp(app as any, { logger: () => {} })
       
       await new Promise(resolve => setTimeout(resolve, 50))
       

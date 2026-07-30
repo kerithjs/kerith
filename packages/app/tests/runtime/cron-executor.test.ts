@@ -9,7 +9,6 @@ vi.mock('node-cron', () => ({
   schedule: vi.fn()
 }))
 import { createApp } from '../../src/index.js'
-import { KerithError } from '@kerith/core'
 import { Cron } from '@kerith/identifiers'
 import fs from 'node:fs'
 import os from 'node:os'

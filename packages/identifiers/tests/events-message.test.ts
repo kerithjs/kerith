@@ -32,7 +32,7 @@ describe('Message() — Binding channel', () => {
     Message('user.created', fn, options)
     
     const plugin = getBindingPlugins()[0]
-    const bindData = plugin.bind as { handler: Function, options: any }
+    const bindData = plugin.bind as { handler: (...args: any[]) => any, options: any }
     
     expect(bindData.handler).toBe(fn)
     expect(bindData.options).toEqual(options)
@@ -42,7 +42,7 @@ describe('Message() — Binding channel', () => {
     expect(() => Message('user.created', () => {})).not.toThrow()
     
     const plugin = getBindingPlugins()[0]
-    const bindData = plugin.bind as { handler: Function, options: any }
+    const bindData = plugin.bind as { handler: (...args: any[]) => any, options: any }
     expect(bindData.options).toEqual({}) // Defaults to {}
   })
 

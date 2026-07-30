@@ -94,7 +94,7 @@ describe('Guard() — getHandlers() filtering', () => {
 describe('Guard() — handler allows request when check() returns true', () => {
   it('calls next() when check returns true (sync)', async () => {
     Guard('jwt', () => true)
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as any[]
 
     const req  = {}
     const res  = { status: vi.fn().mockReturnThis(), json: vi.fn() }
@@ -108,7 +108,7 @@ describe('Guard() — handler allows request when check() returns true', () => {
 
   it('calls next() when check returns true (async)', async () => {
     Guard('jwt', async () => true)
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as any[]
 
     const next = vi.fn()
     await handler({}, { status: vi.fn().mockReturnThis(), json: vi.fn() }, next)
@@ -121,7 +121,7 @@ describe('Guard() — handler allows request when check() returns true', () => {
 describe('Guard() — handler rejects request when check() returns false', () => {
   it('responds with 401 and default message when check returns false', async () => {
     Guard('jwt', () => false)
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as any[]
 
     const jsonMock   = vi.fn()
     const statusMock = vi.fn(() => ({ json: jsonMock }))
@@ -135,7 +135,7 @@ describe('Guard() — handler rejects request when check() returns false', () =>
 
   it('responds with custom statusCode when options.statusCode is set', async () => {
     Guard('jwt', () => false, { statusCode: 403 })
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as any[]
 
     const jsonMock   = vi.fn()
     const statusMock = vi.fn(() => ({ json: jsonMock }))
@@ -147,7 +147,7 @@ describe('Guard() — handler rejects request when check() returns false', () =>
 
   it('responds with custom message when options.message is set', async () => {
     Guard('jwt', () => false, { message: 'Invalid token' })
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as any[]
 
     const jsonMock   = vi.fn()
     const statusMock = vi.fn(() => ({ json: jsonMock }))
@@ -159,7 +159,7 @@ describe('Guard() — handler rejects request when check() returns false', () =>
 
   it('does NOT call next() when check returns false', async () => {
     Guard('jwt', () => false)
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as any[]
 
     const next = vi.fn()
     const statusMock = vi.fn(() => ({ json: vi.fn() }))
@@ -171,7 +171,7 @@ describe('Guard() — handler rejects request when check() returns false', () =>
 
   it('responds with 401 when async check rejects with false', async () => {
     Guard('jwt', async () => false)
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithJwt) as any[]
 
     const jsonMock   = vi.fn()
     const statusMock = vi.fn(() => ({ json: jsonMock }))

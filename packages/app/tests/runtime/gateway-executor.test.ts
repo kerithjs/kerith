@@ -28,8 +28,8 @@ describe('Gateway Channel Executor', () => {
     const { executeGatewayChannel } = await import('../../src/runtime/gateway-executor.js')
     const { Gateway } = await import('@kerith/identifiers')
     const { getRegisteredBindingProviders } = await import('@kerith/core')
-    const handler = (socket: unknown) => {}
-    Gateway('chat-gateway-test-1', handler, { namespace: '/chat' })
+    const handler2 = (_socket: unknown) => {}
+    Gateway('chat-gateway-test-1', handler2, { namespace: '/chat' })
 
     // Execute the gateway channel to register BindingProviders in Core
     await executeGatewayChannel()
@@ -57,7 +57,7 @@ describe('Gateway Channel Executor', () => {
 
     // Import and declare a non-gateway binding (e.g., Worker)
     const { Worker } = await import('@kerith/identifiers')
-    const workerHandler = (job: unknown) => {}
+    const workerHandler = (_job: unknown) => {}
     Worker('test-job-gateway-no-register', workerHandler)
 
     // Execute the gateway channel

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { loadSocketIOTransport } from '../../src/adapters/socket-io.js'
+
 
 describe('Socket.io Adapter', () => {
   afterEach(() => {
@@ -41,7 +41,7 @@ describe('Socket.io Adapter', () => {
 
     // Mock socket.io import - Server should be a constructor
     class MockServer {
-      constructor(server: any) {
+      constructor(_server: any) {
         Object.assign(this, mockIO)
       }
     }
@@ -84,7 +84,7 @@ describe('Socket.io Adapter', () => {
 
     // Mock socket.io import - Server should be a constructor
     class MockServer {
-      constructor(server: any) {
+      constructor(_server: any) {
         Object.assign(this, mockIO)
       }
     }

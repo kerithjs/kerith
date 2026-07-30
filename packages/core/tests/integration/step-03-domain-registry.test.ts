@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import { scanFromConfig } from '../../src/bootstrap/scanner.js';
 import { createRegistry, registryContext } from '../../src/core/registry.js';
-import { registerEntitiesFromScan } from '../../src/bootstrap/register-from-scan.js';
+
 import { runEntityRegistration } from '../../src/bootstrap/steps/step-03-register.js';
 import { isValidDomainId } from '../../src/nits/domain-id.js';
 

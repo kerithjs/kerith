@@ -89,7 +89,7 @@ describe('RateLimit() — getHandlers() filtering (string equality, not array)',
 describe('RateLimit() — handler allows request when check() returns true', () => {
   it('calls next() when check returns true (sync)', async () => {
     RateLimit('api', () => true)
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as any[]
 
     const next = vi.fn()
     const res  = { status: vi.fn().mockReturnThis(), json: vi.fn() }
@@ -102,7 +102,7 @@ describe('RateLimit() — handler allows request when check() returns true', () 
 
   it('calls next() when check returns true (async)', async () => {
     RateLimit('api', async () => true)
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as any[]
 
     const next = vi.fn()
     await handler({}, { status: vi.fn().mockReturnThis(), json: vi.fn() }, next)
@@ -115,7 +115,7 @@ describe('RateLimit() — handler allows request when check() returns true', () 
 describe('RateLimit() — handler rejects request when check() returns false', () => {
   it('responds with 429 and default message', async () => {
     RateLimit('api', () => false)
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as any[]
 
     const jsonMock   = vi.fn()
     const statusMock = vi.fn(() => ({ json: jsonMock }))
@@ -128,7 +128,7 @@ describe('RateLimit() — handler rejects request when check() returns false', (
 
   it('uses custom message when options.message is set', async () => {
     RateLimit('api', () => false, { message: 'Rate limit exceeded' })
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as any[]
 
     const jsonMock   = vi.fn()
     const statusMock = vi.fn(() => ({ json: jsonMock }))
@@ -140,7 +140,7 @@ describe('RateLimit() — handler rejects request when check() returns false', (
 
   it('does NOT call next() when check returns false', async () => {
     RateLimit('api', () => false)
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(controllerWithApi) as any[]
 
     const next = vi.fn()
     const statusMock = vi.fn(() => ({ json: vi.fn() }))

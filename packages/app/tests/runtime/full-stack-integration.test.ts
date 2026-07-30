@@ -10,7 +10,7 @@ import { _resetAllChannels } from '@kerith/identifiers'
 vi.mock('../../src/adapters/bullmq.js', () => ({
   loadBullMQ: vi.fn(async () => ({
     Worker: class MockWorker {
-      constructor(name: string, handler: any, opts: any) {}
+      constructor(_name: string, _handler: any, _opts: any) {}
     },
   })),
 }))

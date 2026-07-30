@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { createApp, getRegisteredScheduleProviders } from '@kerith/core'
+import { getRegisteredScheduleProviders } from '@kerith/core'
 import { HealthCheck } from '@kerith/identifiers'
 import fs from 'node:fs'
 import os from 'node:os'

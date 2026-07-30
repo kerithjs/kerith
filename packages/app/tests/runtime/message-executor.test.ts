@@ -28,7 +28,7 @@ describe('Message Channel Executor', () => {
     const { executeMessageChannel } = await import('../../src/runtime/message-executor.js')
     const { Message } = await import('@kerith/identifiers')
     const { getRegisteredBindingProviders } = await import('@kerith/core')
-    const handler = async (msg: unknown) => {}
+    const handler = async (_msg: unknown) => {}
     Message('user-created-message-test-1', handler, { group: 'email-service' })
 
     // Execute the message channel to register BindingProviders in Core
@@ -57,7 +57,7 @@ describe('Message Channel Executor', () => {
 
     // Import and declare a non-message binding (e.g., Worker)
     const { Worker } = await import('@kerith/identifiers')
-    const workerHandler = (job: unknown) => {}
+    const workerHandler = (_job: unknown) => {}
     Worker('test-job-message-no-register', workerHandler)
 
     // Execute the message channel

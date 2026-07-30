@@ -45,7 +45,7 @@ describe('Shared Lifecycle — global (@shared)', () => {
   });
 
   it('module payments declares shared: ["@shared"] → no UNDECLARED_SHARED', async () => {
-    const { scan, registry } = await scanAndRegister(sharedApp);
+    const { scan, registry: _registry } = await scanAndRegister(sharedApp);
     const graph = await buildModuleGraph({ origin: 'src', strict: false }, sharedApp);
 
     // Ensure registry has shared entries

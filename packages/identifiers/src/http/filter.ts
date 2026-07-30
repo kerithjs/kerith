@@ -31,7 +31,7 @@ import { registerMiddlewarePlugin } from '../channels/index.js';
  */
 export function Filter<E extends Error>(
   name: string,
-  errorType: new (...args: unknown[]) => E,
+  errorType: new (...args: any[]) => E,
   handler: (err: E) => { status: number; error: string; [key: string]: unknown },
 ): void {
   const { filePath } = getFileCallerInfo('Filter()');

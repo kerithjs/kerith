@@ -70,13 +70,13 @@ describe('Filter() — getHandlers() is global (not per-controller)', () => {
 describe('Filter() — handler arity (fn.length === 4 required by Express)', () => {
   it('NotFoundError filter returns a handler with exactly 4 parameters', () => {
     Filter('not-found', NotFoundError, (err) => ({ status: 404, error: err.message }))
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as any[]
     expect(handler.length).toBe(4)
   })
 
   it('ValidationError filter returns a handler with exactly 4 parameters', () => {
     Filter('validation', ValidationError, (err) => ({ status: 422, error: err.message }))
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as any[]
     expect(handler.length).toBe(4)
   })
 })
@@ -85,7 +85,7 @@ describe('Filter() — handler arity (fn.length === 4 required by Express)', () 
 describe('Filter() — handler passes unmatched errors to next(err)', () => {
   it('calls next(err) and does NOT call res.status when error does not match', () => {
     Filter('not-found', NotFoundError, (err) => ({ status: 404, error: err.message }))
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as any[]
 
     const unrelated = new UnrelatedError()
     const next      = vi.fn()
@@ -99,7 +99,7 @@ describe('Filter() — handler passes unmatched errors to next(err)', () => {
 
   it('passes ValidationError to next when filter is for NotFoundError', () => {
     Filter('not-found', NotFoundError, (err) => ({ status: 404, error: err.message }))
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as any[]
 
     const valErr = new ValidationError()
     const next   = vi.fn()
@@ -114,7 +114,7 @@ describe('Filter() — handler passes unmatched errors to next(err)', () => {
 describe('Filter() — handler responds when error matches errorType', () => {
   it('calls res.status(result.status).json(result) and does NOT call next()', () => {
     Filter('not-found', NotFoundError, (err) => ({ status: 404, error: err.message }))
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as any[]
 
     const nfErr    = new NotFoundError('User not found')
     const jsonMock   = vi.fn()
@@ -134,7 +134,7 @@ describe('Filter() — handler responds when error matches errorType', () => {
       ValidationError,
       (err) => ({ status: 422, error: err.message, field: 'email' }),
     )
-    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as Function[]
+    const [handler] = getMiddlewarePlugins()[0].getHandlers(null) as any[]
 
     const valErr   = new ValidationError('Invalid email')
     const jsonMock   = vi.fn()
@@ -151,7 +151,7 @@ describe('Filter() — handler responds when error matches errorType', () => {
     Filter('validation', ValidationError, (err) => ({ status: 422, error: err.message }))
 
     const [nfHandler, valHandler] = getMiddlewarePlugins().map(
-      (p) => (p.getHandlers(null) as Function[])[0],
+      (p) => (p.getHandlers(null) as any[])[0],
     )
 
     const nfJson   = vi.fn()

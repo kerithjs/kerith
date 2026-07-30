@@ -22,19 +22,19 @@ beforeEach(() => {
 // ─── Registration ─────────────────────────────────────────────────────────────
 describe('Middleware() — registration', () => {
   it('registers exactly one MiddlewarePlugin', () => {
-    Middleware('logger', (_req, _res, next) => (next as Function)())
+    Middleware('logger', (_req, _res, next) => (next as any)())
     expect(getMiddlewarePlugins()).toHaveLength(1)
   })
 
   it('plugin has phase "pre" and priority 0', () => {
-    Middleware('logger', (_req, _res, next) => (next as Function)())
+    Middleware('logger', (_req, _res, next) => (next as any)())
     const plugin = getMiddlewarePlugins()[0]
     expect(plugin.phase).toBe('pre')
     expect(plugin.priority).toBe(0)
   })
 
   it('priority 0 is less than Guard (1) and RateLimit (2)', () => {
-    Middleware('logger', (_req, _res, next) => (next as Function)())
+    Middleware('logger', (_req, _res, next) => (next as any)())
     expect(getMiddlewarePlugins()[0].priority).toBeLessThan(1)
   })
 })
@@ -42,31 +42,31 @@ describe('Middleware() — registration', () => {
 // ─── getHandlers — filtering by controller.middlewareNames ────────────────────
 describe('Middleware() — getHandlers() filtering (controller.middlewareNames)', () => {
   it('returns 1 handler when controller.middlewareNames includes the name', () => {
-    Middleware('logger', (_req, _res, next) => (next as Function)())
+    Middleware('logger', (_req, _res, next) => (next as any)())
     const plugin = getMiddlewarePlugins()[0]
     expect(plugin.getHandlers(controllerWithLogger)).toHaveLength(1)
   })
 
   it('returns [] when controller.middlewareNames does NOT include the name', () => {
-    Middleware('logger', (_req, _res, next) => (next as Function)())
+    Middleware('logger', (_req, _res, next) => (next as any)())
     const plugin = getMiddlewarePlugins()[0]
     expect(plugin.getHandlers(controllerWithCors)).toEqual([])
   })
 
   it('returns [] when controller has no middlewareNames field', () => {
-    Middleware('logger', (_req, _res, next) => (next as Function)())
+    Middleware('logger', (_req, _res, next) => (next as any)())
     const plugin = getMiddlewarePlugins()[0]
     expect(plugin.getHandlers(controllerNoNames)).toEqual([])
   })
 
   it('returns [] when controller.middlewareNames is empty', () => {
-    Middleware('logger', (_req, _res, next) => (next as Function)())
+    Middleware('logger', (_req, _res, next) => (next as any)())
     const plugin = getMiddlewarePlugins()[0]
     expect(plugin.getHandlers(controllerEmptyNames)).toEqual([])
   })
 
   it('returns [] for null/undefined controller', () => {
-    Middleware('logger', (_req, _res, next) => (next as Function)())
+    Middleware('logger', (_req, _res, next) => (next as any)())
     const plugin = getMiddlewarePlugins()[0]
     expect(plugin.getHandlers(null)).toEqual([])
     expect(plugin.getHandlers(undefined)).toEqual([])

@@ -170,6 +170,7 @@ describe('Alias Channel Executor', () => {
     } catch (err: any) {
       throw new Error(
         `E2E Alias import failed:\n${err.stderr ?? ''}\n${err.stdout ?? ''}\n${err.message}`,
+        { cause: err },
       )
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true })

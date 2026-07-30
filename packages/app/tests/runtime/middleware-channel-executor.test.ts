@@ -14,7 +14,6 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 import { _resetAllChannels } from '@kerith/identifiers'
-// @ts-ignore - internal test utility
 import { _resetExtensionStore } from '@kerith/core/extension'
 
 describe('Middleware Channel Executor', () => {
@@ -145,7 +144,7 @@ describe('Filter — dedup by identity and 4-arg validation', () => {
     expect(errorResolvers.length).toBeGreaterThan(0)
     const resolver = errorResolvers[errorResolvers.length - 1]
 
-    const [handler] = resolver.getHandlers(undefined as any) as Function[]
+    const [handler] = resolver.getHandlers(undefined as any) as any[]
 
     // Express distinguishes error middleware by having exactly 4 args: (err, req, res, next)
     expect(handler.length).toBe(4)

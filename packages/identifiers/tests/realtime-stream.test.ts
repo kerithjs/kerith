@@ -32,7 +32,7 @@ describe('Stream() — Binding channel', () => {
     Stream('audio-chunks', fn, options)
     
     const plugin = getBindingPlugins()[0]
-    const bindData = plugin.bind as { handler: Function, options: any }
+    const bindData = plugin.bind as { handler: (...args: any[]) => any, options: any }
     
     expect(bindData.handler).toBe(fn)
     expect(bindData.options).toEqual(options)
@@ -42,7 +42,7 @@ describe('Stream() — Binding channel', () => {
     expect(() => Stream('audio-chunks', () => {})).not.toThrow()
     
     const plugin = getBindingPlugins()[0]
-    const bindData = plugin.bind as { handler: Function, options: any }
+    const bindData = plugin.bind as { handler: (...args: any[]) => any, options: any }
     expect(bindData.options).toEqual({}) // Defaults to {}
   })
 
