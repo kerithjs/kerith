@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import * as readline from 'node:readline';
+
 import { cleanCommand } from '../../src/cli/commands/clean.js';
 
 vi.mock('node:readline', () => {

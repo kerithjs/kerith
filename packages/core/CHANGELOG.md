@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `origin` config key: single scan root replacing separate `domains`/`modules` config
 - `Domain()` identifier: semantic marker for domain boundaries
 - `SubModule()` identifier: implementation unit within a module
+- **Extension API** (`@kerith/core/extension`): Subpath added containing the provider registry (`registerAliasProvider`, etc.) for the Extension Architecture. **Internal API**: This is exclusively for consumption by `@kerith/app` to wire higher-level channels (Schedule, Middleware, Alias, Binding) and is not intended for direct use by end developers.
+- 8 new error codes for the Extension API: `INVALID_IDENTIFIER_NAME`, `DUPLICATE_ALIAS_IDENTIFIER`, `DUPLICATE_MIDDLEWARE_IDENTIFIER`, `DUPLICATE_SCHEDULE_IDENTIFIER`, `DUPLICATE_BINDING_IDENTIFIER`, `MISSING_PEER_DEPENDENCY`, `INVALID_CRON_EXPRESSION`, `DUPLICATE_EXTENSION_PROVIDER`.
 - Automatic alias generation: `@{domain}`, `@{domain}/{module}` from filesystem structure
 - `kerith create-domain <name>` command
 - `kerith create-submodule <name> --module --domain` command

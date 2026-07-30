@@ -66,7 +66,7 @@ export const CacheManager = {
       }
       
       return cache;
-    } catch (e) {
+    } catch {
       return null;
     }
   },
@@ -104,12 +104,12 @@ export const CacheManager = {
       
       try {
         fs.renameSync(tmp, file);
-      } catch (e) {
+      } catch {
         // Windows fallback in case rename fails
         fs.copyFileSync(tmp, file);
         fs.unlinkSync(tmp);
       }
-    } catch (e) {
+    } catch {
       // Best effort cache write, do not crash bootstrap
     }
   },
@@ -118,7 +118,7 @@ export const CacheManager = {
     const { file } = getCachePaths();
     try {
       fs.writeFileSync(file, JSON.stringify({ status: 'failed', error }), 'utf-8');
-    } catch (e) {
+    } catch {
       // Ignore error, the process is already failing
     }
   },

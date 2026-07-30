@@ -18,6 +18,7 @@ import { KerithError } from "../../core/errors.js";
 import { normalizePath, groupFilesByModulePath } from "../../core/utils/paths.js";
 import { withTimeout } from "../../core/utils/timeout.js";
 import { buildModuleKey } from "../../core/registry.js";
+import { getRegisteredMiddlewareResolvers } from "../../extension/store.js";
 import type { BootstrapContext } from "../context.js";
 import type { Application } from "express";
 import type { MountedRoute } from "../../types/index.js";
@@ -183,6 +184,52 @@ export async function runControllersAndMount(
   let logMs = 0;
   const routeLogGate = new BootLogGate(config.logLevel);
 
+  // Get extension middlewares and sort them by priority (descending: higher runs first)
+  const allResolvers = getRegisteredMiddlewareResolvers();
+  const preResolvers = allResolvers.filter(r => r.phase === 'pre').sort((a, b) => b.priority - a.priority);
+  const postResolvers = allResolvers.filter(r => r.phase === 'post').sort((a, b) => b.priority - a.priority);
+  const errorResolvers = allResolvers.filter(r => r.phase === 'error').sort((a, b) => b.priority - a.priority);
+
+  const postMounts: { path: string; handlers: any[] }[] = [];
+  const globalErrorHandlers = new Set<any>();
+
+  // 2.2 fix: error handlers are global and must be mounted exactly once.
+  // getHandlers() is called ONCE PER RESOLVER here (not once per controller
+  // as pre/post resolvers are below) — this avoids the identity-dedup Set
+  // multi-mounting a logically-single Filter whose getHandlers() happens to
+  // return a fresh closure on every call. Error handlers are assumed not to
+  // need per-controller context (see extension/types.ts JSDoc for phase 'error').
+  const anyControllerForErrorContext = allModules
+    .map((mod) => registry.getRawModule(mod.name, mod.domain))
+    .flatMap((rawMod) => rawMod?.controllers ?? [])[0];
+
+  for (const resolver of errorResolvers) {
+    let handlers: unknown[];
+    try {
+      handlers = resolver.getHandlers(anyControllerForErrorContext as any);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new KerithError(
+        'MIDDLEWARE_RESOLUTION_FAILED',
+        `Middleware resolver "${resolver.name}" failed during getHandlers() execution`,
+        `File: ${resolver.filePath} — ${message}`
+      );
+    }
+    for (const handler of handlers) {
+      // 2.3 fix: Express only treats a middleware as an error handler if it
+      // declares exactly 4 parameters (err, req, res, next). A resolver that
+      // gets this wrong would otherwise fail silently in production —
+      // Express would mount it as normal middleware, never invoked on error.
+      if (typeof handler === "function" && handler.length !== 4) {
+        log.warn(
+          `A MiddlewareResolver with phase 'error' returned a handler with ${handler.length} parameter(s) instead of 4 — Express will not treat it as an error handler and it will never run on error.`,
+          { _module: "router" },
+        );
+      }
+      globalErrorHandlers.add(handler);
+    }
+  }
+
   for (const mod of allModules) {
     const rawMod = registry.getRawModule(mod.name, mod.domain);
     if (!rawMod) continue;
@@ -206,11 +253,61 @@ export async function runControllersAndMount(
           .replace(/\/$/, "") || "/";
       if (ctrl.router) {
         const tMount = performance.now();
-        if (ctrl.middlewares && ctrl.middlewares.length > 0) {
-          app.use(fullPath, ...ctrl.middlewares, ctrl.router);
-        } else {
-          app.use(fullPath, ctrl.router);
+
+        // Execute extension resolvers for this specific controller.
+        // Error-phase resolvers are handled once, above, outside this loop.
+        let preMiddlewares: unknown[];
+        try {
+          preMiddlewares = preResolvers.flatMap(r => r.getHandlers(ctrl));
+        } catch (err: unknown) {
+          const resolver = preResolvers.find(r => {
+            try {
+              r.getHandlers(ctrl);
+              return false;
+            } catch {
+              return true;
+            }
+          });
+          const message = err instanceof Error ? err.message : String(err);
+          throw new KerithError(
+            'MIDDLEWARE_RESOLUTION_FAILED',
+            `Middleware resolver "${resolver?.name || 'unknown'}" failed during getHandlers() execution`,
+            `File: ${resolver?.filePath || 'unknown'} — ${message}`
+          );
         }
+
+        let postMiddlewares: unknown[];
+        try {
+          postMiddlewares = postResolvers.flatMap(r => r.getHandlers(ctrl));
+        } catch (err: unknown) {
+          const resolver = postResolvers.find(r => {
+            try {
+              r.getHandlers(ctrl);
+              return false;
+            } catch {
+              return true;
+            }
+          });
+          const message = err instanceof Error ? err.message : String(err);
+          throw new KerithError(
+            'MIDDLEWARE_RESOLUTION_FAILED',
+            `Middleware resolver "${resolver?.name || 'unknown'}" failed during getHandlers() execution`,
+            `File: ${resolver?.filePath || 'unknown'} — ${message}`
+          );
+        }
+
+        const allPreMiddlewares = [
+          ...preMiddlewares,
+          ...(ctrl.middlewares || []),
+          ctrl.router
+        ];
+
+        app.use(fullPath, ...(allPreMiddlewares as any[]));
+        
+        if (postMiddlewares.length > 0) {
+          postMounts.push({ path: fullPath, handlers: postMiddlewares });
+        }
+
         mountMs += performance.now() - tMount;
 
         let foundRoutes = false;
@@ -282,6 +379,16 @@ export async function runControllersAndMount(
       }
     }
 
+  }
+
+  // Mount post middlewares after all routers
+  for (const mount of postMounts) {
+    app.use(mount.path, ...mount.handlers);
+  }
+
+  // Mount error handlers exactly once at the end of the app
+  if (globalErrorHandlers.size > 0) {
+    app.use(...Array.from(globalErrorHandlers));
   }
 
   if (routeLogGate.hasOverflow) {

@@ -259,7 +259,6 @@ export function reconcile(
     const matchesForThisDisc: { sim: number; idx: number }[] = [];
 
     for (let j = 0; j < unmatchedPrev.length; j++) {
-      const prev = unmatchedPrev[j];
       const sim = hashSimilarity(prevIdSets[j], discSet);
 
       const threshold = options.similarityThreshold ?? 0.9;

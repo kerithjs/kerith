@@ -597,6 +597,8 @@ Kerith also (re)generates `tsconfig.kerith.json` on every bootstrap for IDE supp
 
 ## API reference
 
+> **Note on `@kerith/core/extension`**: The package exposes an extension subpath containing the provider registry for the Extension Architecture. **This is an internal API** explicitly designed for consumption by `@kerith/app` to construct higher-level channels (Schedule, Middleware, Alias, Binding). It is **not a public API** and should not be used directly by end developers.
+
 ### `createApp(app?, options?)`
 
 ```ts

@@ -37,3 +37,62 @@ describe('KerithError', () => {
     expect(err.name).toBe('KerithError')
   })
 })
+
+// ─── Part 3 — Extension API + identifier codes ────────────────────────────────
+describe('KerithErrorCode — Part 3 (Extension API)', () => {
+  it('accepts INVALID_IDENTIFIER_NAME', () => {
+    const err = new KerithError('INVALID_IDENTIFIER_NAME', 'name must be a non-empty string')
+    expect(err.code).toBe('INVALID_IDENTIFIER_NAME')
+    expect(err instanceof KerithError).toBe(true)
+  })
+
+  it('accepts DUPLICATE_ALIAS_IDENTIFIER', () => {
+    const err = new KerithError('DUPLICATE_ALIAS_IDENTIFIER', 'duplicate Client "db"')
+    expect(err.code).toBe('DUPLICATE_ALIAS_IDENTIFIER')
+    expect(err instanceof KerithError).toBe(true)
+  })
+
+  it('accepts DUPLICATE_MIDDLEWARE_IDENTIFIER', () => {
+    const err = new KerithError('DUPLICATE_MIDDLEWARE_IDENTIFIER', 'duplicate Guard "Auth"')
+    expect(err.code).toBe('DUPLICATE_MIDDLEWARE_IDENTIFIER')
+    expect(err instanceof KerithError).toBe(true)
+  })
+
+  it('accepts DUPLICATE_SCHEDULE_IDENTIFIER', () => {
+    const err = new KerithError('DUPLICATE_SCHEDULE_IDENTIFIER', 'duplicate Cron "CleanUp"')
+    expect(err.code).toBe('DUPLICATE_SCHEDULE_IDENTIFIER')
+    expect(err instanceof KerithError).toBe(true)
+  })
+
+  it('accepts DUPLICATE_BINDING_IDENTIFIER', () => {
+    const err = new KerithError('DUPLICATE_BINDING_IDENTIFIER', 'duplicate Worker "EmailWorker"')
+    expect(err.code).toBe('DUPLICATE_BINDING_IDENTIFIER')
+    expect(err instanceof KerithError).toBe(true)
+  })
+
+  it('accepts DUPLICATE_EXTENSION_PROVIDER', () => {
+    const err = new KerithError('DUPLICATE_EXTENSION_PROVIDER', 'duplicate ScheduleProvider "cron-scheduler"')
+    expect(err.code).toBe('DUPLICATE_EXTENSION_PROVIDER')
+    expect(err instanceof KerithError).toBe(true)
+  })
+
+  it('accepts MISSING_PEER_DEPENDENCY', () => {
+    const err = new KerithError(
+      'MISSING_PEER_DEPENDENCY',
+      'bullmq is not installed',
+      'Run: npm install bullmq',
+    )
+    expect(err.code).toBe('MISSING_PEER_DEPENDENCY')
+    expect(err.details).toBe('Run: npm install bullmq')
+  })
+
+  it('accepts INVALID_CRON_EXPRESSION', () => {
+    const err = new KerithError(
+      'INVALID_CRON_EXPRESSION',
+      '"* * * 13 *" is not a valid cron expression',
+      'Month field must be 1-12.',
+    )
+    expect(err.code).toBe('INVALID_CRON_EXPRESSION')
+    expect(err.details).toBe('Month field must be 1-12.')
+  })
+})

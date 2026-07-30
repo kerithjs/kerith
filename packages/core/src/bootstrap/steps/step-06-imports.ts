@@ -16,6 +16,7 @@ import pc from "picocolors";
 import { importIndexEntry } from "../import-index.js";
 import { normalizePath } from "../../core/utils/paths.js";
 import { KerithError } from "../../core/errors.js";
+
 import type { BootstrapContext } from "../context.js";
 
 export async function runDynamicImports(ctx: BootstrapContext): Promise<void> {

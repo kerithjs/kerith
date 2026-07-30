@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { resolveQualityRules, DEFAULT_QUALITY_RULES } from '../../src/config/rules.types.js';
 import { runQualityRules } from '../../src/cli/lib/rules-engine.js';
 import { detectDepthViolations } from '../../src/cli/lib/depth-checker.js';

@@ -198,7 +198,7 @@ export function initCommand() {
         const { runSyncPreload } = await import('./sync-preload.js');
         await runSyncPreload(logger, true);
         console.log(pc.green('Preload synced successfully'));
-      } catch (err: any) {
+      } catch {
         console.log(pc.yellow('WARN  Preload sync failed (this is normal if dependencies are not installed yet)'));
       }
 
@@ -207,7 +207,7 @@ export function initCommand() {
           const { runSyncTsconfig } = await import('./sync-tsconfig.js');
           await runSyncTsconfig(logger, 'tsconfig.json', true);
           console.log(pc.green('tsconfig synced successfully'));
-        } catch (err: any) {
+        } catch {
           console.log(pc.yellow('WARN  tsconfig sync failed (this is normal if dependencies are not installed yet)'));
         }
       }

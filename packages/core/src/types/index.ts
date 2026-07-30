@@ -12,6 +12,7 @@ export interface ControllerEntry {
   middlewares: RequestHandler[];
   router?: Router;
   enabled: boolean;
+  metadata?: Record<string, unknown>;
 }
 
 export type {
@@ -151,10 +152,11 @@ export type {
 } from '../core/types/hierarchy.js';
 
 export interface ControllerOptions {
-  /** Middlewares applied to all routes. Mounted before the router. Default: []. */
+  /** Direct middleware handlers applied to all routes. Mounted before the router. Default: []. */
   middlewares?: RequestHandler[];
   /** If false, createApp() ignores this controller entirely. Default: true. */
   enabled?: boolean;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ServiceOptions {
@@ -248,6 +250,16 @@ export interface CreateAppOptions {
    * configured via `logLevel` and `logFormat` in `kerith.config.ts`.
    */
   logger?: LogHandler;
+  
+  /**
+   * Internal hook for `@kerith/app` to inject the channel translation
+   * exactly when dynamic imports finish and before alias resolution.
+   *
+   * @internal
+   * @warning This is NOT part of the public API. It may change or be removed
+   * without notice in any version. Do not use this field in your application code.
+   */
+  _onDynamicImportsComplete?: () => void | Promise<void>;
 }
 
 /** Resolved configuration used internally (defaults applied). */
@@ -390,7 +402,7 @@ export interface KerithApp {
    * ```
    * @since v1.5.1
    */
-  listen(server: import('node:http').Server, options?: ListenOptions): ShutdownHook;
+  listen(server: import('node:http').Server, options?: ListenOptions): Promise<ShutdownHook>;
 }
 
 export interface GetAliasesOptions {

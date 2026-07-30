@@ -27,5 +27,14 @@ export default defineConfig([
     minify: false,
     sourcemap: true,
     external: ['pino', '@clack/prompts'],
+  },
+  {
+    entry: ['src/extension/index.ts'],
+    format: ['esm'],
+    outDir: 'dist/extension',
+    dts: true,
+    sourcemap: true,
+    target: 'node20',
+    external: ['pino', '@clack/prompts'],
   }
 ]);

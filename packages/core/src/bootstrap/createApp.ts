@@ -8,6 +8,10 @@ import type { Application } from "express";
 import { CacheManager } from "../cache/bootstrap-cache.js";
 import { createRegistry, registryContext } from "../core/registry.js";
 import { registerShutdown } from "../core/shutdown.js";
+import { KerithError } from "../core/errors.js";
+import { getRegisteredScheduleProviders, getRegisteredAliasProviders, getRegisteredBindingProviders } from "../extension/store.js";
+import { activateAliasResolver } from "../aliases/resolver.js";
+import { updateAliasCache } from "../aliases/cache.js";
 import type { CreateAppOptions, KerithApp } from "../types/index.js";
 
 // Bootstrap
@@ -76,6 +80,50 @@ export async function createApp(
       // Step 06 — Dynamic Imports
       await runDynamicImports(ctx);
 
+      // Invoke the internal hook for @kerith/app so it can map plugins to providers
+      if (options?._onDynamicImportsComplete) {
+        await options._onDynamicImportsComplete();
+      }
+
+      // Execute bindings sequentially to guarantee predictability
+      const bindings = getRegisteredBindingProviders();
+      for (const provider of bindings) {
+        const bindStart = performance.now();
+        try {
+          await provider.bind();
+          if (process.env.KERITH_PROFILE === "true") {
+            log.debug(
+              `[perf] binding ${provider.name} took ${Math.round(performance.now() - bindStart)}ms`,
+              { _module: "boot" },
+            );
+          }
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          throw new KerithError(
+            'BINDING_EXECUTION_FAILED',
+            `Binding provider "${provider.name}" failed during bind() execution`,
+            message
+          );
+        }
+      }
+
+      // --- Extension API: Alias Providers ---
+      // At this point, modules have been evaluated, meaning Client(), Store(), etc. have executed
+      // and registered their AliasProviders. We must now inject them into the ESM hook so that
+      // subsequent steps (like Step 08, which imports controllers) can resolve them.
+      const extensionAliases = getRegisteredAliasProviders();
+      if (extensionAliases.length > 0) {
+        const pureExtensionAliases: Record<string, string> = {};
+        for (const provider of extensionAliases) {
+          const fullAlias = `@${provider.prefix}/${provider.name}`;
+          registry.registerAlias(fullAlias, provider.filePath);
+          pureExtensionAliases[fullAlias] = provider.filePath;
+        }
+        
+        await activateAliasResolver(pureExtensionAliases, {}, log);
+        updateAliasCache(registry.getAllAliases());
+      }
+
       // Step 07 — Validate dependencies (strict mode only)
       await runValidations(ctx);
 
@@ -123,6 +171,18 @@ export async function createApp(
       // Step 09 — Bootstrap Cache Write
       runCacheWrite(ctx);
 
+      // Execute 'after-bootstrap' schedules
+      const schedules = getRegisteredScheduleProviders();
+      const afterBootstrapSchedules = schedules.filter(s => s.timing === 'after-bootstrap');
+      for (const schedule of afterBootstrapSchedules) {
+        try {
+          await schedule.execute();
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          log.error(`Extension schedule ${schedule.name} threw an error during after-bootstrap: ${message}`, { _module: 'boot' });
+        }
+      }
+
       return {
         modules: safeRegisteredModules,
         routes: mountedRoutes,
@@ -132,7 +192,18 @@ export async function createApp(
           preloaderVersion: preloadConfig?._version ?? null,
           aliasesAtBoot: preloadConfig?.aliases ?? {},
         },
-        listen(server, listenOptions) {
+        async listen(server, listenOptions) {
+          // Execute 'on-listen' schedules
+          const onListenSchedules = getRegisteredScheduleProviders().filter(s => s.timing === 'on-listen');
+          for (const schedule of onListenSchedules) {
+            try {
+              await schedule.execute();
+            } catch (err: unknown) {
+              const message = err instanceof Error ? err.message : String(err);
+              log.error(`Extension schedule ${schedule.name} threw an error during on-listen: ${message}`, { _module: 'boot' });
+            }
+          }
+
           return registerShutdown({
             server,
             onShutdown: listenOptions?.onShutdown,

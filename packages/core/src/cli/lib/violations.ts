@@ -3,8 +3,7 @@ import path from 'node:path';
 import fg from 'fast-glob';
 import type { ModuleGraph } from './graph-builder.js';
 import { extractRelativeCrossModuleImports } from './import-scanner.js';
-import { findCircularDependencies } from '../../core/utils/cycle-detector.js';
-import type { KerithConfig } from '../../config/kerith-config.types.js';
+
 
 export const ViolationType = {
   PRIVATE_IMPORT: 'private-import',

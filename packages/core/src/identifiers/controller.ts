@@ -17,6 +17,7 @@ export function Controller(prefix: string, options: ControllerOptions = {}): voi
     path: normalizePath(filePath),
     prefix: prefix,
     middlewares: options.middlewares ?? [],
-    enabled: options.enabled ?? true
+    enabled: options.enabled ?? true,
+    metadata: options.metadata,
   });
 }

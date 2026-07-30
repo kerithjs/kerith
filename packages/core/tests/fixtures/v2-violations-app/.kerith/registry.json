@@ -1,21 +1,8 @@
 {
   "project": "v2-violations-app-fixture",
   "version": "1.0.0",
-  "lastCheck": "2026-07-15T17:15:13.714Z",
+  "lastCheck": "2026-07-30T22:50:53.131Z",
   "modules": {
-    "mod_c30b5a3b": {
-      "id": "mod_c30b5a3b",
-      "name": "members",
-      "path": "src/workspace/members",
-      "domain": "workspace",
-      "hash": "a06042b04e",
-      "status": "active",
-      "createdAt": "2026-06-03T22:31:33.290Z",
-      "lastSeen": "2026-07-15T17:15:13.707Z",
-      "identifiers": [
-        "MemberService"
-      ]
-    },
     "mod_b3cefe9e": {
       "id": "mod_b3cefe9e",
       "name": "payments",
@@ -24,9 +11,22 @@
       "hash": "4fa0cee9d2",
       "status": "active",
       "createdAt": "2026-06-03T22:31:33.290Z",
-      "lastSeen": "2026-07-15T17:15:13.707Z",
+      "lastSeen": "2026-07-30T22:50:53.125Z",
       "identifiers": [
         "PaymentService"
+      ]
+    },
+    "mod_c30b5a3b": {
+      "id": "mod_c30b5a3b",
+      "name": "members",
+      "path": "src/workspace/members",
+      "domain": "workspace",
+      "hash": "a06042b04e",
+      "status": "active",
+      "createdAt": "2026-06-03T22:31:33.290Z",
+      "lastSeen": "2026-07-30T22:50:53.125Z",
+      "identifiers": [
+        "MemberService"
       ]
     }
   },

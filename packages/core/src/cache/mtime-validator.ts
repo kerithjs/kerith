@@ -18,7 +18,7 @@ export function getModuleSignature(files: string[]): { maxMtime: number; totalSi
         maxMtime = stats.mtimeMs;
       }
       totalSize += stats.size;
-    } catch (e) {
+    } catch {
       // If a file does not exist or cannot be accessed, mark as dirty immediately
       return { maxMtime: Infinity, totalSize: -1 };
     }

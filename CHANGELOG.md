@@ -1,68 +1,71 @@
 # Kerith — Suite Changelog
 
 All notable changes to the **Kerith suite** are documented here.
-This file covers both [`@kerith/core`](./packages/core) and [`@kerith/eslint-plugin`](./packages/eslint-plugin).
-Both packages are versioned in lockstep and published independently to npm.
+This file covers [`@kerith/core`](./packages/core), [`@kerith/identifiers`](./packages/identifiers), [`@kerith/app`](./packages/app), and [`@kerith/eslint-plugin`](./packages/eslint-plugin).
+All packages are versioned in lockstep and published independently to npm.
 
 For full technical details, see the individual package changelogs:
 -> [`packages/core/CHANGELOG.md`](./packages/core/CHANGELOG.md)
+-> [`packages/identifiers/CHANGELOG.md`](./packages/identifiers/CHANGELOG.md)
+-> [`packages/app/CHANGELOG.md`](./packages/app/CHANGELOG.md)
 -> [`packages/eslint-plugin/CHANGELOG.md`](./packages/eslint-plugin/CHANGELOG.md)
 
 > **Note:** v1.0.0 - v1.8.1 were developed under the `Nodulus` repository
 > prior to the KerithJS rebranding. Full history is preserved below for reference.
 
-## [2.0.0-alpha.1] - 2026-06-04
+## [2.0.0-alpha.1] - 2026-07-26
+
+> **Headline: A pluggable Kerith.** This release introduces two new packages — `@kerith/identifiers` and `@kerith/app` — that let you declare infrastructure, guards, rate limits, scheduled jobs, and background workers the same declarative way you already declare modules and controllers. `@kerith/core` itself stays exactly as self-contained as before: both new packages are entirely optional, and Core has no knowledge of either one. This release also brings a domain-based project structure, shared code boundaries, and a much faster local dev loop.
+
+### Added
+
+#### New packages
+
+- **`@kerith/identifiers`** — an extended catalog of declarative identifiers on top of `@kerith/core`: infrastructure clients, config, guards, rate limits, scheduled jobs, background workers, and more. First identifiers available now: `Client`, `Config`, `Provider`, `Store`, `Adapter`, `Guard`, `RateLimit`, `Middleware`, `Filter`, `Cron`, `HealthCheck`, `Probe`, `Worker`, `Message`, `Stream` — the rest of the catalog ships incrementally in upcoming releases. See [`packages/identifiers/CHANGELOG.md`](./packages/identifiers/CHANGELOG.md) for the full list.
+- **`@kerith/app`** — the optional runtime that brings those identifiers to life: it wires infrastructure clients, mounts guards and rate limits, runs scheduled jobs, and connects background workers, using `bullmq` and `node-cron` under the hood when needed. Projects that don't need this can keep using `@kerith/core` on its own, exactly as before. Features a new `infrastructure` option in `createApp` to inject Redis configurations directly (bypassing env vars). See [`packages/app/CHANGELOG.md`](./packages/app/CHANGELOG.md) for details.
+
+#### Extension API
+
+- `@kerith/core` now exposes a stable, documented way for an optional runtime (like `@kerith/app`) to plug in behavior at four points in the request/bootstrap lifecycle — aliasing, middleware, scheduled tasks, and infrastructure bindings — without Core needing to know anything about what's plugged in. This is what makes `@kerith/identifiers` and `@kerith/app` possible without touching `@kerith/core`'s internals.
+- Clearer, more specific error messages when an identifier is declared twice, named invalidly, or fails to initialize.
+- `Controller()` now accepts a flexible `metadata` option, so extensions like `Guard()` or `RateLimit()` can attach their own configuration to a controller without `@kerith/core` needing to know what a "guard" or a "rate limit" is.
+
+#### Runtime
+
+- Bootstrap cache for near-instant startup in development, with automatic invalidation when files actually change.
+- `kerith dev --force` to force a full rescan when needed.
+- Faster project scanning overall (a longstanding inefficiency for larger projects has been resolved).
+
+#### Shared
+
+- Shared code boundaries: a project-wide `@shared` for code used everywhere, and a domain-scoped `@{domain}/shared` for code shared only within one domain.
+- `kerith create-shared` scaffolds either kind.
+- `kerith check` and the ESLint plugin now catch undeclared, unused, or out-of-scope shared imports.
+
+#### Domains
+
+- Projects can now be organized as `Domain → Module → SubModule`, inferred automatically from your folder structure, with automatic aliases (`@{domain}`, `@{domain}/{module}`) generated to match.
+- `kerith create-domain` and `kerith create-submodule` scaffold the new structure.
+- `kerith check` reports domain boundary violations and groups its output by domain.
+- New coupling warnings (`FAN_OUT_HIGH` / `FAN_IN_HIGH`) with configurable thresholds.
+- `@kerith/eslint-plugin`: two new rules matching the domain and shared-boundary checks above.
+
+### Changed
+
+- Project configuration is simpler: a single `origin` key replaces the old separate `domains`/`modules` config.
+- `createApp()` no longer requires an Express app to be passed in — it's optional.
+- `kerith check`'s exit code is more predictable: warnings like coupling or circular dependencies only fail the command in `--strict` mode.
+- Existing v1.x projects continue to work without any changes — see `MIGRATION.md` if you want to adopt the new domain structure.
 
 ### Fixed
 
-- `stalePurgeCycles`: default corrected from `3` to `5`, aligned with the actual
-  configured value (`3` was a hardcoded bug detected during code audit,
-  not the intentional value).
+- A stale purge-cycle default that didn't match its intended value has been corrected.
 
-### Bootstrap
+### Known Limitations (alpha)
 
-- **Bootstrap Pipeline**: Refactored `createApp()` into an explicit step-based pipeline (`step-00` → `step-09`) with isolated bootstrap stages.
-- **Bootstrap Context**: Introduced shared `BootstrapContext` passed across all bootstrap steps, replacing the previous monolithic bootstrap state.
-- **Architecture**: Bootstrap internals reorganized into dedicated step modules, significantly improving maintainability and future extensibility without changing runtime behavior.
-
-### Added — Shared System
-
-- Global shared (`@shared`): place shared code in `src/shared/`, declare with `shared: ['@shared']` in Module()
-- Domain-scoped shared (`@{domain}/shared`): place code in `src/{domain}/_shared/`, implicit access for domain modules
-- `kerith check` detects UNDECLARED_SHARED, UNUSED_SHARED, SHARED_SCOPE_VIOLATION
-- `kerith create-shared --domain <name>` scaffolds domain shared directory
-- `kerith create-shared --global` scaffolds global shared directory
-- ESLint rules: `kerith/no-undeclared-shared`, `kerith/no-shared-scope-violation`
-- `sync-tsconfig` generates aliases for @shared and @{domain}/shared automatically
-
-### Added — Runtime Zero & Bootstrap Cache
-
-- Bootstrap cache (`.kerith/bootstrap-cache.json`) for near-zero startup times in development
-- Intelligent `mtime` and file-size validation for partial cache invalidation
-- Partial scanning optimizations (only invalidated domains are rescanned)
-- `kerith dev --force` flag to explicitly invalidate cache
-- Enhanced `chokidar` watcher that coordinates smoothly with caching and ignores internal state
-
-### @kerith/core
-
-- **Domain Hierarchy**: Introduced `Domain → Module → SubModule` architecture inferred from filesystem
-- **New Identifiers**: `Domain()` and `SubModule()` for semantic boundary marking
-- **Automatic Aliases**: `@{domain}` and `@{domain}/{module}` generated from filesystem structure
-- **New CLI Commands**: `kerith create-domain`, `kerith create-submodule`, `create-module --domain`
-- **Enhanced Check**: `kerith check` groups output by Domains / Modules / SubModules
-- **New Violations**: Domain boundary violations, relative boundary violations, module space conflicts
-- **ESLint Rules**: `no-domain-boundary-violations`, `no-relative-boundary-violations`
-- **Coupling Rules**: Detects `FAN_OUT_HIGH` and `FAN_IN_HIGH` based on configurable thresholds (`kerith.config.ts`)
-- **Strict Mode Checks**: `kerith check` exit-code logic refactored; warnings like coupling or circular dependencies only block in `--strict` mode
-- **Config Simplification**: `origin` config key replaces separate `domains`/`modules` config
-- **Optional Express App**: `createApp(app?)` now accepts optional Express app (REGLA-02)
-- **Performance**: Single fg() call instead of O(n) per-module globs (N-32 fix)
-- **Migration**: v1.x projects work without changes — see MIGRATION.md for adoption guide
-
-### @kerith/eslint-plugin
-
-- **New Rules**: `no-domain-boundary-violations`, `no-relative-boundary-violations`
-- **Version Sync**: Synchronized with `@kerith/core@2.0.0-alpha.1`
+- `Message()` and `Stream()` (background messaging/streaming identifiers) are available to declare but don't yet run against real infrastructure — this is coming in a follow-up alpha.
+- The `Gateway()` identifier (real-time/Socket.io) is still being finalized and isn't usable yet.
+- Worker infrastructure connection settings are not yet configurable per-project — this is planned before beta.
 
 ---
 

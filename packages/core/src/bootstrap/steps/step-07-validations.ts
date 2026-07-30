@@ -20,6 +20,7 @@ import { KerithError } from "../../core/errors.js";
 import { extractModuleImportsAsync } from "../../nits/import-scanner.js";
 import { normalizePath, groupFilesByModulePath } from "../../core/utils/paths.js";
 import { buildModuleKey } from "../../core/registry.js";
+
 import type { BootstrapContext } from "../context.js";
 
 export async function runValidations(ctx: BootstrapContext): Promise<void> {

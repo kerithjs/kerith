@@ -39,11 +39,11 @@ function baseConfig(overrides: Record<string, unknown> = {}) {
 
 describe('Quality Rules Integration Tests', () => {
   let logSpy: ReturnType<typeof vi.spyOn>;
-  let errorSpy: ReturnType<typeof vi.spyOn>;
+  let _errorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    _errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(process, 'cwd').mockReturnValue(fixturePath);
     vi.spyOn(nitsStore, 'loadNitsRegistry').mockResolvedValue(null);
     vi.spyOn(nitsStore, 'saveNitsRegistry').mockResolvedValue(undefined);
