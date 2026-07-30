@@ -30,7 +30,7 @@ jobs:
       run: npm run lint
 
     - name: Build
-      run: npm run build --workspaces --if-present
+      run: npm run build
 
     - name: Run typecheck
       run: npm run typecheck
@@ -58,7 +58,7 @@ jobs:
       run: npm install socket.io@^4.0.0
 
     - name: Build @kerith/app with socket.io present
-      run: npm run build --workspace=packages/app
+      run: npm run build
 
     - name: Typecheck @kerith/app with socket.io present
       run: npm run typecheck --workspace=packages/app
