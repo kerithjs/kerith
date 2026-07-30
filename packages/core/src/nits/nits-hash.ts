@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import fg from 'fast-glob';
 import { DEFAULT_SIMILARITY_THRESHOLD, MINIMUM_SIMILARITY_THRESHOLD } from './constants.js';
-import { extractIdentifierCall, extractMultipleIdentifierCalls } from '../cli/lib/ast-parser.js';
+import { extractMultipleIdentifierCalls } from '../cli/lib/ast-parser.js';
 
 /**
  * Calculates the Jaccard Similarity between two sets of strings.

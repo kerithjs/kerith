@@ -21,7 +21,7 @@
  * registry discards after validation.
  */
 
-import fs from "node:fs";
+
 import path from "node:path";
 import { CacheManager } from "../../cache/bootstrap-cache.js";
 import type { CachedModule } from "../../cache/bootstrap-cache.js";

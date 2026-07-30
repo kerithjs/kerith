@@ -146,7 +146,6 @@ function isValidRegistry(data: any): data is NitsRegistry {
  */
 export async function saveNitsRegistry(registry: NitsRegistry, cwd: string): Promise<void> {
   const fullPath = path.join(cwd, KERITH_DIR, 'registry.json');
-  const tempPath = `${fullPath}.tmp`;
   const dir = path.dirname(fullPath);
   
   if (!fs.existsSync(dir)) {

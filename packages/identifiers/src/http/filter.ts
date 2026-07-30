@@ -31,8 +31,7 @@ import { registerMiddlewarePlugin } from '../channels/index.js';
  */
 export function Filter<E extends Error>(
   name: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  errorType: new (...args: any[]) => E,
+  errorType: new (...args: unknown[]) => E,
   handler: (err: E) => { status: number; error: string; [key: string]: unknown },
 ): void {
   const { filePath } = getFileCallerInfo('Filter()');

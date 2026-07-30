@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import type { KerithConfig } from '../../config/kerith-config.types.js';
 
 // Default package specifier — used as fallback when the file path cannot be resolved.

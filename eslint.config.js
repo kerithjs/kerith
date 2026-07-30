@@ -5,7 +5,7 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ['dist/**', 'node_modules/**', '.tmp/**', '.github/**', 'tests/.tmp/**', 'tests/fixtures/**', '**/tests/fixtures/**'],
+    ignores: ['dist/**', 'node_modules/**', '.tmp/**', '.github/**', 'tests/.tmp/**', 'tests/fixtures/**', '**/tests/fixtures/**', '**/benchmarks/fixture/**'],
   },
   {
     rules: {
