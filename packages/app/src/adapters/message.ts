@@ -1,5 +1,8 @@
 // src/adapters/message.ts
 import { createRedisClient } from './redis-streams.js'
+import { createLogger } from '@kerith/core'
+
+const logger = createLogger('kerith')
 
 export interface MessageTransport {
   bind(
@@ -44,7 +47,7 @@ export async function loadMessageTransport(): Promise<MessageTransport> {
             }
           } catch (err: any) {
             if (!running) break // Exit if stopped during error handling
-            console.error(`[Kerith] Message consumption error for stream "${name}":`, err)
+            logger.error(`Message consumption error for stream "${name}"`, { err })
             // Exponential backoff before retry
             await new Promise(resolve => setTimeout(resolve, 1000))
             // Reconnect on next iteration
