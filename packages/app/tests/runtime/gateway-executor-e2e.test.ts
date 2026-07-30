@@ -24,7 +24,6 @@ describe('Gateway Executor E2E', () => {
     let receivedSocket: any = null
 
     // Import Gateway after dependencies are confirmed
-    // @ts-expect-error - Gateway export requires @kerith/identifiers package rebuild
     const { Gateway } = await import('@kerith/identifiers')
 
     // Declare Gateway

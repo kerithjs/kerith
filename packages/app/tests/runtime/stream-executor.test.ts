@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { _resetExtensionStore } from '../../../core/src/extension/store.js'
-import { _resetAllChannels } from '../../../identifiers/src/channels/index.js'
+import { _resetExtensionStore } from '@kerith/core'
+import { _resetAllChannels } from '@kerith/identifiers'
 
 describe('Stream Channel Executor', () => {
   beforeEach(() => {

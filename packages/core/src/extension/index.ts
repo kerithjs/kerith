@@ -149,4 +149,5 @@ export {
   getRegisteredScheduleProviders,
   getRegisteredMiddlewareResolvers,
   getRegisteredIdentifierMetadata,
+  _resetExtensionStore,
 } from './store.js';
