@@ -11,9 +11,11 @@ describe('Gateway Executor E2E', () => {
   it('connects real socket.io-client and executes handler', async () => {
     // Skip test if socket.io is not installed
     try {
-      // @ts-expect-error - socket.io is an optional peer dependency
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - socket.io is an optional peer dependency
       await import('socket.io')
-      // @ts-expect-error - socket.io-client is an optional peer dependency
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - socket.io-client is an optional peer dependency
       await import('socket.io-client')
     } catch {
       // Skip test gracefully if dependencies are missing

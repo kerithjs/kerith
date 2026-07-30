@@ -48,7 +48,8 @@ function resolveNamespace(server: SocketIOServer, options: Record<string, unknow
 export async function loadSocketIOTransport(): Promise<SocketIOTransport> {
   if (!socketIOModule) {
     try {
-      // @ts-expect-error — optional peer dep, runtime import guarded by catch
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - optional peer dep, runtime import guarded by catch
       socketIOModule = (await import('socket.io')) as { Server: new (server: HTTPServer) => SocketIOServer }
     } catch {
       throw new KerithError(
