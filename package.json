@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @kerith/core && npm run build -w @kerith/identifiers && npm run build -w @kerith/eslint-plugin && npm run build -w @kerith/app",
     "build:identifiers": "npm run build -w @kerith/identifiers",
     "build:app": "npm run build -w @kerith/app",
     "test": "npm test --workspaces --if-present",
