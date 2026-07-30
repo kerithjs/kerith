@@ -22,7 +22,7 @@ For full technical details, see the individual package changelogs:
 #### New packages
 
 - **`@kerith/identifiers`** — an extended catalog of declarative identifiers on top of `@kerith/core`: infrastructure clients, config, guards, rate limits, scheduled jobs, background workers, and more. First identifiers available now: `Client`, `Config`, `Provider`, `Store`, `Adapter`, `Guard`, `RateLimit`, `Middleware`, `Filter`, `Cron`, `HealthCheck`, `Probe`, `Worker`, `Message`, `Stream` — the rest of the catalog ships incrementally in upcoming releases. See [`packages/identifiers/CHANGELOG.md`](./packages/identifiers/CHANGELOG.md) for the full list.
-- **`@kerith/app`** — the optional runtime that brings those identifiers to life: it wires infrastructure clients, mounts guards and rate limits, runs scheduled jobs, and connects background workers, using `bullmq` and `node-cron` under the hood when needed. Projects that don't need this can keep using `@kerith/core` on its own, exactly as before. See [`packages/app/CHANGELOG.md`](./packages/app/CHANGELOG.md) for details.
+- **`@kerith/app`** — the optional runtime that brings those identifiers to life: it wires infrastructure clients, mounts guards and rate limits, runs scheduled jobs, and connects background workers, using `bullmq` and `node-cron` under the hood when needed. Projects that don't need this can keep using `@kerith/core` on its own, exactly as before. Features a new `infrastructure` option in `createApp` to inject Redis configurations directly (bypassing env vars). See [`packages/app/CHANGELOG.md`](./packages/app/CHANGELOG.md) for details.
 
 #### Extension API
 

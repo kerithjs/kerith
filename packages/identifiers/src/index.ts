@@ -6,6 +6,7 @@ export {
   getMiddlewarePlugins,
   getSchedulePlugins,
   getBindingPlugins,
+  _resetAllChannels,
 } from './channels/index.js'
 
 // ─── Catalog ──────────────────────────────────────────────────────────────────

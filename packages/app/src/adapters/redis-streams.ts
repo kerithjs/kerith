@@ -15,5 +15,6 @@ export async function loadIORedis(): Promise<any> {
 
 export async function createRedisClient() {
   const { default: IORedis } = await loadIORedis()
-  return new IORedis(getRedisConnection())
+  const { getInfrastructureOptions } = await import('../runtime/infrastructure-context.js')
+  return new IORedis(getRedisConnection(getInfrastructureOptions()?.redis))
 }

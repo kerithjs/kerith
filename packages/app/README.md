@@ -131,6 +131,26 @@ Gateway('chat', (socket) => {
 - Socket.io Adapter: ✅ Implemented in `@kerith/app` (lazy-loaded via `loadSocketIOTransport()`, requires `socket.io` as optional peer dependency)
 - Gateway Bridge: ✅ Implemented in `@kerith/app` (wraps `kerithApp.listen()` to call `attach(server)` when Gateway() is declared)
 
+## Configuration
+
+When initializing the app via `createApp` from `@kerith/app`, you can provide optional infrastructure configurations (like Redis settings) that override environment variables. This is particularly useful for tests or isolated environments.
+
+```typescript
+import { createApp } from '@kerith/app';
+
+const app = await createApp(baseApp, {
+  infrastructure: {
+    redis: {
+      host: 'localhost',
+      port: 6379,
+      password: 'my-password'
+    }
+  }
+});
+```
+
+If `infrastructure` is not provided, the adapters will default to using environment variables (e.g., `REDIS_HOST`, `REDIS_PORT`, `REDIS_URL`) or fallback to defaults (`localhost:6379`).
+
 ## Version
 
 Current version: v1.0.0-alpha.1

@@ -1,5 +1,5 @@
 // src/index.ts
-
+import { setInfrastructureOptions } from './runtime/infrastructure-context.js'
 import { registerIdentifierMetadata } from '@kerith/core/extension'
 import { IDENTIFIER_CATALOG, getBindingPlugins } from '@kerith/identifiers'
 import { createApp as coreCreateApp, type CreateAppOptions, type KerithApp } from '@kerith/core'
@@ -23,15 +23,26 @@ for (const meta of IDENTIFIER_CATALOG) {
 }
 
 /**
+ * Options for creating a Kerith Application, extending the core options with
+ * infrastructure configuration specific to the @kerith/app execution environment.
+ */
+export interface AppCreateAppOptions extends CreateAppOptions {
+  infrastructure?: import('./adapters/redis-connection.js').InfrastructureOptions;
+}
+
+/**
  * Wraps @kerith/core's createApp to inject the channel translation hook.
  * This ensures that identifier decorators executed during dynamic imports
  * are properly mapped to core extensions right before core resolves them.
  */
-export async function createApp(app: any, options: CreateAppOptions = {}): Promise<KerithApp> {
-  const originalHook = options._onDynamicImportsComplete;
+export async function createApp(app: any, options: AppCreateAppOptions = {}): Promise<KerithApp> {
+  const { infrastructure, ...coreOptions } = options;
+  const originalHook = coreOptions._onDynamicImportsComplete;
+
+  setInfrastructureOptions(infrastructure);
 
   const internalOptions: CreateAppOptions = {
-    ...options,
+    ...coreOptions,
     _onDynamicImportsComplete: async () => {
       executeAliasChannel();
       executeMiddlewareChannel();

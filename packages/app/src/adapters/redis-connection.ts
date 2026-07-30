@@ -7,8 +7,12 @@ export interface RedisConnectionOptions {
   password?: string
 }
 
+export interface InfrastructureOptions {
+  redis?: Partial<RedisConnectionOptions>
+}
+
 /**
- * Reads Redis connection settings from environment variables.
+ * Reads Redis connection settings from overrides or environment variables.
  * Falls back to localhost:6379 (dev default) if nothing is set.
  * KERITH_REDIS_PORT is validated — a malformed value fails loudly
  * instead of producing a silent NaN that BullMQ would swallow.
@@ -16,10 +20,10 @@ export interface RedisConnectionOptions {
  * Used by multiple adapters (BullMQ, Message, Stream) to share the same
  * Redis connection configuration without duplicating code.
  */
-export function getRedisConnection(): RedisConnectionOptions {
-  const host = process.env.KERITH_REDIS_HOST ?? 'localhost'
-  const rawPort = process.env.KERITH_REDIS_PORT
-  const port = rawPort ? Number(rawPort) : 6379
+export function getRedisConnection(override?: Partial<RedisConnectionOptions>): RedisConnectionOptions {
+  const host = override?.host ?? process.env.KERITH_REDIS_HOST ?? 'localhost'
+  const rawPort = override?.port !== undefined ? String(override.port) : process.env.KERITH_REDIS_PORT
+  const port = override?.port ?? (rawPort ? Number(rawPort) : 6379)
 
   if (Number.isNaN(port) || port <= 0) {
     throw new KerithError(
@@ -31,6 +35,6 @@ export function getRedisConnection(): RedisConnectionOptions {
   return {
     host,
     port,
-    password: process.env.KERITH_REDIS_PASSWORD,
+    password: override?.password ?? process.env.KERITH_REDIS_PASSWORD,
   }
 }

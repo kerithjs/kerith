@@ -22,7 +22,8 @@ export async function executeWorkerChannel() {
           const { handler, options } = plugin.bind as WorkerBinding
 
           const opts = options || {}
-          const redisConnection = getRedisConnection()
+          const { getInfrastructureOptions } = await import('./infrastructure-context.js')
+          const redisConnection = getRedisConnection(getInfrastructureOptions()?.redis)
 
           // BullMQ v5 breaking change: connection object is now mandatory.
           // In v4 it showed a warning; v5 throws an error without it.

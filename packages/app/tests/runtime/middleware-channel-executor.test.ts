@@ -13,9 +13,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+import { _resetAllChannels } from '@kerith/identifiers'
+// @ts-ignore - internal test utility
+import { _resetExtensionStore } from '@kerith/core/extension'
+
 describe('Middleware Channel Executor', () => {
   afterEach(() => {
     vi.restoreAllMocks()
+    _resetAllChannels()
+    if (typeof _resetExtensionStore === 'function') _resetExtensionStore()
   })
 
   it('verifies Guard and Filter plugin integration with createApp()', async () => {
@@ -24,7 +30,7 @@ describe('Middleware Channel Executor', () => {
       return req.headers['x-pass'] === 'true'
     }, { message: 'Guard blocked access' })
 
-    Filter('test-filter', URIError, (err) => ({
+    Filter('test-filter', URIError, (err: any) => ({
       status: 500,
       error: err.message,
       customError: err.message,
@@ -132,7 +138,7 @@ describe('Filter — dedup by identity and 4-arg validation', () => {
 
   it('returned error handler has exactly 4 parameters (Express arity requirement)', () => {
     class ArityError extends Error {}
-    Filter('arity-test', ArityError, (err) => ({ status: 500, error: err.message }))
+    Filter('arity-test', ArityError, (err: any) => ({ status: 500, error: err.message }))
 
     const resolvers = getRegisteredMiddlewareResolvers()
     const errorResolvers = resolvers.filter(r => r.phase === 'error')
