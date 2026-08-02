@@ -3,10 +3,12 @@
 > Scaffold a new [Kerith](https://kerith.dev) project in seconds.
 
 ```bash
-npm create kerith@latest
+npm create kerith@alpha
 # or
-npx create-kerith
+npx create-kerith@alpha
 ```
+
+> **Note**: During the v2 alpha cycle, use the `@alpha` tag — there is no `latest` dist-tag published yet.
 
 ## Usage
 
@@ -29,31 +31,31 @@ Options:
 
 ### Validation rules
 
-| Flag | Rule |
-|---|---|
+| Flag           | Rule                                                                                                                                |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `project-name` | Must be a valid npm package name (lowercase, no spaces). Auto-sanitised in `--yes` mode (spaces → hyphens, uppercased → lowercase). |
-| `--port` | Must be an integer between 1 and 65535. Rejected with a clear error if invalid. |
-| `--template` | Must be `core` or `app`. Any other value exits with a non-zero code. |
-| `--language` | Must be `ts` or `js`. Any other value exits with a non-zero code. |
+| `--port`       | Must be an integer between 1 and 65535. Rejected with a clear error if invalid.                                                     |
+| `--template`   | Must be `core` or `app`. Any other value exits with a non-zero code.                                                                |
+| `--language`   | Must be `ts` or `js`. Any other value exits with a non-zero code.                                                                   |
 
 ## Templates
 
-| Template | Description |
-|---|---|
-| `core` | Bare Kerith setup — router, channels, preload hook |
-| `app` | Extends `core` with `@kerith/app` + `@kerith/identifiers` |
+| Template | Description                                               |
+| -------- | --------------------------------------------------------- |
+| `core`   | Bare Kerith setup — router, preload hook                  |
+| `app`    | Extends `core` with `@kerith/app` + `@kerith/identifiers` |
 
 ### Channels (template `app` only)
 
 When `--template app` is used interactively, you can choose from these channel types:
 
-| Channel | Extra dependency added |
-|---|---|
-| `alias` | — |
-| `middleware` | — |
-| `cron` | `node-cron ^3.0.0` |
-| `worker` | `bullmq ^5.0.0` |
-| `gateway` | `socket.io ^4.7.5` (if Socket.io is confirmed) |
+| Channel      | Extra dependency added                         |
+| ------------ | ---------------------------------------------- |
+| `alias`      | —                                              |
+| `middleware` | —                                              |
+| `cron`       | `node-cron ^3.0.0`                             |
+| `worker`     | `bullmq ^5.0.0`                                |
+| `gateway`    | `socket.io ^4.7.5` (if Socket.io is confirmed) |
 
 Additionally, selecting `worker` or `cron` prompts for a Redis stub (`ioredis ^5`).
 
