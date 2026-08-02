@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import path from 'node:path';
 import os from 'node:os';
+import fs from 'node:fs';
+import { writeProject } from '../src/fs-writer.js';
 
 /**
  * fs-writer.test.ts
@@ -50,5 +52,64 @@ describe('outDir resolution contract (mirrors src/index.ts)', () => {
     // The old bug: files wrote to CWD itself instead of a sub-folder
     expect(result).not.toBe(CWD);
     expect(result).not.toBe(path.resolve(CWD, '.'));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// writeProject — existing-project guard
+// ---------------------------------------------------------------------------
+
+describe('writeProject — existing package.json guard', () => {
+  it('throws a descriptive Error (not process.exit) when outDir already has package.json', async () => {
+    // Create a real tmpdir with a package.json to simulate an existing project
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-guard-'));
+    fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'existing' }));
+
+    try {
+      await expect(
+        writeProject({
+          outDir: tmpDir,
+          files: { 'index.ts': '// hello' },
+          install: false,
+          yes: true,
+        }),
+      ).rejects.toThrow(/package\.json already exists/i);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('error message mentions create-kerith and kerith init', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-guard-'));
+    fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'existing' }));
+
+    try {
+      await expect(
+        writeProject({ outDir: tmpDir, files: {}, install: false }),
+      ).rejects.toThrow(/kerith init/i);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('does NOT throw when outDir is a fresh directory (no package.json)', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-fresh-'));
+
+    try {
+      // A completely empty tmpdir — guard must pass without error
+      await expect(
+        writeProject({
+          outDir: tmpDir,
+          files: { 'hello.txt': 'world' },
+          install: false,
+          yes: true,
+        }),
+      ).resolves.toBeUndefined();
+
+      // Confirm the file was actually written
+      expect(fs.existsSync(path.join(tmpDir, 'hello.txt'))).toBe(true);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });

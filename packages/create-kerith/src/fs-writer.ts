@@ -60,6 +60,22 @@ export function runNpmInstall(cwd: string): Promise<void> {
  * runs `npm install` inside that directory.
  */
 export async function writeProject(options: WriteOptions): Promise<void> {
+  // --- Pre-check: own guard for existing project -------------------------
+  //
+  // @kerith/core's validateDirectoryGuard calls process.exit(0) silently when
+  // it detects a package.json, giving no feedback to the user about *why* the
+  // CLI exited. We intercept that scenario first with an explicit Error so that
+  // main().catch() can print it and exit with code 1 (failure, not success).
+  //
+  // Rule: do NOT modify @kerith/core for create-kerith concerns (Stage-1 rule).
+  if (fs.existsSync(path.join(options.outDir, 'package.json'))) {
+    throw new Error(
+      `A package.json already exists in "${options.outDir}".\n` +
+      `create-kerith only scaffolds new projects.\n` +
+      `To add Kerith to an existing project run: kerith init (coming soon).`,
+    );
+  }
+
   // Ensure the target directory exists before validateDirectoryGuard runs:
   // the guard calls readdirSync internally and will throw ENOENT if the
   // directory hasn't been created yet (e.g. first-time scaffold of <projectName>/).

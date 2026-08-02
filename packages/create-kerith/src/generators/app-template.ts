@@ -14,6 +14,7 @@ import { generateChannelStubs, type ChannelType } from './channel-stubs.js';
 
 export interface AppTemplateInput {
   projectName: string;
+  language: 'ts' | 'js';
   channels: ChannelType[];
   redis: boolean;
   socketio: boolean;
@@ -80,6 +81,7 @@ export function buildAppTemplate(
   if (input.channels && input.channels.length > 0) {
     const channelFiles = generateChannelStubs({
       projectName: input.projectName,
+      language: input.language,
       channels: input.channels,
       redis: input.redis,
       socketio: input.socketio,

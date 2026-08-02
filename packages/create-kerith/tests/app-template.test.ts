@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import ts from 'typescript';
 import { vi } from 'vitest';
 import { buildAppTemplate } from '../src/generators/app-template.js';
+import { buildCoreTemplate } from '../src/generators/core-template.js';
 import * as channelStubs from '../src/generators/channel-stubs.js';
 
 vi.mock('../src/generators/channel-stubs.js', () => {
@@ -22,7 +23,7 @@ describe('app-template', () => {
       }),
     };
 
-    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: false, socketio: false });
+    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: false, socketio: false, language: 'ts' });
     const pkg = JSON.parse(result['package.json']);
 
     expect(pkg.dependencies['@kerith/app']).toBe(`^${APP_VERSION}`);
@@ -35,7 +36,7 @@ describe('app-template', () => {
       'package.json': JSON.stringify({ name: 'my-project' }),
     };
 
-    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: true, socketio: true });
+    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: true, socketio: true, language: 'ts' });
     const pkg = JSON.parse(result['package.json']);
 
     expect(pkg.dependencies['ioredis']).toBeDefined();
@@ -55,7 +56,7 @@ describe('app-template', () => {
       }),
     };
 
-    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: false, socketio: false });
+    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: false, socketio: false, language: 'ts' });
     const pkg = JSON.parse(result['package.json']);
 
     expect(pkg.scripts.dev).toBe('kerith dev');
@@ -72,7 +73,7 @@ console.log("I am a comment about @kerith/core")
 `,
     };
 
-    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: false, socketio: false });
+    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: false, socketio: false, language: 'ts' });
     const content = result['src/server.ts'];
 
     // 1. the import was updated
@@ -101,7 +102,7 @@ export default defineConfig({
 })`,
     };
 
-    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: false, socketio: false });
+    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: false, socketio: false, language: 'ts' });
     const content = result['kerith.config.ts'];
 
     expect(content).toContain(`from '@kerith/app'`);
@@ -123,7 +124,7 @@ export default {
 }`,
     };
 
-    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: false, socketio: false });
+    const result = buildAppTemplate(baseFiles, { projectName: 'my-project', channels: [], redis: false, socketio: false, language: 'ts' });
     const content = result['kerith.config.js'];
 
     expect(content).toContain(`import('@kerith/app')`);
@@ -145,7 +146,8 @@ export default {
       projectName: 'test-app', 
       channels: ['alias'], 
       redis: false, 
-      socketio: false 
+      socketio: false,
+      language: 'ts',
     });
 
     expect(channelStubs.generateChannelStubs).toHaveBeenCalledWith({
@@ -153,10 +155,42 @@ export default {
       channels: ['alias'],
       redis: false,
       socketio: false,
+      language: 'ts',
     });
 
     expect(result['src/channels/test-stub.ts']).toBe('export const stub = true;');
   });
 
-  it.todo('snapshot: patched output matches fixture/app-project');
+  it('snapshot: patched output matches fixture/app-project', () => {
+    // Generate base core project first
+    const coreFiles = buildCoreTemplate({
+      projectName: 'my-test-project',
+      language: 'ts',
+      port: 3000,
+      routePrefix: '',
+      yes: true,
+      outDir: '/fake/dir',
+    });
+
+    // Patch it with app template
+    const result = buildAppTemplate(coreFiles, {
+      projectName: 'my-test-project',
+      channels: ['alias', 'middleware', 'cron', 'worker', 'gateway'],
+      redis: true,
+      socketio: true,
+      language: 'ts',
+    });
+
+    // Sanitize non-deterministic fields from the shadow files
+    for (const [filePath, content] of Object.entries(result)) {
+      if (filePath.endsWith('.kerith')) {
+        const parsed = JSON.parse(content);
+        parsed.id = 'MOCKED-UUID';
+        parsed.createdAt = 'MOCKED-DATE';
+        result[filePath] = JSON.stringify(parsed, null, 2);
+      }
+    }
+
+    expect(result).toMatchSnapshot();
+  });
 });

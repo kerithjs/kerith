@@ -24,11 +24,19 @@ describe('channel-stubs', () => {
     parseAsTs(code, 'alias.ts');
   });
 
-  it('middlewareStub returns a valid TypeScript string', () => {
-    const code = middlewareStub('test-project');
+  it('middlewareStub returns a valid TypeScript string (ts)', () => {
+    const code = middlewareStub('test-project', 'ts');
     expect(code).toContain(`Middleware('logger'`);
     expect(code).toContain('next as Function');
     parseAsTs(code, 'middleware.ts');
+  });
+
+  it('middlewareStub returns a valid JavaScript string (js)', () => {
+    const code = middlewareStub('test-project', 'js');
+    expect(code).toContain(`Middleware('logger'`);
+    expect(code).toContain('next();');
+    expect(code).not.toContain('next as Function');
+    parseAsTs(code, 'middleware.js');
   });
 
   it('cronStub returns a valid TypeScript string with 3 positional arguments', () => {
@@ -65,9 +73,10 @@ describe('channel-stubs', () => {
     parseAsTs(code, 'gateway-socketio.ts');
   });
 
-  it('generateChannelStubs only includes requested channels', () => {
+  it('generateChannelStubs only includes requested channels with correct extension (ts)', () => {
     const files = generateChannelStubs({
       projectName: 'test',
+      language: 'ts',
       channels: ['cron', 'gateway'],
       redis: false,
       socketio: false,
@@ -80,5 +89,21 @@ describe('channel-stubs', () => {
     expect(files['src/channels/alias.ts']).toBeUndefined();
     expect(files['src/channels/middleware.ts']).toBeUndefined();
     expect(files['src/channels/worker.ts']).toBeUndefined();
+  });
+
+  it('generateChannelStubs only includes requested channels with correct extension (js)', () => {
+    const files = generateChannelStubs({
+      projectName: 'test',
+      language: 'js',
+      channels: ['cron', 'gateway'],
+      redis: false,
+      socketio: false,
+    });
+
+    expect(files['src/channels/cron.js']).toBeDefined();
+    expect(files['src/channels/gateway.js']).toBeDefined();
+    
+    // Should NOT include TS files
+    expect(files['src/channels/cron.ts']).toBeUndefined();
   });
 });

@@ -11,6 +11,7 @@ export type ChannelType = 'alias' | 'middleware' | 'cron' | 'worker' | 'gateway'
 
 export interface ChannelStubOptions {
   projectName: string;
+  language: 'ts' | 'js';
   channels: ChannelType[];
   redis: boolean;
   socketio: boolean;
@@ -24,21 +25,22 @@ export function generateChannelStubs(
   options: ChannelStubOptions,
 ): Record<string, string> {
   const files: Record<string, string> = {};
+  const ext = options.language;
 
   if (options.channels.includes('alias')) {
-    files['src/channels/alias.ts'] = aliasStub(options.projectName);
+    files[`src/channels/alias.${ext}`] = aliasStub(options.projectName);
   }
   if (options.channels.includes('middleware')) {
-    files['src/channels/middleware.ts'] = middlewareStub(options.projectName);
+    files[`src/channels/middleware.${ext}`] = middlewareStub(options.projectName, options.language);
   }
   if (options.channels.includes('cron')) {
-    files['src/channels/cron.ts'] = cronStub(options.projectName);
+    files[`src/channels/cron.${ext}`] = cronStub(options.projectName);
   }
   if (options.channels.includes('worker')) {
-    files['src/channels/worker.ts'] = workerStub(options.projectName, options.redis);
+    files[`src/channels/worker.${ext}`] = workerStub(options.projectName, options.redis);
   }
   if (options.channels.includes('gateway')) {
-    files['src/channels/gateway.ts'] = gatewayStub(options.projectName, options.socketio);
+    files[`src/channels/gateway.${ext}`] = gatewayStub(options.projectName, options.socketio);
   }
 
   return files;
@@ -56,14 +58,15 @@ Client('Database', () => ({ connected: true }));
 `;
 }
 
-export function middlewareStub(_projectName: string): string {
+export function middlewareStub(_projectName: string, language: 'ts' | 'js' = 'ts'): string {
+  const nextCall = language === 'ts' ? '(next as Function)();' : 'next();';
   return `import { Middleware } from '@kerith/identifiers';
 
 // Registers a named middleware.
 // Only applies to controllers declaring it in metadata.middlewareNames
 Middleware('logger', (req, res, next) => {
   console.log('Request received');
-  (next as Function)();
+  ${nextCall}
 });
 `;
 }

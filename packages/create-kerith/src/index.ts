@@ -70,6 +70,7 @@ async function main() {
   if (choices.template === 'app') {
     fileMap = buildAppTemplate(fileMap, {
       projectName: choices.projectName,
+      language: choices.language,
       channels: choices.channels,
       redis: choices.redis,
       socketio: choices.socketio,
