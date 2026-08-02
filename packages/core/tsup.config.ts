@@ -11,7 +11,7 @@ export default defineConfig([
     external: ['pino', '@clack/prompts'],
   },
   {
-    entry: ['src/cli/index.ts'],
+    entry: ['src/cli/index.ts', 'src/cli/api.ts'],
     format: ['esm'],
     dts: true,
     outDir: 'dist/cli',

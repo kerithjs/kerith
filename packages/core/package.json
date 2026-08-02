@@ -22,6 +22,10 @@
     "./extension": {
       "types": "./dist/extension/index.d.ts",
       "import": "./dist/extension/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/api.d.ts",
+      "import": "./dist/cli/api.js"
     }
   },
   "files": [

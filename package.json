@@ -7,12 +7,14 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @kerith/core && npm run build -w @kerith/identifiers && npm run build -w @kerith/eslint-plugin && npm run build -w @kerith/app",
+    "build": "npm run build -w @kerith/core && npm run build -w @kerith/identifiers && npm run build -w @kerith/eslint-plugin && npm run build -w @kerith/app && npm run build -w create-kerith",
     "build:identifiers": "npm run build -w @kerith/identifiers",
     "build:app": "npm run build -w @kerith/app",
+    "build:create-kerith": "npm run build -w create-kerith",
     "test": "npm test --workspaces --if-present",
     "test:identifiers": "npm test -w @kerith/identifiers",
     "test:app": "npm test -w @kerith/app",
+    "test:create-kerith": "npm test -w create-kerith",
     "lint": "eslint \"packages/**/src/**/*.ts\" \"packages/**/tests/**/*.ts\"",
     "lint:fix": "eslint \"packages/**/src/**/*.ts\" \"packages/**/tests/**/*.ts\" --fix",
     "typecheck": "npm run typecheck --workspaces --if-present",
