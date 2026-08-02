@@ -43,6 +43,48 @@ describe('app-template', () => {
     expect(pkg.dependencies['socket.io']).toBeDefined();
   });
 
+  it('adds bullmq when worker channel is selected', () => {
+    const baseFiles = { 'package.json': JSON.stringify({ name: 'my-project' }) };
+    const result = buildAppTemplate(baseFiles, {
+      projectName: 'my-project', channels: ['worker'], redis: false, socketio: false, language: 'ts',
+    });
+    const pkg = JSON.parse(result['package.json']);
+    expect(pkg.dependencies['bullmq']).toBe('^5.0.0');
+    expect(pkg.dependencies['node-cron']).toBeUndefined();
+  });
+
+  it('adds node-cron when cron channel is selected', () => {
+    const baseFiles = { 'package.json': JSON.stringify({ name: 'my-project' }) };
+    const result = buildAppTemplate(baseFiles, {
+      projectName: 'my-project', channels: ['cron'], redis: false, socketio: false, language: 'ts',
+    });
+    const pkg = JSON.parse(result['package.json']);
+    expect(pkg.dependencies['node-cron']).toBe('^3.0.0');
+    expect(pkg.dependencies['bullmq']).toBeUndefined();
+  });
+
+  it('adds both bullmq and node-cron when both channels are selected', () => {
+    const baseFiles = { 'package.json': JSON.stringify({ name: 'my-project' }) };
+    const result = buildAppTemplate(baseFiles, {
+      projectName: 'my-project', channels: ['cron', 'worker'], redis: false, socketio: false, language: 'ts',
+    });
+    const pkg = JSON.parse(result['package.json']);
+    expect(pkg.dependencies['bullmq']).toBe('^5.0.0');
+    expect(pkg.dependencies['node-cron']).toBe('^3.0.0');
+  });
+
+  it('does NOT add bullmq/node-cron when neither channel is selected', () => {
+    const baseFiles = { 'package.json': JSON.stringify({ name: 'my-project' }) };
+    const result = buildAppTemplate(baseFiles, {
+      projectName: 'my-project', channels: ['alias'], redis: false, socketio: false, language: 'ts',
+    });
+    const pkg = JSON.parse(result['package.json']);
+    expect(pkg.dependencies['bullmq']).toBeUndefined();
+    expect(pkg.dependencies['node-cron']).toBeUndefined();
+  });
+
+
+
   it('does NOT rewrite or drop scripts/devDependencies from core', () => {
     const baseFiles = {
       'package.json': JSON.stringify({

@@ -13,7 +13,7 @@
 import { program } from 'commander';
 import path from 'node:path';
 import * as p from '@clack/prompts';
-import { runPrompts, type CliFlags } from './prompts.js';
+import { runPrompts, validatePort, type CliFlags } from './prompts.js';
 import { buildCoreTemplate } from './generators/core-template.js';
 import { buildAppTemplate } from './generators/app-template.js';
 import { writeProject } from './fs-writer.js';
@@ -36,6 +36,26 @@ async function main() {
   program.parse(process.argv);
   const options = program.opts();
   const args = program.args;
+
+  // Validate --port early, before runPrompts, so --yes --port abc fails fast.
+  if (options.port !== undefined) {
+    const portError = validatePort(String(options.port));
+    if (portError) {
+      program.error(`Invalid --port "${options.port}": ${portError}`);
+    }
+  }
+
+  // Validate --template early.
+  const VALID_TEMPLATES = ['core', 'app'] as const;
+  if (options.template !== undefined && !VALID_TEMPLATES.includes(options.template)) {
+    program.error(`Invalid --template "${options.template}": must be "core" or "app"`);
+  }
+
+  // Validate --language early.
+  const VALID_LANGUAGES = ['ts', 'js'] as const;
+  if (options.language !== undefined && !VALID_LANGUAGES.includes(options.language)) {
+    program.error(`Invalid --language "${options.language}": must be "ts" or "js"`);
+  }
 
   const flags: CliFlags = {
     yes: options.yes,

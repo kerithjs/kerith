@@ -99,3 +99,98 @@ describe('CLI end-to-end — outDir resolution', () => {
     ).toBe(false);
   });
 });
+
+describe('CLI end-to-end — --port validation', () => {
+  /** Helper: spawn the CLI synchronously and return the result. */
+  function spawn(args: string[], cwd: string) {
+    return spawnSync(process.execPath, [BIN, ...args], {
+      cwd,
+      encoding: 'utf8',
+      timeout: 10_000,
+      env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
+    });
+  }
+
+  it('exits with non-zero code when --port is not a number', () => {
+    const tmpCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-port-'));
+    try {
+      const result = spawn(['test-project', '--yes', '--no-install', '--port', 'abc'], tmpCwd);
+      expect(result.status, '--port abc should exit non-zero').not.toBe(0);
+      const combined = (result.stdout ?? '') + (result.stderr ?? '');
+      expect(combined).toMatch(/invalid.*port|port.*invalid/i);
+    } finally {
+      fs.rmSync(tmpCwd, { recursive: true, force: true });
+    }
+  });
+
+  it('exits with non-zero code when --port is out of range (70000)', () => {
+    const tmpCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-port-'));
+    try {
+      const result = spawn(['test-project', '--yes', '--no-install', '--port', '70000'], tmpCwd);
+      expect(result.status, '--port 70000 should exit non-zero').not.toBe(0);
+      const combined = (result.stdout ?? '') + (result.stderr ?? '');
+      expect(combined).toMatch(/invalid.*port|port.*invalid/i);
+    } finally {
+      fs.rmSync(tmpCwd, { recursive: true, force: true });
+    }
+  });
+
+  it('exits 0 with a valid --port value', () => {
+    const tmpCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-port-'));
+    try {
+      const result = spawn(['test-project', '--yes', '--no-install', '--port', '4000'], tmpCwd);
+      if (result.status !== 0) {
+        console.error('STDOUT:', result.stdout);
+        console.error('STDERR:', result.stderr);
+      }
+      expect(result.status, '--port 4000 should exit 0').toBe(0);
+    } finally {
+      fs.rmSync(tmpCwd, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('CLI end-to-end — --template / --language validation', () => {
+  function spawn(args: string[], cwd: string) {
+    return spawnSync(process.execPath, [BIN, ...args], {
+      cwd,
+      encoding: 'utf8',
+      timeout: 10_000,
+      env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
+    });
+  }
+
+  it('exits non-zero and prints error for --template foo', () => {
+    const tmpCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-tmpl-'));
+    try {
+      const result = spawn(['test-project', '--yes', '--no-install', '--template', 'foo'], tmpCwd);
+      expect(result.status, '--template foo should exit non-zero').not.toBe(0);
+      const combined = (result.stdout ?? '') + (result.stderr ?? '');
+      expect(combined).toMatch(/invalid.*template|template.*invalid/i);
+    } finally {
+      fs.rmSync(tmpCwd, { recursive: true, force: true });
+    }
+  });
+
+  it('exits non-zero and prints error for --language python', () => {
+    const tmpCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-lang-'));
+    try {
+      const result = spawn(['test-project', '--yes', '--no-install', '--language', 'python'], tmpCwd);
+      expect(result.status, '--language python should exit non-zero').not.toBe(0);
+      const combined = (result.stdout ?? '') + (result.stderr ?? '');
+      expect(combined).toMatch(/invalid.*language|language.*invalid/i);
+    } finally {
+      fs.rmSync(tmpCwd, { recursive: true, force: true });
+    }
+  });
+
+  it('does NOT error for valid --template app', () => {
+    const tmpCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-tmpl-'));
+    try {
+      const result = spawn(['test-project', '--yes', '--no-install', '--template', 'app'], tmpCwd);
+      expect(result.status, '--template app should exit 0').toBe(0);
+    } finally {
+      fs.rmSync(tmpCwd, { recursive: true, force: true });
+    }
+  });
+});

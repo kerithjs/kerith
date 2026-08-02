@@ -97,12 +97,29 @@ export interface CliFlags {
 // Port validator
 // ---------------------------------------------------------------------------
 
-function validatePort(raw: string): string | undefined {
+export function validatePort(raw: string): string | undefined {
   const n = Number(raw);
   if (!Number.isInteger(n) || n < 1 || n > 65535) {
     return 'Port must be an integer between 1 and 65535';
   }
   return undefined; // valid
+}
+
+// ---------------------------------------------------------------------------
+// Project Name Validator & Sanitizer
+// ---------------------------------------------------------------------------
+
+export function isValidNpmName(name: string): boolean {
+  // npm package name regex
+  return /^(?:@[a-z0-9-*~][a-z0-9-*._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/.test(name);
+}
+
+export function sanitizeProjectName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-~._@/]/g, '');
 }
 
 // ---------------------------------------------------------------------------
@@ -120,10 +137,11 @@ function validatePort(raw: string): string | undefined {
 export async function runPrompts(flags: CliFlags = {}): Promise<UserChoices> {
   // ── --yes / non-interactive ────────────────────────────────────────────
   if (flags.yes) {
+    const rawProjectName = flags.projectName ?? YES_DEFAULTS.projectName;
     return {
       ...YES_DEFAULTS,
       ...(flags.outDir !== undefined && { outDir: flags.outDir }),
-      ...(flags.projectName !== undefined && { projectName: flags.projectName }),
+      projectName: sanitizeProjectName(rawProjectName),
       ...(flags.template !== undefined && { template: flags.template }),
       ...(flags.language !== undefined && { language: flags.language }),
       ...(flags.port !== undefined && { port: flags.port }),
@@ -149,9 +167,12 @@ export async function runPrompts(flags: CliFlags = {}): Promise<UserChoices> {
     await p.text({
       message: 'Project name',
       placeholder: 'kerith-project',
-      defaultValue: flags.projectName ?? YES_DEFAULTS.projectName,
-      validate: (v) =>
-        v.trim().length === 0 ? 'Project name cannot be empty' : undefined,
+      defaultValue: flags.projectName ? sanitizeProjectName(flags.projectName) : YES_DEFAULTS.projectName,
+      validate: (v) => {
+        if (v.trim().length === 0) return 'Project name cannot be empty';
+        if (!isValidNpmName(v.trim())) return 'Invalid npm package name (lowercase, no spaces, allowed chars: - . _ ~)';
+        return undefined;
+      },
     }),
   );
 

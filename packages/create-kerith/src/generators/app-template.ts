@@ -47,6 +47,14 @@ export function buildAppTemplate(
       pkg.dependencies['socket.io'] = '^4.7.5';
     }
 
+    if (input.channels?.includes('worker')) {
+      pkg.dependencies['bullmq'] = '^5.0.0';
+    }
+
+    if (input.channels?.includes('cron')) {
+      pkg.dependencies['node-cron'] = '^3.0.0';
+    }
+
     files['package.json'] = JSON.stringify(pkg, null, 2);
   }
 

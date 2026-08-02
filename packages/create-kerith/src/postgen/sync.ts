@@ -35,7 +35,7 @@ function runCommand(command: string, args: string[], cwd: string): Promise<void>
  */
 export async function runSync(options: SyncOptions): Promise<void> {
   const s = spinner();
-  s.start('Sincronizando configuración de Kerith...');
+  s.start('Syncing Kerith configuration...');
 
   try {
     // Both JS and TS need sync-preload to configure alias resolution
@@ -46,14 +46,14 @@ export async function runSync(options: SyncOptions): Promise<void> {
       await runCommand('npx', ['kerith', 'sync-tsconfig'], options.cwd);
     }
 
-    s.stop('Configuración sincronizada exitosamente.');
+    s.stop('Configuration synced successfully.');
   } catch (error) {
-    s.stop('Configuración completada con advertencias.');
+    s.stop('Configuration completed with warnings.');
     log.warn(
-      'No se pudo sincronizar automáticamente la configuración de Kerith.\\n' +
-      'Por favor, ejecuta "npx kerith sync-preload"' +
-      (options.ext === 'ts' ? ' y "npx kerith sync-tsconfig"' : '') +
-      ' manualmente dentro de la carpeta del proyecto.'
+      'Could not automatically sync the Kerith configuration.\n' +
+      'Please run "npx kerith sync-preload"' +
+      (options.ext === 'ts' ? ' and "npx kerith sync-tsconfig"' : '') +
+      ' manually inside the project folder.'
     );
   }
 }
