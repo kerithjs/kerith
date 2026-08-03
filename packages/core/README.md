@@ -63,6 +63,8 @@ Express is minimal by design. `@kerith/core` keeps it that way while adding just
 
 ## Installation & requirements
 
+> **Starting a new project?** `npm create kerith@alpha` scaffolds a ready-to-run project for you (bare `core` or `core` + `@kerith/app` + `@kerith/identifiers`) — see [`create-kerith`](../create-kerith). The steps below are for adding `@kerith/core` to an existing project by hand.
+
 ```bash
 npm install @kerith/core@alpha
 ```

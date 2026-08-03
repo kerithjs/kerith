@@ -21,33 +21,7 @@ export function initCommand() {
     .action(async (options: { yes?: boolean; ts?: boolean; js?: boolean; port?: string; prefix?: string; skipInstall?: boolean }) => {
       const cwd = process.cwd();
       
-      // Mode A guard: Check if package.json exists
-      if (fs.existsSync(path.join(cwd, 'package.json'))) {
-        console.log(pc.yellow(`\nWARN  A package.json already exists in this directory.`));
-        console.log(pc.gray(`   Use kerith init on an existing project (Mode B) — coming soon.\n`));
-        process.exit(0);
-      }
-
-      // Check if directory is empty
-      const rawFiles = fs.readdirSync(cwd);
-      const ignoredFiles = new Set(['.git', '.gitignore', '.editorconfig', '.DS_Store', '.env', '.env.local', '.kerith']);
-      const files = rawFiles.filter(file => !ignoredFiles.has(file));
-      const hasFiles = files.length > 0;
-
-      if (hasFiles) {
-        if (!options.yes) {
-          console.log(pc.yellow(`\nWARN  The directory is not empty but does not have package.json.`));
-          console.log(pc.gray(`   This might contain user files we don't want to overwrite.\n`));
-          
-          // In interactive mode, we would use @clack/prompts here
-          // For now, we'll require --yes to proceed
-          throw new KerithError('CLI_ERROR', pc.red(`\nError: To proceed in a non-empty directory, use --yes to confirm.\n`));
-        } else {
-          console.log(pc.yellow(`\nWARN  Warning: The directory is not empty.`));
-          console.log(pc.yellow(`   Found files: ${files.join(', ')}\n`));
-          console.log(pc.red(`   WARN  These files may be overwritten without further confirmation.\n`));
-        }
-      }
+      validateDirectoryGuard(cwd, !!options.yes);
 
       // Determine language, port, and prefix
       let ext: string;
@@ -224,7 +198,35 @@ export function initCommand() {
     });
 }
 
-function generateProjectStructure(projectName: string, ext: string, port: string, prefix: string, kerithVersion: string): Record<string, string> {
+export function validateDirectoryGuard(cwd: string, isYes: boolean): void {
+  // Mode A guard: Check if package.json exists
+  if (fs.existsSync(path.join(cwd, 'package.json'))) {
+    console.log(pc.yellow(`\nWARN  A package.json already exists in this directory.`));
+    console.log(pc.gray(`   Use kerith init on an existing project (Mode B) — coming soon.\n`));
+    process.exit(0);
+  }
+
+  // Check if directory is empty
+  const rawFiles = fs.readdirSync(cwd);
+  const ignoredFiles = new Set(['.git', '.gitignore', '.editorconfig', '.DS_Store', '.env', '.env.local', '.kerith']);
+  const files = rawFiles.filter(file => !ignoredFiles.has(file));
+  const hasFiles = files.length > 0;
+
+  if (hasFiles) {
+    if (!isYes) {
+      console.log(pc.yellow(`\nWARN  The directory is not empty but does not have package.json.`));
+      console.log(pc.gray(`   This might contain user files we don't want to overwrite.\n`));
+      
+      throw new KerithError('CLI_ERROR', pc.red(`\nError: To proceed in a non-empty directory, use --yes to confirm.\n`));
+    } else {
+      console.log(pc.yellow(`\nWARN  Warning: The directory is not empty.`));
+      console.log(pc.yellow(`   Found files: ${files.join(', ')}\n`));
+      console.log(pc.red(`   WARN  These files may be overwritten without further confirmation.\n`));
+    }
+  }
+}
+
+export function generateProjectStructure(projectName: string, ext: string, port: string, prefix: string, kerithVersion: string): Record<string, string> {
   const files: Record<string, string> = {};
   
   files['package.json'] = generatePackageJson(projectName, ext, kerithVersion);

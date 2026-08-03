@@ -1,0 +1,196 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`app-template > snapshot: patched output matches fixture/app-project 1`] = `
+{
+  ".gitignore": "node_modules
+dist
+.env
+.env.local
+.kerith/bootstrap-cache.json
+",
+  "README.md": "# my-test-project
+
+## Getting Started
+
+To run the development server:
+\`\`\`bash
+npm run dev
+\`\`\`
+
+## Architecture
+
+This project is built using [Kerith](https://github.com/kerithjs/kerith).
+
+- \`kerith.config.ts\`: Central configuration for the framework. It defines where modules are located (\`origin\`) and custom route prefixes.
+- \`.kerith/registry.json\`: This file tracks all your modules and their identifiers. **It must be checked into Git** to ensure consistency across environments.
+- \`.kerith/preload.js\`: This is automatically generated and must also be checked into Git. It enables fast startup and ESM alias resolution.
+",
+  "kerith.config.ts": "import { defineConfig } from '@kerith/app'
+
+export default defineConfig({
+  origin: 'src',
+  prefix: "",
+})
+",
+  "package.json": "{
+  "name": "my-test-project",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "scripts": {
+    "dev": "kerith dev --watch --clear --runtime tsx src/server.ts",
+    "build": "tsc",
+    "start": "NODE_ENV=production node dist/server.js",
+    "setup": "kerith sync-preload && kerith sync-tsconfig",
+    "check": "kerith check"
+  },
+  "dependencies": {
+    "@kerith/core": "^2.0.0-alpha.1",
+    "express": "^5.0.0",
+    "@kerith/app": "^1.0.0-alpha.1",
+    "@kerith/identifiers": "^1.0.0-alpha.1",
+    "ioredis": "^5.4.0",
+    "socket.io": "^4.7.5",
+    "bullmq": "^5.0.0",
+    "node-cron": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.5"
+  }
+}",
+  "src/channels/test-stub.ts": "export const stub = true;",
+  "src/modules/.gitkeep": "",
+  "src/modules/health/.kerith": "{
+  "version": 1,
+  "id": "MOCKED-UUID",
+  "name": "health",
+  "createdAt": "MOCKED-DATE"
+}",
+  "src/modules/health/health.routes.ts": "import { Controller } from '@kerith/core'
+import { Router } from 'express'
+
+Controller('/health')
+
+const router = Router()
+
+router.get('/', (_req, res) => {
+  res.json({ status: 'ok', message: 'Hello from Kerith!' })
+})
+
+export default router
+",
+  "src/modules/health/index.ts": "
+import { Module } from '@kerith/core'
+
+Module('health', {
+  imports: [],
+  exports: [],
+})
+",
+  "src/modules/home/.kerith": "{
+  "version": 1,
+  "id": "MOCKED-UUID",
+  "name": "home",
+  "createdAt": "MOCKED-DATE"
+}",
+  "src/modules/home/home.routes.ts": "import { Controller } from '@kerith/core'
+import { Router } from 'express'
+
+Controller('/')
+
+const router = Router()
+
+router.get('/', (_req, res) => {
+  res.send('Hello World! Welcome to Kerith Express')
+})
+
+export default router
+",
+  "src/modules/home/index.ts": "
+import { Module } from '@kerith/core'
+
+Module('home', {
+  imports: [],
+  exports: [],
+})
+",
+  "src/server.ts": "import express from 'express'
+import { createApp, KerithError, useLogger, useHttpLogger } from '@kerith/app'
+
+const log = useLogger('app')
+const httpLogger = useHttpLogger({ ignore: ['/health'] })
+
+const app = express()
+app.use(express.json())
+app.use(httpLogger.requests())
+
+try {
+  const kerith = await createApp(app)
+  
+  if (!kerith.runtime.preloaderActive) {
+    log.warn('Pre-loader not detected. Run: npm run setup')
+  }
+  
+  log.info(\`Mounted \${kerith.routes.length} route(s)\`)
+  
+  const port = 3000
+  const server = app.listen(port, () => {
+    log.info(\`Server running on http://localhost:\${port}\`)
+  })
+  
+  kerith.listen(server, {
+    onShutdown: async () => {
+      log.info('Cleaning up resources...')
+      // await db.disconnect()
+    }
+  })
+  
+  // Error handler — must be the last middleware in the pipeline
+  app.use(httpLogger.errors())
+} catch (err) {
+  if (err instanceof KerithError) {
+    log.error(\`[\${err.code}] \${err.message}\`)
+    if (err.details) log.error(err.details)
+    process.exit(1)
+  }
+  log.error(err instanceof Error ? err.message : String(err))
+  throw err
+}
+",
+  "src/shared/.gitkeep": "",
+  "tsconfig.json": "{
+  "extends": "./tsconfig.kerith.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "paths": {}
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}",
+  "tsconfig.kerith.json": "{
+  "compilerOptions": {}
+}",
+}
+`;

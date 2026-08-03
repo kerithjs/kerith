@@ -2,7 +2,7 @@
 
 Thanks for taking the time to help improve Kerith. At this stage, the project is maintained by a single developer, so the most valuable contribution you can make is a **well-reported issue** — clear, reproducible bug reports save far more time than they cost to write.
 
-This document covers how to report bugs effectively. Code contributions (PRs) are welcome but not yet the primary focus while the `2.0.0-alpha.x` line is under active development — see [Code Contributions](#code-contributions) below before opening a PR.
+This document covers how to report bugs effectively, and how to set up and contribute code. Code contributions (PRs) are welcome but not yet the primary focus while the `2.0.0-alpha.x` line is under active development — see [Code Contributions](#code-contributions) below before opening a PR.
 
 ---
 
@@ -57,11 +57,82 @@ Kerith is currently developed by a single maintainer following a spec-first appr
 - **Small fixes** (typos, incorrect error messages, obviously wrong logic with a clear correct answer) are welcome as PRs directly.
 - **Anything larger** (new rules, new identifiers, changes to NITS/reconciliation behavior, new packages) — please open an issue or discussion first to align on approach before investing time in a PR. Large PRs opened without prior discussion may not be mergeable as-is, simply because they might not match a direction already decided elsewhere in the architecture.
 
-If you do open a PR:
+### Repository layout
+
+Kerith is an npm workspaces monorepo (`packages/*`). Before touching code, it helps to know where things live:
+
+| Package                 | What it is                                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `@kerith/core`          | The framework itself — bootstrap, CLI (`kerith` binary), NITS, architectural checks.                          |
+| `@kerith/identifiers`   | Extended identifier catalog (Alias, Middleware, Schedule, Binding channels) built on Core's Extension API.    |
+| `@kerith/app`           | Runtime that connects `@kerith/identifiers` to `@kerith/core` (BullMQ, node-cron, Socket.IO, Redis adapters). |
+| `@kerith/eslint-plugin` | ESLint rules enforcing Kerith's architectural boundaries.                                                     |
+
+A bug fix usually touches one package. If your change needs to touch more than one (e.g. a new Extension API capability that both `core` and `app` need to consume), say so explicitly in your issue/PR — it changes how it gets reviewed.
+
+### Local setup
+
+```bash
+git clone https://github.com/kerithjs/kerith.git
+cd kerith
+npm install          # installs and links all workspaces from the root — do not run npm install inside a package folder
+```
+
+Supported Node.js versions: 20.x, 22.x, 24.x, 26.x (matches the CI matrix — if it doesn't work on one of these, that's a bug worth reporting on its own).
+
+### Running checks
+
+Kerith's own CI runs, in this order: **lint → build → typecheck → test**. Run the same sequence locally before opening a PR — a PR that fails any of these will not be merged as-is:
+
+```bash
+npm run lint          # across all packages
+npm run build          # all workspaces, --if-present
+npm run typecheck      # all workspaces, --if-present
+npm test               # all workspaces, --if-present
+```
+
+To scope any of these to a single package while you're iterating, use `-w`:
+
+```bash
+npm run test -w @kerith/core
+npm run typecheck -w @kerith/identifiers
+```
+
+### Branch naming
+
+Name your branch `<type>/<short-description>`, using the same `type` vocabulary as your commit messages (see below):
+
+```
+feat/create-kerith
+fix/http-logger-error-handling
+chore/update-vitest
+docs/contributing-setup
+```
+
+- Keep the description short and specific — it should be clear from the branch name alone what it does, without opening the diff.
+- If a change is scoped to one package, it's fine (and often clearer) to include it: `fix/app-worker-executor-typing`.
+- Base your branch off `develop`, not `main` — `main` tracks published releases only.
+
+### Commit messages
+
+Kerith follows [Conventional Commits](https://www.conventionalcommits.org/): `<type>(<scope>): <description>`.
+
+```
+feat(identifiers): add Stream channel for realtime consumers
+fix(core): resolve EADDRINUSE race in kerith dev --watch
+docs(contributing): document branch naming convention
+chore(app): bump bullmq to 5.x
+```
+
+Common types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`. Scope is optional but preferred when the change is confined to one package (`core`, `identifiers`, `app`, `eslint-plugin`).
+
+### Opening the PR
 
 - Keep it focused on one change — easier to review, easier to revert if something's wrong.
 - Include or update tests for the behavior you're changing.
-- Run `pnpm test` and `tsc --noEmit` locally before opening the PR.
+- Run `npm run lint`, `npm run build`, `npm run typecheck`, and `npm test` locally before opening the PR (see [Running checks](#running-checks) above).
+- Target `develop`, matching your branch's base.
+- PR title should follow the same Conventional Commits format as commit messages — it's used as-is when the changelog is generated.
 
 ---
 
