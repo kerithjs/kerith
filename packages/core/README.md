@@ -8,9 +8,9 @@
 
 [![npm](https://img.shields.io/npm/v/@kerith/core?color=e4f222&label=%40kerith%2Fcore&style=flat-square)](https://www.npmjs.com/package/@kerith/core)
 [![License: MIT](https://img.shields.io/badge/license-MIT-e4f222?style=flat-square)](../../LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D20.6-e4f222?style=flat-square)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D24-e4f222?style=flat-square)](https://nodejs.org/)
 
-> **Node.js ≥ 20.6** · **Express 5.x (peer, optional)** · **ESM Only** · **TypeScript included**
+> **Node.js ≥ 24** · **Express 5.x (peer, optional)** · **ESM Only** · **TypeScript included**
 
 </div>
 
@@ -87,7 +87,7 @@ Kerith validates this at the very start of `createApp()` and throws `INVALID_ESM
 
 | Requirement   | Minimum                                                     |
 | ------------- | ----------------------------------------------------------- |
-| Node.js       | 20.6.0 (required for the native ESM Hooks `register()` API) |
+| Node.js       | 24.0.0 (required for the native ESM Hooks `register()` API) |
 | Express       | 5.x (peer dependency, only needed for HTTP mode)            |
 | TypeScript    | 5.0+ (optional — types are bundled)                         |
 | Module system | ESM (`"type": "module"`)                                    |
@@ -1149,7 +1149,7 @@ import { isPreloaderActive, getPreloadConfig } from "@kerith/core";
 
 |            | Minimum                              |
 | ---------- | ------------------------------------ |
-| Node.js    | 20.6.0                               |
+| Node.js    | 24.0.0                               |
 | Express    | 5.x (peer, optional for worker mode) |
 | TypeScript | 5.0+ (optional)                      |
 

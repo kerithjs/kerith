@@ -9,10 +9,10 @@
 [![npm](https://img.shields.io/npm/v/@kerith/core?color=e4f222&label=%40kerith%2Fcore&style=flat-square)](https://www.npmjs.com/package/@kerith/core)
 [![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin?color=e4f222&label=%40kerith%2Feslint-plugin&style=flat-square)](https://www.npmjs.com/package/@kerith/eslint-plugin)
 [![License: MIT](https://img.shields.io/badge/license-MIT-e4f222?style=flat-square)](./LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D20.6-e4f222?style=flat-square)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D24-e4f222?style=flat-square)](https://nodejs.org/)
 [![kerith.dev](https://img.shields.io/badge/docs-kerith.dev-e4f222?style=flat-square)](https://docs.kerith.dev)
 
-> **Node.js ≥ 20.6** · **Express 5.x** · **ESM Only** · **TypeScript included**
+> **Node.js ≥ 24** · **Express 5.x** · **ESM Only** · **TypeScript included**
 
 </div>
 
@@ -85,7 +85,7 @@ kerith/
 
 ## Development Setup
 
-**Prerequisites:** Node.js ≥ 20.6, npm ≥ 10
+**Prerequisites:** Node.js ≥ 24, npm ≥ 10
 
 ```bash
 git clone https://github.com/kerithjs/kerith.git

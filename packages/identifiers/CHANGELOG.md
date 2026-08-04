@@ -9,7 +9,13 @@ For the full Kerith suite changelog (all packages), see the [root CHANGELOG](../
 
 ---
 
-## [1.0.0-alpha.1] — 2026-07-26
+
+## [2.0.0-alpha.2] - Unreleased
+
+### Changed
+- **BREAKING**: minimum supported Node version raised to 24 LTS
+
+
 
 > **Initial release of `@kerith/identifiers`.** Introduces the extended declarative identifier catalog on top of `@kerith/core`. All identifiers register into one of four Extension API channels (`alias`, `middleware`, `schedule`, `binding`) and are wired to life by `@kerith/app`.
 

@@ -58,5 +58,8 @@
   "dependencies": {
     "acorn": "8.16.0",
     "acorn-walk": "8.3.5"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   }
 }
