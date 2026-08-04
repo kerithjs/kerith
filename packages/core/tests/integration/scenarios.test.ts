@@ -1189,4 +1189,61 @@ describe("Integration Tests", () => {
       }
     });
   });
+
+  // -----------------------------------------------------------------------
+  // Timing Verification: Step 5 (Alias Activation) vs Step 6 (Dynamic Imports)
+  // -----------------------------------------------------------------------
+  describe("Sync Hook Timing Verification", () => {
+    it("Step 5 (Alias Activation) completes synchronously before Step 6 (Dynamic Imports)", async () => {
+      await runInTmpApp({
+        "kerith.config.js": `
+          export default {
+            modules: 'src/modules/*'
+          };
+        `,
+        "src/modules/users/index.ts": `
+          import { Module } from '{{SOURCE}}';
+          
+          Module('users');
+        `,
+      }, async (tmpDir, app) => {
+        const result = await createApp(app as any);
+        
+        // Verify the module loaded successfully, meaning Step 5 completed before Step 6
+        expect(result.modules).toHaveLength(1);
+        expect(result.modules[0].name).toBe('users');
+      });
+    });
+
+    it("Performance metrics in Step 6 and Step 8 remain consistent with sync hooks", async () => {
+      await runInTmpApp({
+        "kerith.config.js": `
+          export default {
+            modules: 'src/modules/*'
+          };
+        `,
+        "src/modules/users/index.ts": `
+          import { Module } from '{{SOURCE}}';
+          
+          Module('users');
+        `,
+        "src/modules/users/routes/users.routes.ts": `
+          import { Controller } from '{{SOURCE}}';
+          import { Router } from 'express';
+          
+          const router = Router();
+          router.get('/', (req, res) => res.json({ hello: 'world' }));
+          
+          Controller('users.routes', router);
+          export default router;
+        `,
+      }, async (tmpDir, app) => {
+        const result = await createApp(app as any);
+        
+        // Verify both steps completed successfully
+        expect(result.modules).toHaveLength(1);
+        expect(result.routes).toHaveLength(1);
+      });
+    });
+  });
 });

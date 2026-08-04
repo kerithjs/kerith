@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0-alpha.2] - Unreleased
 
 ### Changed
-- **BREAKING**: minimum supported Node version raised to 24 LTS
+- **BREAKING**: minimum supported Node version raised to 20.6.0 (required for the native ESM Hooks `registerHooks()` API)
+- **BREAKING**: ESM hook registration migrated from deprecated `module.register()` to `module.registerHooks()`. This is an internal implementation change that does not affect the public API, but requires Node.js 20.6+ where `registerHooks()` was introduced. The pre-loader system (`kerith sync-preload`) now generates code using `registerHooks()` instead of `register()`.
 
 
 
@@ -337,7 +338,7 @@ export default defineConfig({
 - **Graceful Shutdown (`nodulus.listen()`)**: `createApp()` now returns a `listen(server)` method that registers `SIGINT` and `SIGTERM` handlers. On signal: closes the HTTP server, runs the optional `onShutdown` hook, then exits with code `0`. Eliminates zombie processes and port-in-use errors on restart.
 - **`onShutdown` option in `CreateAppOptions`**: Async callback invoked during the shutdown sequence after the HTTP server closes. Use for releasing DB connections, message queues, open file handles, etc.
 - **`WatcherOptions`**: exported in the public API.
-- **Runtime Pre-loader Hook** (`src/preload/preload-hook.ts`): A stateless ESM loader hook registered via Node.js `module.register()`. Receives embedded alias config through the `initialize()` hook, resolves aliases during module loading, and prioritises more-specific aliases over general ones when paths overlap.
+- **Runtime Pre-loader Hook** (`src/preload/preload-hook.ts`): A stateless ESM loader hook registered via Node.js `module.registerHooks()`. Receives embedded alias config through the top-level hook closure, resolves aliases during module loading, and prioritises more-specific aliases over general ones when paths overlap.
 - **`nodulus sync-preload` CLI command**: Generates `.nodulus/preload.js` — a static ESM entry point that embeds your current alias configuration and registers the hook at Node.js startup. Idempotent: running it twice with the same config produces no file changes.
 - **`nodulus dev` CLI command**: Drops-in replacement for `node`/`tsx` during development. Automatically injects `--import ./.nodulus/preload.js` when the file is present. Supports `--watch` and `--runtime tsx` flags.
 - **`createApp()` Step 0 validation**: Before the bootstrap pipeline runs, `createApp()` now:

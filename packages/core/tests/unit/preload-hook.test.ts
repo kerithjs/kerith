@@ -1,75 +1,71 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { initialize, resolve } from '../../src/preload/preload-hook.js';
+import { createResolveHook } from '../../src/preload/preload-hook.js';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
-import type { PreloadConfig } from '../../src/preload/index.js';
 
 describe('Pre-loader ESM Hook (preload-hook.ts)', () => {
   const nextResolve = vi.fn((specifier, _context) => {
-    return Promise.resolve({ url: specifier, shortCircuit: true });
+    return { url: specifier, shortCircuit: true };
   });
 
-  const config: PreloadConfig = {
-    modulesDir: '/abs/src/modules',
-    aliases: {
-      '@modules': '/abs/src/modules',
-      '@shared': '/abs/src/shared',
-      '@config': '/abs/src/config',
-      // Overlap to test priority (specific > general)
-      '@specific': '/abs/src/general',
-      '@specific/deep': '/abs/src/deep'
-    },
-    preloaded: true,
-    _version: '1.5.0'
+  const aliases = {
+    '@modules': '/abs/src/modules',
+    '@shared': '/abs/src/shared',
+    '@config': '/abs/src/config',
+    // Overlap to test priority (specific > general)
+    '@specific': '/abs/src/general',
+    '@specific/deep': '/abs/src/deep'
   };
+
+  let resolve: any;
 
   beforeEach(() => {
     nextResolve.mockClear();
-    // Reset module-level config state before each test
-    initialize(config);
+    // Create a fresh resolve hook for each test
+    resolve = createResolveHook(aliases);
   });
 
-  it('should not duplicate aliases when initialize() is called multiple times (idempotency)', () => {
+  it('should not throw when createResolveHook() is called multiple times (idempotency)', () => {
     // First call
-    initialize(config);
+    createResolveHook(aliases);
     // Second call (should not do anything or throw error)
-    expect(() => initialize(config)).not.toThrow();
+    expect(() => createResolveHook(aliases)).not.toThrow();
   });
 
-  it('resolve() should transform @modules/users into the correct absolute path', async () => {
-    await resolve('@modules/users', { conditions: [] }, nextResolve);
+  it('resolve() should transform @modules/users into the correct absolute path', () => {
+    resolve('@modules/users', { conditions: [] }, nextResolve);
     const expectedPath = path.resolve('/abs/src/modules', 'users');
     const expectedUrl = pathToFileURL(expectedPath).href;
     
     expect(nextResolve).toHaveBeenCalledWith(expectedUrl, { conditions: [] });
   });
 
-  it('resolve() should transform subpaths @modules/users/service correctly', async () => {
-    await resolve('@modules/users/service', { conditions: [] }, nextResolve);
+  it('resolve() should transform subpaths @modules/users/service correctly', () => {
+    resolve('@modules/users/service', { conditions: [] }, nextResolve);
     const expectedPath = path.resolve('/abs/src/modules', 'users/service');
     const expectedUrl = pathToFileURL(expectedPath).href;
     
     expect(nextResolve).toHaveBeenCalledWith(expectedUrl, { conditions: [] });
   });
 
-  it('resolve() should passthrough imports that are not known aliases', async () => {
-    await resolve('./local-file.js', { conditions: [] }, nextResolve);
+  it('resolve() should passthrough imports that are not known aliases', () => {
+    resolve('./local-file.js', { conditions: [] }, nextResolve);
     expect(nextResolve).toHaveBeenCalledWith('./local-file.js', { conditions: [] });
   });
 
-  it('resolve() should passthrough node:* imports and npm packages', async () => {
-    await resolve('node:fs', { conditions: [] }, nextResolve);
+  it('resolve() should passthrough node:* imports and npm packages', () => {
+    resolve('node:fs', { conditions: [] }, nextResolve);
     expect(nextResolve).toHaveBeenCalledWith('node:fs', { conditions: [] });
 
-    await resolve('express', { conditions: [] }, nextResolve);
+    resolve('express', { conditions: [] }, nextResolve);
     expect(nextResolve).toHaveBeenCalledWith('express', { conditions: [] });
   });
 
-  it('resolve() should prioritize more specific aliases over general ones when overlapping', async () => {
+  it('resolve() should prioritize more specific aliases over general ones when overlapping', () => {
     // If we resolve '@specific/deep/file', it should map to '/abs/src/deep/file'
     // and NOT to '/abs/src/general/deep/file'.
     
-    await resolve('@specific/deep/file', { conditions: [] }, nextResolve);
+    resolve('@specific/deep/file', { conditions: [] }, nextResolve);
     const expectedPath = path.resolve('/abs/src/deep', 'file');
     const expectedUrl = pathToFileURL(expectedPath).href;
     
@@ -77,96 +73,91 @@ describe('Pre-loader ESM Hook (preload-hook.ts)', () => {
   });
 
   // ── Gap 2: improved error message includes original alias ────────────────────
-  it('attemptResolve() enriches ERR_MODULE_NOT_FOUND with the original alias name', async () => {
+  it('attemptResolve() enriches ERR_MODULE_NOT_FOUND with the original alias name', () => {
     // Simulate nextResolve failing to find the resolved path
     const notFoundError = Object.assign(
       new Error('Cannot find module file:///abs/src/shared/index.js'),
       { code: 'ERR_MODULE_NOT_FOUND' }
     );
-    const failingResolve = vi.fn().mockRejectedValue(notFoundError);
+    const failingResolve = vi.fn(() => { throw notFoundError; });
 
-    await expect(
-      resolve('@shared', { conditions: [] }, failingResolve)
-    ).rejects.toMatchObject({
+    expect(() => {
+      resolve('@shared', { conditions: [] }, failingResolve);
+    }).toThrow(expect.objectContaining({
       code: 'ERR_MODULE_NOT_FOUND',
       message: expect.stringContaining("Cannot resolve alias '@shared'"),
-    });
+    }));
   });
 
-  it('attemptResolve() enriches error for sub-path alias (@shared/utils → path not found)', async () => {
+  it('attemptResolve() enriches error for sub-path alias (@shared/utils → path not found)', () => {
     const notFoundError = Object.assign(
       new Error('Cannot find module file:///abs/src/shared/utils'),
       { code: 'ERR_MODULE_NOT_FOUND' }
     );
-    const failingResolve = vi.fn().mockRejectedValue(notFoundError);
+    const failingResolve = vi.fn(() => { throw notFoundError; });
 
-    await expect(
-      resolve('@shared/utils', { conditions: [] }, failingResolve)
-    ).rejects.toMatchObject({
+    expect(() => {
+      resolve('@shared/utils', { conditions: [] }, failingResolve);
+    }).toThrow(expect.objectContaining({
       message: expect.stringContaining("Cannot resolve alias '@shared'"),
-    });
+    }));
 
     // The message should also hint to run sync-preload
-    await expect(
-      resolve('@shared/utils', { conditions: [] }, failingResolve)
-    ).rejects.toMatchObject({
+    expect(() => {
+      resolve('@shared/utils', { conditions: [] }, failingResolve);
+    }).toThrow(expect.objectContaining({
       message: expect.stringContaining('Run: kerith sync-preload'),
-    });
+    }));
   });
 
-  it('resolve() re-throws ERR_MODULE_NOT_FOUND unchanged when no alias was involved', async () => {
+  it('resolve() re-throws ERR_MODULE_NOT_FOUND unchanged when no alias was involved', () => {
     // A plain relative import that is not an alias should have its error unchanged
     const notFoundError = Object.assign(
       new Error('Cannot find module ./missing-file.js'),
       { code: 'ERR_MODULE_NOT_FOUND' }
     );
-    const failingResolve = vi.fn().mockRejectedValue(notFoundError);
+    const failingResolve = vi.fn(() => { throw notFoundError; });
 
-    await expect(
-      resolve('./missing-file.js', { conditions: [] }, failingResolve)
-    ).rejects.toMatchObject({
+    expect(() => {
+      resolve('./missing-file.js', { conditions: [] }, failingResolve);
+    }).toThrow(expect.objectContaining({
       message: expect.not.stringContaining("Cannot resolve alias"),
-    });
+    }));
   });
 
   // ── Part 3: Optimized preload-hook tests ─────────────────────────────────────
-  it('prebuilds exactAliasMap and wildcardAliases in initialize() efficiently', () => {
-    const aliases = Object.fromEntries(
+  it('prebuilds exactAliasMap and wildcardAliases in createResolveHook() efficiently', () => {
+    const largeAliases = Object.fromEntries(
       Array.from({ length: 84 }, (_, i) => [`@alias${i}`, `/path/to/alias${i}`])
     );
     // Ensure it doesn't throw and initializes quickly without O(N) iteration on resolve
     expect(() => {
-      initialize({ preloaded: true, _version: '1.5.1', aliases, modulesDir: '/tmp' });
+      createResolveHook(largeAliases);
     }).not.toThrow();
   });
 
-  it('clears previous structures when initialize() is called again', async () => {
-    initialize({ preloaded: true, _version: '1.5.1', aliases: { '@old': '/old' }, modulesDir: '/tmp' });
-    await resolve('@old', { conditions: [] }, nextResolve);
+  it('creates independent resolve hooks for different alias sets', () => {
+    const resolveOld = createResolveHook({ '@old': '/old' });
+    resolveOld('@old', { conditions: [] }, nextResolve);
     expect(nextResolve).toHaveBeenCalledWith(expect.stringContaining('/old'), expect.anything());
     
     nextResolve.mockClear();
-    initialize({ preloaded: true, _version: '1.5.1', aliases: { '@new': '/new' }, modulesDir: '/tmp' });
+    const resolveNew = createResolveHook({ '@new': '/new' });
     
     // '@old' should no longer resolve to the alias path (it passes through)
-    await resolve('@old', { conditions: [] }, nextResolve);
+    resolveNew('@old', { conditions: [] }, nextResolve);
     expect(nextResolve).toHaveBeenCalledWith('@old', expect.anything());
     
     nextResolve.mockClear();
     // '@new' should resolve successfully
-    await resolve('@new', { conditions: [] }, nextResolve);
+    resolveNew('@new', { conditions: [] }, nextResolve);
     expect(nextResolve).toHaveBeenCalledWith(expect.stringContaining('/new'), expect.anything());
   });
 
-  it('resolves subpaths of exact alias correctly', async () => {
-    initialize({
-      preloaded: true,
-      _version: '1.5.1',
-      aliases: { '@shared': '/abs/path/shared' },
-      modulesDir: '/tmp'
-    });
+  it('resolves subpaths of exact alias correctly', () => {
+    const resolveShared = createResolveHook({ '@shared': '/abs/path/shared' });
     // '@shared/utils' should resolve to '/abs/path/shared/utils' via prefixAliases
-    await resolve('@shared/utils', { conditions: [] }, nextResolve);
+    resolveShared('@shared/utils', { conditions: [] }, nextResolve);
     const expectedPath = path.resolve('/abs/path/shared', 'utils');
     const expectedUrl = pathToFileURL(expectedPath).href;
     expect(nextResolve).toHaveBeenCalledWith(expectedUrl, { conditions: [] });

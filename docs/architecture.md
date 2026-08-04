@@ -67,6 +67,10 @@ No package "below" ever knows about the ones above it: **`@kerith/core` never de
 
 `app` is an **optional** argument to `createApp()`: without it, the full pipeline still runs (config, discovery, aliases, NITS, dependency validation) — Step 08 simply becomes a no-op. This is what enables **worker mode**: background processes, queue consumers, or scheduled jobs that still want module boundaries, aliases, and graceful shutdown without HTTP.
 
+### Future consideration: worker_threads
+
+As of v2.0.0, `@kerith/core` does not use Node.js `worker_threads`. If worker threads are introduced in the future, note that **synchronous ESM hooks registered via `registerHooks()` are not automatically inherited by worker threads**. Each worker would need to re-register the hooks independently (e.g., by loading the generated `preload.js` via `--import` in the worker's entry point) to maintain alias resolution consistency across threads.
+
 ### Where `@kerith/app` fits in
 
 `@kerith/app` doesn't replace this pipeline or add its own numbered steps — it **wraps** it. Its `createApp()` calls Core's `createApp()`, injecting its own hook into the internal `_onDynamicImportsComplete` option. Core invokes that hook at the **end of Step 06** (dynamic imports), before Step 07 (validation) and Step 08 (controller mounting) — the only point in the lifecycle where every identifier in the project (including those from `@kerith/identifiers`, already declared via its dynamic imports) is registered, but routes haven't been mounted yet.
