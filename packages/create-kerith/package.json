@@ -42,9 +42,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@kerith/core": "^2.0.0-alpha.1",
-    "@kerith/app": "^1.0.0-alpha.1",
-    "@kerith/identifiers": "^1.0.0-alpha.1",
+    "@kerith/core": "workspace:*",
+    "@kerith/app": "workspace:*",
+    "@kerith/identifiers": "workspace:*",
     "@clack/prompts": "^0.8.2",
     "commander": "14.0.3",
     "picocolors": "1.1.1"
@@ -53,6 +53,6 @@
     "@types/node": "^20.0.0",
     "tsup": "8.5.1",
     "typescript": "5.4.5",
-    "vitest": "4.1.2"
+    "vitest": "4.1.10"
   }
 }

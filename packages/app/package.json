@@ -42,8 +42,8 @@
     "node": ">=24.0.0"
   },
   "dependencies": {
-    "@kerith/core": "*",
-    "@kerith/identifiers": "*"
+    "@kerith/core": "workspace:*",
+    "@kerith/identifiers": "workspace:*"
   },
   "peerDependencies": {
     "express": "^5.0.0",
@@ -70,12 +70,12 @@
     "@types/express": "^5.0.0",
     "@types/node": "^20.0.0",
     "@types/node-cron": "^3.0.11",
-    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/coverage-v8": "4.1.10",
     "bullmq": "^5.0.0",
     "ioredis": "^5.0.0",
     "tsup": "8.5.1",
     "typescript": "5.4.5",
-    "vitest": "4.1.2"
+    "vitest": "4.1.10"
   },
   "scripts": {
     "build": "tsup",
