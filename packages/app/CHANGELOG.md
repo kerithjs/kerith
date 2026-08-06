@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.0-alpha.1] - 2026-07-29
+
+## [2.0.0-alpha.2] - Unreleased
+
+### Changed
+- **BREAKING**: minimum supported Node version raised to 24 LTS
+
+
 
 ### Added
 - Added `infrastructure` option to `AppCreateAppOptions` in `createApp()` to allow injecting Redis configurations (`host`, `port`, `password`, etc.) programmatically, bypassing environment variables. This simplifies testing and isolated environments.

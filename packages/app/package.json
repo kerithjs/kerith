@@ -39,7 +39,7 @@
   },
   "homepage": "https://kerith.dev",
   "engines": {
-    "node": ">=20.6.0"
+    "node": ">=24.0.0"
   },
   "dependencies": {
     "@kerith/core": "*",

@@ -6,7 +6,7 @@ vi.mock('node:module', async () => {
   const actual = await vi.importActual('node:module') as any;
   return {
     ...actual,
-    register: vi.fn()
+    registerHooks: vi.fn(() => ({ deregister: vi.fn() }))
   };
 });
 
@@ -28,19 +28,19 @@ describe('Resolver Guard 2 (anti-double-registration)', () => {
     delete (globalThis as any).__KERITH_PRELOAD_CONFIG__;
   });
 
-  it('activateAliasResolver() calls module.register() when global is not present (v1.4.0 behavior)', async () => {
+  it('activateAliasResolver() calls module.registerHooks() when global is not present (v1.4.0 behavior)', async () => {
     await activateAliasResolver({ '@modules': '/abs/src/modules' }, {}, dummyLog);
-    expect(nodeModule.register).toHaveBeenCalledTimes(1);
+    expect(nodeModule.registerHooks).toHaveBeenCalledTimes(1);
   });
 
-  it('activateAliasResolver() does not call module.register() if globalThis.__KERITH_PRELOAD_CONFIG__.preloaded === true', async () => {
+  it('activateAliasResolver() does not call module.registerHooks() if globalThis.__KERITH_PRELOAD_CONFIG__.preloaded === true', async () => {
     (globalThis as any).__KERITH_PRELOAD_CONFIG__ = {
       preloaded: true,
       aliases: {}
     };
 
     await activateAliasResolver({ '@modules': '/abs/src/modules' }, {}, dummyLog);
-    expect(nodeModule.register).not.toHaveBeenCalled();
+    expect(nodeModule.registerHooks).not.toHaveBeenCalled();
     expect(dummyLog.debug).toHaveBeenCalledWith(expect.stringContaining('skipped'), expect.any(Object));
   });
 
@@ -60,5 +60,20 @@ describe('Resolver Guard 2 (anti-double-registration)', () => {
       '@modules': expect.stringContaining('modules'),
       '@custom': expect.stringContaining('custom')
     });
+  });
+
+  it('deregister() is called when aliases change to prevent duplicate hooks', async () => {
+    const deregisterSpy = vi.fn();
+    (nodeModule.registerHooks as any).mockReturnValue({ deregister: deregisterSpy });
+
+    // First registration
+    await activateAliasResolver({ '@modules': '/abs/src/modules' }, {}, dummyLog);
+    expect(nodeModule.registerHooks).toHaveBeenCalledTimes(1);
+    expect(deregisterSpy).not.toHaveBeenCalled();
+
+    // Second registration with different aliases should call deregister first
+    await activateAliasResolver({ '@modules': '/abs/src/modules' }, { '@new': '/abs/new' }, dummyLog);
+    expect(deregisterSpy).toHaveBeenCalledTimes(1);
+    expect(nodeModule.registerHooks).toHaveBeenCalledTimes(2);
   });
 });

@@ -78,7 +78,7 @@ For anyone auditing the alpha against the `1.8.x` security model described below
 
 ### 1. ESM Alias Resolver (`src/aliases/resolver.ts`)
 
-The alias resolver hooks into the Node.js module resolution pipeline via `node:module`'s `register()` API (requires Node.js ≥ 20.6.0).
+The alias resolver hooks into the Node.js module resolution pipeline via `node:module`'s `register()` API (requires Node.js ≥ 24.0.0).
 
 **Protections in place:**
 
@@ -175,7 +175,7 @@ Prior to v1.4.0, the `Controller` identifier was included in the NITS semantic h
 
 ### Node.js Minimum Version
 
-Kerith requires **Node.js ≥ 20.6.0** for the `--import` flag and native ESM Hooks API (`node:module` `register()`). Running on older Node.js versions will fail at the ESM environment validation step. Ensure your deployment infrastructure and CI pipeline enforce this minimum.
+Kerith requires **Node.js ≥ 24.0.0** for the `--import` flag and native ESM Hooks API (`node:module` `register()`). Running on older Node.js versions will fail at the ESM environment validation step. Ensure your deployment infrastructure and CI pipeline enforce this minimum.
 
 ### ESM-Only
 

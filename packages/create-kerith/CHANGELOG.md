@@ -9,7 +9,13 @@ For the full Kerith suite changelog (all packages), see the [root CHANGELOG](../
 
 ---
 
-## [1.0.0-alpha.1] — 2026-08-02
+
+## [2.0.0-alpha.2] - Unreleased
+
+### Changed
+- **BREAKING**: minimum supported Node version raised to 24 LTS
+
+
 
 > **Initial release of `create-kerith`.** A scaffolding CLI (`npm create kerith@alpha`) that generates ready-to-run Kerith projects from two templates: `core` (bare `@kerith/core`) and `app` (`core` + `@kerith/app` + `@kerith/identifiers`, with optional channel stubs). The `app` template does not duplicate project generation — it reuses `generateProjectStructure` from `@kerith/core/cli` and patches the result, so both templates stay in sync with whatever `kerith init` produces.
 

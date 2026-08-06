@@ -19,6 +19,9 @@ const makeBaseConfig = (overrides: Record<string, unknown> = {}) => ({
   logFormat: 'auto' as any,
   nits: { enabled: false },
   requirePreloader: false,
+  rules: { moduleLoadTimeout: 5000, stalePurgeCycles: 3 },
+  resolvedAliases: new Map(),
+  resolvedRules: {} as any,
   ...overrides
 });
 
@@ -59,7 +62,7 @@ describe('CLI: sync-preload', () => {
     expect(fs.existsSync(preloadPath)).toBe(true);
 
     const content = fs.readFileSync(preloadPath, 'utf8');
-    expect(content).toContain("import { register } from 'node:module'");
+    expect(content).toContain("import { registerHooks } from 'node:module'");
     expect(content).toContain('globalThis.__KERITH_PRELOAD_CONFIG__');
     expect(content).toContain("preloaded: true");
     expect(content).toContain("_version:");

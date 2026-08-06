@@ -281,7 +281,7 @@ function generatePackageJson(projectName: string, ext: string, kerithVersion: st
     type: 'module',
     private: true,
     engines: {
-      node: '>=20.6.0',
+      node: '>=24.0.0',
     },
     scripts: {
       dev: isTs 

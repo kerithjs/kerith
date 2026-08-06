@@ -10,7 +10,7 @@ import * as readline from 'node:readline';
 // ─── Confirmation prompt ───────────────────────────────────────────────────────
 
 function confirm(question: string): Promise<boolean> {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const rl = readline.createInterface({ input: process.stdin as any, output: process.stdout });
   return new Promise(resolve => {
     rl.question(question, answer => {
       rl.close();
