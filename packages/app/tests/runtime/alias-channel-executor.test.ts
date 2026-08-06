@@ -31,7 +31,7 @@ describe('Alias Channel Executor', () => {
     fs.mkdirSync(moduleDir, { recursive: true })
 
     fs.symlinkSync(
-      path.resolve(__dirname, '../../../../node_modules'),
+      path.resolve(__dirname, '../../node_modules'),
       path.join(tmpDir, 'node_modules'),
       'junction',
     )
@@ -104,7 +104,7 @@ describe('Alias Channel Executor', () => {
       fs.mkdirSync(moduleDir, { recursive: true })
 
       fs.symlinkSync(
-        path.resolve(__dirname, '../../../../node_modules'),
+        path.resolve(__dirname, '../../node_modules'),
         path.join(tmpDir, 'node_modules'),
         'junction',
       )
@@ -160,8 +160,10 @@ describe('Alias Channel Executor', () => {
         process.stdout.write('SUCCESS\\n')
       `)
 
-      // Run with tsx (handles .ts source imports)
-      const out = execSync(`npx tsx ${e2eScript}`, {
+      // Run with tsx (handles .ts source imports) — use local binary to avoid npx cache overhead
+      const tsxBin = path.resolve(__dirname, '../../node_modules/.bin/tsx')
+      const tsxCmd = process.platform === 'win32' ? `${tsxBin}.cmd` : tsxBin
+      const out = execSync(`"${tsxCmd}" "${e2eScript}"`, {
         cwd: tmpDir,
         encoding: 'utf-8',
         timeout: 30_000,
@@ -175,5 +177,5 @@ describe('Alias Channel Executor', () => {
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true })
     }
-  })
+  }, 30_000)
 })

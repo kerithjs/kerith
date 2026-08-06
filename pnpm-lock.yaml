@@ -54,6 +54,9 @@ importers:
       '@types/node-cron':
         specifier: ^3.0.11
         version: 3.0.11
+      '@types/supertest':
+        specifier: 7.2.0
+        version: 7.2.0
       '@vitest/coverage-v8':
         specifier: 4.1.10
         version: 4.1.10(vitest@4.1.10)
@@ -63,9 +66,15 @@ importers:
       ioredis:
         specifier: ^5.0.0
         version: 5.11.1(supports-color@7.2.0)
+      supertest:
+        specifier: 7.2.2
+        version: 7.2.2(supports-color@7.2.0)
       tsup:
         specifier: 8.5.1
         version: 8.5.1(postcss@8.5.25)(supports-color@7.2.0)(tsx@4.23.8)(typescript@5.4.5)
+      tsx:
+        specifier: ^4.23.8
+        version: 4.23.8
       typescript:
         specifier: 5.4.5
         version: 5.4.5
@@ -3089,7 +3098,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(tsx@4.23.8))
+      vitest: 4.1.10(@types/node@20.19.43)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@20.19.43)(esbuild@0.27.7)(tsx@4.23.8))
 
   '@vitest/expect@4.1.10':
     dependencies:
