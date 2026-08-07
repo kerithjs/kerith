@@ -18,9 +18,9 @@ export default defineConfig({
   resolve: {
     alias: {
       // Direct alias for the E2E fixture modules
-      '@modules': path.resolve(__dirname, 'packages/core/tests/fixtures/basic-app/src/modules'),
-      '@config': path.resolve(__dirname, 'packages/core/tests/fixtures/basic-app/src/config'),
-      '@middleware': path.resolve(__dirname, 'packages/core/tests/fixtures/basic-app/src/middleware')
+      '@modules': path.resolve(import.meta.dirname, 'packages/core/tests/fixtures/basic-app/src/modules'),
+      '@config': path.resolve(import.meta.dirname, 'packages/core/tests/fixtures/basic-app/src/config'),
+      '@middleware': path.resolve(import.meta.dirname, 'packages/core/tests/fixtures/basic-app/src/middleware')
     },
     extensions: ['.ts', '.js', '.mts', '.mjs', '.json']
   }

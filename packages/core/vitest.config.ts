@@ -27,11 +27,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@modules': path.resolve(__dirname, 'tests/fixtures/basic-app/src/modules'),
-      '@config': path.resolve(__dirname, 'tests/fixtures/basic-app/src/config'),
-      '@middleware': path.resolve(__dirname, 'tests/fixtures/basic-app/src/middleware')
+      '@modules': path.resolve(import.meta.dirname, 'tests/fixtures/basic-app/src/modules'),
+      '@config': path.resolve(import.meta.dirname, 'tests/fixtures/basic-app/src/config'),
+      '@middleware': path.resolve(import.meta.dirname, 'tests/fixtures/basic-app/src/middleware')
     },
     extensions: ['.ts', '.js', '.mts', '.mjs', '.json']
   }
 });
-
