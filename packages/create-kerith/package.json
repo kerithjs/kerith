@@ -42,15 +42,15 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@kerith/core": "workspace:*",
-    "@kerith/app": "workspace:*",
-    "@kerith/identifiers": "workspace:*",
     "@clack/prompts": "^0.8.2",
+    "@kerith/app": "workspace:*",
+    "@kerith/core": "workspace:*",
+    "@kerith/identifiers": "workspace:*",
     "commander": "14.0.3",
     "picocolors": "1.1.1"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@types/node": "^20.19.43",
     "tsup": "8.5.1",
     "typescript": "5.4.5",
     "vitest": "4.1.10"

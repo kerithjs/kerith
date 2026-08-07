@@ -44,7 +44,7 @@
     "@kerith/core": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@types/node": "^20.19.43",
     "@vitest/coverage-v8": "4.1.10",
     "tsup": "8.5.1",
     "typescript": "5.4.5",
