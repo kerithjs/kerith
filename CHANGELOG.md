@@ -56,6 +56,7 @@ For full technical details, see the individual package changelogs:
 - `createApp()` no longer requires an Express app to be passed in — it's optional.
 - `kerith check`'s exit code is more predictable: warnings like coupling or circular dependencies only fail the command in `--strict` mode.
 - Existing v1.x projects continue to work without any changes — see `MIGRATION.md` if you want to adopt the new domain structure.
+- **Monorepo Architecture**: Migrated from npm workspaces to **pnpm + Turborepo** for strict dependency boundaries (phantom dependency elimination) and sub-second cached builds/tests in local development and CI.
 
 ### Fixed
 

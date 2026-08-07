@@ -17,7 +17,7 @@ function makeTmpApp() {
   fs.writeFileSync(path.join(tmpDir, 'kerith.config.js'), 'export default { strict: false };')
   const moduleDir = path.join(tmpDir, 'src/modules/test')
   fs.mkdirSync(moduleDir, { recursive: true })
-  fs.symlinkSync(path.resolve(__dirname, '../../../../node_modules'), path.join(tmpDir, 'node_modules'), 'junction')
+  fs.symlinkSync(path.resolve(__dirname, '../../node_modules'), path.join(tmpDir, 'node_modules'), 'junction')
   fs.writeFileSync(path.join(moduleDir, 'index.ts'), `
     import { Module } from '@kerith/core'
     Module('test')

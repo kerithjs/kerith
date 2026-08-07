@@ -85,37 +85,41 @@ kerith/
 
 ## Development Setup
 
-**Prerequisites:** Node.js ≥ 20.6, npm ≥ 10
+**Prerequisites:** Node.js ≥ 24.0, [pnpm](https://pnpm.io) ≥ 9
 
 ```bash
 git clone https://github.com/kerithjs/kerith.git
 cd kerith
-npm install
+pnpm install
 ```
 
 ### Common commands
 
+All root scripts delegate to **Turborepo**, which respects the dependency graph, runs tasks in parallel where safe, and caches results locally in `.turbo/`.
+
 ```bash
-# Build all packages
-npm run build
+# Build all packages (respects dependency order: core → identifiers → app, etc.)
+pnpm run build
 
 # Run all tests across the workspace
-npm test
+pnpm test
 
 # Type-check all packages
-npm run typecheck
+pnpm run typecheck
 
 # Lint all source and test files
-npm run lint
-npm run lint:fix
+pnpm run lint
+pnpm run lint:fix
 ```
 
-To run commands for a specific package, use the `-w` flag:
+To run a command for a specific package, use `--filter`:
 
 ```bash
-npm test -w @kerith/core
-npm run build -w @kerith/eslint-plugin
+pnpm --filter @kerith/core test
+pnpm --filter @kerith/eslint-plugin build
 ```
+
+> **Turborepo cache:** The second run of any unchanged package will show `cache hit` and finish in milliseconds. To force a clean run, pass `--force` to turbo: `pnpm run build -- --force`.
 
 ---
 

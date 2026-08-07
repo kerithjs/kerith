@@ -59,7 +59,7 @@ Kerith is currently developed by a single maintainer following a spec-first appr
 
 ### Repository layout
 
-Kerith is an npm workspaces monorepo (`packages/*`). Before touching code, it helps to know where things live:
+Kerith is a **pnpm workspaces** monorepo (`packages/*`) orchestrated with **Turborepo**. Before touching code, it helps to know where things live:
 
 | Package                 | What it is                                                                                                    |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -75,27 +75,27 @@ A bug fix usually touches one package. If your change needs to touch more than o
 ```bash
 git clone https://github.com/kerithjs/kerith.git
 cd kerith
-npm install          # installs and links all workspaces from the root — do not run npm install inside a package folder
+pnpm install          # installs and links all workspaces — do not run pnpm install inside a package folder
 ```
 
-Supported Node.js versions: 20.x, 22.x, 24.x, 26.x (matches the CI matrix — if it doesn't work on one of these, that's a bug worth reporting on its own).
+Supported Node.js versions: 24.x, 26.x (matches the CI matrix). **pnpm ≥ 9** is required — install it via `corepack enable` or `npm install -g pnpm`.
 
 ### Running checks
 
 Kerith's own CI runs, in this order: **lint → build → typecheck → test**. Run the same sequence locally before opening a PR — a PR that fails any of these will not be merged as-is:
 
 ```bash
-npm run lint          # across all packages
-npm run build          # all workspaces, --if-present
-npm run typecheck      # all workspaces, --if-present
-npm test               # all workspaces, --if-present
+pnpm run lint          # across all packages (via Turbo)
+pnpm run build         # all workspaces, dependency-order
+pnpm run typecheck     # all workspaces
+pnpm test              # all workspaces
 ```
 
-To scope any of these to a single package while you're iterating, use `-w`:
+To scope any of these to a single package while iterating, use `--filter`:
 
 ```bash
-npm run test -w @kerith/core
-npm run typecheck -w @kerith/identifiers
+pnpm --filter @kerith/core test
+pnpm --filter @kerith/identifiers typecheck
 ```
 
 ### Branch naming
@@ -130,7 +130,7 @@ Common types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`. Scope is optio
 
 - Keep it focused on one change — easier to review, easier to revert if something's wrong.
 - Include or update tests for the behavior you're changing.
-- Run `npm run lint`, `npm run build`, `npm run typecheck`, and `npm test` locally before opening the PR (see [Running checks](#running-checks) above).
+- Run `pnpm run lint`, `pnpm run build`, `pnpm run typecheck`, and `pnpm test` locally before opening the PR (see [Running checks](#running-checks) above).
 - Target `develop`, matching your branch's base.
 - PR title should follow the same Conventional Commits format as commit messages — it's used as-is when the changelog is generated.
 

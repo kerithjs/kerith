@@ -41,14 +41,14 @@
     "node": ">=24.0.0"
   },
   "dependencies": {
-    "@kerith/core": "*"
+    "@kerith/core": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@vitest/coverage-v8": "^4.1.2",
+    "@types/node": "^20.19.43",
+    "@vitest/coverage-v8": "4.1.10",
     "tsup": "8.5.1",
     "typescript": "5.4.5",
-    "vitest": "4.1.2"
+    "vitest": "4.1.10"
   },
   "scripts": {
     "build": "tsup",

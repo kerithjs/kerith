@@ -20,7 +20,9 @@ describe('Integration: kerith create-domain', () => {
 
   it('scaffolds a domain and creates a valid domain registry', () => {
     // Run create-domain command
-    const output = execSync(`npx tsx ${cliPath} create-domain billing`, { 
+    const tsxPath = path.resolve(__dirname, '../../node_modules/.bin/tsx');
+    const tsxCmd = process.platform === 'win32' ? `${tsxPath}.cmd` : tsxPath;
+    const output = execSync(`"${tsxCmd}" "${cliPath}" create-domain billing`, { 
       cwd: tmpDir, 
       encoding: 'utf-8', 
       stdio: 'pipe' 

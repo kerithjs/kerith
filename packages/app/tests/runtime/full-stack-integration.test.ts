@@ -46,7 +46,7 @@ describe('Full Stack Integration (All Channels)', () => {
 
   it('boots up an app with Alias, Middleware, Cron, Worker, Gateway, Controller and Module combined', async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kerith-fullstack-'))
-    fs.symlinkSync(path.resolve(__dirname, '../../../../node_modules'), path.join(tmpDir, 'node_modules'), 'junction')
+    fs.symlinkSync(path.resolve(__dirname, '../../node_modules'), path.join(tmpDir, 'node_modules'), 'junction')
     
     // Create necessary Kerith app structure
     fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ type: 'module' }))
