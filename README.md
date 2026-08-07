@@ -115,15 +115,8 @@ pnpm run lint:fix
 To run a command for a specific package, use `--filter`:
 
 ```bash
-pnpm run test --filter @kerith/core
-pnpm run build --filter @kerith/eslint-plugin
-```
-
-Or run scripts directly inside a package:
-
-```bash
 pnpm --filter @kerith/core test
-pnpm --filter @kerith/app build
+pnpm --filter @kerith/eslint-plugin build
 ```
 
 > **Turborepo cache:** The second run of any unchanged package will show `cache hit` and finish in milliseconds. To force a clean run, pass `--force` to turbo: `pnpm run build -- --force`.

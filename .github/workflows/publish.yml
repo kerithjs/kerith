@@ -33,7 +33,7 @@ jobs:
         run: pnpm run build
 
       - name: Run tests
-        run: pnpm -r test
+        run: pnpm run test
 
       - name: Validate versions match tag
         run: |
@@ -68,11 +68,11 @@ jobs:
           fi
 
       - name: Publish @kerith/core
-        run: pnpm publish --filter packages/core --provenance --access public --tag $NPM_TAG --no-git-checks
+        run: pnpm publish --filter @kerith/core --provenance --access public --tag $NPM_TAG --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @kerith/eslint
-        run: pnpm publish --filter packages/eslint-plugin --provenance --access public --tag $NPM_TAG --no-git-checks
+      - name: Publish @kerith/eslint-plugin
+        run: pnpm publish --filter @kerith/eslint-plugin --provenance --access public --tag $NPM_TAG --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -39,7 +39,7 @@ jobs:
       run: pnpm run typecheck
 
     - name: Run tests
-      run: pnpm -r test
+      run: pnpm run test
       continue-on-error: ${{ matrix.node-version == '26.x' }}
 
   build-with-socketio:
