@@ -7,20 +7,21 @@
 **The architectural standard for Node.js and TypeScript.**
 
 [![npm](https://img.shields.io/npm/v/@kerith/core?color=e4f222&label=%40kerith%2Fcore&style=flat-square)](https://www.npmjs.com/package/@kerith/core)
+[![npm](https://img.shields.io/npm/v/@kerith/app?color=e4f222&label=%40kerith%2Fapp&style=flat-square)](https://www.npmjs.com/package/@kerith/app)
+[![npm](https://img.shields.io/npm/v/@kerith/identifiers?color=e4f222&label=%40kerith%2Fidentifiers&style=flat-square)](https://www.npmjs.com/package/@kerith/identifiers)
 [![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin?color=e4f222&label=%40kerith%2Feslint-plugin&style=flat-square)](https://www.npmjs.com/package/@kerith/eslint-plugin)
+[![npm](https://img.shields.io/npm/v/create-kerith?color=e4f222&label=create-kerith&style=flat-square)](https://www.npmjs.com/package/create-kerith)
 [![License: MIT](https://img.shields.io/badge/license-MIT-e4f222?style=flat-square)](./LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D20.6-e4f222?style=flat-square)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D24.0-e4f222?style=flat-square)](https://nodejs.org/)
 [![kerith.dev](https://img.shields.io/badge/docs-kerith.dev-e4f222?style=flat-square)](https://docs.kerith.dev)
 
-> **Node.js ≥ 20.6** · **Express 5.x** · **ESM Only** · **TypeScript included**
+> **Node.js ≥ 24.0** · **Express 5.x** · **ESM Only** · **TypeScript included**
 
 </div>
 
 ---
 
 This repository is the monorepo for the KerithJS ecosystem. All packages are versioned in lockstep and published independently to npm under the `@kerith` scope.
-
-> Notice: Ecosystem not stable, some things work others don't, everything is under constant development.
 
 ---
 
@@ -30,9 +31,9 @@ This repository is the monorepo for the KerithJS ecosystem. All packages are ver
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | [`@kerith/core`](./packages/core)                   | The engine — deterministic bootstrap, module discovery, NITS identity tracking, HTTP logger, CLI          | [![npm](https://img.shields.io/npm/v/@kerith/core?style=flat-square)](https://www.npmjs.com/package/@kerith/core)                   |
 | [`@kerith/eslint-plugin`](./packages/eslint-plugin) | Architectural rules enforced at edit time — before the server runs                                        | [![npm](https://img.shields.io/npm/v/@kerith/eslint-plugin?style=flat-square)](https://www.npmjs.com/package/@kerith/eslint-plugin) |
-| [`@kerith/app`](./packages/app)                     | Application layer — channel-based connection system (Alias, Middleware, Schedule, Binding)                | 🚧 in development                                                                                                                   |
-| [`@kerith/identifiers`](./packages/identifiers)     | Identifier catalog — architectural identifiers consumed by `@kerith/app`'s channel loops                  | 🚧 in development                                                                                                                   |
-| [`create-kerith`](./packages/create-kerith)         | Project scaffolder — generates a new project from the `core` or `app` (core + app + identifiers) template | 🚧 in development                                                                                                                   |
+| [`@kerith/app`](./packages/app)                     | Application layer — channel-based connection system (Alias, Middleware, Schedule, Binding)                | [![npm](https://img.shields.io/npm/v/@kerith/app?style=flat-square)](https://www.npmjs.com/package/@kerith/app)                     |
+| [`@kerith/identifiers`](./packages/identifiers)     | Identifier catalog — architectural identifiers consumed by `@kerith/app`'s channel loops                  | [![npm](https://img.shields.io/npm/v/@kerith/identifiers?style=flat-square)](https://www.npmjs.com/package/@kerith/identifiers)     |
+| [`create-kerith`](./packages/create-kerith)         | Project scaffolder — generates a new project from the `core` or `app` (core + app + identifiers) template | [![npm](https://img.shields.io/npm/v/create-kerith?style=flat-square)](https://www.npmjs.com/package/create-kerith)                 |
 
 All packages are independent installs. `@kerith/eslint-plugin` is a companion — not a dependency of the core. `create-kerith` only depends on `@kerith/core`, `@kerith/app`, and `@kerith/identifiers` — none of those packages know it exists.
 
@@ -184,9 +185,6 @@ import { createApp, useLogger, useHttpLogger } from "@kerith/core";
 const app = express();
 const log = useLogger("app");
 const httpLog = useHttpLogger({ ignore: ["/health"] });
-
-app.use(express.json());
-app.use(httpLog.requests());
 
 const Kerith = await createApp(app);
 
@@ -364,7 +362,6 @@ For full configuration details, see the [`@kerith/eslint-plugin` README](./packa
 During the alpha cycle, the following known limitations apply:
 
 - **Mode B of `kerith init`**: Running `kerith init` in a directory with an existing `package.json` (Mode B) is currently disabled. The CLI will abort to prevent unintentional overwriting of your project files. If you want to scaffold a new Kerith project, please do so in an empty directory. `create-kerith` follows the same restriction — it only scaffolds new projects and will refuse to run against a directory that already has a `package.json`.
-- **`@kerith/app` and `@kerith/identifiers`**: still not published to npm. Use them through `create-kerith`'s `app` template inside this monorepo (npm workspaces resolve them locally), or as a `file:`/`workspace:` dependency until they're published.
 - **`create-kerith` channel selection**: the interactive prompt offers all five channels (`Alias`, `Middleware`, `Cron`, `Worker`, `Gateway`), but there is currently no non-interactive flag to pick channels when using `--yes` — non-interactive runs generate the `app` template with no channel stubs.
 
 ---
