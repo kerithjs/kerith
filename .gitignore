@@ -26,3 +26,6 @@ packages/core/benchmarks/fixture/
 packages/core/benchmarks/results.json
 packages/core/benchmarks/results-temp.json
 packages/core/scratch-mitata.ts
+
+# Test E2E None
+Projects

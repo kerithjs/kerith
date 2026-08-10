@@ -35,7 +35,10 @@
   },
   "scripts": {
     "build": "tsup",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run"
   },
   "peerDependencies": {
     "@kerith/core": ">=2.0.0-alpha.1",
@@ -56,6 +59,8 @@
     "@kerith/identifiers": "workspace:*",
     "@types/node": "^26.1.2",
     "tsup": "8.5.1",
-    "typescript": "5.4.5"
+    "tsx": "4.23.8",
+    "typescript": "5.4.5",
+    "vitest": "4.1.10"
   }
 }
