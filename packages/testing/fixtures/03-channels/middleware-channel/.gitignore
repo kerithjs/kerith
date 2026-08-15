@@ -3,3 +3,4 @@ dist
 .env
 .env.local
 .kerith/bootstrap-cache.json
+.kerith/registry.json
