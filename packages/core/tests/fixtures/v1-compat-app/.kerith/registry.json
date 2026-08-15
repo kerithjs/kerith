@@ -1,7 +1,7 @@
 {
   "project": "v1-compat-app-fixture",
   "version": "1.0.0",
-  "lastCheck": "2026-08-10T20:15:11.598Z",
+  "lastCheck": "2026-08-15T14:56:15.566Z",
   "modules": {
     "mod_0faa00de": {
       "id": "mod_0faa00de",
@@ -10,7 +10,7 @@
       "hash": "71c643c1a1",
       "status": "active",
       "createdAt": "2026-06-03T22:35:29.848Z",
-      "lastSeen": "2026-08-10T20:15:11.595Z",
+      "lastSeen": "2026-08-15T14:56:15.564Z",
       "identifiers": [
         "UserService"
       ]
@@ -22,7 +22,7 @@
       "hash": "da39a3ee5e",
       "status": "active",
       "createdAt": "2026-06-03T22:35:29.848Z",
-      "lastSeen": "2026-08-10T20:15:11.595Z",
+      "lastSeen": "2026-08-15T14:56:15.564Z",
       "identifiers": []
     },
     "mod_f68b652f": {
@@ -32,7 +32,7 @@
       "hash": "b393ab88d4",
       "status": "active",
       "createdAt": "2026-06-03T22:35:29.848Z",
-      "lastSeen": "2026-08-10T20:15:11.595Z",
+      "lastSeen": "2026-08-15T14:56:15.564Z",
       "identifiers": [
         "AuthService"
       ]
