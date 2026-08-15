@@ -1,0 +1,12 @@
+{
+  "name": "schedule-passthrough-failsoft",
+  "expectedModules": 2,
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "expectedStatus": 200,
+      "expectedBody": { "status": "ok", "message": "Hello from Kerith!" }
+    }
+  ]
+}

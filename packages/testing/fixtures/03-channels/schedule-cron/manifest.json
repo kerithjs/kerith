@@ -1,0 +1,16 @@
+{
+  "name": "schedule-cron",
+  "expectedModules": 2,
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/",
+      "pollAfterMs": 1500,
+      "expectedStatus": 200,
+      "expectedBody": {
+        "status": "ok",
+        "count": 1
+      }
+    }
+  ]
+}

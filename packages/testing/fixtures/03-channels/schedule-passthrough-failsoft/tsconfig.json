@@ -1,0 +1,44 @@
+{
+  "extends": "./tsconfig.kerith.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "@modules/health": [
+        "./src/modules/health/index.ts"
+      ],
+      "@modules/health/*": [
+        "./src/modules/health/*"
+      ],
+      "@modules/home": [
+        "./src/modules/home/index.ts"
+      ],
+      "@modules/home/*": [
+        "./src/modules/home/*"
+      ],
+      "@shared": [
+        "./src/shared"
+      ],
+      "@shared/*": [
+        "./src/shared/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

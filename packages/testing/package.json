@@ -41,8 +41,8 @@
     "test:e2e": "vitest run"
   },
   "peerDependencies": {
-    "@kerith/core": ">=2.0.0-alpha.1",
     "@kerith/app": ">=1.0.0-alpha.1",
+    "@kerith/core": ">=2.0.0-alpha.1",
     "@kerith/identifiers": ">=1.0.0-alpha.1"
   },
   "peerDependenciesMeta": {
@@ -54,13 +54,16 @@
     }
   },
   "devDependencies": {
-    "@kerith/core": "workspace:*",
     "@kerith/app": "workspace:*",
+    "@kerith/core": "workspace:*",
     "@kerith/identifiers": "workspace:*",
     "@types/node": "^26.1.2",
     "tsup": "8.5.1",
     "tsx": "4.23.8",
     "typescript": "5.4.5",
     "vitest": "4.1.10"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.3"
   }
 }

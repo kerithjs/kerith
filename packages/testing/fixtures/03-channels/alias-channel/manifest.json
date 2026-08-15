@@ -1,0 +1,15 @@
+{
+  "name": "alias-channel",
+  "expectedModules": 2,
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "status": "ok",
+        "featureFlag": "enabled"
+      }
+    }
+  ]
+}
