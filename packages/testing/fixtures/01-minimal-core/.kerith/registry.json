@@ -1,7 +1,7 @@
 {
   "project": "kerith-core",
   "version": "1.0.0",
-  "lastCheck": "2026-08-15T14:56:33.257Z",
+  "lastCheck": "2026-08-15T15:05:27.172Z",
   "modules": {
     "mod_5e45824a": {
       "id": "mod_5e45824a",
@@ -10,7 +10,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-10T19:28:27.101Z",
-      "lastSeen": "2026-08-15T14:56:33.255Z",
+      "lastSeen": "2026-08-15T15:05:27.170Z",
       "identifiers": [],
       "shadowFileId": "mod_5e45824a"
     },
@@ -21,7 +21,7 @@
       "hash": "00807229ac",
       "status": "active",
       "createdAt": "2026-08-10T19:28:27.101Z",
-      "lastSeen": "2026-08-15T14:56:33.255Z",
+      "lastSeen": "2026-08-15T15:05:27.170Z",
       "identifiers": [],
       "shadowFileId": "mod_1526f2ce"
     }

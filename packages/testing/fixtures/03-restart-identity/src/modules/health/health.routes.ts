@@ -1,7 +1,7 @@
-import { Module } from '@kerith/core'
+import { Controller } from '@kerith/core'
 import { Router } from 'express'
 
-Module('health')
+Controller('/health')
 
 const router = Router()
 

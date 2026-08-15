@@ -197,9 +197,14 @@ export async function runFixtureExpectingFailure(
 export async function runFixtureTwice(
   fixtureDir: string,
   opts: FixtureOpts = {},
+  actionBetweenRuns?: (firstHandle: FixtureHandle) => Promise<void> | void,
 ): Promise<[FixtureHandle, FixtureHandle]> {
   const first = await runFixture(fixtureDir, opts);
   await stopFixture(first.child);
+
+  if (actionBetweenRuns) {
+    await actionBetweenRuns(first);
+  }
 
   const second = await runFixture(fixtureDir, opts);
 
