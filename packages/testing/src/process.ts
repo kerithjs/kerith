@@ -93,7 +93,11 @@ export async function stopFixture(
 ): Promise<void> {
   if (child.exitCode !== null) return; // Already exited.
 
-  child.kill('SIGTERM');
+  if (child.send) {
+    child.send('kerith:shutdown');
+  } else {
+    child.kill('SIGTERM');
+  }
 
   await new Promise<void>((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -252,7 +256,7 @@ function spawnServer(
         // Ensure coloured output doesn't pollute port-parsing.
         FORCE_COLOR: '0',
       },
-      stdio: debug ? ['ignore', 'inherit', 'inherit'] : ['ignore', 'pipe', 'pipe'],
+      stdio: debug ? ['ignore', 'inherit', 'inherit', 'ipc'] : ['ignore', 'pipe', 'pipe', 'ipc'],
     },
   );
 

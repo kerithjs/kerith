@@ -20,7 +20,7 @@ export { waitForHealth } from './health.js';
 export { createHttpClient } from './http-client.js';
 
 // Fixture artifact readers
-export { readManifest, readRegistrySnapshot } from './readers.js';
+export { readManifest, readRegistrySnapshot, readDomainRegistrySnapshot } from './readers.js';
 
 // Shared types (re-exported for test files)
 export type {
@@ -33,5 +33,7 @@ export type {
   Manifest,
   ManifestEndpoint,
   RegistrySnapshot,
+  RegistryRecord,
   RegistryModule,
 } from './types.js';
+

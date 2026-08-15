@@ -62,6 +62,20 @@ describe('01-minimal', () => {
     it('boots and all manifest endpoints respond as declared', async () => {
       await runEndpointAssertions(handle, fixtureDir);
     });
+
+    it('shuts down cleanly and executes onShutdown hook', async () => {
+      let output = '';
+      handle.child.stdout?.on('data', (chunk) => {
+        output += chunk.toString();
+      });
+
+      // Await close so we are guaranteed to have drained all stdout before asserting.
+      const closed = new Promise<void>((resolve) => handle.child.once('close', resolve));
+      await stopFixture(handle.child);
+      await closed;
+
+      expect(output).toContain('Cleaning up resources...');
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -84,6 +98,20 @@ describe('01-minimal', () => {
 
     it('boots and all manifest endpoints respond as declared', async () => {
       await runEndpointAssertions(handle, fixtureDir);
+    });
+
+    it('shuts down cleanly and executes onShutdown hook', async () => {
+      let output = '';
+      handle.child.stdout?.on('data', (chunk) => {
+        output += chunk.toString();
+      });
+
+      // Await close so we are guaranteed to have drained all stdout before asserting.
+      const closed = new Promise<void>((resolve) => handle.child.once('close', resolve));
+      await stopFixture(handle.child);
+      await closed;
+
+      expect(output).toContain('Cleaning up resources...');
     });
   });
 });

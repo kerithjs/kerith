@@ -10,7 +10,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { Manifest, RegistrySnapshot } from './types.js';
+import type { Manifest, RegistrySnapshot, RegistryRecord } from './types.js';
 
 // ---------------------------------------------------------------------------
 // readManifest
@@ -45,7 +45,52 @@ export function readManifest(fixtureDir: string): Manifest {
  */
 export function readRegistrySnapshot(fixtureDir: string): RegistrySnapshot {
   const snapshotPath = resolve(fixtureDir, '.kerith', 'registry.json');
-  return readJson<RegistrySnapshot>(snapshotPath, '.kerith/registry.json');
+  const raw = readJson<any>(snapshotPath, '.kerith/registry.json');
+
+  // Normalize: build a flat `records` array from the modules dict.
+  // The registry stores modules as { [id]: NitsModuleRecord } — we flatten
+  // that into an array so tests can iterate without coupling to the dict shape.
+  const modules: Record<string, RegistryRecord> = raw.modules ?? {};
+  const records: RegistryRecord[] = Object.values(modules);
+
+  return {
+    ...raw,
+    modules,
+    records,
+  } as RegistrySnapshot;
+}
+
+// ---------------------------------------------------------------------------
+// readDomainRegistrySnapshot
+// ---------------------------------------------------------------------------
+
+/**
+ * Loads `<fixtureDir>/src/modules/<domainName>/.kerith-register/registry.json`
+ * and returns it typed as {@link RegistrySnapshot}.
+ * 
+ * Used to verify the submodules registered within a specific domain.
+ * 
+ * @param fixtureDir - Absolute path to the fixture project directory.
+ * @param domainName - The name of the domain (folder name).
+ */
+export function readDomainRegistrySnapshot(fixtureDir: string, domainName: string): RegistrySnapshot {
+  const snapshotPath = resolve(fixtureDir, 'src', 'modules', domainName, '.kerith-register', 'registry.json');
+  const raw = readJson<any>(snapshotPath, `src/modules/${domainName}/.kerith-register/registry.json`);
+
+  // Domain registry shape: { version, domain, modules: {...}, submodules: [...], lastCheck }
+  // We normalize to RegistrySnapshot by flattening `modules` into `records`.
+  const modules: Record<string, RegistryRecord> = raw.modules ?? {};
+  const records: RegistryRecord[] = Object.values(modules);
+
+  return {
+    project: raw.domain?.name ?? domainName,
+    version: raw.version ?? '1.0.0',
+    lastCheck: raw.lastCheck ?? new Date().toISOString(),
+    modules,
+    domains: {},
+    _note: `Domain registry for ${domainName}`,
+    records,
+  } as RegistrySnapshot;
 }
 
 // ---------------------------------------------------------------------------

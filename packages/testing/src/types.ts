@@ -88,25 +88,49 @@ export interface FailureResult {
 // Registry snapshot (.kerith/registry.json)
 // ---------------------------------------------------------------------------
 
-export interface RegistryModule {
-  id: string;
+/** A single module record, normalized from the registry dict into a flat array entry. */
+export interface RegistryRecord {
+  id?: string;
   name: string;
   path: string;
-  hash: string;
+  domain?: string;
+  hash?: string;
   status: string;
+  createdAt?: string;
+  lastSeen?: string;
+  identifiers?: string[];
+  shadowFileId?: string;
+}
+
+/** @deprecated Use RegistryRecord instead. Kept for backward compatibility. */
+export interface RegistryModule extends RegistryRecord {
+  id: string;
+  hash: string;
   createdAt: string;
   lastSeen: string;
   identifiers: string[];
   shadowFileId: string;
 }
 
+/**
+ * Normalized view of a registry file (.kerith/registry.json or domain registry).
+ * The `records` array is a flat list of all module entries, built by the reader
+ * functions so tests never need to iterate a dict manually.
+ */
 export interface RegistrySnapshot {
-  project: string;
+  project?: string;
   version: string;
   lastCheck: string;
-  modules: Record<string, RegistryModule>;
-  domains: Record<string, unknown>;
-  _note: string;
+  /** Raw modules dict from the JSON file. */
+  modules: Record<string, RegistryRecord>;
+  domains?: Record<string, unknown>;
+  _note?: string;
+  /**
+   * Flat array of all module records in this snapshot.
+   * Built by readRegistrySnapshot() / readDomainRegistrySnapshot().
+   * This is the canonical field for test assertions.
+   */
+  records: RegistryRecord[];
 }
 
 // ---------------------------------------------------------------------------

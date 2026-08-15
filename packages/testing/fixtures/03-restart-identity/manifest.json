@@ -1,0 +1,18 @@
+{
+  "expect": "success",
+  "errorCode": null,
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "expectedStatus": 200,
+      "expectedBody": { "status": "ok", "message": "Hello from Kerith!" }
+    },
+    {
+      "method": "GET",
+      "path": "/store",
+      "expectedStatus": 200,
+      "expectedBody": { "items": ["item-A", "item-B"] }
+    }
+  ]
+}

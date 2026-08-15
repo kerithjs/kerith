@@ -12,7 +12,7 @@
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
-      "expectedBody": null
+      "expectedBody": { "message": "Hello World! Welcome to Kerith Express" }
     }
   ]
 }

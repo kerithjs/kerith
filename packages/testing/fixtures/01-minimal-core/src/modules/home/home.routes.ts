@@ -6,7 +6,7 @@ Controller('/')
 const router = Router()
 
 router.get('/', (_req, res) => {
-  res.send('Hello World! Welcome to Kerith Express')
+  res.json({ message: 'Hello World! Welcome to Kerith Express' })
 })
 
 export default router

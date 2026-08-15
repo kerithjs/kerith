@@ -1,0 +1,36 @@
+{
+  "expect": "success",
+  "errorCode": null,
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "expectedStatus": 200,
+      "expectedBody": { "status": "ok", "message": "Hello from Kerith!" }
+    },
+    {
+      "method": "GET",
+      "path": "/products",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "products": [
+          { "id": "p1", "name": "[SHARED] Keyboard", "price": 100 },
+          { "id": "p2", "name": "[SHARED] Mouse", "price": 50 }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/orders",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "orders": [
+          {
+            "id": "o1",
+            "product": { "id": "p1", "name": "[SHARED] Keyboard", "price": 100 }
+          }
+        ]
+      }
+    }
+  ]
+}
