@@ -1,0 +1,28 @@
+{
+  "name": "kerith-02-full-surface-app",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "kerith dev --watch --clear --runtime tsx src/server.ts",
+    "build": "tsc",
+    "start": "NODE_ENV=production node dist/server.js",
+    "setup": "kerith sync-preload && kerith sync-tsconfig",
+    "check": "kerith check"
+  },
+  "dependencies": {
+    "@kerith/core": "file:C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core",
+    "@kerith/app": "file:C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/app",
+    "@kerith/identifiers": "file:C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/identifiers",
+    "express": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.5"
+  }
+}

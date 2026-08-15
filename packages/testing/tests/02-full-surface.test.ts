@@ -185,3 +185,23 @@ describe('02-full-surface', () => {
     expect(normBoot1Domain).toEqual(normBaselineDomain);
   });
 });
+
+describe('02-full-surface-app (infrastructure composition)', () => {
+  let handle: FixtureHandle;
+  const fixtureDir = resolve(__dirname, '../fixtures/02-full-surface-app');
+
+  beforeAll(async () => {
+    handle = await runFixture(fixtureDir);
+  });
+
+  afterAll(async () => {
+    if (handle?.child?.exitCode === null) {
+      await stopFixture(handle.child);
+    }
+  });
+
+  it('endpoints respond exactly as declared in manifest, proving full Config→Client→Store→Provider composition', async () => {
+    const manifest = readManifest(fixtureDir);
+    await runEndpointAssertions(handle, manifest);
+  });
+});
