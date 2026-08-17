@@ -1,5 +1,5 @@
 {
   "expect": "success",
-  "warnCode": "UNDECLARED_SHARED",
+  "warnCode": "not a valid shared alias",
   "endpoints": []
 }

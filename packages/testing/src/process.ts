@@ -62,6 +62,10 @@ export async function runFixture(
 
   const child = spawnServer(fixtureDir, serverEntry, preloadPath, env, debug);
 
+  let logs = '';
+  child.stdout?.on('data', (chunk: Buffer) => { logs += chunk.toString(); });
+  child.stderr?.on('data', (chunk: Buffer) => { logs += chunk.toString(); });
+
   const port = await resolvePort(child, healthTimeoutMs);
 
   // Run health-gate: ensures the server is accepting requests before returning.
@@ -71,6 +75,7 @@ export async function runFixture(
     port,
     child,
     http: createHttpClient(port),
+    getLogs: () => logs,
   };
 }
 

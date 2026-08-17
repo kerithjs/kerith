@@ -1,18 +1,5 @@
 {
-  "expect": "success",
-  "errorCode": null,
-  "endpoints": [
-    {
-      "method": "GET",
-      "path": "/health",
-      "expectedStatus": 200,
-      "expectedBody": { "status": "ok", "message": "Hello from Kerith!" }
-    },
-    {
-      "method": "GET",
-      "path": "/",
-      "expectedStatus": 200,
-      "expectedBody": { "message": "Hello World! Welcome to Kerith Express" }
-    }
-  ]
+  "expect": "failure",
+  "errorCode": "BINDING_EXECUTION_FAILED",
+  "endpoints": []
 }

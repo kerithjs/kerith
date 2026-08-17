@@ -1,5 +1,7 @@
 {
   "name": "schedule-provider-partial-failure",
+  "expect": "success",
+  "errorCode": null,
   "expectedModules": 2,
   "endpoints": [
     {

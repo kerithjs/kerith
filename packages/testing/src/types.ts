@@ -42,6 +42,10 @@ export interface FixtureHandle {
    * Convenience wrapper — avoids repeating the base URL in every test.
    */
   http: HttpClient;
+  /**
+   * Helper to get the accumulated stdout/stderr output from the child process.
+   */
+  getLogs: () => string;
 }
 
 // ---------------------------------------------------------------------------
@@ -167,10 +171,15 @@ export interface Manifest {
    * The KerithError code expected in stdout/stderr when `expect` is
    * "failure". null for success fixtures.
    */
-  errorCode: string | null;
+  errorCode?: string | null;
+  /**
+   * A warning string (e.g. KerithError code) expected to appear in stdout
+   * when `expect` is "success".
+   */
+  warnCode?: string | null;
   /**
    * Ordered list of HTTP requests to exercise after the server is up.
    * The test runner iterates this list and asserts status + body for each.
    */
-  endpoints: ManifestEndpoint[];
+  endpoints?: ManifestEndpoint[];
 }
