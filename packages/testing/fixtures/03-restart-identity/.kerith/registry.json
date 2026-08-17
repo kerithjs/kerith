@@ -1,7 +1,7 @@
 {
   "project": "kerith-restart-identity",
   "version": "1.0.0",
-  "lastCheck": "2026-08-15T16:44:20.834Z",
+  "lastCheck": "2026-08-17T22:46:17.321Z",
   "modules": {
     "mod_8dc44912": {
       "id": "mod_8dc44912",
@@ -10,7 +10,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-15T15:02:17.679Z",
-      "lastSeen": "2026-08-15T16:44:20.821Z",
+      "lastSeen": "2026-08-17T22:46:17.309Z",
       "identifiers": [],
       "shadowFileId": "mod_8dc44912"
     }

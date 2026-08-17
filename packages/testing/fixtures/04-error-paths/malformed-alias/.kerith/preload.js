@@ -9,12 +9,12 @@ import { createResolveHook } from 'file:///C:/Users/Keiver/Desktop/Projects/Proj
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Preload configuration
+// NOTE: '@modules/no-existe' is intentionally absent from aliases —
+// the fixture exercises the failure path when an import cannot be resolved.
 const KERITH_PRELOAD_CONFIG = {
   modulesDir: resolve(__dirname, '../src'),
   aliases: {
     '@modules': resolve(__dirname, '../src'),
-    '@shared': resolve(__dirname, '../src/shared'),
-    '@modules/health': resolve(__dirname, '../src/modules/health'),
     '@modules/home': resolve(__dirname, '../src/modules/home'),
   },
   preloaded: true,

@@ -1,19 +1,8 @@
 {
   "project": "kerithapp",
   "version": "1.0.0",
-  "lastCheck": "2026-08-15T16:44:18.761Z",
+  "lastCheck": "2026-08-17T22:50:02.360Z",
   "modules": {
-    "mod_f8221947": {
-      "id": "mod_f8221947",
-      "name": "home",
-      "path": "src/modules/home",
-      "hash": "00807229ac",
-      "status": "active",
-      "createdAt": "2026-08-10T19:28:54.618Z",
-      "lastSeen": "2026-08-15T16:44:18.759Z",
-      "identifiers": [],
-      "shadowFileId": "mod_f8221947"
-    },
     "mod_64bd7347": {
       "id": "mod_64bd7347",
       "name": "health",
@@ -21,9 +10,20 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-10T19:28:54.618Z",
-      "lastSeen": "2026-08-15T16:44:18.759Z",
+      "lastSeen": "2026-08-17T22:50:02.358Z",
       "identifiers": [],
       "shadowFileId": "mod_64bd7347"
+    },
+    "mod_f8221947": {
+      "id": "mod_f8221947",
+      "name": "home",
+      "path": "src/modules/home",
+      "hash": "00807229ac",
+      "status": "active",
+      "createdAt": "2026-08-10T19:28:54.618Z",
+      "lastSeen": "2026-08-17T22:50:02.358Z",
+      "identifiers": [],
+      "shadowFileId": "mod_f8221947"
     }
   },
   "domains": {},

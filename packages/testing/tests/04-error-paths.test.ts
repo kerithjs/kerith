@@ -26,6 +26,26 @@ describe('04-error-paths', () => {
     });
   });
 
+  // ── malformed-alias ──────────────────────────────────────────────────────
+  describe('malformed-alias', () => {
+    const fixtureDir = resolve(__dirname, '../fixtures/04-error-paths/malformed-alias');
+
+    it('server never starts when a module imports a non-existent alias', async () => {
+      // The child process should crash because home/index.ts imports
+      // '@modules/no-existe', which is not registered in preload.js.
+      // Node throws ERR_MODULE_NOT_FOUND before Module() ever runs.
+      const failure = await runFixtureExpectingFailure(fixtureDir);
+
+      // Process must have exited with a non-zero code (or been killed due to
+      // health-gate timeout — either way the server never listened).
+      expect(failure.exitCode !== 0 || failure.healthTimedOut).toBe(true);
+
+      // The combined output must mention MODULE_NOT_FOUND so the cause is clear.
+      const combined = failure.stdout + failure.stderr;
+      expect(combined).toContain('MODULE_NOT_FOUND');
+    });
+  });
+
   // ── schedule-provider-partial-failure ────────────────────────────────────
   describe('schedule-provider-partial-failure', () => {
     let handle: FixtureHandle;
