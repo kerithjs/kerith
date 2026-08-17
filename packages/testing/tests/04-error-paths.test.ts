@@ -60,6 +60,34 @@ describe('04-error-paths', () => {
     });
   });
 
+  // ── duplicate-identifier ─────────────────────────────────────────────────
+  describe('duplicate-identifier', () => {
+    const fixtureDir = resolve(__dirname, '../fixtures/04-error-paths/duplicate-identifier');
+
+    it('fails to boot with DUPLICATE_MODULE when two folders register the same module name', async () => {
+      const failure = await runFixtureExpectingFailure(fixtureDir);
+
+      expect(failure.exitCode).toBe(1);
+
+      const combined = failure.stdout + failure.stderr;
+      expect(combined).toContain('DUPLICATE_MODULE');
+    });
+  });
+
+  // ── export-mismatch ──────────────────────────────────────────────────────
+  describe('export-mismatch', () => {
+    const fixtureDir = resolve(__dirname, '../fixtures/04-error-paths/export-mismatch');
+
+    it('fails to boot with EXPORT_MISMATCH when a declared export does not exist in index.ts', async () => {
+      const failure = await runFixtureExpectingFailure(fixtureDir);
+
+      expect(failure.exitCode).toBe(1);
+
+      const combined = failure.stdout + failure.stderr;
+      expect(combined).toContain('EXPORT_MISMATCH');
+    });
+  });
+
   // ── schedule-provider-partial-failure ────────────────────────────────────
   describe('schedule-provider-partial-failure', () => {
     let handle: FixtureHandle;
