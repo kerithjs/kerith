@@ -1,0 +1,1 @@
+{"status":"failed","error":"Circular dependency detected. Extract the shared dependency into a separate module."}

@@ -46,6 +46,20 @@ describe('04-error-paths', () => {
     });
   });
 
+  // ── circular-dependency ──────────────────────────────────────────────────
+  describe('circular-dependency', () => {
+    const fixtureDir = resolve(__dirname, '../fixtures/04-error-paths/circular-dependency');
+
+    it('fails to boot with CIRCULAR_DEPENDENCY when strict mode is true', async () => {
+      const failure = await runFixtureExpectingFailure(fixtureDir);
+      
+      expect(failure.exitCode).toBe(1);
+      
+      const combined = failure.stdout + failure.stderr;
+      expect(combined).toContain('CIRCULAR_DEPENDENCY');
+    });
+  });
+
   // ── schedule-provider-partial-failure ────────────────────────────────────
   describe('schedule-provider-partial-failure', () => {
     let handle: FixtureHandle;
