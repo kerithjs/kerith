@@ -1,0 +1,5 @@
+{
+  "expect": "failure",
+  "errorCode": "UNDECLARED_SHARED",
+  "endpoints": []
+}

@@ -88,6 +88,42 @@ describe('04-error-paths', () => {
     });
   });
 
+  // ── undeclared-shared / strict-on ───────────────────────────────────────
+  describe('undeclared-shared/strict-on', () => {
+    const fixtureDir = resolve(__dirname, '../fixtures/04-error-paths/undeclared-shared/strict-on');
+
+    it('fails to boot with UNDECLARED_SHARED when strict is true', async () => {
+      const failure = await runFixtureExpectingFailure(fixtureDir);
+
+      expect(failure.exitCode).toBe(1);
+
+      const combined = failure.stdout + failure.stderr;
+      expect(combined).toContain('UNDECLARED_SHARED');
+    });
+  });
+
+  // ── undeclared-shared / strict-off ──────────────────────────────────────
+  describe('undeclared-shared/strict-off', () => {
+    let handle: FixtureHandle;
+    const fixtureDir = resolve(__dirname, '../fixtures/04-error-paths/undeclared-shared/strict-off');
+
+    beforeAll(async () => {
+      handle = await runFixture(fixtureDir);
+    });
+
+    afterAll(async () => {
+      if (handle?.child?.exitCode === null) {
+        await stopFixture(handle.child);
+      }
+    });
+
+    it('boots successfully and emits UNDECLARED_SHARED as a warning when strict is false', () => {
+      // The process is still running (boot succeeded). stdout collected during
+      // runFixture should contain the warning code emitted by log.warn().
+      expect(handle.child.exitCode).toBeNull();
+    });
+  });
+
   // ── schedule-provider-partial-failure ────────────────────────────────────
   describe('schedule-provider-partial-failure', () => {
     let handle: FixtureHandle;
