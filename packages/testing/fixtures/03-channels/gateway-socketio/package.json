@@ -14,9 +14,9 @@
     "check": "kerith check"
   },
   "dependencies": {
-    "@kerith/app": "file:C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/app",
-    "@kerith/core": "file:C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core",
-    "@kerith/identifiers": "file:C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/identifiers",
+    "@kerith/app": "workspace:*",
+    "@kerith/core": "workspace:*",
+    "@kerith/identifiers": "workspace:*",
     "express": "^5.0.0",
     "socket.io": "^4.8.3"
   },

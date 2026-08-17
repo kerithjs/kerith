@@ -36,6 +36,7 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
+    "pretest": "node scripts/setup-fixtures.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "vitest run"

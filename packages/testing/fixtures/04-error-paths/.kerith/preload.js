@@ -13,11 +13,6 @@ const KERITH_PRELOAD_CONFIG = {
   modulesDir: resolve(__dirname, '../src'),
   aliases: {
     '@modules': resolve(__dirname, '../src'),
-    '@ecommerce': resolve(__dirname, '../src/modules/ecommerce'),
-    '@shared': resolve(__dirname, '../src/shared'),
-    '@modules/health': resolve(__dirname, '../src/modules/health'),
-    '@modules/catalog': resolve(__dirname, '../src/modules/ecommerce/catalog'),
-    '@modules/orders': resolve(__dirname, '../src/modules/ecommerce/orders'),
   },
   preloaded: true,
   _version: '2.0.0-alpha.1'

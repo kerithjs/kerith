@@ -14,7 +14,7 @@
     "check": "kerith check"
   },
   "dependencies": {
-    "@kerith/core": "file:C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core",
+    "@kerith/core": "workspace:*",
     "express": "^5.0.0"
   },
   "devDependencies": {
