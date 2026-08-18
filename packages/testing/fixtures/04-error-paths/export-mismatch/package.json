@@ -1,5 +1,5 @@
 {
-  "name": "fixture-export-mismatch",
+  "name": "fixture-04-error-paths-export-mismatch",
   "version": "1.0.0",
   "private": true,
   "type": "module"

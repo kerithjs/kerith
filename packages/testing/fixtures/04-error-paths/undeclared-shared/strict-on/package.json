@@ -1,1 +1,6 @@
-{ "name": "fixture-undeclared-shared-strict-on", "version": "1.0.0", "private": true, "type": "module" }
+{
+  "name": "fixture-undeclared-shared-strict-on",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module"
+}

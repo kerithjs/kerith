@@ -1,0 +1,1 @@
+import { Module } from "@kerith/core"; Module("a", { imports: ["b"] }); import "../b/private.ts";

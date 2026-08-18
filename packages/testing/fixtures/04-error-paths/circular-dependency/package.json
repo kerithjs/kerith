@@ -1,5 +1,5 @@
 {
-  "name": "fixture-circular-dependency",
+  "name": "fixture-04-error-paths-circular-dependency",
   "version": "1.0.0",
   "private": true,
   "type": "module"
