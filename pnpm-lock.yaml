@@ -83,7 +83,7 @@ importers:
         version: 5.4.5
       vitest:
         specifier: 4.1.10
-        version: 4.1.10(@types/node@20.19.43)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(tsx@4.23.8))
+        version: 4.1.10(@types/node@20.19.43)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@20.19.43)(esbuild@0.27.2)(tsx@4.23.8))
 
   packages/core:
     dependencies:
@@ -283,7 +283,390 @@ importers:
         version: 5.4.5
       vitest:
         specifier: 4.1.10
-        version: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.27.2)(tsx@4.23.8))
+        version: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(tsx@4.23.8))
+
+  packages/testing/fixtures/01-minimal-app:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/01-minimal-core:
+    dependencies:
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../core
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/02-full-surface-app:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/02-full-surface-core:
+    dependencies:
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../core
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/03-channels/alias-channel:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/03-channels/gateway-socketio:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+      socket.io:
+        specifier: ^4.8.3
+        version: 4.8.3(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/03-channels/middleware-channel:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/03-channels/schedule-cron:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/03-channels/schedule-passthrough-failsoft:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/03-channels/schedule-worker:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/03-restart-identity:
+    dependencies:
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../core
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/04-error-paths:
+    dependencies:
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../core
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/04-error-paths/binding-bind-failfast:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/04-error-paths/circular-dependency: {}
+
+  packages/testing/fixtures/04-error-paths/duplicate-identifier: {}
+
+  packages/testing/fixtures/04-error-paths/export-mismatch: {}
+
+  packages/testing/fixtures/04-error-paths/malformed-alias: {}
+
+  packages/testing/fixtures/04-error-paths/schedule-provider-partial-failure:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+  packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off: {}
+
+  packages/testing/fixtures/04-error-paths/undeclared-shared/strict-on: {}
 
 packages:
 
@@ -2952,7 +3335,7 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 26.1.2
+      '@types/node': 20.19.43
 
   '@types/chai@5.2.3':
     dependencies:
@@ -2961,13 +3344,13 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 26.1.2
+      '@types/node': 20.19.43
 
   '@types/cookiejar@2.1.5': {}
 
   '@types/cors@2.8.19':
     dependencies:
-      '@types/node': 26.1.2
+      '@types/node': 20.19.43
 
   '@types/deep-eql@4.0.2': {}
 
@@ -2979,7 +3362,7 @@ snapshots:
 
   '@types/express-serve-static-core@5.1.3':
     dependencies:
-      '@types/node': 26.1.2
+      '@types/node': 20.19.43
       '@types/qs': 6.15.1
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.1
@@ -3016,18 +3399,18 @@ snapshots:
 
   '@types/send@1.2.1':
     dependencies:
-      '@types/node': 26.1.2
+      '@types/node': 20.19.43
 
   '@types/serve-static@2.2.0':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 26.1.2
+      '@types/node': 20.19.43
 
   '@types/superagent@8.1.11':
     dependencies:
       '@types/cookiejar': 2.1.5
       '@types/methods': 1.1.4
-      '@types/node': 26.1.2
+      '@types/node': 20.19.43
       form-data: 4.0.6
 
   '@types/supertest@7.2.0':
@@ -3037,7 +3420,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 26.1.2
+      '@types/node': 20.19.43
 
   '@typescript-eslint/eslint-plugin@8.58.1(@typescript-eslint/parser@8.58.1(eslint@10.2.0(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.4.5))(eslint@10.2.0(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.4.5)':
     dependencies:
@@ -3142,7 +3525,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.27.2)(tsx@4.23.8))
+      vitest: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(tsx@4.23.8))
 
   '@vitest/expect@4.1.10':
     dependencies:
@@ -3153,6 +3536,14 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.1
 
+  '@vitest/mocker@4.1.10(vite@8.2.0(@types/node@20.19.43)(esbuild@0.27.2)(tsx@4.23.8))':
+    dependencies:
+      '@vitest/spy': 4.1.10
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 8.2.0(@types/node@20.19.43)(esbuild@0.27.2)(tsx@4.23.8)
+
   '@vitest/mocker@4.1.10(vite@8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(tsx@4.23.8))':
     dependencies:
       '@vitest/spy': 4.1.10
@@ -3160,14 +3551,6 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(tsx@4.23.8)
-
-  '@vitest/mocker@4.1.10(vite@8.2.0(@types/node@26.1.2)(esbuild@0.27.2)(tsx@4.23.8))':
-    dependencies:
-      '@vitest/spy': 4.1.10
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 8.2.0(@types/node@26.1.2)(esbuild@0.27.2)(tsx@4.23.8)
 
   '@vitest/mocker@4.1.10(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(tsx@4.23.8))':
     dependencies:
@@ -3418,7 +3801,7 @@ snapshots:
   engine.io@6.6.9(supports-color@7.2.0):
     dependencies:
       '@types/cors': 2.8.19
-      '@types/node': 26.1.2
+      '@types/node': 20.19.43
       '@types/ws': 8.18.1
       accepts: 1.3.8
       base64id: 2.0.0
@@ -4505,6 +4888,19 @@ snapshots:
 
   vary@1.1.2: {}
 
+  vite@8.2.0(@types/node@20.19.43)(esbuild@0.27.2)(tsx@4.23.8):
+    dependencies:
+      lightningcss: 1.33.0
+      picomatch: 4.0.5
+      postcss: 8.5.25
+      rolldown: 1.2.3
+      tinyglobby: 0.2.17
+    optionalDependencies:
+      '@types/node': 20.19.43
+      esbuild: 0.27.2
+      fsevents: 2.3.3
+      tsx: 4.23.8
+
   vite@8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(tsx@4.23.8):
     dependencies:
       lightningcss: 1.33.0
@@ -4515,19 +4911,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 20.19.43
       esbuild: 0.28.1
-      fsevents: 2.3.3
-      tsx: 4.23.8
-
-  vite@8.2.0(@types/node@26.1.2)(esbuild@0.27.2)(tsx@4.23.8):
-    dependencies:
-      lightningcss: 1.33.0
-      picomatch: 4.0.5
-      postcss: 8.5.25
-      rolldown: 1.2.3
-      tinyglobby: 0.2.17
-    optionalDependencies:
-      '@types/node': 26.1.2
-      esbuild: 0.27.2
       fsevents: 2.3.3
       tsx: 4.23.8
 
@@ -4543,6 +4926,34 @@ snapshots:
       esbuild: 0.28.1
       fsevents: 2.3.3
       tsx: 4.23.8
+
+  vitest@4.1.10(@types/node@20.19.43)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@20.19.43)(esbuild@0.27.2)(tsx@4.23.8)):
+    dependencies:
+      '@vitest/expect': 4.1.10
+      '@vitest/mocker': 4.1.10(vite@8.2.0(@types/node@20.19.43)(esbuild@0.27.2)(tsx@4.23.8))
+      '@vitest/pretty-format': 4.1.10
+      '@vitest/runner': 4.1.10
+      '@vitest/snapshot': 4.1.10
+      '@vitest/spy': 4.1.10
+      '@vitest/utils': 4.1.10
+      es-module-lexer: 2.3.1
+      expect-type: 1.4.0
+      magic-string: 0.30.21
+      obug: 2.1.4
+      pathe: 2.0.3
+      picomatch: 4.0.5
+      std-env: 4.2.0
+      tinybench: 2.9.0
+      tinyexec: 1.3.0
+      tinyglobby: 0.2.17
+      tinyrainbow: 3.1.1
+      vite: 8.2.0(@types/node@20.19.43)(esbuild@0.27.2)(tsx@4.23.8)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 20.19.43
+      '@vitest/coverage-v8': 4.1.10(vitest@4.1.10)
+    transitivePeerDependencies:
+      - msw
 
   vitest@4.1.10(@types/node@20.19.43)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(tsx@4.23.8)):
     dependencies:
@@ -4568,34 +4979,6 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 20.19.43
-      '@vitest/coverage-v8': 4.1.10(vitest@4.1.10)
-    transitivePeerDependencies:
-      - msw
-
-  vitest@4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.27.2)(tsx@4.23.8)):
-    dependencies:
-      '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(vite@8.2.0(@types/node@26.1.2)(esbuild@0.27.2)(tsx@4.23.8))
-      '@vitest/pretty-format': 4.1.10
-      '@vitest/runner': 4.1.10
-      '@vitest/snapshot': 4.1.10
-      '@vitest/spy': 4.1.10
-      '@vitest/utils': 4.1.10
-      es-module-lexer: 2.3.1
-      expect-type: 1.4.0
-      magic-string: 0.30.21
-      obug: 2.1.4
-      pathe: 2.0.3
-      picomatch: 4.0.5
-      std-env: 4.2.0
-      tinybench: 2.9.0
-      tinyexec: 1.3.0
-      tinyglobby: 0.2.17
-      tinyrainbow: 3.1.1
-      vite: 8.2.0(@types/node@26.1.2)(esbuild@0.27.2)(tsx@4.23.8)
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@types/node': 26.1.2
       '@vitest/coverage-v8': 4.1.10(vitest@4.1.10)
     transitivePeerDependencies:
       - msw
