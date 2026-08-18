@@ -30,8 +30,8 @@ for (const fixture of fixtures) {
   const pkgName = path.basename(fixture);
   console.log(`Setting up ${pkgName}...`);
   try {
-    // Run npm run setup which executes kerith sync-preload
-    execSync('npm run setup', { cwd: fixture, stdio: 'inherit' });
+    // Run pnpm run setup which executes kerith sync-preload
+    execSync('pnpm run setup', { cwd: fixture, stdio: 'inherit' });
   } catch (err) {
     console.error(`Failed to setup ${pkgName}`);
     process.exit(1);
