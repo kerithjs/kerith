@@ -3,6 +3,10 @@ export type HierarchyLevel = 'domain' | 'module' | 'submodule';
 export interface DomainOptions {
   /** Documentation only — does not affect runtime behavior. */
   description?: string;
+  /** Documentation only — lists sub-module folders within this domain. Does not affect runtime behavior. */
+  subModules?: string[];
+  /** Documentation only — lists module folders within this domain. Does not affect runtime behavior. */
+  modules?: string[];
 }
 
 export interface SubModuleOptions {

@@ -1,7 +1,7 @@
 {
   "project": "fixture-undeclared-shared-strict-off",
   "version": "1.0.0",
-  "lastCheck": "2026-08-18T15:23:34.153Z",
+  "lastCheck": "2026-08-18T15:34:58.080Z",
   "modules": {
     "mod_f95fa581": {
       "id": "mod_f95fa581",
@@ -10,7 +10,7 @@
       "hash": "da39a3ee5e",
       "status": "active",
       "createdAt": "2026-08-17T23:24:18.268Z",
-      "lastSeen": "2026-08-18T15:23:34.152Z",
+      "lastSeen": "2026-08-18T15:34:58.078Z",
       "identifiers": [],
       "shadowFileId": "mod_f95fa581"
     },
@@ -21,7 +21,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-17T23:26:41.341Z",
-      "lastSeen": "2026-08-18T15:23:34.152Z",
+      "lastSeen": "2026-08-18T15:34:58.078Z",
       "identifiers": [],
       "shadowFileId": "mod_64bd7347"
     }

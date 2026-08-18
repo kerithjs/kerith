@@ -1,7 +1,7 @@
 {
   "project": "v2-violations-app-fixture",
   "version": "1.0.0",
-  "lastCheck": "2026-08-18T15:23:05.220Z",
+  "lastCheck": "2026-08-18T15:34:08.638Z",
   "modules": {
     "mod_c30b5a3b": {
       "id": "mod_c30b5a3b",
@@ -11,7 +11,7 @@
       "hash": "a06042b04e",
       "status": "active",
       "createdAt": "2026-06-03T22:31:33.290Z",
-      "lastSeen": "2026-08-18T15:23:05.200Z",
+      "lastSeen": "2026-08-18T15:34:08.631Z",
       "identifiers": [
         "MemberService"
       ]
@@ -24,7 +24,7 @@
       "hash": "4fa0cee9d2",
       "status": "active",
       "createdAt": "2026-06-03T22:31:33.290Z",
-      "lastSeen": "2026-08-18T15:23:05.200Z",
+      "lastSeen": "2026-08-18T15:34:08.631Z",
       "identifiers": [
         "PaymentService"
       ]
