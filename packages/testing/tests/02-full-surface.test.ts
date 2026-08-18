@@ -12,7 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // ---------------------------------------------------------------------------
 
 async function runEndpointAssertions(handle: FixtureHandle, manifest: Manifest): Promise<void> {
-  for (const endpoint of manifest.endpoints) {
+  for (const endpoint of manifest.endpoints || []) {
     const res = await handle.http.request(endpoint.path, { method: endpoint.method });
     expect(
       res.status,

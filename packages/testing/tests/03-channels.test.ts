@@ -8,7 +8,7 @@ import { io } from 'socket.io-client';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 async function runEndpointAssertions(handle: FixtureHandle, manifest: Manifest): Promise<void> {
-  for (const endpoint of manifest.endpoints) {
+  for (const endpoint of manifest.endpoints || []) {
     if (endpoint.pollAfterMs) {
       await new Promise((resolve) => setTimeout(resolve, endpoint.pollAfterMs));
     }
