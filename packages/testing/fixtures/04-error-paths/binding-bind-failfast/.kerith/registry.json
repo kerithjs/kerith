@@ -1,19 +1,8 @@
 {
-  "project": "kerithapp",
+  "project": "fixture-04-error-paths-binding-bind-failfast",
   "version": "1.0.0",
-  "lastCheck": "2026-08-18T00:03:44.545Z",
+  "lastCheck": "2026-08-18T15:23:27.426Z",
   "modules": {
-    "mod_f8221947": {
-      "id": "mod_f8221947",
-      "name": "home",
-      "path": "src/modules/home",
-      "hash": "00807229ac",
-      "status": "active",
-      "createdAt": "2026-08-10T19:28:54.618Z",
-      "lastSeen": "2026-08-18T00:03:44.542Z",
-      "identifiers": [],
-      "shadowFileId": "mod_f8221947"
-    },
     "mod_64bd7347": {
       "id": "mod_64bd7347",
       "name": "health",
@@ -21,9 +10,20 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-10T19:28:54.618Z",
-      "lastSeen": "2026-08-18T00:03:44.542Z",
+      "lastSeen": "2026-08-18T15:23:27.424Z",
       "identifiers": [],
       "shadowFileId": "mod_64bd7347"
+    },
+    "mod_f8221947": {
+      "id": "mod_f8221947",
+      "name": "home",
+      "path": "src/modules/home",
+      "hash": "00807229ac",
+      "status": "active",
+      "createdAt": "2026-08-10T19:28:54.618Z",
+      "lastSeen": "2026-08-18T15:23:27.424Z",
+      "identifiers": [],
+      "shadowFileId": "mod_f8221947"
     }
   },
   "domains": {},

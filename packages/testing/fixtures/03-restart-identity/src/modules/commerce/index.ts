@@ -1,3 +1,6 @@
 import { Domain } from '@kerith/core';
 
-Domain('commerce');
+Domain('commerce', {
+  subModules: ['catalog'],
+  modules: ['store']
+});

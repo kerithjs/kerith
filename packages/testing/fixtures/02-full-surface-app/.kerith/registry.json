@@ -1,7 +1,7 @@
 {
-  "project": "kerith-02-full-surface-app",
+  "project": "fixture-02-full-surface-app",
   "version": "1.0.0",
-  "lastCheck": "2026-08-18T00:03:47.491Z",
+  "lastCheck": "2026-08-18T15:23:30.341Z",
   "modules": {
     "mod_85abe7e0": {
       "id": "mod_85abe7e0",
@@ -10,7 +10,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-15T15:35:02.309Z",
-      "lastSeen": "2026-08-18T00:03:47.489Z",
+      "lastSeen": "2026-08-18T15:23:30.339Z",
       "identifiers": [],
       "shadowFileId": "mod_85abe7e0"
     },
@@ -21,7 +21,7 @@
       "hash": "5fe7d53325",
       "status": "active",
       "createdAt": "2026-08-15T15:35:02.309Z",
-      "lastSeen": "2026-08-18T00:03:47.489Z",
+      "lastSeen": "2026-08-18T15:23:30.339Z",
       "identifiers": [],
       "shadowFileId": "mod_904bb40d"
     }

@@ -1,7 +1,7 @@
 {
-  "project": "kerithapp",
+  "project": "fixture-03-channels-alias-channel",
   "version": "1.0.0",
-  "lastCheck": "2026-08-18T00:03:46.414Z",
+  "lastCheck": "2026-08-18T15:23:29.263Z",
   "modules": {
     "mod_64bd7347": {
       "id": "mod_64bd7347",
@@ -10,7 +10,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-10T19:28:54.618Z",
-      "lastSeen": "2026-08-18T00:03:46.412Z",
+      "lastSeen": "2026-08-18T15:23:29.261Z",
       "identifiers": [],
       "shadowFileId": "mod_64bd7347"
     },
@@ -21,7 +21,7 @@
       "hash": "00807229ac",
       "status": "active",
       "createdAt": "2026-08-10T19:28:54.618Z",
-      "lastSeen": "2026-08-18T00:03:46.412Z",
+      "lastSeen": "2026-08-18T15:23:29.261Z",
       "identifiers": [],
       "shadowFileId": "mod_f8221947"
     }
