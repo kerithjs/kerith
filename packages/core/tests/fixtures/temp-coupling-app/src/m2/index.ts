@@ -1,1 +1,0 @@
-import { Module } from "@kerith/core"; Module("m2", { imports: ["target", "m1", "m3"] }); import "@modules/target"; import "@modules/m1"; import "@modules/m3";
