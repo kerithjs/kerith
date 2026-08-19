@@ -1,7 +1,7 @@
 {
   "project": "fixture-04-error-paths-circular-dependency",
   "version": "1.0.0",
-  "lastCheck": "2026-08-18T15:34:53.028Z",
+  "lastCheck": "2026-08-19T19:00:18.055Z",
   "modules": {
     "mod_0bcc6e81": {
       "id": "mod_0bcc6e81",
@@ -10,7 +10,7 @@
       "hash": "a3ca47e760",
       "status": "active",
       "createdAt": "2026-08-17T22:52:38.150Z",
-      "lastSeen": "2026-08-18T15:34:53.026Z",
+      "lastSeen": "2026-08-19T19:00:18.052Z",
       "identifiers": [],
       "shadowFileId": "mod_0bcc6e81"
     },
@@ -21,7 +21,7 @@
       "hash": "a3ca47e760",
       "status": "active",
       "createdAt": "2026-08-17T22:52:38.150Z",
-      "lastSeen": "2026-08-18T15:34:53.026Z",
+      "lastSeen": "2026-08-19T19:00:18.052Z",
       "identifiers": [],
       "shadowFileId": "mod_db9ab88b"
     }

@@ -36,6 +36,19 @@ function normalizeSnapshot(snapshot: RegistrySnapshot, type: 'global' | 'domain'
   // Strip root-level volatile fields that change every boot.
   delete clone.lastCheck;
 
+  // Normalize absolute paths to be platform-agnostic
+  const walk = (obj: any) => {
+    if (!obj || typeof obj !== 'object') return;
+    for (const key in obj) {
+      if (key === 'path' && typeof obj[key] === 'string') {
+        obj[key] = obj[key].replace(/\\/g, '/').replace(/^.*\/packages\/testing\/fixtures\//, '<root>/packages/testing/fixtures/');
+      } else if (typeof obj[key] === 'object') {
+        walk(obj[key]);
+      }
+    }
+  };
+  walk(clone);
+
   // Strip volatile fields from the flat records array.
   if (Array.isArray(clone.records)) {
     for (const record of clone.records) {

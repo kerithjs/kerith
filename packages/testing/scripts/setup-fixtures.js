@@ -14,9 +14,8 @@ function findFixtures(dir) {
       const fullPath = path.join(dir, entry.name);
       if (fs.existsSync(path.join(fullPath, 'package.json'))) {
         results.push(fullPath);
-      } else {
-        results = results.concat(findFixtures(fullPath));
       }
+      results = results.concat(findFixtures(fullPath));
     }
   }
   return results;
@@ -30,8 +29,11 @@ for (const fixture of fixtures) {
   const pkgName = path.basename(fixture);
   console.log(`Setting up ${pkgName}...`);
   try {
-    // Run pnpm run setup which executes kerith sync-preload
-    execSync('pnpm run setup', { cwd: fixture, stdio: 'inherit' });
+    const pkgJsonPath = path.join(fixture, 'package.json');
+    if (fs.existsSync(pkgJsonPath)) {
+      const kerithBin = path.resolve(__dirname, '../../core/dist/cli/index.js');
+      execSync(`node ${kerithBin} sync-preload && node ${kerithBin} sync-tsconfig`, { cwd: fixture, stdio: 'inherit' });
+    }
   } catch (err) {
     console.error(`Failed to setup ${pkgName}`);
     process.exit(1);

@@ -1,0 +1,1 @@
+import { Module } from "@kerith/core"; Module("m3", { imports: ["target"] }); import "@modules/target";

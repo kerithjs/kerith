@@ -1,7 +1,7 @@
 {
   "project": "fixture-01-minimal-core",
   "version": "1.0.0",
-  "lastCheck": "2026-08-18T15:34:51.442Z",
+  "lastCheck": "2026-08-19T19:00:16.218Z",
   "modules": {
     "mod_5e45824a": {
       "id": "mod_5e45824a",
@@ -10,7 +10,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-10T19:28:27.101Z",
-      "lastSeen": "2026-08-18T15:34:51.440Z",
+      "lastSeen": "2026-08-19T19:00:16.216Z",
       "identifiers": [],
       "shadowFileId": "mod_5e45824a"
     },
@@ -21,7 +21,7 @@
       "hash": "00807229ac",
       "status": "active",
       "createdAt": "2026-08-10T19:28:27.101Z",
-      "lastSeen": "2026-08-18T15:34:51.440Z",
+      "lastSeen": "2026-08-19T19:00:16.216Z",
       "identifiers": [],
       "shadowFileId": "mod_1526f2ce"
     }
