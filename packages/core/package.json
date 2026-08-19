@@ -9,7 +9,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "kerith": "dist/cli/index.js"
+    "kerith": "bin/kerith.js"
   },
   "exports": {
     ".": {
