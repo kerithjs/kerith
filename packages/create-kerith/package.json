@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "create-kerith": "./dist/index.js"
+    "create-kerith": "bin/create-kerith.js"
   },
   "files": [
     "dist",

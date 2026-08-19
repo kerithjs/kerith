@@ -1,0 +1,5 @@
+{
+  "expect": "success",
+  "warnCode": "not a valid shared alias",
+  "endpoints": []
+}

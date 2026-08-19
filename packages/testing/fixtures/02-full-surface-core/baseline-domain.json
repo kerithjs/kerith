@@ -1,0 +1,67 @@
+{
+  "project": "ecommerce",
+  "version": "1.0.0",
+  "lastCheck": "2026-08-15T14:49:59.482Z",
+  "modules": {
+    "mod_bea994de": {
+      "id": "mod_bea994de",
+      "name": "catalog",
+      "path": "src/modules/ecommerce/catalog",
+      "domain": "ecommerce",
+      "hash": "067bd46d35",
+      "status": "active",
+      "createdAt": "2026-08-15T14:49:59.481Z",
+      "lastSeen": "2026-08-15T14:49:59.481Z",
+      "identifiers": [
+        "ProductSchema",
+        "ProductsRepository",
+        "ProductsService"
+      ],
+      "shadowFileId": "mod_bea994de"
+    },
+    "mod_f22bdc2d": {
+      "id": "mod_f22bdc2d",
+      "name": "orders",
+      "path": "src/modules/ecommerce/orders",
+      "domain": "ecommerce",
+      "hash": "61982f9112",
+      "status": "active",
+      "createdAt": "2026-08-15T14:49:59.481Z",
+      "lastSeen": "2026-08-15T14:49:59.481Z",
+      "identifiers": [],
+      "shadowFileId": "mod_f22bdc2d"
+    }
+  },
+  "domains": {},
+  "_note": "Domain registry for ecommerce",
+  "records": [
+    {
+      "id": "mod_bea994de",
+      "name": "catalog",
+      "path": "src/modules/ecommerce/catalog",
+      "domain": "ecommerce",
+      "hash": "067bd46d35",
+      "status": "active",
+      "createdAt": "2026-08-15T14:49:59.481Z",
+      "lastSeen": "2026-08-15T14:49:59.481Z",
+      "identifiers": [
+        "ProductSchema",
+        "ProductsRepository",
+        "ProductsService"
+      ],
+      "shadowFileId": "mod_bea994de"
+    },
+    {
+      "id": "mod_f22bdc2d",
+      "name": "orders",
+      "path": "src/modules/ecommerce/orders",
+      "domain": "ecommerce",
+      "hash": "61982f9112",
+      "status": "active",
+      "createdAt": "2026-08-15T14:49:59.481Z",
+      "lastSeen": "2026-08-15T14:49:59.481Z",
+      "identifiers": [],
+      "shadowFileId": "mod_f22bdc2d"
+    }
+  ]
+}

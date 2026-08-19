@@ -1,0 +1,6 @@
+{
+  "name": "fixture-undeclared-shared-strict-off",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module"
+}

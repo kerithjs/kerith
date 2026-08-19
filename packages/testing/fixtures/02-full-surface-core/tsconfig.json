@@ -1,0 +1,68 @@
+{
+  "extends": "./tsconfig.kerith.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "@ecommerce": [
+        "./src/modules/ecommerce/index.ts"
+      ],
+      "@ecommerce/*": [
+        "./src/modules/ecommerce/*"
+      ],
+      "@modules/catalog": [
+        "./src/modules/ecommerce/catalog/index.ts"
+      ],
+      "@modules/catalog/*": [
+        "./src/modules/ecommerce/catalog/*"
+      ],
+      "@modules/ecommerce": [
+        "./src/modules/ecommerce/index.ts"
+      ],
+      "@modules/ecommerce/*": [
+        "./src/modules/ecommerce/*"
+      ],
+      "@modules/health": [
+        "./src/modules/health/index.ts"
+      ],
+      "@modules/health/*": [
+        "./src/modules/health/*"
+      ],
+      "@modules/orders": [
+        "./src/modules/ecommerce/orders/index.ts"
+      ],
+      "@modules/orders/*": [
+        "./src/modules/ecommerce/orders/*"
+      ],
+      "@modules/products": [
+        "./src/modules/ecommerce/catalog/products/index.ts"
+      ],
+      "@modules/products/*": [
+        "./src/modules/ecommerce/catalog/products/*"
+      ],
+      "@shared": [
+        "./src/shared"
+      ],
+      "@shared/*": [
+        "./src/shared/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

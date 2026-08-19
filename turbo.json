@@ -9,13 +9,13 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["build"]
+      "dependsOn": ["^build", "build", "^test"]
     },
     "lint": {
       "dependsOn": []
     },
     "test:e2e": {
-      "dependsOn": ["build"],
+      "dependsOn": ["^build", "build", "^test"],
       "cache": false
     },
     "bench": {

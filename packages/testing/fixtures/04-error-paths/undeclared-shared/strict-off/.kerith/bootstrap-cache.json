@@ -1,0 +1,57 @@
+{
+  "version": "2.0.0-alpha.1",
+  "status": "ok",
+  "savedAt": "2026-08-19T19:07:05.131Z",
+  "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\testing\\fixtures\\04-error-paths\\undeclared-shared\\strict-off",
+  "configHash": "d46380c2",
+  "data": {
+    "domains": [],
+    "modules": [
+      {
+        "name": "consumer",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/consumer",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/consumer/index.ts",
+        "imports": [],
+        "exports": [],
+        "shared": [
+          "@no-es-shared-valido"
+        ],
+        "options": {
+          "shared": [
+            "@no-es-shared-valido"
+          ]
+        },
+        "id": "mod_f95fa581",
+        "files": [],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 0,
+        "cachedMtime": 0
+      },
+      {
+        "name": "health",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/health",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/health/index.ts",
+        "imports": [],
+        "exports": [],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": []
+        },
+        "id": "mod_64bd7347",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/health/health.routes.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 243,
+        "cachedMtime": 1786389660161.8445
+      }
+    ],
+    "submodules": [],
+    "shared": [],
+    "identifiers": [],
+    "aliases": []
+  }
+}

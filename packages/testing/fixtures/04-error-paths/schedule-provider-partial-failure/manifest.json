@@ -1,0 +1,17 @@
+{
+  "name": "schedule-provider-partial-failure",
+  "expect": "success",
+  "errorCode": null,
+  "expectedModules": 2,
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "status": "ok",
+        "goodProviderRan": true
+      }
+    }
+  ]
+}

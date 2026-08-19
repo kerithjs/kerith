@@ -1,0 +1,1 @@
+{"status":"failed","error":"Module \"consumer\" declares \"@no-es-shared-valido\" in shared[] but it is not a valid shared alias."}

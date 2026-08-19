@@ -1,0 +1,5 @@
+{
+  "expect": "failure",
+  "errorCode": "CIRCULAR_DEPENDENCY",
+  "endpoints": []
+}

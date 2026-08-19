@@ -1,0 +1,70 @@
+{
+  "name": "@kerith/testing",
+  "version": "0.1.0-alpha.1",
+  "description": "E2E testing harness for Kerith projects.",
+  "author": "Vlynk Studios & Keiver-dev",
+  "license": "MIT",
+  "type": "module",
+  "module": "./dist/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kerithjs/kerith"
+  },
+  "bugs": {
+    "url": "https://github.com/kerithjs/kerith/issues"
+  },
+  "homepage": "https://kerith.dev",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "pretest": "node scripts/setup-fixtures.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run"
+  },
+  "peerDependencies": {
+    "@kerith/app": ">=1.0.0-alpha.1",
+    "@kerith/core": ">=2.0.0-alpha.1",
+    "@kerith/identifiers": ">=1.0.0-alpha.1"
+  },
+  "peerDependenciesMeta": {
+    "@kerith/app": {
+      "optional": true
+    },
+    "@kerith/identifiers": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@kerith/app": "workspace:*",
+    "@kerith/core": "workspace:*",
+    "@kerith/identifiers": "workspace:*",
+    "@types/node": "^26.1.2",
+    "tsup": "8.5.1",
+    "tsx": "4.23.8",
+    "typescript": "5.4.5",
+    "vitest": "4.1.10"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.3"
+  }
+}

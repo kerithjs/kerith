@@ -1,7 +1,7 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-08-07T00:32:03.898Z",
+  "savedAt": "2026-08-19T19:05:26.647Z",
   "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app",
   "configHash": "79329199",
   "data": {
@@ -29,7 +29,7 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 392,
-        "cachedMtime": 1775940391830.9624
+        "cachedMtime": 1786391079752.4192
       },
       {
         "name": "core",
@@ -73,7 +73,7 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 67,
-        "cachedMtime": 1775940391834.5027
+        "cachedMtime": 1786391079767.9453
       },
       {
         "name": "users",
@@ -102,7 +102,7 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 581,
-        "cachedMtime": 1779028768394.0388
+        "cachedMtime": 1786391079776.9502
       }
     ],
     "submodules": [],

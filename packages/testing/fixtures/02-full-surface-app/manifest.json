@@ -1,0 +1,24 @@
+{
+  "expect": "success",
+  "errorCode": null,
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "expectedStatus": 200,
+      "expectedBody": { "status": "ok", "message": "Hello from Kerith!" }
+    },
+    {
+      "method": "GET",
+      "path": "/catalog/status",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "apiBase": "https://api.example.com",
+        "timeout": 5000,
+        "client": "http@api.example.com",
+        "cache": "in-memory-v1",
+        "provider": "data-provider:http@api.example.com+in-memory-v1"
+      }
+    }
+  ]
+}

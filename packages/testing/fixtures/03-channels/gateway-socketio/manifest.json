@@ -1,0 +1,18 @@
+{
+  "name": "gateway-socketio",
+  "expectedModules": 2,
+  "socketio": {
+    "event": "ping",
+    "payload": "hello",
+    "expectedEvent": "pong",
+    "expectedPayload": "echo:hello"
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "expectedStatus": 200,
+      "expectedBody": { "status": "ok", "message": "Hello from Kerith!" }
+    }
+  ]
+}
