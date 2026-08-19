@@ -4,14 +4,17 @@
 import { registerHooks } from 'node:module';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { createResolveHook } from 'file:///C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/dist/preload/preload-hook.js';
+import { createResolveHook } from '@kerith/core/preload-hook';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Preload configuration
 const KERITH_PRELOAD_CONFIG = {
-  modulesDir: resolve(__dirname, '../src/modules'),
+  modulesDir: resolve(__dirname, '../src'),
   aliases: {
-    '@modules': resolve(__dirname, '../src/modules')
+    '@modules': resolve(__dirname, '../src'),
+    '@modules/consumer': resolve(__dirname, '../src/modules/consumer'),
+    '@modules/health': resolve(__dirname, '../src/modules/health'),
   },
   preloaded: true,
   _version: '2.0.0-alpha.1'
@@ -19,9 +22,10 @@ const KERITH_PRELOAD_CONFIG = {
 
 globalThis.__KERITH_PRELOAD_CONFIG__ = KERITH_PRELOAD_CONFIG;
 
+// Create resolve hook with precomputed alias structures at top-level
 const resolveHook = createResolveHook(KERITH_PRELOAD_CONFIG.aliases);
 
+// Register the hook directly with registerHooks()
 registerHooks({
   resolve: resolveHook
 });
-
