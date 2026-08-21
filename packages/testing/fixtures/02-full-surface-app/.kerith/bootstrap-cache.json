@@ -1,32 +1,12 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-08-19T19:06:58.713Z",
+  "savedAt": "2026-08-21T16:03:06.649Z",
   "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\testing\\fixtures\\02-full-surface-app",
   "configHash": "297d8d5c",
   "data": {
     "domains": [],
     "modules": [
-      {
-        "name": "health",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health/index.ts",
-        "imports": [],
-        "exports": [],
-        "shared": [],
-        "options": {
-          "imports": [],
-          "exports": []
-        },
-        "id": "mod_85abe7e0",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health/health.routes.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 242,
-        "cachedMtime": 1786807866097.6697
-      },
       {
         "name": "catalog",
         "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/catalog",
@@ -45,7 +25,27 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 883,
-        "cachedMtime": 1786808092510.104
+        "cachedMtime": 1787166602667.4658
+      },
+      {
+        "name": "health",
+        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health",
+        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health/index.ts",
+        "imports": [],
+        "exports": [],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": []
+        },
+        "id": "mod_85abe7e0",
+        "files": [
+          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health/health.routes.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 242,
+        "cachedMtime": 1787166602671.465
       }
     ],
     "submodules": [],

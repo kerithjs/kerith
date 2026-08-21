@@ -1,7 +1,7 @@
 {
   "project": "fixture-04-error-paths-duplicate-identifier",
   "version": "1.0.0",
-  "lastCheck": "2026-08-19T19:06:58.455Z",
+  "lastCheck": "2026-08-21T16:03:06.429Z",
   "modules": {
     "mod_0bcc6e81": {
       "id": "mod_0bcc6e81",
@@ -10,7 +10,7 @@
       "hash": "da39a3ee5e",
       "status": "active",
       "createdAt": "2026-08-17T23:34:23.396Z",
-      "lastSeen": "2026-08-19T19:06:58.451Z",
+      "lastSeen": "2026-08-21T16:03:06.428Z",
       "identifiers": [],
       "shadowFileId": "mod_0bcc6e81"
     },
@@ -21,7 +21,7 @@
       "hash": "da39a3ee5e",
       "status": "active",
       "createdAt": "2026-08-17T23:34:23.396Z",
-      "lastSeen": "2026-08-19T19:06:58.451Z",
+      "lastSeen": "2026-08-21T16:03:06.428Z",
       "identifiers": [],
       "shadowFileId": "mod_8b91304c"
     }

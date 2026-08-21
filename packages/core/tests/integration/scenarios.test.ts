@@ -8,6 +8,13 @@ import { KerithError } from "../../src/core/errors.js";
 import { loadNitsRegistry } from "../../src/nits/nits-store.js";
 import * as pinoModule from "../../src/core/pino-instance.js";
 
+vi.mock('@modules/core', () => ({
+  CoreService: class { getData() { return 'core-data'; } }
+}));
+vi.mock('@modules/auth', () => ({
+  AuthService: class { isAuthenticated() { return true; } }
+}));
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const sourceUrl = pathToFileURL(
@@ -1102,13 +1109,6 @@ describe("Integration Tests", () => {
   // strict-app Fixture Tests
   // -----------------------------------------------------------------------
   describe("strict-app fixture", () => {
-    vi.mock('@modules/core', () => ({
-      CoreService: class { getData() { return 'core-data'; } }
-    }));
-    vi.mock('@modules/auth', () => ({
-      AuthService: class { isAuthenticated() { return true; } }
-    }));
-
     const strictAppFixturePath = path.resolve(__dirname, "../fixtures/strict-app");
 
     it("bootstrap of strict-app completes without error when everything is correctly declared", async () => {

@@ -1,7 +1,7 @@
 {
   "project": "fixture-04-error-paths-export-mismatch",
   "version": "1.0.0",
-  "lastCheck": "2026-08-19T19:07:00.110Z",
+  "lastCheck": "2026-08-21T16:03:07.392Z",
   "modules": {
     "mod_2ac538ed": {
       "id": "mod_2ac538ed",
@@ -10,7 +10,7 @@
       "hash": "da39a3ee5e",
       "status": "active",
       "createdAt": "2026-08-17T23:20:31.887Z",
-      "lastSeen": "2026-08-19T19:07:00.109Z",
+      "lastSeen": "2026-08-21T16:03:07.390Z",
       "identifiers": [],
       "shadowFileId": "mod_2ac538ed"
     }

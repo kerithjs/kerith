@@ -1,19 +1,8 @@
 {
   "project": "fixture-03-channels-schedule-passthrough-failsoft",
   "version": "1.0.0",
-  "lastCheck": "2026-08-19T19:07:03.487Z",
+  "lastCheck": "2026-08-21T16:03:10.351Z",
   "modules": {
-    "mod_64bd7347": {
-      "id": "mod_64bd7347",
-      "name": "health",
-      "path": "src/modules/health",
-      "hash": "31eb9a593f",
-      "status": "active",
-      "createdAt": "2026-08-15T15:57:23.148Z",
-      "lastSeen": "2026-08-19T19:07:03.484Z",
-      "identifiers": [],
-      "shadowFileId": "mod_64bd7347"
-    },
     "mod_f8221947": {
       "id": "mod_f8221947",
       "name": "home",
@@ -21,9 +10,20 @@
       "hash": "00807229ac",
       "status": "active",
       "createdAt": "2026-08-15T15:57:23.148Z",
-      "lastSeen": "2026-08-19T19:07:03.484Z",
+      "lastSeen": "2026-08-21T16:03:10.349Z",
       "identifiers": [],
       "shadowFileId": "mod_f8221947"
+    },
+    "mod_64bd7347": {
+      "id": "mod_64bd7347",
+      "name": "health",
+      "path": "src/modules/health",
+      "hash": "31eb9a593f",
+      "status": "active",
+      "createdAt": "2026-08-15T15:57:23.148Z",
+      "lastSeen": "2026-08-21T16:03:10.349Z",
+      "identifiers": [],
+      "shadowFileId": "mod_64bd7347"
     }
   },
   "domains": {},

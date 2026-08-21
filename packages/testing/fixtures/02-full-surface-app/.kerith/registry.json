@@ -1,19 +1,8 @@
 {
   "project": "fixture-02-full-surface-app",
   "version": "1.0.0",
-  "lastCheck": "2026-08-19T19:06:58.650Z",
+  "lastCheck": "2026-08-21T16:03:06.616Z",
   "modules": {
-    "mod_85abe7e0": {
-      "id": "mod_85abe7e0",
-      "name": "health",
-      "path": "src/modules/health",
-      "hash": "31eb9a593f",
-      "status": "active",
-      "createdAt": "2026-08-15T15:35:02.309Z",
-      "lastSeen": "2026-08-19T19:06:58.646Z",
-      "identifiers": [],
-      "shadowFileId": "mod_85abe7e0"
-    },
     "mod_904bb40d": {
       "id": "mod_904bb40d",
       "name": "catalog",
@@ -21,9 +10,20 @@
       "hash": "5fe7d53325",
       "status": "active",
       "createdAt": "2026-08-15T15:35:02.309Z",
-      "lastSeen": "2026-08-19T19:06:58.646Z",
+      "lastSeen": "2026-08-21T16:03:06.615Z",
       "identifiers": [],
       "shadowFileId": "mod_904bb40d"
+    },
+    "mod_85abe7e0": {
+      "id": "mod_85abe7e0",
+      "name": "health",
+      "path": "src/modules/health",
+      "hash": "31eb9a593f",
+      "status": "active",
+      "createdAt": "2026-08-15T15:35:02.309Z",
+      "lastSeen": "2026-08-21T16:03:06.615Z",
+      "identifiers": [],
+      "shadowFileId": "mod_85abe7e0"
     }
   },
   "domains": {},
