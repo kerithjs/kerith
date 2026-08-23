@@ -85,5 +85,8 @@ export type { IdentifierCategory, IdentifierMetadata } from '@kerith/core'
 // Controller decorators
 export { Controller } from './decorators/controller.js';
 export { Get, Post, Put, Patch, Delete } from './decorators/methods.js';
-export type { RouteDefinition, AppControllerMeta, AppControllerOptions } from './types/routing.js';
-export { KERITH_CONTROLLER } from './decorators/symbols.js';
+export type { RouteDefinition, AppControllerMeta, AppControllerOptions, ParamSource, ParamDefinition } from './types/routing.js';
+export { KERITH_CONTROLLER, KERITH_ROUTES, KERITH_PARAMS } from './decorators/symbols.js';
+
+// Parameter decorators
+export { Body, Param, Query, Headers, Req, Res } from './decorators/params.js';

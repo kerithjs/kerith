@@ -4,4 +4,4 @@
 // cannot be cross-referenced outside the originating module.
 export const KERITH_CONTROLLER = Symbol.for('kerith:controller');
 export const KERITH_ROUTES = Symbol.for('kerith:routes');
-
+export const KERITH_PARAMS = Symbol.for('kerith:params');

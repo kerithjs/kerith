@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { Controller } from '../src/decorators/controller.js';
 import { Get, Post, Put, Patch, Delete } from '../src/decorators/methods.js';
-import { KERITH_CONTROLLER, KERITH_ROUTES } from '../src/decorators/symbols.js';
+import { KERITH_CONTROLLER, KERITH_ROUTES, KERITH_PARAMS } from '../src/decorators/symbols.js';
+import { Body, Param, Query } from '../src/decorators/params.js';
 
 describe('Controller Decorator', () => {
   it('should set metadata as undefined when no options provided', () => {
@@ -31,6 +32,44 @@ describe('Controller Decorator', () => {
       @Controller(123 as any)
       class InvalidController {}
     }).toThrow(TypeError);
+  });
+
+  it('should propagate params into route entries for decorated handlers', () => {
+    @Controller('/things')
+    class ThingsController {
+      @Get('/:id')
+      getOne(@Param('id') id: string, @Query('v') v: string) {}
+
+      @Post('/')
+      create(@Body() body: any) {}
+    }
+
+    const meta = (ThingsController as any)[KERITH_CONTROLLER];
+
+    const getOneRoute = meta.routes.find((r: any) => r.handlerKey === 'getOne');
+    expect(getOneRoute.params).toHaveLength(2);
+    expect(getOneRoute.params).toContainEqual({ index: 0, source: 'param', key: 'id' });
+    expect(getOneRoute.params).toContainEqual({ index: 1, source: 'query', key: 'v' });
+
+    const createRoute = meta.routes.find((r: any) => r.handlerKey === 'create');
+    expect(createRoute.params).toHaveLength(1);
+    expect(createRoute.params).toContainEqual({ index: 0, source: 'body', key: undefined });
+  });
+
+  it('should leave route.params undefined (not []) for handlers with no param decorators', () => {
+    @Controller('/plain')
+    class PlainController {
+      @Get('/')
+      list() {}
+    }
+
+    const meta = (PlainController as any)[KERITH_CONTROLLER];
+    const route = meta.routes[0];
+
+    // Retrocompatibilidad exacta con Fase 1: el campo params no debe existir en
+    // el objeto, no debe ser [] ni undefined explícito — toBeUndefined() cubre ambos
+    expect(route.params).toBeUndefined();
+    expect(Object.keys(route)).not.toContain('params');
   });
 });
 

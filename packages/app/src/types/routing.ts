@@ -2,10 +2,19 @@ import type { RequestHandler } from 'express';
 
 export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
+export type ParamSource = 'body' | 'param' | 'query' | 'headers' | 'req' | 'res';
+
+export interface ParamDefinition {
+  index: number;
+  source: ParamSource;
+  key?: string;
+}
+
 export interface RouteDefinition {
   method: HttpMethod;
   path: string;
   handlerKey: string;
+  params?: ParamDefinition[];
 }
 
 export interface AppControllerOptions {

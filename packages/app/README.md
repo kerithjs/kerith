@@ -232,12 +232,68 @@ class UsersController {
 > }
 > ```
 
+### Parameter Decorators
+
+Parameter decorators extract values from the incoming request and pass them as arguments to the handler method. They are **pure extractors** — no validation, no transformation, no cloning. The raw Express value is passed directly.
+
+```typescript
+import { Controller, Get, Post, Body, Param, Query, Headers, Req, Res } from '@kerith/app';
+
+@Controller('/items')
+class ItemsController {
+  @Get('/:id')
+  async getOne(@Param('id') id: string, @Query('v') version: string) {
+    // id   = req.params.id
+    // version = req.query.v
+  }
+
+  @Post('/')
+  async create(@Body() body: any, @Res() res: any) {
+    // body = req.body (as parsed by Express — requires express.json() middleware)
+    res.status(201).json({ ...body });
+  }
+
+  @Get('/raw')
+  async raw(@Req() req: any, @Res() res: any) {
+    // full Express Request and Response objects
+    res.json({ method: req.method });
+  }
+}
+```
+
+#### Available decorators
+
+| Decorator | Resolves to |
+|-----------|-------------|
+| `@Body()` | `req.body` |
+| `@Param(key?)` | `req.params[key]` if `key` given, `req.params` otherwise |
+| `@Query(key?)` | `req.query[key]` if `key` given, `req.query` otherwise |
+| `@Headers(key?)` | `req.headers[key]` if `key` given, `req.headers` otherwise |
+| `@Req()` | `req` (full Express Request) |
+| `@Res()` | `res` (full Express Response) |
+
+#### Known restrictions
+
+**No serialization of return values.**
+> When parameter decorators are used on a handler, Kerith does **not** automatically serialize the return value as a JSON response. `@Res()` is the only way to send a response. This is intentional — automatic serialization would conflict with streaming, SSE, and other non-JSON response patterns.
+
+**`@Headers(key)` expects lowercase header names.**
+> Express normalizes all incoming header names to lowercase (`content-type`, not `Content-Type`). Using `@Headers('Content-Type')` will always return `undefined`. Always use the lowercase form: `@Headers('content-type')`.
+
+**Parameter decorators are not supported on constructor parameters.**
+> Kerith has no dependency injection container. Applying `@Body()` or any other parameter decorator to a constructor parameter throws a `TypeError` at decoration time with a clear error message. Dependencies must be imported directly inside methods.
+
+**Arrow function class fields are not supported.**
+> TypeScript does not emit parameter decorator calls for arrow function class fields (e.g., `getUser = async (req, res) => {}`). Parameter decorators only work on regular method declarations. This is a TypeScript compiler limitation, not a Kerith restriction.
+
 ### Compatibility
 
 - Class-based decorators (`@Controller`) work alongside the traditional `Controller()` function
 - If both are used in the same file, the `Controller()` function takes precedence
 - The `@Controller` decorator automatically integrates with the Extension API (e.g., `Guard()`, `RateLimit()`) via the `metadata` option
+- Routes **without** any parameter decorators (Fase 1 style) continue to receive `(req, res, next)` exactly as before — no behavioral change
 
 ## Version
 
-Current version: v1.0.0-alpha.1
+Current version: v2.0.0-alpha.2
+

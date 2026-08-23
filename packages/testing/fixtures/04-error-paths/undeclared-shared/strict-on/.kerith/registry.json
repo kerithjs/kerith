@@ -1,7 +1,7 @@
 {
   "project": "fixture-undeclared-shared-strict-on",
   "version": "1.0.0",
-  "lastCheck": "2026-08-23T14:34:06.008Z",
+  "lastCheck": "2026-08-23T15:17:08.987Z",
   "modules": {
     "mod_c2504dde": {
       "id": "mod_c2504dde",
@@ -10,7 +10,7 @@
       "hash": "da39a3ee5e",
       "status": "active",
       "createdAt": "2026-08-17T23:24:17.202Z",
-      "lastSeen": "2026-08-23T14:34:06.007Z",
+      "lastSeen": "2026-08-23T15:17:08.986Z",
       "identifiers": [],
       "shadowFileId": "mod_c2504dde"
     }

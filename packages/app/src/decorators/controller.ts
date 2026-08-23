@@ -1,4 +1,4 @@
-import { KERITH_CONTROLLER, KERITH_ROUTES } from './symbols.js';
+import { KERITH_CONTROLLER, KERITH_ROUTES, KERITH_PARAMS } from './symbols.js';
 import type { AppControllerOptions, AppControllerMeta } from '../types/routing.js';
 import { getFileCallerInfo, getActiveRegistry } from '@kerith/core';
 import path from 'node:path';
@@ -44,10 +44,14 @@ export function Controller(prefix: string, options?: AppControllerOptions) {
 
   return function <T extends { new (...args: any[]): {} }>(target: T): void {
     const routes = (target.prototype as any)[KERITH_ROUTES] || [];
+    const paramsByHandler = (target.prototype as any)[KERITH_PARAMS] || {};
 
     const meta: AppControllerMeta = {
       prefix,
-      routes,
+      routes: routes.map((route: any) => ({
+        ...route,
+        ...(paramsByHandler[route.handlerKey] !== undefined && { params: paramsByHandler[route.handlerKey] }),
+      })),
       middlewares: options?.middlewares ?? [],
       metadata: options?.metadata,
       enabled: options?.enabled,
