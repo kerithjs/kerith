@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `exit 0 — no violations found` (no violations)
   - `exit 0 — N warnings (use --strict to block)` (warnings only, without `--strict`)
   - `exit 1 — violations found` (hard errors, or any violation with `--strict`)
+- **Class-based Controller Support**: Added optional dynamic import of `@kerith/app` in `step-08-controllers.ts` to support class-based controller decorators. Core continues to work without `@kerith/app` installed (graceful degradation). Added `buildRouterFromClass()` function in `app-controller-bridge.ts` to build Express routers from decorated controller classes. Added controller metadata synthesis from decorator metadata when `@Controller` decorator is used without `Controller()` function call.
 
 ### Changed
 

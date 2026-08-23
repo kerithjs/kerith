@@ -151,6 +151,93 @@ const app = await createApp(baseApp, {
 
 If `infrastructure` is not provided, the adapters will default to using environment variables (e.g., `REDIS_HOST`, `REDIS_PORT`, `REDIS_URL`) or fallback to defaults (`localhost:6379`).
 
+## Controller Decorators
+
+Kerith provides class-based controller decorators (`@Controller`, `@Get`, `@Post`, etc.) for organizing HTTP routes. This is an alternative to the traditional `Controller()` function approach.
+
+### Usage
+
+```typescript
+import { Controller, Get, Post, Put, Patch, Delete } from '@kerith/app';
+
+@Controller('/users')
+class UsersController {
+  @Get('/')
+  async getUsers(req: any, res: any) {
+    res.json([{ id: 1, name: 'John' }]);
+  }
+
+  @Get('/:id')
+  async getUser(req: any, res: any) {
+    const { id } = req.params;
+    res.json({ id, name: 'John' });
+  }
+
+  @Post('/')
+  async createUser(req: any, res: any) {
+    const user = req.body;
+    res.status(201).json({ id: 2, ...user });
+  }
+
+  @Put('/:id')
+  async updateUser(req: any, res: any) {
+    const { id } = req.params;
+    const updates = req.body;
+    res.json({ id, ...updates });
+  }
+
+  @Patch('/:id')
+  async patchUser(req: any, res: any) {
+    const { id } = req.params;
+    const updates = req.body;
+    res.json({ id, ...updates });
+  }
+
+  @Delete('/:id')
+  async deleteUser(req: any, res: any) {
+    const { id } = req.params;
+    res.status(204).send();
+  }
+}
+
+export default UsersController;
+```
+
+### Options
+
+The `@Controller` decorator accepts an optional configuration object:
+
+```typescript
+@Controller('/users', {
+  middlewares: [authMiddleware, loggingMiddleware],
+  metadata: { guards: ['admin'], rateLimit: 100 }
+})
+class UsersController {
+  // ...
+}
+```
+
+**⚠️ Dependency Injection Limitation:**
+> Controllers are instantiated without constructor arguments — Kerith does not currently have a dependency injection container. If a controller needs a Service or other dependency, it must be imported directly within the method rather than injected via constructor. For example:
+> ```typescript
+> import { Service } from './services/service.js'
+>
+> @Controller('/users')
+> class UserController {
+>   @Get()
+>   async getUsers() {
+>     const service = new Service() // Import and instantiate directly
+>     return service.findAll()
+>   }
+> }
+> ```
+
+### Compatibility
+
+- Class-based decorators (`@Controller`) work alongside the traditional `Controller()` function
+- If both are used in the same file, the `Controller()` function takes precedence
+- The `@Controller` decorator automatically integrates with the Extension API (e.g., `Guard()`, `RateLimit()`) via the `metadata` option
+
 ## Version
 
 Current version: v1.0.0-alpha.1
