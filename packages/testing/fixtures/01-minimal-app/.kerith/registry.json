@@ -1,7 +1,7 @@
 {
   "project": "fixture-01-minimal-app",
   "version": "1.0.0",
-  "lastCheck": "2026-08-23T15:17:02.910Z",
+  "lastCheck": "2026-08-27T17:47:56.984Z",
   "modules": {
     "mod_64bd7347": {
       "id": "mod_64bd7347",
@@ -10,7 +10,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-10T19:28:54.618Z",
-      "lastSeen": "2026-08-23T15:17:02.908Z",
+      "lastSeen": "2026-08-27T17:47:56.982Z",
       "identifiers": [],
       "shadowFileId": "mod_64bd7347"
     },
@@ -21,7 +21,7 @@
       "hash": "00807229ac",
       "status": "active",
       "createdAt": "2026-08-10T19:28:54.618Z",
-      "lastSeen": "2026-08-23T15:17:02.908Z",
+      "lastSeen": "2026-08-27T17:47:56.982Z",
       "identifiers": [],
       "shadowFileId": "mod_f8221947"
     }

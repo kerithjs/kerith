@@ -1,7 +1,7 @@
 {
   "project": "fixture-02-full-surface-core",
   "version": "1.0.0",
-  "lastCheck": "2026-08-23T15:17:02.936Z",
+  "lastCheck": "2026-08-27T17:47:57.132Z",
   "modules": {
     "mod_5e45824a": {
       "id": "mod_5e45824a",
@@ -10,7 +10,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-12T18:06:02.330Z",
-      "lastSeen": "2026-08-23T15:17:02.928Z",
+      "lastSeen": "2026-08-27T17:47:57.125Z",
       "identifiers": [],
       "shadowFileId": "mod_5e45824a"
     }
