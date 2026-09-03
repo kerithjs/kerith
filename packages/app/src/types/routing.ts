@@ -15,6 +15,11 @@ export interface RouteDefinition {
   path: string;
   handlerKey: string;
   params?: ParamDefinition[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface RouteOptions {
+  metadata?: Record<string, unknown>;
 }
 
 export interface AppControllerOptions {

@@ -1,7 +1,7 @@
 {
   "project": "fixture-03-channels-schedule-passthrough-failsoft",
   "version": "1.0.0",
-  "lastCheck": "2026-09-03T17:36:02.654Z",
+  "lastCheck": "2026-09-03T18:04:50.237Z",
   "modules": {
     "mod_f8221947": {
       "id": "mod_f8221947",
@@ -10,7 +10,7 @@
       "hash": "00807229ac",
       "status": "active",
       "createdAt": "2026-08-15T15:57:23.148Z",
-      "lastSeen": "2026-09-03T17:36:02.653Z",
+      "lastSeen": "2026-09-03T18:04:50.236Z",
       "identifiers": [],
       "shadowFileId": "mod_f8221947"
     },
@@ -21,7 +21,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-15T15:57:23.148Z",
-      "lastSeen": "2026-09-03T17:36:02.653Z",
+      "lastSeen": "2026-09-03T18:04:50.236Z",
       "identifiers": [],
       "shadowFileId": "mod_64bd7347"
     }

@@ -1,4 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import type { ControllerEntry } from '../../types/index.js';
+import { getRegisteredMiddlewareResolvers } from '../../extension/store.js';
 
 // Local duplicates of @kerith/app types — Core cannot depend on @kerith/app
 // (dependency goes the other way). Keep in sync with packages/app/src/types/routing.ts.
@@ -15,6 +17,7 @@ interface RouteDefinition {
   path: string;
   handlerKey: string;
   params?: ParamDefinition[];
+  metadata?: Record<string, unknown>;
 }
 
 interface AppControllerMeta {
@@ -22,6 +25,77 @@ interface AppControllerMeta {
   routes: RouteDefinition[];
   middlewares: any[];
   metadata?: Record<string, unknown>;
+}
+
+/**
+ * Resolves `phase: 'pre'` middleware handlers scoped to a single route.
+ *
+ * Implements Fase 4.0 decision (B): no change to MiddlewareResolver.getHandlers
+ * signature — instead, a synthetic ControllerEntry is built per route whose
+ * `.metadata` is the route-level metadata (complete override, no merge with
+ * controller-level metadata). This means guard/validate/rateLimit declared on
+ * a specific route apply only to that route, not to the whole controller.
+ *
+ * Returns [] if `route.metadata` is absent — controllers with no per-route
+ * metadata are unaffected and continue to use the controller-level resolvers
+ * from step-08-controllers.ts as before.
+ *
+ * ## Coexistence with controller-level middleware (Fase 4.5)
+ *
+ * When both controller-level AND route-level metadata are declared, they
+ * execute in two distinct Express layers — not in conflict:
+ *
+ *   app.use(fullPrefix, ...controllerPreMiddlewares, router)
+ *                        └── resolved by step-08 from ctrl.metadata
+ *                            runs for ALL routes in this controller
+ *
+ *   router[method](path, ...routePreMiddlewares, handler)
+ *                        └── resolved here from route.metadata
+ *                            runs only for THIS specific route
+ *
+ * Express executes them in mount order naturally (app-level first, then
+ * route-level). No special coordination is needed.
+ *
+ * ## "Opt-out" is intentionally impossible (Fase 4.5)
+ *
+ * A route cannot cancel or override a guard declared at the controller level.
+ * Controller-level guards (step-08) always run for every route in that
+ * controller regardless of what `route.metadata` says. Route-level metadata
+ * is strictly additive — it can only add more middleware for that specific
+ * route, not remove middleware inherited from the controller.
+ *
+ * This is by design: if a guard needs to be conditional per route, it should
+ * be registered as a route-level guard, not a controller-level guard.
+ *
+ * ## Post/error per-route (deferred)
+ *
+ * Post/error per-route handlers are not implemented here: no phase:'post'|
+ * 'error' identifiers exist today, so there is no concrete case to support.
+ */
+function resolveRouteMiddlewares(
+  ControllerClass: any,
+  ctrlMeta: AppControllerMeta,
+  route: RouteDefinition,
+): unknown[] {
+  if (!route.metadata) return [];
+
+  // Build a synthetic ControllerEntry satisfying the ControllerEntry type.
+  // Guard/RateLimit/Validate only read `.metadata`, so name/path/router/etc.
+  // are placeholders — they are never accessed by the resolvers in practice.
+  const syntheticEntry: ControllerEntry = {
+    name: ControllerClass.name ?? 'unknown',
+    path: '',
+    prefix: ctrlMeta.prefix,
+    middlewares: [],
+    router: null as any,
+    enabled: true,
+    metadata: route.metadata,  // complete override — no merge with ctrlMeta.metadata
+  };
+
+  return getRegisteredMiddlewareResolvers()
+    .filter(r => r.phase === 'pre')
+    .sort((a, b) => b.priority - a.priority)
+    .flatMap(r => r.getHandlers(syntheticEntry));
 }
 
 /**
@@ -96,20 +170,24 @@ export function buildRouterFromClass(
 
     if (route.params?.length) {
       // Fase 2 path: resolve decorated parameters and invoke handler.
-      // `return` is required so Express 5 can forward rejected promises to
-      // next(err) automatically — without it, async handlers that throw
-      // would silently swallow the error when params are in use.
+      // Route-level pre-middlewares (Fase 4.4) run before the param-aware handler.
+      const routeMiddlewares = resolveRouteMiddlewares(ControllerClass, meta, route);
       (router as any)[method](
         route.path,
+        ...(routeMiddlewares as any[]),
         function paramAwareHandler(req: Request, res: Response, next: NextFunction) {
           return handler.apply(instance, resolveArgs(req, res, route.params!));
         },
       );
     } else {
-      // Fase 1 path: no param decorators — pass handler bound directly to
-      // Express so it keeps the same behaviour as before (including Express 5
-      // promise forwarding, which works for free on bound functions).
-      (router as any)[method](route.path, handler.bind(instance));
+      // Fase 1 path: no param decorators — pass handler bound directly.
+      // Route-level pre-middlewares (Fase 4.4) run before the bound handler.
+      const routeMiddlewares = resolveRouteMiddlewares(ControllerClass, meta, route);
+      if (routeMiddlewares.length > 0) {
+        (router as any)[method](route.path, ...(routeMiddlewares as any[]), handler.bind(instance));
+      } else {
+        (router as any)[method](route.path, handler.bind(instance));
+      }
     }
   }
 

@@ -113,6 +113,26 @@ describe('Method Decorators', () => {
     expect(Array.isArray(routes)).toBe(true);
     expect(routes).toHaveLength(1);
   });
+
+  it('should propagate route-level metadata and not leave undefined fields', () => {
+    @Controller('/route-meta')
+    class RouteMetaController {
+      @Get('/1', { metadata: { validate: 'schema1' } })
+      withMeta() {}
+
+      @Get('/2')
+      withoutMeta() {}
+    }
+
+    const meta = (RouteMetaController as any)[KERITH_CONTROLLER];
+    
+    const routeWith = meta.routes.find((r: any) => r.handlerKey === 'withMeta');
+    expect(routeWith.metadata).toEqual({ validate: 'schema1' });
+
+    const routeWithout = meta.routes.find((r: any) => r.handlerKey === 'withoutMeta');
+    expect(routeWithout.metadata).toBeUndefined();
+    expect(Object.keys(routeWithout)).not.toContain('metadata');
+  });
 });
 
 describe('Decorator Evaluation Order', () => {
