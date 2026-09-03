@@ -210,7 +210,7 @@ The `@Controller` decorator accepts an optional configuration object:
 ```typescript
 @Controller('/users', {
   middlewares: [authMiddleware, loggingMiddleware],
-  metadata: { guards: ['admin'], rateLimit: 100 }
+  metadata: { guards: ['admin'], rateLimit: 100, validate: 'updateUserSchema' }
 })
 class UsersController {
   // ...

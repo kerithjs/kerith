@@ -235,6 +235,13 @@ export const IDENTIFIER_CATALOG: IdentifierMetadata[] = [
     channel: "middleware",
     trackable: true,
   },
+  {
+    name: "Validate",
+    category: "security",
+    kind: "logical",
+    channel: "middleware",
+    trackable: true,
+  },
 
   // ─── HTTP ─────────────────────────────────────────────────────────────────
   {

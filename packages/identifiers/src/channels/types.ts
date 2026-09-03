@@ -29,7 +29,7 @@ export interface MiddlewarePlugin {
   /**
    * Order within the phase (higher = earlier — matches Core's execution order).
    * Core sorts descending: `sort((a, b) => b.priority - a.priority)`.
-   * Convention: RateLimit = 2, Guard = 1, Middleware = 0.
+   * Convention: RateLimit = 2, Guard = 1, Validate = 0.5, Middleware = 0.
    */
   priority: number;
   /**

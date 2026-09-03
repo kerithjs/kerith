@@ -13,8 +13,8 @@
       "domain": "ecommerce",
       "hash": "067bd46d35",
       "status": "active",
-      "createdAt": "2026-08-27T17:47:57.125Z",
-      "lastSeen": "2026-08-27T17:47:57.125Z",
+      "createdAt": "2026-09-03T17:35:57.596Z",
+      "lastSeen": "2026-09-03T17:35:57.596Z",
       "identifiers": [
         "ProductSchema",
         "ProductsRepository",
@@ -29,12 +29,12 @@
       "domain": "ecommerce",
       "hash": "61982f9112",
       "status": "active",
-      "createdAt": "2026-08-27T17:47:57.125Z",
-      "lastSeen": "2026-08-27T17:47:57.125Z",
+      "createdAt": "2026-09-03T17:35:57.596Z",
+      "lastSeen": "2026-09-03T17:35:57.596Z",
       "identifiers": [],
       "shadowFileId": "mod_f22bdc2d"
     }
   },
   "submodules": [],
-  "lastCheck": "2026-08-27T17:47:57.127Z"
+  "lastCheck": "2026-09-03T17:35:57.598Z"
 }
