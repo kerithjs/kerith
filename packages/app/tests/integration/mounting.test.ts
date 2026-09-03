@@ -451,4 +451,265 @@ export default AsyncErrController;
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  // ─── Fase 4.6 — Route-level middleware tests ──────────────────────────────
+
+  it('4.6.1 — Guard() at route level: /public passes without token, /admin requires token', async () => {
+    const { tmpDir, moduleDir } = makeTmpProject('routeguard');
+
+    const { Guard } = await import('@kerith/identifiers');
+    Guard('jwt-route', (req: any) => req.headers?.authorization === 'Bearer valid-token');
+
+    fs.writeFileSync(
+      path.join(moduleDir, 'routeguard.ts'),
+      SYMBOL_PREAMBLE + `
+class RouteGuardController {
+  public(req, res) { res.status(200).json({ route: 'public' }); }
+  admin(req, res)  { res.status(200).json({ route: 'admin'  }); }
+}
+RouteGuardController.prototype[KERITH_ROUTES] = [
+  { method: 'get', path: '/public', handlerKey: 'public' },
+  { method: 'get', path: '/admin',  handlerKey: 'admin', metadata: { guards: ['jwt-route'] } },
+];
+RouteGuardController[KERITH_CONTROLLER] = {
+  prefix: '/api',
+  routes: RouteGuardController.prototype[KERITH_ROUTES],
+  middlewares: [],
+  metadata: undefined,
+};
+export default RouteGuardController;
+`,
+    );
+
+    vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
+    const { createApp } = await import('../../src/index.js');
+    const app = express();
+
+    try {
+      await createApp(app as any, { logger: () => {} });
+
+      // /public — no guard, always 200
+      const resPublic = await request(app).get('/api/public');
+      expect(resPublic.status).toBe(200);
+      expect(resPublic.body).toEqual({ route: 'public' });
+
+      // /admin without token — guard rejects → 401
+      const resAdminNoToken = await request(app).get('/api/admin');
+      expect(resAdminNoToken.status).toBe(401);
+
+      // /admin with valid token — guard passes → 200
+      const resAdminWithToken = await request(app)
+        .get('/api/admin')
+        .set('Authorization', 'Bearer valid-token');
+      expect(resAdminWithToken.status).toBe(200);
+      expect(resAdminWithToken.body).toEqual({ route: 'admin' });
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('4.6.2 — RateLimit() at route level: limited route rejects at 429, unlimited route always passes', async () => {
+    const { tmpDir, moduleDir } = makeTmpProject('routeratelimit');
+
+    const { RateLimit } = await import('@kerith/identifiers');
+    // Always-reject limiter for test purposes
+    RateLimit('always-limited', (_req: any) => false, { message: 'Rate limit hit' });
+
+    fs.writeFileSync(
+      path.join(moduleDir, 'routeratelimit.ts'),
+      SYMBOL_PREAMBLE + `
+class RateLimitController {
+  free(req, res)     { res.status(200).json({ route: 'free' }); }
+  limited(req, res)  { res.status(200).json({ route: 'limited' }); }
+}
+RateLimitController.prototype[KERITH_ROUTES] = [
+  { method: 'get', path: '/free',    handlerKey: 'free'    },
+  { method: 'get', path: '/limited', handlerKey: 'limited', metadata: { rateLimit: 'always-limited' } },
+];
+RateLimitController[KERITH_CONTROLLER] = {
+  prefix: '/rl',
+  routes: RateLimitController.prototype[KERITH_ROUTES],
+  middlewares: [],
+  metadata: undefined,
+};
+export default RateLimitController;
+`,
+    );
+
+    vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
+    const { createApp } = await import('../../src/index.js');
+    const app = express();
+
+    try {
+      await createApp(app as any, { logger: () => {} });
+
+      const resFree = await request(app).get('/rl/free');
+      expect(resFree.status).toBe(200);
+
+      const resLimited = await request(app).get('/rl/limited');
+      expect(resLimited.status).toBe(429);
+      expect(resLimited.body.error).toBe('Rate limit hit');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('4.6.3 — Validate() at route level: invalid body → 400, valid body → 200 with coerced req.body', async () => {
+    const { tmpDir, moduleDir } = makeTmpProject('routevalidate');
+
+    const { Validate } = await import('@kerith/identifiers');
+    Validate('user-schema', {
+      parse(data: any) {
+        if (!data?.name || typeof data.name !== 'string') {
+          throw new Error('name is required');
+        }
+        return { ...data, name: data.name.trim(), validated: true };
+      },
+    });
+
+    fs.writeFileSync(
+      path.join(moduleDir, 'routevalidate.ts'),
+      SYMBOL_PREAMBLE + `
+class ValidateController {
+  create(req, res) { res.status(200).json({ body: req.body }); }
+}
+ValidateController.prototype[KERITH_ROUTES] = [
+  { method: 'post', path: '/', handlerKey: 'create', metadata: { validate: 'user-schema' } },
+];
+ValidateController[KERITH_CONTROLLER] = {
+  prefix: '/validate',
+  routes: ValidateController.prototype[KERITH_ROUTES],
+  middlewares: [],
+  metadata: undefined,
+};
+export default ValidateController;
+`,
+    );
+
+    vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
+    const { createApp } = await import('../../src/index.js');
+    const app = express();
+    app.use(express.json());
+
+    try {
+      await createApp(app as any, { logger: () => {} });
+
+      // Invalid body — no name field → 400
+      const resBad = await request(app)
+        .post('/validate')
+        .set('Content-Type', 'application/json')
+        .send({ age: 25 });
+      expect(resBad.status).toBe(400);
+      expect(resBad.body.error).toBe('Validation failed');
+
+      // Valid body — name present → 200, body coerced (validated: true injected)
+      const resOk = await request(app)
+        .post('/validate')
+        .set('Content-Type', 'application/json')
+        .send({ name: '  Kerith  ' });
+      expect(resOk.status).toBe(200);
+      expect(resOk.body.body).toMatchObject({ name: 'Kerith', validated: true });
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('4.6.4 — regression: routes without route.metadata are completely unaffected (Fase 1/2/3 baseline)', async () => {
+    // Re-runs the 6.2.1 fixture verbatim — confirms that resolveRouteMiddlewares
+    // returns [] when route.metadata is absent, adding zero overhead.
+    const { tmpDir, moduleDir } = makeTmpProject('no-meta-regression');
+
+    fs.writeFileSync(
+      path.join(moduleDir, 'nometa.ts'),
+      SYMBOL_PREAMBLE + `
+class NoMetaController {
+  list(req, res) { res.status(200).json({ ok: true }); }
+}
+NoMetaController.prototype[KERITH_ROUTES] = [
+  { method: 'get', path: '/', handlerKey: 'list' },
+];
+NoMetaController[KERITH_CONTROLLER] = {
+  prefix: '/nometa',
+  routes: NoMetaController.prototype[KERITH_ROUTES],
+  middlewares: [],
+  metadata: undefined,
+};
+export default NoMetaController;
+`,
+    );
+
+    vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
+    const { createApp } = await import('../../src/index.js');
+    const app = express();
+
+    try {
+      await createApp(app as any, { logger: () => {} });
+
+      const res = await request(app).get('/nometa');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ ok: true });
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('4.6.5 — override not merge: route.metadata.guards replaces ctrl.metadata.guards at route scope only', async () => {
+    const { tmpDir, moduleDir } = makeTmpProject('override-meta');
+
+    const { Guard } = await import('@kerith/identifiers');
+    // admin-guard: only passes for 'admin' header
+    Guard('admin-guard', (req: any) => req.headers?.role === 'admin');
+    // jwt-guard: only passes for 'jwt' header
+    Guard('jwt-guard', (req: any) => req.headers?.role === 'jwt');
+
+    fs.writeFileSync(
+      path.join(moduleDir, 'override.ts'),
+      SYMBOL_PREAMBLE + `
+class OverrideController {
+  // Both routes go through controller-level 'admin-guard' (step-08).
+  // /extra also runs route-level 'jwt-guard' (Fase 4.4).
+  base(req, res)  { res.status(200).json({ route: 'base'  }); }
+  extra(req, res) { res.status(200).json({ route: 'extra' }); }
+}
+OverrideController.prototype[KERITH_ROUTES] = [
+  { method: 'get', path: '/base',  handlerKey: 'base'  },
+  { method: 'get', path: '/extra', handlerKey: 'extra', metadata: { guards: ['jwt-guard'] } },
+];
+OverrideController[KERITH_CONTROLLER] = {
+  prefix: '/ov',
+  routes: OverrideController.prototype[KERITH_ROUTES],
+  middlewares: [],
+  metadata: { guards: ['admin-guard'] },
+};
+export default OverrideController;
+`,
+    );
+
+    vi.spyOn(process, 'cwd').mockReturnValue(tmpDir);
+    const { createApp } = await import('../../src/index.js');
+    const app = express();
+
+    try {
+      await createApp(app as any, { logger: () => {} });
+
+      // /base: only admin-guard (controller level). role=admin passes, role=jwt fails.
+      const baseAdmin = await request(app).get('/ov/base').set('role', 'admin');
+      expect(baseAdmin.status).toBe(200);
+
+      const baseJwt = await request(app).get('/ov/base').set('role', 'jwt');
+      expect(baseJwt.status).toBe(401); // admin-guard blocks jwt role
+
+      // /extra: admin-guard (controller) + jwt-guard (route). Both must pass.
+      // role=admin only → jwt-guard at route level blocks → 401
+      const extraAdmin = await request(app).get('/ov/extra').set('role', 'admin');
+      expect(extraAdmin.status).toBe(401);
+
+      // Neither header → admin-guard blocks immediately → 401
+      const extraNone = await request(app).get('/ov/extra');
+      expect(extraNone.status).toBe(401);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });
+

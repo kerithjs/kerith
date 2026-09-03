@@ -21,6 +21,8 @@ All notable changes to this project will be documented in this file.
 - Added `KERITH_PARAMS` symbol (`Symbol.for('kerith:params')`) for parameter metadata storage, following the same global registry convention as `KERITH_CONTROLLER`/`KERITH_ROUTES`.
 - Added `ParamSource` union type and `ParamDefinition` interface to `types/routing.ts`. Extended `RouteDefinition` with optional `params?: ParamDefinition[]` — fully backwards-compatible (field is omitted, not set to `undefined` or `[]`, for routes without param decorators).
 - `@Controller` now reads `KERITH_PARAMS` from the prototype and propagates per-handler `ParamDefinition[]` into the `AppControllerMeta.routes` array at class decoration time.
+- **Route-level Metadata (Fase 4)**: The HTTP method decorators (`@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`) now accept a second optional argument `options?: RouteOptions` containing a `metadata` field. This allows registering Extension API identifiers (e.g., `Guard`, `RateLimit`, `Validate`) on a per-route basis.
+- Extended `RouteDefinition` with an optional `metadata?: Record<string, unknown>` field.
 
 
 ### Fixed

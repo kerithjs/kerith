@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Route-level Middleware (Fase 4)**: The internal `app-controller-bridge.ts` now supports resolving `phase: 'pre'` middlewares at the route level via `route.metadata`. This allows identifiers like `Guard`, `RateLimit`, and `Validate` to be applied to specific routes without modifying the `MiddlewareResolver` public interface. Controller-level middlewares (resolved in `step-08-controllers.ts`) remain unaffected and coexist additively with route-level middlewares.
 - Global shared (`@shared`): place shared code in `src/shared/`, declare with `shared: ['@shared']` in Module()
 - Domain-scoped shared (`@{domain}/shared`): place code in `src/{domain}/_shared/`, implicit access for domain modules
 - `kerith check` detects UNDECLARED_SHARED, UNUSED_SHARED, SHARED_SCOPE_VIOLATION

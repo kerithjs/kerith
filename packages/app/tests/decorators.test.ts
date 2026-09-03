@@ -133,6 +133,52 @@ describe('Method Decorators', () => {
     expect(routeWithout.metadata).toBeUndefined();
     expect(Object.keys(routeWithout)).not.toContain('metadata');
   });
+
+  it('should write route.metadata to KERITH_ROUTES for all 5 HTTP method decorators', () => {
+    const routeMeta = { guards: ['jwt'] };
+
+    @Controller('/all-methods')
+    class AllMethodsController {
+      @Get('/', { metadata: routeMeta }) get() {}
+      @Post('/', { metadata: routeMeta }) post() {}
+      @Put('/', { metadata: routeMeta }) put() {}
+      @Patch('/', { metadata: routeMeta }) patch() {}
+      @Delete('/', { metadata: routeMeta }) del() {}
+    }
+
+    const routes = (AllMethodsController.prototype as any)[KERITH_ROUTES];
+    for (const route of routes) {
+      expect(route.metadata).toEqual(routeMeta);
+    }
+  });
+
+  it('should not write metadata to KERITH_ROUTES when options omitted (retrocompatibility)', () => {
+    @Controller('/no-meta')
+    class NoMetaController {
+      @Get('/') list() {}
+    }
+
+    const routes = (NoMetaController.prototype as any)[KERITH_ROUTES];
+    expect(routes[0].metadata).toBeUndefined();
+    expect(Object.keys(routes[0])).not.toContain('metadata');
+  });
+
+  it('should propagate both metadata and params on the same route without collision', () => {
+    @Controller('/combined')
+    class CombinedController {
+      @Get('/:id', { metadata: { guards: ['jwt'] } })
+      getOne(@Param('id') id: string) {}
+    }
+
+    const meta = (CombinedController as any)[KERITH_CONTROLLER];
+    const route = meta.routes[0];
+
+    expect(route.metadata).toEqual({ guards: ['jwt'] });
+    expect(route.params).toContainEqual({ index: 0, source: 'param', key: 'id' });
+    // Both keys present, neither overwriting the other
+    expect(Object.keys(route)).toContain('metadata');
+    expect(Object.keys(route)).toContain('params');
+  });
 });
 
 describe('Decorator Evaluation Order', () => {

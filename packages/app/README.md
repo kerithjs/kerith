@@ -217,6 +217,20 @@ class UsersController {
 }
 ```
 
+The HTTP method decorators (`@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`) also accept an optional configuration object with a `metadata` property. This allows for route-specific extension integration:
+
+```typescript
+@Controller('/users')
+class UsersController {
+  @Get('/:id', { metadata: { rateLimit: 'strict-api' } })
+  async getUser() { /* ... */ }
+}
+```
+
+**⚠️ Controller-level and Route-level metadata coexistence:**
+> When a controller defines metadata (e.g., a guard) and a specific route inside it also defines metadata (e.g., a different guard or a rate limiter), **both will execute**. Route-level metadata is **additive**. It is strictly impossible for a route to "opt-out" or cancel a middleware (like a Guard) that was applied at the controller level.
+> Express executes them in distinct layers: the controller-level middleware wraps the entire router, and the route-level middleware wraps only the specific route. Both layers will trigger in their natural order.
+
 **⚠️ Dependency Injection Limitation:**
 > Controllers are instantiated without constructor arguments — Kerith does not currently have a dependency injection container. If a controller needs a Service or other dependency, it must be imported directly within the method rather than injected via constructor. For example:
 > ```typescript
