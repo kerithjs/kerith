@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 
-## [2.0.0-alpha.2] - Unreleased
+## [1.0.0-alpha.1] - Unreleased
 
 ### Changed
 - **BREAKING**: minimum supported Node version raised to 24 LTS

@@ -10,7 +10,7 @@ For the full Kerith suite changelog (all packages), see the [root CHANGELOG](../
 ---
 
 
-## [2.0.0-alpha.2] - Unreleased
+## [1.0.0-alpha.1] - Unreleased
 
 ### Changed
 - **BREAKING**: minimum supported Node version raised to 24 LTS
