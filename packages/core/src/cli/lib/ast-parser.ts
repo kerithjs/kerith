@@ -5,8 +5,8 @@ import * as ts from "typescript";
 import type { CallExpression, Literal, ObjectExpression, ArrayExpression } from 'estree';
 
 // Note about TypeScript and acorn parsing:
-// Acorn does not support TS syntax natively — if parsing fails, the file is silently skipped;
-// for compiled TS projects, it is recommended to parse the JS output from the `dist/` folder.
+// Acorn does not support TS syntax natively — if parsing fails, the file falls back to
+// the TypeScript compiler API to correctly parse Decorators and TS-specific structures.
 export interface IdentifierCall {
   name: string;
   options: Record<string, unknown>;

@@ -182,4 +182,93 @@ describe('ast-parser tests', () => {
       });
     });
   });
+  // ── Requested Cases ─────────────────────────────────────────────────────────
+
+  it('Caso central — decorador de clase con opciones anidadas', async () => {
+    await runWithTempFile(`
+      @Controller('/users', { metadata: { guards: ['jwt'] } })
+      export class MyController {}
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Controller');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('/users');
+      expect(res?.options).toEqual({ metadata: { guards: ['jwt'] } });
+    });
+  });
+
+  it('Caso — decorador de método con opciones', async () => {
+    await runWithTempFile(`
+      export class MyController {
+        @Get('/y', { metadata: { rateLimit: 'strict' } })
+        method() {}
+      }
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Get');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('/y');
+      expect(res?.options).toEqual({ metadata: { rateLimit: 'strict' } });
+    });
+  });
+
+  it('Caso — decorador de parámetro (soporte incidental)', async () => {
+    await runWithTempFile(`
+      @Controller('/users')
+      export class MyController {
+        @Get('/')
+        method(@Body() body: any, @Param('id') id: string) {}
+      }
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Controller');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('/users');
+    });
+  });
+
+  it('Caso — mezcla de decorador + llamada de función tradicional en el mismo archivo', async () => {
+    await runWithTempFile(`
+      import { Controller, Service } from '@kerith/core';
+
+      @Controller('/api')
+      export class MyController {}
+
+      Service('billing');
+    `, async (filePath) => {
+      const results = await extractMultipleIdentifierCalls(filePath, ['Controller', 'Service']);
+      expect(results.length).toBe(2);
+      const names = results.map(r => r.name);
+      expect(names).toContain('/api');
+      expect(names).toContain('billing');
+    });
+  });
+
+  it('Caso — extractTopLevelIdentifier preserva orden (TS compiler fallback)', async () => {
+    await runWithTempFile(`
+      // Force fallback
+      @@@
+      Module('second');
+      Domain('first');
+    `, async (filePath) => {
+      // Despite 'Domain' coming before 'Module' in KERITH_TOP_LEVEL_CALLEES array,
+      // 'Module' is the first call textually in the file, so it should be returned.
+      const res = await extractTopLevelIdentifier(filePath);
+      expect(res).not.toBeNull();
+      expect(res?.type).toBe('Module');
+      expect(res?.name).toBe('second');
+    });
+  });
+
+  it('Caso negativo — archivo con sintaxis genuinamente inválida', async () => {
+    await runWithTempFile(`
+      import type { SomeType } from "./types";
+      // bad syntax that throws acorn parser Error AND is not valid TS
+      @@@
+      // fallback to regex
+      Service("fallback-service", { hello: "world" });
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Service');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('fallback-service');
+      expect(res?.options).toEqual({ hello: 'world' });
+    });
+  });
 });

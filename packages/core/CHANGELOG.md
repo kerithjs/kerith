@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **BREAKING**: minimum supported Node version raised to 20.6.0 (required for the native ESM Hooks `registerHooks()` API)
 - **BREAKING**: ESM hook registration migrated from deprecated `module.register()` to `module.registerHooks()`. This is an internal implementation change that does not affect the public API, but requires Node.js 20.6+ where `registerHooks()` was introduced. The pre-loader system (`kerith sync-preload`) now generates code using `registerHooks()` instead of `register()`.
+- **AST Parser Decorator Support (Phase 5)**: `kerith check` now detects decorated `@Controller`/`@Get`/etc., not just function calls — via a fallback to the TypeScript compiler when the lightweight parser (acorn) cannot process decorator syntax.
 
 
 
