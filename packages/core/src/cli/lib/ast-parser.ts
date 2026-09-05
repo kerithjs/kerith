@@ -63,31 +63,74 @@ export function extractOptionsFromSource(src: string): Record<string, unknown> {
   return options;
 }
 
-export function extractOptionsFromTSObject(optionsArg: ts.ObjectLiteralExpression): Record<string, unknown> {
-  const options: Record<string, unknown> = {};
-  for (const prop of optionsArg.properties) {
-    if (!ts.isPropertyAssignment(prop)) continue;
-    
-    let keyName = '';
-    if (ts.isIdentifier(prop.name)) {
-      keyName = prop.name.text;
-    } else if (ts.isStringLiteral(prop.name)) {
-      keyName = prop.name.text;
-    }
+/**
+ * Internal TS-compiler-based extractor shared by all three public extractors.
+ *
+ * Uses `ts.createSourceFile` with `setParentNodes: true` so callers can walk
+ * upward in the tree if needed in the future (no cost for current callers).
+ *
+ * `visit` uses `ts.forEachChild` which naturally descends into decorator
+ * expressions — no special-casing per node kind is needed because the TS
+ * compiler represents `@Foo(...)` as a `Decorator` node whose `.expression`
+ * is a regular `CallExpression`; `forEachChild` visits it on the way down.
+ *
+ * Supported option value types (mirrors `extractOptionsFromSource`):
+ *   - string literals
+ *   - numeric literals (coerced to string, same as acorn path)
+ *   - arrays of string literals
+ *   - nested object literals (recursive — fixes the brace-truncation bug of
+ *     the regex path confirmed in Fase 5.0)
+ *
+ * NOT supported (same limits as today, intentional — out of scope for Fase 5):
+ *   - spread elements (`...obj`)
+ *   - template literals (`` `foo` ``)
+ *   - references to variables (`schema: createUserSchema`)
+ */
+function extractCallsViaTsCompiler(
+  code: string,
+  calleeNames: string[],
+): Array<{ name: string; options: Record<string, unknown>; type: string }> {
+  const found: Array<{ name: string; options: Record<string, unknown>; type: string }> = [];
+  const sourceFile = ts.createSourceFile('temp.ts', code, ts.ScriptTarget.Latest, /* setParentNodes */ true, ts.ScriptKind.TS);
 
-    if (keyName && ts.isArrayLiteralExpression(prop.initializer)) {
-      const arr: string[] = [];
-      for (const elem of prop.initializer.elements) {
-        if (ts.isStringLiteral(elem)) {
-          arr.push(elem.text);
-        }
+  function extractOptionsFromObjectLiteral(obj: ts.ObjectLiteralExpression): Record<string, unknown> {
+    const options: Record<string, unknown> = {};
+    for (const prop of obj.properties) {
+      if (!ts.isPropertyAssignment(prop)) continue;
+      const key = ts.isIdentifier(prop.name) ? prop.name.text
+        : ts.isStringLiteral(prop.name) ? prop.name.text
+        : undefined;
+      if (!key) continue;
+
+      if (ts.isStringLiteral(prop.initializer) || ts.isNumericLiteral(prop.initializer)) {
+        options[key] = prop.initializer.text;
+      } else if (ts.isArrayLiteralExpression(prop.initializer)) {
+        options[key] = prop.initializer.elements
+          .filter(ts.isStringLiteral)
+          .map(el => el.text);
+      } else if (ts.isObjectLiteralExpression(prop.initializer)) {
+        // Recursive — unlike the current regex, this correctly handles nested
+        // objects like { metadata: { guards: ['jwt'] } } without truncation.
+        options[key] = extractOptionsFromObjectLiteral(prop.initializer);
       }
-      options[keyName] = arr;
-    } else if (keyName && ts.isStringLiteral(prop.initializer)) {
-      options[keyName] = prop.initializer.text;
     }
+    return options;
   }
-  return options;
+
+  function visit(node: ts.Node) {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && calleeNames.includes(node.expression.text)) {
+      const [nameArg, optionsArg] = node.arguments;
+      if (nameArg && ts.isStringLiteral(nameArg)) {
+        const options = optionsArg && ts.isObjectLiteralExpression(optionsArg)
+          ? extractOptionsFromObjectLiteral(optionsArg)
+          : {};
+        found.push({ name: nameArg.text, options, type: node.expression.text });
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(sourceFile);
+  return found;
 }
 
 export async function extractIdentifierCall(
@@ -150,45 +193,26 @@ export async function extractIdentifierCall(
     if (error.code === 'ENOENT') {
       return null;
     }
-    // Fallback 1: Try parsing with TypeScript for decorator support
+    // Fallback 1: acorn failed (e.g. decorator syntax) — try TypeScript compiler.
     if (code) {
       try {
-        const tsAst = ts.createSourceFile(filePath, code, ts.ScriptTarget.Latest, true);
-        ts.forEachChild(tsAst, function visit(node: ts.Node) {
-          if (found) return;
-          let callNode: ts.CallExpression | null = null;
-          
-          if (ts.isDecorator(node) && ts.isCallExpression(node.expression)) {
-            callNode = node.expression;
-          } else if (ts.isCallExpression(node)) {
-            callNode = node;
+        const results = extractCallsViaTsCompiler(code, [calleeName]);
+        if (results.length > 0) {
+          const { name, options } = results[0];
+          found = { name, options };
+          if (process.env.DEBUG || process.argv.includes('--verbose')) {
+            console.log(`[kerith check] INFO: Used TypeScript parser fallback for ${filePath}`);
           }
-          
-          if (callNode && ts.isIdentifier(callNode.expression) && callNode.expression.text === calleeName) {
-            const nameArg = callNode.arguments[0];
-            if (nameArg && ts.isStringLiteral(nameArg)) {
-              const name = nameArg.text;
-              let options = {};
-              const optionsArg = callNode.arguments[1];
-              if (optionsArg && ts.isObjectLiteralExpression(optionsArg)) {
-                options = extractOptionsFromTSObject(optionsArg);
-              }
-              found = { name, options };
-              if (process.env.DEBUG || process.argv.includes('--verbose')) {
-                console.log(`[kerith check] INFO: Used TypeScript parser fallback for ${filePath}`);
-              }
-            }
-          }
-          if (!found) ts.forEachChild(node, visit);
-        });
-      } catch (tsError) {
-        // Ignore TS parse errors and let the regex fallback operate
+        }
+      } catch {
+        // TS compiler also failed — fall through to regex last resort below.
       }
     }
   }
 
-  // Fallback: Acorn does not parse TypeScript natively (interfaces, types, strong typings).
-  // Regex support is explicitly documented and centralized here as a fallback.
+  // Last-resort fallback: Acorn does not parse TypeScript natively (interfaces,
+  // types, strong typings). Regex support is explicitly documented and centralized
+  // here as the final safety net.
   if (!found && code) {
     const regex = new RegExp(`${calleeName}\\s*\\(\\s*['"]([^'"]+)['"](?:\\s*,\\s*(\\{[^}]+\\}))?`, "g");
     let match;
@@ -263,46 +287,26 @@ export async function extractMultipleIdentifierCalls(
     if (error.code === 'ENOENT') {
       return [];
     }
-    // Fallback 1: Try parsing with TypeScript for decorator support
+    // Fallback 1: acorn failed (e.g. decorator syntax) — try TypeScript compiler.
     if (code) {
       try {
-        let tsUsed = false;
-        const tsAst = ts.createSourceFile(filePath, code, ts.ScriptTarget.Latest, true);
-        ts.forEachChild(tsAst, function visit(node: ts.Node) {
-          let callNode: ts.CallExpression | null = null;
-          
-          if (ts.isDecorator(node) && ts.isCallExpression(node.expression)) {
-            callNode = node.expression;
-          } else if (ts.isCallExpression(node)) {
-            callNode = node;
+        const results = extractCallsViaTsCompiler(code, calleeNames);
+        if (results.length > 0) {
+          for (const r of results) {
+            found.push(r);
           }
-          
-          if (callNode && ts.isIdentifier(callNode.expression) && calleeNames.includes(callNode.expression.text)) {
-            const nameArg = callNode.arguments[0];
-            if (nameArg && ts.isStringLiteral(nameArg)) {
-              const name = nameArg.text;
-              let options = {};
-              const optionsArg = callNode.arguments[1];
-              if (optionsArg && ts.isObjectLiteralExpression(optionsArg)) {
-                options = extractOptionsFromTSObject(optionsArg);
-              }
-              found.push({ name, options, type: callNode.expression.text });
-              tsUsed = true;
-            }
+          if (process.env.DEBUG || process.argv.includes('--verbose')) {
+            console.log(`[kerith check] INFO: Used TypeScript parser fallback for ${filePath}`);
           }
-          ts.forEachChild(node, visit);
-        });
-        if (tsUsed && (process.env.DEBUG || process.argv.includes('--verbose'))) {
-          console.log(`[kerith check] INFO: Used TypeScript parser fallback for ${filePath}`);
         }
-      } catch (tsError) {
-        // Ignore TS parse errors and let the regex fallback operate
+      } catch {
+        // TS compiler also failed — fall through to regex last resort below.
       }
     }
   }
 
-  // Fallback: Acorn does not parse TypeScript natively.
-  // Run regex for any callee that wasn't found by the AST traversal
+  // Last-resort fallback: Acorn does not parse TypeScript natively.
+  // Run regex only for any callee not already covered by acorn or TS compiler.
   if (code) {
     const foundCallees = new Set(found.map(f => f.type));
     for (const calleeName of calleeNames) {
@@ -407,49 +411,31 @@ export async function extractTopLevelIdentifier(
     if (error && typeof error === 'object' && 'code' in error && (error as any).code === 'ENOENT') {
       return null;
     }
-    // Fallback 1: Try parsing with TypeScript for decorator support
+    // Fallback 1: acorn failed (e.g. decorator syntax) — try TypeScript compiler.
     if (code) {
       try {
-        const tsAst = ts.createSourceFile(filePath, code, ts.ScriptTarget.Latest, true);
-        ts.forEachChild(tsAst, function visit(node: ts.Node) {
-          if (found) return;
-          let callNode: ts.CallExpression | null = null;
-          
-          if (ts.isDecorator(node) && ts.isCallExpression(node.expression)) {
-            callNode = node.expression;
-          } else if (ts.isCallExpression(node)) {
-            callNode = node;
+        const results = extractCallsViaTsCompiler(code, [...KERITH_TOP_LEVEL_CALLEES]);
+        if (results.length > 0) {
+          // Honour source order: pick the result whose callee appears earliest.
+          // extractCallsViaTsCompiler visits in source order via forEachChild,
+          // so the first result is already the earliest.
+          const first = results[0];
+          found = {
+            type: first.type as KerithTopLevelIdentifierType,
+            name: first.name,
+            options: first.options,
+          };
+          if (process.env.DEBUG || process.argv.includes('--verbose')) {
+            console.log(`[kerith check] INFO: Used TypeScript parser fallback for ${filePath}`);
           }
-          
-          if (callNode && ts.isIdentifier(callNode.expression)) {
-            const calleeName = callNode.expression.text;
-            if (KERITH_TOP_LEVEL_CALLEES.includes(calleeName as KerithTopLevelIdentifierType)) {
-              const nameArg = callNode.arguments[0];
-              if (nameArg && ts.isStringLiteral(nameArg)) {
-                let options = {};
-                const optionsArg = callNode.arguments[1];
-                if (optionsArg && ts.isObjectLiteralExpression(optionsArg)) {
-                  options = extractOptionsFromTSObject(optionsArg);
-                }
-                found = {
-                  type: calleeName as KerithTopLevelIdentifierType,
-                  name: nameArg.text,
-                  options,
-                };
-                if (process.env.DEBUG || process.argv.includes('--verbose')) {
-                  console.log(`[kerith check] INFO: Used TypeScript parser fallback for ${filePath}`);
-                }
-              }
-            }
-          }
-          if (!found) ts.forEachChild(node, visit);
-        });
-      } catch (tsError) {
-        // Ignore TS parse errors and let the regex fallback operate
+        }
+      } catch {
+        // TS compiler also failed — fall through to regex last resort below.
       }
     }
   }
 
+  // Last-resort fallback: regex, preserving earliest-match semantics.
   if (!found && code) {
     let earliest: { index: number; type: KerithTopLevelIdentifierType; name: string; optionsSrc: string } | null = null;
     for (const calleeName of KERITH_TOP_LEVEL_CALLEES) {
@@ -480,4 +466,3 @@ export async function extractTopLevelIdentifier(
 
   return found;
 }
-
