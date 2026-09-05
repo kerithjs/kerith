@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as acorn from "acorn";
 import * as walk from "acorn-walk";
+import * as ts from "typescript";
 import type { CallExpression, Literal, ObjectExpression, ArrayExpression } from 'estree';
 
 // Note about TypeScript and acorn parsing:
@@ -59,6 +60,33 @@ export function extractOptionsFromSource(src: string): Record<string, unknown> {
     }
   }
 
+  return options;
+}
+
+export function extractOptionsFromTSObject(optionsArg: ts.ObjectLiteralExpression): Record<string, unknown> {
+  const options: Record<string, unknown> = {};
+  for (const prop of optionsArg.properties) {
+    if (!ts.isPropertyAssignment(prop)) continue;
+    
+    let keyName = '';
+    if (ts.isIdentifier(prop.name)) {
+      keyName = prop.name.text;
+    } else if (ts.isStringLiteral(prop.name)) {
+      keyName = prop.name.text;
+    }
+
+    if (keyName && ts.isArrayLiteralExpression(prop.initializer)) {
+      const arr: string[] = [];
+      for (const elem of prop.initializer.elements) {
+        if (ts.isStringLiteral(elem)) {
+          arr.push(elem.text);
+        }
+      }
+      options[keyName] = arr;
+    } else if (keyName && ts.isStringLiteral(prop.initializer)) {
+      options[keyName] = prop.initializer.text;
+    }
+  }
   return options;
 }
 
@@ -122,7 +150,41 @@ export async function extractIdentifierCall(
     if (error.code === 'ENOENT') {
       return null;
     }
-    // Ignore acorn parse errors for now to allow fallback to operate
+    // Fallback 1: Try parsing with TypeScript for decorator support
+    if (code) {
+      try {
+        const tsAst = ts.createSourceFile(filePath, code, ts.ScriptTarget.Latest, true);
+        ts.forEachChild(tsAst, function visit(node: ts.Node) {
+          if (found) return;
+          let callNode: ts.CallExpression | null = null;
+          
+          if (ts.isDecorator(node) && ts.isCallExpression(node.expression)) {
+            callNode = node.expression;
+          } else if (ts.isCallExpression(node)) {
+            callNode = node;
+          }
+          
+          if (callNode && ts.isIdentifier(callNode.expression) && callNode.expression.text === calleeName) {
+            const nameArg = callNode.arguments[0];
+            if (nameArg && ts.isStringLiteral(nameArg)) {
+              const name = nameArg.text;
+              let options = {};
+              const optionsArg = callNode.arguments[1];
+              if (optionsArg && ts.isObjectLiteralExpression(optionsArg)) {
+                options = extractOptionsFromTSObject(optionsArg);
+              }
+              found = { name, options };
+              if (process.env.DEBUG || process.argv.includes('--verbose')) {
+                console.log(`[kerith check] INFO: Used TypeScript parser fallback for ${filePath}`);
+              }
+            }
+          }
+          if (!found) ts.forEachChild(node, visit);
+        });
+      } catch (tsError) {
+        // Ignore TS parse errors and let the regex fallback operate
+      }
+    }
   }
 
   // Fallback: Acorn does not parse TypeScript natively (interfaces, types, strong typings).
@@ -201,7 +263,42 @@ export async function extractMultipleIdentifierCalls(
     if (error.code === 'ENOENT') {
       return [];
     }
-    // Ignore acorn parse errors for now to allow fallback to operate
+    // Fallback 1: Try parsing with TypeScript for decorator support
+    if (code) {
+      try {
+        let tsUsed = false;
+        const tsAst = ts.createSourceFile(filePath, code, ts.ScriptTarget.Latest, true);
+        ts.forEachChild(tsAst, function visit(node: ts.Node) {
+          let callNode: ts.CallExpression | null = null;
+          
+          if (ts.isDecorator(node) && ts.isCallExpression(node.expression)) {
+            callNode = node.expression;
+          } else if (ts.isCallExpression(node)) {
+            callNode = node;
+          }
+          
+          if (callNode && ts.isIdentifier(callNode.expression) && calleeNames.includes(callNode.expression.text)) {
+            const nameArg = callNode.arguments[0];
+            if (nameArg && ts.isStringLiteral(nameArg)) {
+              const name = nameArg.text;
+              let options = {};
+              const optionsArg = callNode.arguments[1];
+              if (optionsArg && ts.isObjectLiteralExpression(optionsArg)) {
+                options = extractOptionsFromTSObject(optionsArg);
+              }
+              found.push({ name, options, type: callNode.expression.text });
+              tsUsed = true;
+            }
+          }
+          ts.forEachChild(node, visit);
+        });
+        if (tsUsed && (process.env.DEBUG || process.argv.includes('--verbose'))) {
+          console.log(`[kerith check] INFO: Used TypeScript parser fallback for ${filePath}`);
+        }
+      } catch (tsError) {
+        // Ignore TS parse errors and let the regex fallback operate
+      }
+    }
   }
 
   // Fallback: Acorn does not parse TypeScript natively.
@@ -307,8 +404,49 @@ export async function extractTopLevelIdentifier(
       },
     });
   } catch (error: unknown) {
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+    if (error && typeof error === 'object' && 'code' in error && (error as any).code === 'ENOENT') {
       return null;
+    }
+    // Fallback 1: Try parsing with TypeScript for decorator support
+    if (code) {
+      try {
+        const tsAst = ts.createSourceFile(filePath, code, ts.ScriptTarget.Latest, true);
+        ts.forEachChild(tsAst, function visit(node: ts.Node) {
+          if (found) return;
+          let callNode: ts.CallExpression | null = null;
+          
+          if (ts.isDecorator(node) && ts.isCallExpression(node.expression)) {
+            callNode = node.expression;
+          } else if (ts.isCallExpression(node)) {
+            callNode = node;
+          }
+          
+          if (callNode && ts.isIdentifier(callNode.expression)) {
+            const calleeName = callNode.expression.text;
+            if (KERITH_TOP_LEVEL_CALLEES.includes(calleeName as KerithTopLevelIdentifierType)) {
+              const nameArg = callNode.arguments[0];
+              if (nameArg && ts.isStringLiteral(nameArg)) {
+                let options = {};
+                const optionsArg = callNode.arguments[1];
+                if (optionsArg && ts.isObjectLiteralExpression(optionsArg)) {
+                  options = extractOptionsFromTSObject(optionsArg);
+                }
+                found = {
+                  type: calleeName as KerithTopLevelIdentifierType,
+                  name: nameArg.text,
+                  options,
+                };
+                if (process.env.DEBUG || process.argv.includes('--verbose')) {
+                  console.log(`[kerith check] INFO: Used TypeScript parser fallback for ${filePath}`);
+                }
+              }
+            }
+          }
+          if (!found) ts.forEachChild(node, visit);
+        });
+      } catch (tsError) {
+        // Ignore TS parse errors and let the regex fallback operate
+      }
     }
   }
 

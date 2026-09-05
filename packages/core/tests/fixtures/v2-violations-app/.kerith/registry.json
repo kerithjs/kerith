@@ -1,21 +1,8 @@
 {
   "project": "v2-violations-app-fixture",
   "version": "1.0.0",
-  "lastCheck": "2026-09-03T18:26:16.977Z",
+  "lastCheck": "2026-09-05T18:40:08.313Z",
   "modules": {
-    "mod_b3cefe9e": {
-      "id": "mod_b3cefe9e",
-      "name": "payments",
-      "path": "src/billing/payments",
-      "domain": "billing",
-      "hash": "4fa0cee9d2",
-      "status": "active",
-      "createdAt": "2026-06-03T22:31:33.290Z",
-      "lastSeen": "2026-09-03T18:26:16.972Z",
-      "identifiers": [
-        "PaymentService"
-      ]
-    },
     "mod_c30b5a3b": {
       "id": "mod_c30b5a3b",
       "name": "members",
@@ -24,9 +11,22 @@
       "hash": "a06042b04e",
       "status": "active",
       "createdAt": "2026-06-03T22:31:33.290Z",
-      "lastSeen": "2026-09-03T18:26:16.972Z",
+      "lastSeen": "2026-09-05T18:40:08.291Z",
       "identifiers": [
         "MemberService"
+      ]
+    },
+    "mod_b3cefe9e": {
+      "id": "mod_b3cefe9e",
+      "name": "payments",
+      "path": "src/billing/payments",
+      "domain": "billing",
+      "hash": "4fa0cee9d2",
+      "status": "active",
+      "createdAt": "2026-06-03T22:31:33.290Z",
+      "lastSeen": "2026-09-05T18:40:08.291Z",
+      "identifiers": [
+        "PaymentService"
       ]
     }
   },

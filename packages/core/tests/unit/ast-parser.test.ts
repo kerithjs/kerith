@@ -67,16 +67,13 @@ describe('ast-parser tests', () => {
 
   it('', async () => {
     await runWithTempFile(`
-      @Controller('/api')
-      export class MyController {
-        constructor() {
-          Controller('UserController');
-        }
-      }
+      @Controller('/api', { rateLimit: 'strict', guards: ['jwt'] })
+      export class MyController {}
     `, async (filePath) => {
       const res = await extractIdentifierCall(filePath, 'Controller');
       expect(res).not.toBeNull();
-      expect(res?.name).toBe('UserController');
+      expect(res?.name).toBe('/api');
+      expect(res?.options).toEqual({ rateLimit: 'strict', guards: ['jwt'] });
     });
   });
 
