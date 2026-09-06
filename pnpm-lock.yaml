@@ -668,6 +668,34 @@ importers:
 
   packages/testing/fixtures/04-error-paths/undeclared-shared/strict-on: {}
 
+  packages/testing/fixtures/05-decorators/basic:
+    dependencies:
+      '@kerith/app':
+        specifier: workspace:*
+        version: link:../../../../app
+      '@kerith/core':
+        specifier: workspace:*
+        version: link:../../../../core
+      '@kerith/identifiers':
+        specifier: workspace:*
+        version: link:../../../../identifiers
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsx:
+        specifier: ^4.0.0
+        version: 4.23.8
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
 packages:
 
   '@babel/helper-string-parser@7.29.7':

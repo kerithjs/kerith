@@ -1,19 +1,8 @@
 {
   "project": "fixture-04-error-paths-circular-dependency",
   "version": "1.0.0",
-  "lastCheck": "2026-09-05T19:13:32.303Z",
+  "lastCheck": "2026-09-06T17:04:43.958Z",
   "modules": {
-    "mod_0bcc6e81": {
-      "id": "mod_0bcc6e81",
-      "name": "module-a",
-      "path": "src/modules/module-a",
-      "hash": "a3ca47e760",
-      "status": "active",
-      "createdAt": "2026-08-17T22:52:38.150Z",
-      "lastSeen": "2026-09-05T19:13:32.300Z",
-      "identifiers": [],
-      "shadowFileId": "mod_0bcc6e81"
-    },
     "mod_db9ab88b": {
       "id": "mod_db9ab88b",
       "name": "module-b",
@@ -21,9 +10,20 @@
       "hash": "a3ca47e760",
       "status": "active",
       "createdAt": "2026-08-17T22:52:38.150Z",
-      "lastSeen": "2026-09-05T19:13:32.300Z",
+      "lastSeen": "2026-09-06T17:04:43.956Z",
       "identifiers": [],
       "shadowFileId": "mod_db9ab88b"
+    },
+    "mod_0bcc6e81": {
+      "id": "mod_0bcc6e81",
+      "name": "module-a",
+      "path": "src/modules/module-a",
+      "hash": "a3ca47e760",
+      "status": "active",
+      "createdAt": "2026-08-17T22:52:38.150Z",
+      "lastSeen": "2026-09-06T17:04:43.956Z",
+      "identifiers": [],
+      "shadowFileId": "mod_0bcc6e81"
     }
   },
   "domains": {},

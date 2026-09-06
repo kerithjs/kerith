@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { runFixture, stopFixture, readManifest, readRegistrySnapshot, readDomainRegistrySnapshot } from '../src/index.js';
+import { runFixture, stopFixture, readManifest, readRegistrySnapshot, readDomainRegistrySnapshot, runEndpointAssertions } from '../src/index.js';
 import type { FixtureHandle, RegistrySnapshot, Manifest } from '../src/index.js';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,23 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function runEndpointAssertions(handle: FixtureHandle, manifest: Manifest): Promise<void> {
-  for (const endpoint of manifest.endpoints || []) {
-    const res = await handle.http.request(endpoint.path, { method: endpoint.method });
-    expect(
-      res.status,
-      `${endpoint.method} ${endpoint.path} — expected status ${endpoint.expectedStatus}, got ${res.status}`,
-    ).toBe(endpoint.expectedStatus);
 
-    if (endpoint.expectedBody !== null) {
-      const body = await res.json();
-      expect(
-        body,
-        `${endpoint.method} ${endpoint.path} — unexpected body`,
-      ).toEqual(endpoint.expectedBody);
-    }
-  }
-}
 
 function normalizeSnapshot(snapshot: RegistrySnapshot, type: 'global' | 'domain'): any {
   // Deep clone to avoid mutating the original

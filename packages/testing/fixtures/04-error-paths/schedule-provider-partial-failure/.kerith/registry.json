@@ -1,7 +1,7 @@
 {
   "project": "fixture-04-error-paths-schedule-provider-partial-failure",
   "version": "1.0.0",
-  "lastCheck": "2026-09-05T19:13:39.145Z",
+  "lastCheck": "2026-09-06T17:04:50.489Z",
   "modules": {
     "mod_f8221947": {
       "id": "mod_f8221947",
@@ -10,7 +10,7 @@
       "hash": "00807229ac",
       "status": "active",
       "createdAt": "2026-08-15T16:02:00.735Z",
-      "lastSeen": "2026-09-05T19:13:39.144Z",
+      "lastSeen": "2026-09-06T17:04:50.488Z",
       "identifiers": [],
       "shadowFileId": "mod_f8221947"
     },
@@ -21,7 +21,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-15T16:02:00.735Z",
-      "lastSeen": "2026-09-05T19:13:39.144Z",
+      "lastSeen": "2026-09-06T17:04:50.488Z",
       "identifiers": [],
       "shadowFileId": "mod_64bd7347"
     }

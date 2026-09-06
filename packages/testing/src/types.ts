@@ -154,6 +154,8 @@ export interface ManifestEndpoint {
    * null means the test will only assert the status code, not the body.
    */
   expectedBody: Record<string, unknown> | null;
+  /** Request body to send (JSON-serialized). Forwarded via http-client.ts. */
+  requestBody?: Record<string, unknown>;
   /**
    * Optional delay in milliseconds to wait before hitting this endpoint.
    * Useful for validating cron or background workers.

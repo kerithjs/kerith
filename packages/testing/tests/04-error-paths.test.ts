@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { runFixture, stopFixture, readManifest, runFixtureExpectingFailure } from '../src/index.js';
+import { runFixture, stopFixture, readManifest, runFixtureExpectingFailure, runEndpointAssertions } from '../src/index.js';
 import type { FixtureHandle } from '../src/index.js';
 import { resolve, dirname, relative, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -69,14 +69,7 @@ describe('04-error-paths', () => {
 
         if (manifest.endpoints && manifest.endpoints.length > 0) {
           it('serves expected endpoints', async () => {
-            for (const endpoint of manifest.endpoints!) {
-              const res = await handle.http.request(endpoint.path, { method: endpoint.method });
-              expect(res.status).toBe(endpoint.expectedStatus);
-              if (endpoint.expectedBody) {
-                const body = await res.json();
-                expect(body).toEqual(endpoint.expectedBody);
-              }
-            }
+            await runEndpointAssertions(handle, manifest);
           });
         }
       }
