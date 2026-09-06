@@ -1,0 +1,28 @@
+{
+  "name": "fixture-05-decorators-validate",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "kerith dev --watch --clear --runtime tsx src/server.ts",
+    "build": "tsc",
+    "start": "NODE_ENV=production node dist/server.js",
+    "setup": "kerith sync-preload && kerith sync-tsconfig",
+    "check": "kerith check"
+  },
+  "dependencies": {
+    "@kerith/core": "workspace:*",
+    "express": "^5.0.0",
+    "@kerith/app": "workspace:*",
+    "@kerith/identifiers": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.5"
+  }
+}

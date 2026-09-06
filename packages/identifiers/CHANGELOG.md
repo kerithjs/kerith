@@ -10,7 +10,7 @@ For the full Kerith suite changelog (all packages), see the [root CHANGELOG](../
 ---
 
 
-## [2.0.0-alpha.2] - Unreleased
+## [1.0.0-alpha.1] - Unreleased
 
 ### Changed
 - **BREAKING**: minimum supported Node version raised to 24 LTS
@@ -33,6 +33,7 @@ For the full Kerith suite changelog (all packages), see the [root CHANGELOG](../
 
 - **`Guard`** — Synchronous or async security checks. Responds with `401` on failure. Accepts a custom `message`.
 - **`RateLimit`** — Token-bucket rate limiting. Accepts `limit`, `windowMs`, and `message`.
+- **`Validate`** — Request body validation. Accepts a schema (e.g. Zod/Valibot) and replaces `req.body` with the parsed output. Responds with `400` on failure.
 
 #### HTTP — Middleware channel
 

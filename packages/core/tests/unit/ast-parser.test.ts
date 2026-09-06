@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { extractIdentifierCall, extractTopLevelIdentifier } from '../../src/cli/lib/ast-parser.js';
+import { extractIdentifierCall, extractMultipleIdentifierCalls, extractTopLevelIdentifier } from '../../src/cli/lib/ast-parser.js';
 
 describe('ast-parser tests', () => {
   afterEach(() => {
@@ -67,16 +67,13 @@ describe('ast-parser tests', () => {
 
   it('', async () => {
     await runWithTempFile(`
-      @Controller('/api')
-      export class MyController {
-        constructor() {
-          Controller('UserController');
-        }
-      }
+      @Controller('/api', { rateLimit: 'strict', guards: ['jwt'] })
+      export class MyController {}
     `, async (filePath) => {
       const res = await extractIdentifierCall(filePath, 'Controller');
       expect(res).not.toBeNull();
-      expect(res?.name).toBe('UserController');
+      expect(res?.name).toBe('/api');
+      expect(res?.options).toEqual({ rateLimit: 'strict', guards: ['jwt'] });
     });
   });
 
@@ -135,6 +132,143 @@ describe('ast-parser tests', () => {
       expect(res).not.toBeNull();
       expect(res?.name).toBe('payments');
       expect(res?.options).toEqual({ imports: ['invoices'], foo: 'bar' });
+    });
+  });
+
+  // ── Fase 5.4 — Verification: @Controller decorator no longer triggers EMPTY_MODULE ──────────
+
+  it('Fase 5.4: file with only @Controller decorator produces non-empty internalIdentifiers (no EMPTY_MODULE)', async () => {
+    // Mirrors exactly what graph-builder.ts does: extractMultipleIdentifierCalls with
+    // targetCallees = ['Service', 'Repository', 'Schema', 'Controller'].
+    // Before Fase 5.2, acorn threw on the '@' character and the regex fallback happened
+    // to match by accident. After Fase 5.2, the TS compiler fallback correctly finds the
+    // CallExpression inside the Decorator node so internalIdentifiers is reliably non-empty
+    // and detectEmptyModules (export-checker.ts:60) does NOT fire.
+    const targetCallees = ['Service', 'Repository', 'Schema', 'Controller'];
+    await runWithTempFile(`
+      import { Controller, Get } from '@kerith/core';
+
+      @Controller('/users')
+      export class UsersController {
+        @Get('/')
+        list() {}
+      }
+    `, async (filePath) => {
+      const results = await extractMultipleIdentifierCalls(filePath, targetCallees);
+      // Must find at least the @Controller('/users') call.
+      expect(results.length).toBeGreaterThan(0);
+      const names = results.map(r => r.name);
+      expect(names).toContain('/users');
+    });
+  });
+
+  it('Fase 5.4: nested options in @Controller decorator are parsed without brace-truncation', async () => {
+    // Validates the fix for the brace-truncation bug documented in Fase 5.0:
+    // the old regex `{[^}]+}` stopped at the first '}' and returned garbage for
+    // nested objects like { metadata: { guards: ['jwt'] } }.
+    // The TS compiler path recurses correctly and returns the full nested structure.
+    await runWithTempFile(`
+      import { Controller } from '@kerith/core';
+
+      @Controller('/x', { metadata: { guards: ['jwt'], rateLimit: 'strict' } })
+      export class XController {}
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Controller');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('/x');
+      // Nested object must be fully present — not truncated at the first '}'.
+      expect(res?.options).toEqual({
+        metadata: { guards: ['jwt'], rateLimit: 'strict' },
+      });
+    });
+  });
+  // ── Requested Cases ─────────────────────────────────────────────────────────
+
+  it('Caso central — decorador de clase con opciones anidadas', async () => {
+    await runWithTempFile(`
+      @Controller('/users', { metadata: { guards: ['jwt'] } })
+      export class MyController {}
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Controller');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('/users');
+      expect(res?.options).toEqual({ metadata: { guards: ['jwt'] } });
+    });
+  });
+
+  it('Caso — decorador de método con opciones', async () => {
+    await runWithTempFile(`
+      export class MyController {
+        @Get('/y', { metadata: { rateLimit: 'strict' } })
+        method() {}
+      }
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Get');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('/y');
+      expect(res?.options).toEqual({ metadata: { rateLimit: 'strict' } });
+    });
+  });
+
+  it('Caso — decorador de parámetro (soporte incidental)', async () => {
+    await runWithTempFile(`
+      @Controller('/users')
+      export class MyController {
+        @Get('/')
+        method(@Body() body: any, @Param('id') id: string) {}
+      }
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Controller');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('/users');
+    });
+  });
+
+  it('Caso — mezcla de decorador + llamada de función tradicional en el mismo archivo', async () => {
+    await runWithTempFile(`
+      import { Controller, Service } from '@kerith/core';
+
+      @Controller('/api')
+      export class MyController {}
+
+      Service('billing');
+    `, async (filePath) => {
+      const results = await extractMultipleIdentifierCalls(filePath, ['Controller', 'Service']);
+      expect(results.length).toBe(2);
+      const names = results.map(r => r.name);
+      expect(names).toContain('/api');
+      expect(names).toContain('billing');
+    });
+  });
+
+  it('Caso — extractTopLevelIdentifier preserva orden (TS compiler fallback)', async () => {
+    await runWithTempFile(`
+      // Force fallback
+      @@@
+      Module('second');
+      Domain('first');
+    `, async (filePath) => {
+      // Despite 'Domain' coming before 'Module' in KERITH_TOP_LEVEL_CALLEES array,
+      // 'Module' is the first call textually in the file, so it should be returned.
+      const res = await extractTopLevelIdentifier(filePath);
+      expect(res).not.toBeNull();
+      expect(res?.type).toBe('Module');
+      expect(res?.name).toBe('second');
+    });
+  });
+
+  it('Caso negativo — archivo con sintaxis genuinamente inválida', async () => {
+    await runWithTempFile(`
+      import type { SomeType } from "./types";
+      // bad syntax that throws acorn parser Error AND is not valid TS
+      @@@
+      // fallback to regex
+      Service("fallback-service", { hello: "world" });
+    `, async (filePath) => {
+      const res = await extractIdentifierCall(filePath, 'Service');
+      expect(res).not.toBeNull();
+      expect(res?.name).toBe('fallback-service');
+      expect(res?.options).toEqual({ hello: 'world' });
     });
   });
 });

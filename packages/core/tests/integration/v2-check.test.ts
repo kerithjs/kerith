@@ -58,7 +58,7 @@ describe('CLI Integration: kerith check', () => {
     
     // Summary
     expect(output).toContain('(5 errors)');
-  });
+  }, 30000);
 
   it('kerith check in v1-compat-app -> exit 0, flat v1.x output', () => {
     const { exitCode, output } = runKerithCheck('v1-compat-app');

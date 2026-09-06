@@ -26,6 +26,8 @@ export { Guard } from './security/guard.js'
 export type { GuardOptions } from './security/guard.js'
 export { RateLimit } from './security/rate-limit.js'
 export type { RateLimitOptions } from './security/rate-limit.js'
+export { Validate } from './security/validate.js'
+export type { ValidateOptions, ValidatableSchema } from './security/validate.js'
 
 // ─── HTTP — Middleware channel ─────────────────────────────────────────────────
 export { Middleware } from './http/middleware.js'

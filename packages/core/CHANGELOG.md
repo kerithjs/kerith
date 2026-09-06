@@ -6,16 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [2.0.0-alpha.2] - Unreleased
+## [2.0.0-alpha.1] - Unreleased
 
 ### Changed
 - **BREAKING**: minimum supported Node version raised to 20.6.0 (required for the native ESM Hooks `registerHooks()` API)
 - **BREAKING**: ESM hook registration migrated from deprecated `module.register()` to `module.registerHooks()`. This is an internal implementation change that does not affect the public API, but requires Node.js 20.6+ where `registerHooks()` was introduced. The pre-loader system (`kerith sync-preload`) now generates code using `registerHooks()` instead of `register()`.
+- **AST Parser Decorator Support (Phase 5)**: `kerith check` now detects decorated `@Controller`/`@Get`/etc., not just function calls — via a fallback to the TypeScript compiler when the lightweight parser (acorn) cannot process decorator syntax.
 
 
 
 ### Added
 
+- **Route-level Middleware (Fase 4)**: The internal `app-controller-bridge.ts` now supports resolving `phase: 'pre'` middlewares at the route level via `route.metadata`. This allows identifiers like `Guard`, `RateLimit`, and `Validate` to be applied to specific routes without modifying the `MiddlewareResolver` public interface. Controller-level middlewares (resolved in `step-08-controllers.ts`) remain unaffected and coexist additively with route-level middlewares.
 - Global shared (`@shared`): place shared code in `src/shared/`, declare with `shared: ['@shared']` in Module()
 - Domain-scoped shared (`@{domain}/shared`): place code in `src/{domain}/_shared/`, implicit access for domain modules
 - `kerith check` detects UNDECLARED_SHARED, UNUSED_SHARED, SHARED_SCOPE_VIOLATION
@@ -52,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `exit 0 — no violations found` (no violations)
   - `exit 0 — N warnings (use --strict to block)` (warnings only, without `--strict`)
   - `exit 1 — violations found` (hard errors, or any violation with `--strict`)
+- **Class-based Controller Support (Fase 1 & 2)**: Added optional dynamic import of `@kerith/app` in `step-08-controllers.ts` to support class-based controller decorators. Core continues to work without `@kerith/app` installed (graceful degradation). Added `buildRouterFromClass()` function in `app-controller-bridge.ts` to build Express routers from decorated controller classes. Added controller metadata synthesis from decorator metadata when `@Controller` decorator is used without `Controller()` function call. In Fase 2, `app-controller-bridge.ts` was extended to dynamically resolve decorated parameters (`@Body`, `@Param`, etc.) when `route.params` is present, forwarding async rejections to Express 5 error handlers.
 
 ### Changed
 
