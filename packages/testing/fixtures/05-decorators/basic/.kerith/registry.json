@@ -1,7 +1,7 @@
 {
   "project": "fixture-05-decorators-basic",
   "version": "1.0.0",
-  "lastCheck": "2026-09-06T17:04:41.517Z",
+  "lastCheck": "2026-09-06T18:00:09.098Z",
   "modules": {
     "mod_806125e6": {
       "id": "mod_806125e6",
@@ -10,7 +10,7 @@
       "hash": "a8c42ef27f",
       "status": "active",
       "createdAt": "2026-09-05T19:45:42.492Z",
-      "lastSeen": "2026-09-06T17:04:41.515Z",
+      "lastSeen": "2026-09-06T18:00:09.095Z",
       "identifiers": [],
       "shadowFileId": "mod_806125e6"
     },
@@ -21,7 +21,7 @@
       "hash": "d045be8535",
       "status": "active",
       "createdAt": "2026-08-10T19:28:54.618Z",
-      "lastSeen": "2026-09-06T17:04:41.515Z",
+      "lastSeen": "2026-09-06T18:00:09.095Z",
       "identifiers": [],
       "shadowFileId": "mod_f8221947"
     },
@@ -32,7 +32,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-10T19:28:54.618Z",
-      "lastSeen": "2026-09-06T17:04:41.515Z",
+      "lastSeen": "2026-09-06T18:00:09.095Z",
       "identifiers": [],
       "shadowFileId": "mod_64bd7347"
     }

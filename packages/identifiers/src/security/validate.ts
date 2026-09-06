@@ -59,7 +59,7 @@ export function Validate(
     getHandlers(controller: unknown): unknown[] {
       // Requires controller.metadata?.validate (ControllerEntry extension — §0.3 resolved in Core).
       const entry = controller as { metadata?: { validate?: string } } | null | undefined;
-      if (entry?.metadata?.validate !== name) return [];
+      console.log('Validate getHandlers for', name, 'on', entry?.metadata); if (entry?.metadata?.validate !== name) return []; console.log('Validate matches!');
 
       return [
         async (req: unknown, res: unknown, next: unknown) => {
@@ -81,3 +81,4 @@ export function Validate(
 
   registerMiddlewarePlugin(plugin);
 }
+

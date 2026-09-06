@@ -158,6 +158,10 @@ export async function runControllersAndMount(
     }),
   );
 
+  if (ctx.options?._onControllersImported) {
+    await ctx.options._onControllersImported();
+  }
+
   // 3. Validate and register in original order (pure CPU — no I/O)
   for (const { task, imported } of importResults) {
     const { rawMod, file } = task;
