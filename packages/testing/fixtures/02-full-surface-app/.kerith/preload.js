@@ -4,7 +4,7 @@
 import { registerHooks } from 'node:module';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { createResolveHook } from 'file:///C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/dist/preload/preload-hook.js';
+import { createResolveHook } from 'file:///home/kevin/Projects/KerithJS/kerith/packages/core/dist/preload/preload-hook.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

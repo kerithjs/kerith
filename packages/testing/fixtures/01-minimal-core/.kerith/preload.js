@@ -4,7 +4,7 @@
 import { registerHooks } from 'node:module';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { createResolveHook } from 'file:///C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/dist/preload/preload-hook.js';
+import { createResolveHook } from 'file:///home/kevin/Projects/KerithJS/kerith/packages/core/dist/preload/preload-hook.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -14,8 +14,8 @@ const KERITH_PRELOAD_CONFIG = {
   aliases: {
     '@modules': resolve(__dirname, '../src'),
     '@shared': resolve(__dirname, '../src/shared'),
-    '@modules/health': resolve(__dirname, '../src/modules/health'),
     '@modules/home': resolve(__dirname, '../src/modules/home'),
+    '@modules/health': resolve(__dirname, '../src/modules/health'),
   },
   preloaded: true,
   _version: '2.0.0-alpha.1'

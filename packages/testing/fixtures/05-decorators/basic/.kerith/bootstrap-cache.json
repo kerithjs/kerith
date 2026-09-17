@@ -1,56 +1,16 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-09-06T18:00:09.156Z",
-  "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\testing\\fixtures\\05-decorators\\basic",
+  "savedAt": "2026-09-17T17:50:58.369Z",
+  "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic",
   "configHash": "ac112f50",
   "data": {
     "domains": [],
     "modules": [
       {
-        "name": "home",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/index.ts",
-        "imports": [],
-        "exports": [],
-        "shared": [],
-        "options": {
-          "imports": [],
-          "exports": []
-        },
-        "id": "mod_806125e6",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/home.controller.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 394,
-        "cachedMtime": 1788637354287.9294
-      },
-      {
-        "name": "legacy",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy/index.ts",
-        "imports": [],
-        "exports": [],
-        "shared": [],
-        "options": {
-          "imports": [],
-          "exports": []
-        },
-        "id": "mod_f8221947",
-        "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy/legacy.routes.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 219,
-        "cachedMtime": 1788637165633.8796
-      },
-      {
         "name": "health",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health/index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health/index.ts",
         "imports": [],
         "exports": [],
         "shared": [],
@@ -60,12 +20,52 @@
         },
         "id": "mod_64bd7347",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health/health.routes.ts"
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health/health.routes.ts"
         ],
         "identifiers": [],
         "aliases": [],
         "cachedSize": 243,
-        "cachedMtime": 1787166602609.9438
+        "cachedMtime": 1789258162490.6172
+      },
+      {
+        "name": "home",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/index.ts",
+        "imports": [],
+        "exports": [],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": []
+        },
+        "id": "mod_806125e6",
+        "files": [
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/home.controller.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 394,
+        "cachedMtime": 1789258162490.7585
+      },
+      {
+        "name": "legacy",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy/index.ts",
+        "imports": [],
+        "exports": [],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": []
+        },
+        "id": "mod_f8221947",
+        "files": [
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy/legacy.routes.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 219,
+        "cachedMtime": 1789258162490.8975
       }
     ],
     "submodules": [],

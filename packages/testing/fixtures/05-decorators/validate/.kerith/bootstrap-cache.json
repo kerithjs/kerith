@@ -1,16 +1,16 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-09-06T18:00:05.541Z",
-  "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\testing\\fixtures\\05-decorators\\validate",
+  "savedAt": "2026-09-17T17:50:56.676Z",
+  "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate",
   "configHash": "ac112f50",
   "data": {
     "domains": [],
     "modules": [
       {
         "name": "health",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/validate/src/modules/health",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/validate/src/modules/health/index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/health",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/health/index.ts",
         "imports": [],
         "exports": [],
         "shared": [],
@@ -20,17 +20,17 @@
         },
         "id": "mod_f97e7e53",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/validate/src/modules/health/health.routes.ts"
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/health/health.routes.ts"
         ],
         "identifiers": [],
         "aliases": [],
         "cachedSize": 243,
-        "cachedMtime": 1788714545481.2048
+        "cachedMtime": 1789258162491.493
       },
       {
         "name": "users",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users/index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users/index.ts",
         "imports": [],
         "exports": [],
         "shared": [],
@@ -40,13 +40,13 @@
         },
         "id": "mod_bbd4af70",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users/user.schema.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users/users.controller.ts"
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users/user.schema.ts",
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users/users.controller.ts"
         ],
         "identifiers": [],
         "aliases": [],
         "cachedSize": 761,
-        "cachedMtime": 1788714856693.3389
+        "cachedMtime": 1789258162491.618
       }
     ],
     "submodules": [],

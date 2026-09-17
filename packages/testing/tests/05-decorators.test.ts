@@ -51,4 +51,29 @@ describe('05-decorators', () => {
       await runEndpointAssertions(handle, manifest);
     });
   });
+
+  describe('param-query', () => {
+    let handle: FixtureHandle;
+    const fixtureDir = resolve(__dirname, '../fixtures/05-decorators/param-query');
+
+    beforeAll(async () => {
+      handle = await runFixture(fixtureDir);
+    });
+
+    afterAll(async () => {
+      if (handle?.child?.exitCode === null) {
+        await stopFixture(handle.child);
+      }
+    });
+
+    it('boots and @Param()/@Query() resolve real decorated values over real HTTP (subprocess)', async () => {
+      const manifest = readManifest(fixtureDir);
+      try {
+        await runEndpointAssertions(handle, manifest);
+      } catch (e) {
+        console.error('SERVER LOGS:', handle.getLogs());
+        throw e;
+      }
+    });
+  });
 });
