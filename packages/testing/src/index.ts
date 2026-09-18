@@ -13,6 +13,9 @@ export {
   runFixtureTwice,
 } from './process.js';
 
+// Project Generation
+export { runCreateKerith } from './scaffold.js';
+
 // Health-gate (poll /health until 200 or timeout)
 export { waitForHealth } from './health.js';
 
@@ -38,5 +41,6 @@ export type {
   RegistrySnapshot,
   RegistryRecord,
   RegistryModule,
+  ScaffoldOptions,
 } from './types.js';
 

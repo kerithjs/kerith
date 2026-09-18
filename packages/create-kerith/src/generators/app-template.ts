@@ -95,7 +95,17 @@ export function buildAppTemplate(
       socketio: input.socketio,
     });
     Object.assign(files, channelFiles);
+
+    const moduleIndexPath = `src/modules/channels/index.${input.language}`;
+    if (!files[moduleIndexPath]) {
+      files[moduleIndexPath] = generateChannelsModuleIndex(input.language, input.channels);
+    }
   }
 
   return files;
+}
+
+function generateChannelsModuleIndex(_ext: 'ts' | 'js', channels: string[]): string {
+  const imports = channels.map(ch => `import './${ch}.js'`).join('\n');
+  return `import { Module } from '@kerith/core'\n\n${imports}\n\nModule('channels', {\n  imports: [],\n  exports: [],\n})\n`;
 }

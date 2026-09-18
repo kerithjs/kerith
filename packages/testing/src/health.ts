@@ -29,9 +29,9 @@ const POLL_INTERVAL_MS = 100;
  * @returns          - Resolves with `port` when the gate opens.
  * @throws           - If the server never responds in time.
  */
-export async function waitForHealth(port: number, timeoutMs = 10_000): Promise<number> {
+export async function waitForHealth(port: number, timeoutMs = 10_000, routePrefix = ''): Promise<number> {
   const deadline = Date.now() + timeoutMs;
-  const url = `http://localhost:${port}/health`;
+  const url = `http://localhost:${port}${routePrefix}/health`;
 
   while (Date.now() < deadline) {
     try {

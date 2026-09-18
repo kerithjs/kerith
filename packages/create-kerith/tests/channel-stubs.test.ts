@@ -82,13 +82,13 @@ describe('channel-stubs', () => {
       socketio: false,
     });
 
-    expect(files['src/channels/cron.ts']).toBeDefined();
-    expect(files['src/channels/gateway.ts']).toBeDefined();
+    expect(files['src/modules/channels/cron.ts']).toBeDefined();
+    expect(files['src/modules/channels/gateway.ts']).toBeDefined();
     
     // Should NOT include others
-    expect(files['src/channels/alias.ts']).toBeUndefined();
-    expect(files['src/channels/middleware.ts']).toBeUndefined();
-    expect(files['src/channels/worker.ts']).toBeUndefined();
+    expect(files['src/modules/channels/alias.ts']).toBeUndefined();
+    expect(files['src/modules/channels/middleware.ts']).toBeUndefined();
+    expect(files['src/modules/channels/worker.ts']).toBeUndefined();
   });
 
   it('generateChannelStubs only includes requested channels with correct extension (js)', () => {
@@ -100,10 +100,10 @@ describe('channel-stubs', () => {
       socketio: false,
     });
 
-    expect(files['src/channels/cron.js']).toBeDefined();
-    expect(files['src/channels/gateway.js']).toBeDefined();
+    expect(files['src/modules/channels/cron.js']).toBeDefined();
+    expect(files['src/modules/channels/gateway.js']).toBeDefined();
     
     // Should NOT include TS files
-    expect(files['src/channels/cron.ts']).toBeUndefined();
+    expect(files['src/modules/channels/cron.ts']).toBeUndefined();
   });
 });

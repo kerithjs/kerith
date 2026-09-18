@@ -30,7 +30,7 @@ export async function executeWorkerChannel() {
           new bullmq.Worker(plugin.name, async (job: any) => {
             return handler(job)
           }, {
-            concurrency: opts.concurrency,
+            concurrency: opts.concurrency ?? 1,
             connection: redisConnection
           })
         }

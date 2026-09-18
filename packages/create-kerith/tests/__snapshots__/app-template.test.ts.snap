@@ -64,8 +64,21 @@ export default defineConfig({
     "typescript": "^5.4.5"
   }
 }",
-  "src/channels/test-stub.ts": "export const stub = true;",
   "src/modules/.gitkeep": "",
+  "src/modules/channels/index.ts": "import { Module } from '@kerith/core'
+
+import './alias.js'
+import './middleware.js'
+import './cron.js'
+import './worker.js'
+import './gateway.js'
+
+Module('channels', {
+  imports: [],
+  exports: [],
+})
+",
+  "src/modules/channels/test-stub.ts": "export const stub = true;",
   "src/modules/health/.kerith": "{
   "version": 1,
   "id": "MOCKED-UUID",
@@ -139,7 +152,7 @@ try {
   
   log.info(\`Mounted \${kerith.routes.length} route(s)\`)
   
-  const port = 3000
+  const port = Number(process.env.PORT) || 3000
   const server = app.listen(port, () => {
     log.info(\`Server running on http://localhost:\${port}\`)
   })
