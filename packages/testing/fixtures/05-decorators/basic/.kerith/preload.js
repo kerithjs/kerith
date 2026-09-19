@@ -13,8 +13,8 @@ const KERITH_PRELOAD_CONFIG = {
   modulesDir: resolve(__dirname, '../src'),
   aliases: {
     '@modules': resolve(__dirname, '../src'),
-    '@modules/health': resolve(__dirname, '../src/modules/health'),
     '@modules/legacy': resolve(__dirname, '../src/modules/legacy'),
+    '@modules/health': resolve(__dirname, '../src/modules/health'),
     '@modules/home': resolve(__dirname, '../src/modules/home'),
   },
   preloaded: true,

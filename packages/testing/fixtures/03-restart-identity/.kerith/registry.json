@@ -1,7 +1,7 @@
 {
   "project": "fixture-03-restart-identity",
   "version": "1.0.0",
-  "lastCheck": "2026-09-19T20:28:58.446Z",
+  "lastCheck": "2026-09-19T21:38:53.655Z",
   "modules": {
     "mod_8dc44912": {
       "id": "mod_8dc44912",
@@ -10,7 +10,7 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-15T15:02:17.679Z",
-      "lastSeen": "2026-09-19T20:28:58.443Z",
+      "lastSeen": "2026-09-19T21:38:53.652Z",
       "identifiers": [],
       "shadowFileId": "mod_8dc44912"
     }

@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 // Use createApp from @kerith/app to test the wrapper
-import { getRegisteredMiddlewareResolvers } from '@kerith/core'
 import { createApp } from '../../src/index.js'
-import { Guard, Filter } from '@kerith/identifiers'
+import { Guard, Filter, getMiddlewarePlugins, _resetAllChannels } from '@kerith/identifiers'
 import express from 'express'
 import request from 'supertest'
 import fs from 'node:fs'
@@ -13,7 +12,6 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-import { _resetAllChannels } from '@kerith/identifiers'
 import { _resetExtensionStore } from '@kerith/core/extension'
 
 describe('Middleware Channel Executor', () => {
@@ -139,12 +137,14 @@ describe('Filter — dedup by identity and 4-arg validation', () => {
     class ArityError extends Error {}
     Filter('arity-test', ArityError, (err: any) => ({ status: 500, error: err.message }))
 
-    const resolvers = getRegisteredMiddlewareResolvers()
-    const errorResolvers = resolvers.filter(r => r.phase === 'error')
-    expect(errorResolvers.length).toBeGreaterThan(0)
-    const resolver = errorResolvers[errorResolvers.length - 1]
+    // Filter() registers into @kerith/identifiers' channel store, not @kerith/core's extension store.
+    // Use getMiddlewarePlugins() to read from the correct store.
+    const plugins = getMiddlewarePlugins()
+    const errorPlugins = plugins.filter(p => p.phase === 'error')
+    expect(errorPlugins.length).toBeGreaterThan(0)
+    const plugin = errorPlugins[errorPlugins.length - 1]
 
-    const [handler] = resolver.getHandlers(undefined as any) as any[]
+    const [handler] = plugin.getHandlers(undefined as any) as any[]
 
     // Express distinguishes error middleware by having exactly 4 args: (err, req, res, next)
     expect(handler.length).toBe(4)
