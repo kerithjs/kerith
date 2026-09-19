@@ -14,6 +14,10 @@ For the full Kerith suite changelog (all packages), see the [root CHANGELOG](../
 
 ### Changed
 - **BREAKING**: minimum supported Node version raised to 24 LTS
+- Added new non-interactive flags (`--channels`, `--redis`, `--socketio`) for automated scaffolding in CI/E2E environments.
+
+### Fixed
+- Fixed a wiring issue where certain channels were not properly integrated in the scaffolded app template.
 
 
 

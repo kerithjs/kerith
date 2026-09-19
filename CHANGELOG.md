@@ -57,10 +57,12 @@ For full technical details, see the individual package changelogs:
 - `kerith check`'s exit code is more predictable: warnings like coupling or circular dependencies only fail the command in `--strict` mode.
 - Existing v1.x projects continue to work without any changes — see `MIGRATION.md` if you want to adopt the new domain structure.
 - **Monorepo Architecture**: Migrated from npm workspaces to **pnpm + Turborepo** for strict dependency boundaries (phantom dependency elimination) and sub-second cached builds/tests in local development and CI.
+- **`create-kerith`**: Added new non-interactive flags (`--channels`, `--redis`, `--socketio`) for automated scaffolding in CI/E2E environments.
 
 ### Fixed
 
 - A stale purge-cycle default that didn't match its intended value has been corrected.
+- **`create-kerith`**: Fixed a wiring issue where certain channels were not properly integrated in the scaffolded app template.
 
 ### Known Limitations (alpha)
 
