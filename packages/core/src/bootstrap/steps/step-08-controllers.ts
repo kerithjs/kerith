@@ -19,6 +19,7 @@ import { normalizePath, groupFilesByModulePath } from "../../core/utils/paths.js
 import { withTimeout } from "../../core/utils/timeout.js";
 import { buildModuleKey } from "../../core/registry.js";
 import { getRegisteredMiddlewareResolvers } from "../../extension/store.js";
+import { buildRouterFromClass } from "./app-controller-bridge.js";
 import type { BootstrapContext } from "../context.js";
 import type { Application } from "express";
 import type { MountedRoute } from "../../types/index.js";
@@ -35,6 +36,12 @@ export async function runControllersAndMount(
   }
 
   const { config, log, registry, allModules, allProjectFiles, modulePathMap, sortedModulePaths } = ctx;
+
+  // Since @kerith/app uses Symbol.for, we can just look up the global symbol
+  // without needing to dynamically import the package (which might fail in some
+  // strict package manager setups or tests where it's a peer dependency).
+  const KERITH_CONTROLLER = Symbol.for('kerith:controller');
+
 
   if (!config || !log || !allModules || !allProjectFiles || !modulePathMap || !sortedModulePaths) {
     throw new Error("runControllersAndMount requires config, log, allModules, allProjectFiles, modulePathMap, sortedModulePaths in context");
@@ -151,27 +158,69 @@ export async function runControllersAndMount(
     }),
   );
 
+  if (ctx.options?._onControllersImported) {
+    await ctx.options._onControllersImported();
+  }
+
   // 3. Validate and register in original order (pure CPU — no I/O)
   for (const { task, imported } of importResults) {
     const { rawMod, file } = task;
     const resolvedFile = normalizePath(file);
-    const ctrlMeta = registry.getControllerMetadata(resolvedFile);
+    let ctrlMeta = registry.getControllerMetadata(resolvedFile);
+
+    // Synthesis: if class-based controller decorator is present, register metadata
+    // Note: if both Controller() function and @Controller decorator are present,
+    // the function wins (ctrlMeta already exists from the function call during import)
+    if (!ctrlMeta && KERITH_CONTROLLER && imported.default?.[KERITH_CONTROLLER]) {
+      const decoratorMeta = imported.default[KERITH_CONTROLLER] as any;
+      registry.registerControllerMetadata({
+        name: path.parse(file).name,
+        path: resolvedFile,
+        prefix: decoratorMeta.prefix,
+        middlewares: decoratorMeta.middlewares || [],
+        enabled: decoratorMeta.enabled ?? true,
+        metadata: decoratorMeta.metadata,
+      });
+      // Re-read so the mount block below sees the newly registered entry
+      ctrlMeta = registry.getControllerMetadata(resolvedFile);
+    }
+
     if (ctrlMeta) {
+      // Check if this is a class-based controller (decorator) or traditional router
+      const isClassBased = KERITH_CONTROLLER && imported.default?.[KERITH_CONTROLLER];
       const isRouter =
         imported.default &&
         typeof imported.default === "function" &&
         typeof imported.default.use === "function";
-      if (!isRouter) {
+
+      if (isClassBased) {
+        // Build router from class using buildRouterFromClass
+        const decoratorMeta = (imported.default as any)[KERITH_CONTROLLER!];
+
+        try {
+          ctrlMeta.router = buildRouterFromClass(imported.default, decoratorMeta);
+        } catch (err: any) {
+          throw new KerithError(
+            "INVALID_CONTROLLER",
+            `Failed to build router from class-based controller: ${err.message}`,
+            `File: ${file}`,
+          );
+        }
+      } else if (isRouter) {
+        // Traditional router function
+        ctrlMeta.router = imported.default;
+      } else {
         throw new KerithError(
           "INVALID_CONTROLLER",
           `Controller has no default export of a Router. Add export default router.`,
           `File: ${file}`,
         );
       }
-      ctrlMeta.router = imported.default;
       rawMod.controllers.push(ctrlMeta);
     }
   }
+
+
 
   // Note: modules with no controllers are valid (workers, email, listeners, etc.)
   // REGLA-01: Kerith does not require controllers — they are Express-specific.

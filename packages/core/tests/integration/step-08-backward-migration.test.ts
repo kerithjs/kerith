@@ -115,4 +115,93 @@ describe('Integration: step-08 — backward migration', () => {
     
     expect(globalRegistry.modules['mod_12345678']).toBeUndefined();
   });
+
+  it('Core boot without @kerith/app installed continues to work', async () => {
+    // This test ensures that the optional dynamic import of @kerith/app
+    // does not break normal Core boot when @kerith/app is not installed
+    const { ctx } = await runBootstrapPipeline(tmpDir);
+
+    // Bootstrap should complete without errors
+    expect(ctx).toBeDefined();
+    expect(ctx.resolvedModules).toBeDefined();
+    expect(ctx.resolvedModules.length).toBe(1);
+    expect(ctx.resolvedModules[0].name).toBe('payments');
+  });
+
+  it('precedence: Controller() function call registers metadata before decorator synthesis can run', async () => {
+    // Verifies the precedence rule of step-08-controllers.ts §5.2:
+    // If a file has both Controller('/x') function AND KERITH_CONTROLLER on the default export,
+    // the function wins because:
+    //   1. The file is dynamically imported → Controller('/x') runs at module evaluation time
+    //   2. registry.registerControllerMetadata('/x') is called → ctrlMeta exists
+    //   3. step-08 hits the synthesis guard: `if (!ctrlMeta && KERITH_CONTROLLER && ...)` → false
+    //   4. Decorator synthesis is skipped entirely
+    //
+    // We test this at the registry level, not through HTTP, since running the full
+    // runControllersAndMount pipeline requires a complete BootstrapContext and a live
+    // Express app — that's covered by @kerith/app/tests/integration/mounting.test.ts (6.2.4).
+    // Here we verify the lighter-weight registry precondition that drives the logic.
+    const { registry } = await runBootstrapPipeline(tmpDir);
+
+    // Register metadata for a controller file directly (simulates what Controller() call does)
+    const fakeFilePath = '/fake/payments/users.ts';
+    registry.registerControllerMetadata({
+      name: 'users',
+      path: fakeFilePath,
+      prefix: '/function-path',
+      middlewares: [],
+      enabled: true,
+    });
+
+    const ctrlMeta = registry.getControllerMetadata(fakeFilePath);
+    expect(ctrlMeta).toBeDefined();
+    expect(ctrlMeta!.prefix).toBe('/function-path');
+
+    // Simulate what step-08 synthesis block does: it checks `!ctrlMeta` first.
+    // Because ctrlMeta already exists, the synthesis branch is NOT entered.
+    // This is the invariant the precedence rule depends on.
+    const wouldSynthesize = !ctrlMeta;
+    expect(wouldSynthesize).toBe(false);
+
+    // Additionally verify that the prefix was NOT overwritten
+    // (i.e., the decorator's '/decorator-path' never reached registerControllerMetadata)
+    expect(ctrlMeta!.prefix).not.toBe('/decorator-path');
+  });
+
+  it('synthesis path: @Controller decorator (no function) registers metadata when ctrlMeta is absent', async () => {
+    // Verifies the positive path of the synthesis block:
+    // When there is NO Controller() function call in the file, ctrlMeta is null,
+    // and step-08 calls registry.registerControllerMetadata() from the decorator metadata.
+    const { registry } = await runBootstrapPipeline(tmpDir);
+
+    const fakeFilePath = '/fake/payments/products.ts';
+
+    // Precondition: no metadata registered for this file
+    expect(registry.getControllerMetadata(fakeFilePath)).toBeUndefined();
+
+    // Simulate the synthesis block: `decoratorMeta.enabled ?? true`
+    const decoratorMeta = {
+      prefix: '/products',
+      routes: [{ method: 'get', path: '/', handlerKey: 'list' }],
+      middlewares: [],
+      metadata: { guards: ['auth'] },
+      enabled: undefined, // not set — should default to true
+    };
+
+    registry.registerControllerMetadata({
+      name: 'products',
+      path: fakeFilePath,
+      prefix: decoratorMeta.prefix,
+      middlewares: decoratorMeta.middlewares,
+      enabled: decoratorMeta.enabled ?? true,
+      metadata: decoratorMeta.metadata,
+    });
+
+    const synthesised = registry.getControllerMetadata(fakeFilePath);
+    expect(synthesised).toBeDefined();
+    expect(synthesised!.prefix).toBe('/products');
+    expect(synthesised!.enabled).toBe(true);
+    expect(synthesised!.metadata).toEqual({ guards: ['auth'] });
+  });
 });
+

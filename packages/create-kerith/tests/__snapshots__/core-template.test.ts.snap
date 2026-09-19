@@ -132,7 +132,7 @@ try {
   
   log.info(\`Mounted \${kerith.routes.length} route(s)\`)
   
-  const port = 3000
+  const port = Number(process.env.PORT) || 3000
   const server = app.listen(port, () => {
     log.info(\`Server running on http://localhost:\${port}\`)
   })

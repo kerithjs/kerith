@@ -1,16 +1,16 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-08-21T16:03:06.649Z",
-  "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\testing\\fixtures\\02-full-surface-app",
+  "savedAt": "2026-09-19T21:38:55.340Z",
+  "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/02-full-surface-app",
   "configHash": "297d8d5c",
   "data": {
     "domains": [],
     "modules": [
       {
         "name": "catalog",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/catalog",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/catalog/index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/02-full-surface-app/src/modules/catalog",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/02-full-surface-app/src/modules/catalog/index.ts",
         "imports": [],
         "exports": [],
         "shared": [],
@@ -20,17 +20,17 @@
         },
         "id": "mod_904bb40d",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/catalog/catalog.routes.ts"
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/02-full-surface-app/src/modules/catalog/catalog.routes.ts"
         ],
         "identifiers": [],
         "aliases": [],
         "cachedSize": 883,
-        "cachedMtime": 1787166602667.4658
+        "cachedMtime": 1789257838427.992
       },
       {
         "name": "health",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health/index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health/index.ts",
         "imports": [],
         "exports": [],
         "shared": [],
@@ -40,12 +40,12 @@
         },
         "id": "mod_85abe7e0",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health/health.routes.ts"
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/02-full-surface-app/src/modules/health/health.routes.ts"
         ],
         "identifiers": [],
         "aliases": [],
         "cachedSize": 242,
-        "cachedMtime": 1787166602671.465
+        "cachedMtime": 1789257838428.1172
       }
     ],
     "submodules": [],

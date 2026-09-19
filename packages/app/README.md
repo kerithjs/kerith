@@ -151,6 +151,163 @@ const app = await createApp(baseApp, {
 
 If `infrastructure` is not provided, the adapters will default to using environment variables (e.g., `REDIS_HOST`, `REDIS_PORT`, `REDIS_URL`) or fallback to defaults (`localhost:6379`).
 
+## Controller Decorators
+
+Kerith provides class-based controller decorators (`@Controller`, `@Get`, `@Post`, etc.) for organizing HTTP routes. This is an alternative to the traditional `Controller()` function approach.
+
+### Usage
+
+```typescript
+import { Controller, Get, Post, Put, Patch, Delete } from '@kerith/app';
+
+@Controller('/users')
+class UsersController {
+  @Get('/')
+  async getUsers(req: any, res: any) {
+    res.json([{ id: 1, name: 'John' }]);
+  }
+
+  @Get('/:id')
+  async getUser(req: any, res: any) {
+    const { id } = req.params;
+    res.json({ id, name: 'John' });
+  }
+
+  @Post('/')
+  async createUser(req: any, res: any) {
+    const user = req.body;
+    res.status(201).json({ id: 2, ...user });
+  }
+
+  @Put('/:id')
+  async updateUser(req: any, res: any) {
+    const { id } = req.params;
+    const updates = req.body;
+    res.json({ id, ...updates });
+  }
+
+  @Patch('/:id')
+  async patchUser(req: any, res: any) {
+    const { id } = req.params;
+    const updates = req.body;
+    res.json({ id, ...updates });
+  }
+
+  @Delete('/:id')
+  async deleteUser(req: any, res: any) {
+    const { id } = req.params;
+    res.status(204).send();
+  }
+}
+
+export default UsersController;
+```
+
+### Options
+
+The `@Controller` decorator accepts an optional configuration object:
+
+```typescript
+@Controller('/users', {
+  middlewares: [authMiddleware, loggingMiddleware],
+  metadata: { guards: ['admin'], rateLimit: 100, validate: 'updateUserSchema' }
+})
+class UsersController {
+  // ...
+}
+```
+
+The HTTP method decorators (`@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`) also accept an optional configuration object with a `metadata` property. This allows for route-specific extension integration:
+
+```typescript
+@Controller('/users')
+class UsersController {
+  @Get('/:id', { metadata: { rateLimit: 'strict-api' } })
+  async getUser() { /* ... */ }
+}
+```
+
+**⚠️ Controller-level and Route-level metadata coexistence:**
+> When a controller defines metadata (e.g., a guard) and a specific route inside it also defines metadata (e.g., a different guard or a rate limiter), **both will execute**. Route-level metadata is **additive**. It is strictly impossible for a route to "opt-out" or cancel a middleware (like a Guard) that was applied at the controller level.
+> Express executes them in distinct layers: the controller-level middleware wraps the entire router, and the route-level middleware wraps only the specific route. Both layers will trigger in their natural order.
+
+**⚠️ Dependency Injection Limitation:**
+> Controllers are instantiated without constructor arguments — Kerith does not currently have a dependency injection container. If a controller needs a Service or other dependency, it must be imported directly within the method rather than injected via constructor. For example:
+> ```typescript
+> import { Service } from './services/service.js'
+>
+> @Controller('/users')
+> class UserController {
+>   @Get()
+>   async getUsers() {
+>     const service = new Service() // Import and instantiate directly
+>     return service.findAll()
+>   }
+> }
+> ```
+
+### Parameter Decorators
+
+Parameter decorators extract values from the incoming request and pass them as arguments to the handler method. They are **pure extractors** — no validation, no transformation, no cloning. The raw Express value is passed directly.
+
+```typescript
+import { Controller, Get, Post, Body, Param, Query, Headers, Req, Res } from '@kerith/app';
+
+@Controller('/items')
+class ItemsController {
+  @Get('/:id')
+  async getOne(@Param('id') id: string, @Query('v') version: string) {
+    // id   = req.params.id
+    // version = req.query.v
+  }
+
+  @Post('/')
+  async create(@Body() body: any, @Res() res: any) {
+    // body = req.body (as parsed by Express — requires express.json() middleware)
+    res.status(201).json({ ...body });
+  }
+
+  @Get('/raw')
+  async raw(@Req() req: any, @Res() res: any) {
+    // full Express Request and Response objects
+    res.json({ method: req.method });
+  }
+}
+```
+
+#### Available decorators
+
+| Decorator | Resolves to |
+|-----------|-------------|
+| `@Body()` | `req.body` |
+| `@Param(key?)` | `req.params[key]` if `key` given, `req.params` otherwise |
+| `@Query(key?)` | `req.query[key]` if `key` given, `req.query` otherwise |
+| `@Headers(key?)` | `req.headers[key]` if `key` given, `req.headers` otherwise |
+| `@Req()` | `req` (full Express Request) |
+| `@Res()` | `res` (full Express Response) |
+
+#### Known restrictions
+
+**No serialization of return values.**
+> When parameter decorators are used on a handler, Kerith does **not** automatically serialize the return value as a JSON response. `@Res()` is the only way to send a response. This is intentional — automatic serialization would conflict with streaming, SSE, and other non-JSON response patterns.
+
+**`@Headers(key)` expects lowercase header names.**
+> Express normalizes all incoming header names to lowercase (`content-type`, not `Content-Type`). Using `@Headers('Content-Type')` will always return `undefined`. Always use the lowercase form: `@Headers('content-type')`.
+
+**Parameter decorators are not supported on constructor parameters.**
+> Kerith has no dependency injection container. Applying `@Body()` or any other parameter decorator to a constructor parameter throws a `TypeError` at decoration time with a clear error message. Dependencies must be imported directly inside methods.
+
+**Arrow function class fields are not supported.**
+> TypeScript does not emit parameter decorator calls for arrow function class fields (e.g., `getUser = async (req, res) => {}`). Parameter decorators only work on regular method declarations. This is a TypeScript compiler limitation, not a Kerith restriction.
+
+### Compatibility
+
+- Class-based decorators (`@Controller`) work alongside the traditional `Controller()` function
+- If both are used in the same file, the `Controller()` function takes precedence
+- The `@Controller` decorator automatically integrates with the Extension API (e.g., `Guard()`, `RateLimit()`) via the `metadata` option
+- Routes **without** any parameter decorators (Fase 1 style) continue to receive `(req, res, next)` exactly as before — no behavioral change
+
 ## Version
 
-Current version: v1.0.0-alpha.1
+Current version: v2.0.0-alpha.2
+

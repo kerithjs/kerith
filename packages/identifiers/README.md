@@ -52,6 +52,7 @@ The identifier catalog is defined in `src/catalog/metadata.ts` and contains meta
 ### Security
 - `Guard` (middleware) - Security guards
 - `RateLimit` (middleware) - Rate limiters
+- `Validate` (middleware) - Request body validation
 - `Firewall` (middleware) - Firewalls
 - `Policy`, `Permission`, `Role`, `Scope`, `Token`, `Session`, `Audit` (structural)
 
@@ -109,6 +110,12 @@ Client('db', () => new DatabaseClient());
 Guard('jwt', () => async (req, res, next) => {
   // JWT validation logic
 });
+
+// Middleware channel - request body validation
+// Note: Validate requires a schema with a `.parse()` method that throws on error.
+// The `req.body` will be replaced by the value returned by `parse()` (allowing coercions).
+// Kerith does not mount a body-parser; ensure `express.json()` is mounted first.
+Validate('createUserSchema', { parse: (data) => data /* your schema here */ });
 
 // Schedule channel - scheduled tasks
 Cron('cleanup', '0 2 * * *', async () => {

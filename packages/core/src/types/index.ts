@@ -260,6 +260,16 @@ export interface CreateAppOptions {
    * without notice in any version. Do not use this field in your application code.
    */
   _onDynamicImportsComplete?: () => void | Promise<void>;
+
+  /**
+   * Internal hook for `@kerith/app` to inject the channel translation
+   * exactly after controllers are imported but before routing starts.
+   *
+   * @internal
+   * @warning This is NOT part of the public API. It may change or be removed
+   * without notice in any version. Do not use this field in your application code.
+   */
+  _onControllersImported?: () => void | Promise<void>;
 }
 
 /** Resolved configuration used internally (defaults applied). */

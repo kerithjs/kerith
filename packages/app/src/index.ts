@@ -1,6 +1,7 @@
 // src/index.ts
 import { setInfrastructureOptions } from './runtime/infrastructure-context.js'
 import { registerIdentifierMetadata } from '@kerith/core/extension'
+// @ts-ignore
 import { IDENTIFIER_CATALOG, getBindingPlugins } from '@kerith/identifiers'
 import { createApp as coreCreateApp, type CreateAppOptions, type KerithApp } from '@kerith/core'
 
@@ -45,7 +46,6 @@ export async function createApp(app: any, options: AppCreateAppOptions = {}): Pr
     ...coreOptions,
     _onDynamicImportsComplete: async () => {
       executeAliasChannel();
-      executeMiddlewareChannel();
       executeSchedulePassthroughChannel();
       await executeCronChannel();
       await executeWorkerChannel();
@@ -56,6 +56,12 @@ export async function createApp(app: any, options: AppCreateAppOptions = {}): Pr
       if (originalHook) {
         await originalHook();
       }
+    },
+    _onControllersImported: async () => {
+      executeMiddlewareChannel();
+      if (coreOptions._onControllersImported) {
+        await coreOptions._onControllersImported();
+      }
     }
   };
 
@@ -65,7 +71,7 @@ export async function createApp(app: any, options: AppCreateAppOptions = {}): Pr
   // que es el único punto del ciclo de vida donde el servidor existe. ──
   const originalListen = kerithApp.listen.bind(kerithApp);
   kerithApp.listen = async (server, listenOptions) => {
-    const hasGateways = getBindingPlugins().some(p => p.kind === 'gateway');
+    const hasGateways = getBindingPlugins().some((p: any) => p.kind === 'gateway');
     if (hasGateways) {
       const transport = await loadSocketIOTransport();
       await transport.attach(server);
@@ -79,5 +85,15 @@ export async function createApp(app: any, options: AppCreateAppOptions = {}): Pr
 // Re-export the full public surface.
 // Note: our explicit createApp export above overrides the one from @kerith/core.
 export * from '@kerith/core'
+// @ts-ignore
 export * from '@kerith/identifiers'
 export type { IdentifierCategory, IdentifierMetadata } from '@kerith/core'
+
+// Controller decorators
+export { Controller } from './decorators/controller.js';
+export { Get, Post, Put, Patch, Delete } from './decorators/methods.js';
+export type { RouteDefinition, AppControllerMeta, AppControllerOptions, ParamSource, ParamDefinition } from './types/routing.js';
+export { KERITH_CONTROLLER, KERITH_ROUTES, KERITH_PARAMS } from './decorators/symbols.js';
+
+// Parameter decorators
+export { Body, Param, Query, Headers, Req, Res } from './decorators/params.js';

@@ -28,19 +28,19 @@ export function generateChannelStubs(
   const ext = options.language;
 
   if (options.channels.includes('alias')) {
-    files[`src/channels/alias.${ext}`] = aliasStub(options.projectName);
+    files[`src/modules/channels/alias.${ext}`] = aliasStub(options.projectName);
   }
   if (options.channels.includes('middleware')) {
-    files[`src/channels/middleware.${ext}`] = middlewareStub(options.projectName, options.language);
+    files[`src/modules/channels/middleware.${ext}`] = middlewareStub(options.projectName, options.language);
   }
   if (options.channels.includes('cron')) {
-    files[`src/channels/cron.${ext}`] = cronStub(options.projectName);
+    files[`src/modules/channels/cron.${ext}`] = cronStub(options.projectName);
   }
   if (options.channels.includes('worker')) {
-    files[`src/channels/worker.${ext}`] = workerStub(options.projectName, options.redis);
+    files[`src/modules/channels/worker.${ext}`] = workerStub(options.projectName, options.redis);
   }
   if (options.channels.includes('gateway')) {
-    files[`src/channels/gateway.${ext}`] = gatewayStub(options.projectName, options.socketio);
+    files[`src/modules/channels/gateway.${ext}`] = gatewayStub(options.projectName, options.socketio);
   }
 
   return files;

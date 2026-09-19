@@ -162,10 +162,8 @@ describe("NITS App Lifecycle (Shadow File Integration)", () => {
     await createApp(makeMockApp() as any);
 
     const registryContentStr = fs.readFileSync(path.join(dir2, ".kerith", "registry.json"), "utf8");
-    console.log("Registry generated in step 3:", registryContentStr);
 
     const usersShadowContent = JSON.parse(fs.readFileSync(path.join(dir2, "src/modules/users/.kerith"), "utf8"));
-    console.log("Shadow ID generated:", usersShadowContent.id);
     expect(usersShadowContent.id).toBe("mod_a1b2c3d4"); // Preserved!
     expect(usersShadowContent.id).toMatch(/^mod_[0-9a-f]{8}$/);
 

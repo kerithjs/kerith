@@ -1,19 +1,8 @@
 {
   "project": "fixture-01-minimal-core",
   "version": "1.0.0",
-  "lastCheck": "2026-08-21T16:03:03.324Z",
+  "lastCheck": "2026-09-19T21:38:51.849Z",
   "modules": {
-    "mod_1526f2ce": {
-      "id": "mod_1526f2ce",
-      "name": "home",
-      "path": "src/modules/home",
-      "hash": "00807229ac",
-      "status": "active",
-      "createdAt": "2026-08-10T19:28:27.101Z",
-      "lastSeen": "2026-08-21T16:03:03.323Z",
-      "identifiers": [],
-      "shadowFileId": "mod_1526f2ce"
-    },
     "mod_5e45824a": {
       "id": "mod_5e45824a",
       "name": "health",
@@ -21,9 +10,20 @@
       "hash": "31eb9a593f",
       "status": "active",
       "createdAt": "2026-08-10T19:28:27.101Z",
-      "lastSeen": "2026-08-21T16:03:03.323Z",
+      "lastSeen": "2026-09-19T21:38:51.848Z",
       "identifiers": [],
       "shadowFileId": "mod_5e45824a"
+    },
+    "mod_1526f2ce": {
+      "id": "mod_1526f2ce",
+      "name": "home",
+      "path": "src/modules/home",
+      "hash": "00807229ac",
+      "status": "active",
+      "createdAt": "2026-08-10T19:28:27.101Z",
+      "lastSeen": "2026-09-19T21:38:51.848Z",
+      "identifiers": [],
+      "shadowFileId": "mod_1526f2ce"
     }
   },
   "domains": {},

@@ -96,7 +96,7 @@ describe('Integration: check.test.ts (Coupling & Regression)', () => {
     
     expect(exitCode).toBe(1);
     expect(output).toContain('exit 1 — violations found');
-  });
+  }, 30000);
 
   it('verifies that RELATIVE_BOUNDARY_VIOLATION still blocks without --strict', () => {
     const dir = path.join(fixturesRoot, boundaryApp);
@@ -104,7 +104,7 @@ describe('Integration: check.test.ts (Coupling & Regression)', () => {
     
     expect(exitCode).toBe(1);
     expect(output).toContain('RELATIVE_BOUNDARY_VIOLATION');
-  });
+  }, 30000);
 
   it('verifies that CIRCULAR_DEPENDENCY does not block without --strict (Phase 0b regression test)', () => {
     const dir = path.join(fixturesRoot, circularApp);

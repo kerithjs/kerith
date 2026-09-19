@@ -87,6 +87,9 @@ export interface CliFlags {
   projectName?: string;
   template?: 'core' | 'app';
   language?: 'ts' | 'js';
+  channels?: ChannelType[];
+  redis?: boolean;
+  socketio?: boolean;
   port?: number;
   prefix?: string;
   noInstall?: boolean;
@@ -103,6 +106,18 @@ export function validatePort(raw: string): string | undefined {
     return 'Port must be an integer between 1 and 65535';
   }
   return undefined; // valid
+}
+
+export function validateChannels(raw: string, template?: string): { valid: false; error: string } | { valid: true; channels: ChannelType[] } {
+  const channelsFlag = raw.split(',').map((c) => c.trim()) as ChannelType[];
+  const invalid = channelsFlag.filter((c) => !IMPLEMENTED_CHANNELS.includes(c as ChannelType));
+  if (invalid.length > 0) {
+    return { valid: false, error: `Invalid --channels value(s): ${invalid.join(', ')}` };
+  }
+  if (template !== undefined && template !== 'app') {
+    return { valid: false, error: '--channels requires --template app' };
+  }
+  return { valid: true, channels: channelsFlag };
 }
 
 // ---------------------------------------------------------------------------
@@ -144,6 +159,9 @@ export async function runPrompts(flags: CliFlags = {}): Promise<UserChoices> {
       projectName: sanitizeProjectName(rawProjectName),
       ...(flags.template !== undefined && { template: flags.template }),
       ...(flags.language !== undefined && { language: flags.language }),
+      ...(flags.channels !== undefined && { channels: flags.channels }),
+      ...(flags.redis !== undefined && { redis: flags.redis }),
+      ...(flags.socketio !== undefined && { socketio: flags.socketio }),
       ...(flags.port !== undefined && { port: flags.port }),
       ...(flags.prefix !== undefined && { routePrefix: flags.prefix }),
       ...(flags.noInstall !== undefined && { installDeps: !flags.noInstall }),

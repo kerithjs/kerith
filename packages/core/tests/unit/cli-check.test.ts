@@ -8,6 +8,7 @@ import {
   ViolationType,
 } from '../../src/cli/lib/violations.js';
 import { runQualityRules } from '../../src/cli/lib/rules-engine.js';
+import { detectEmptyModules } from '../../src/cli/lib/export-checker.js';
 import { buildModuleGraph, ModuleNode } from '../../src/cli/lib/graph-builder.js';
 import { checkCommand } from '../../src/cli/commands/check.js';
 import * as configModule from '../../src/core/config.js';
@@ -88,6 +89,35 @@ describe('kerith check', () => {
         expect(violations[0].import).toBe('../payments/payments.service');
         expect(violations[0].file).toContain('users.service.ts');
         expect(violations[0].hint).toContain('@modules');
+      } finally {
+        fs.rmSync(tmpRoot, { recursive: true, force: true });
+      }
+    });
+
+    it('Fase 5.4 Integración: module with only a @Controller does not trigger EMPTY_MODULE end-to-end', async () => {
+      const tmpRoot = path.join(fixturePath, '..', `empty-mod-tmp-${Date.now()}`);
+      const apiDir = path.join(tmpRoot, 'src', 'modules', 'api');
+      fs.mkdirSync(apiDir, { recursive: true });
+
+      fs.writeFileSync(
+        path.join(apiDir, 'index.ts'),
+        "import { Module } from '@kerith/core';\nModule('api', { imports: [] });",
+      );
+      // The only Kerith token in this module is a class decorator.
+      fs.writeFileSync(
+        path.join(apiDir, 'controller.ts'),
+        "import { Controller } from '@kerith/core';\n@Controller('/api')\nexport class ApiController {}",
+      );
+
+      try {
+        // buildModuleGraph scans the files. ast-parser (via TS compiler fallback) will find @Controller('/api')
+        // and register it in internalIdentifiers, preventing the module from being empty.
+        const graph = await buildModuleGraph({ modules: 'src/modules/*' } as any, tmpRoot);
+        // resolveQualityRules provides { emptyModule: true, ... }
+        const { resolveQualityRules } = await import('../../src/config/rules.types.js');
+        const violations = detectEmptyModules(graph, resolveQualityRules());
+        
+        expect(violations).toHaveLength(0);
       } finally {
         fs.rmSync(tmpRoot, { recursive: true, force: true });
       }

@@ -181,7 +181,7 @@ export default {
 
   it('merges channel stubs when channels are requested', () => {
     vi.spyOn(channelStubs, 'generateChannelStubs').mockReturnValue({
-      'src/channels/test-stub.ts': 'export const stub = true;'
+      'src/modules/channels/test-stub.ts': 'export const stub = true;'
     });
 
     const result = buildAppTemplate({}, { 
@@ -200,7 +200,7 @@ export default {
       language: 'ts',
     });
 
-    expect(result['src/channels/test-stub.ts']).toBe('export const stub = true;');
+    expect(result['src/modules/channels/test-stub.ts']).toBe('export const stub = true;');
   });
 
   it('snapshot: patched output matches fixture/app-project', () => {

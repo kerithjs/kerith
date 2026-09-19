@@ -24,6 +24,9 @@ Options:
   -l, --language <lang>    Language: ts | js             (default: ts)
   -p, --port <number>      Server port (1–65535)         (default: 3000)
       --prefix <prefix>    Route prefix, e.g. /api       (default: none)
+      --channels <list>    Comma-separated channels (app template only): alias,middleware,cron,worker,gateway
+      --redis              Generate Redis connection stub (ioredis) — useful with worker/cron
+      --socketio           Include Socket.io support — useful with gateway
   -o, --out-dir <dir>      Output directory              (default: ./<project-name>)
       --no-install         Skip npm install after scaffolding
   -h, --help               Display help
@@ -37,6 +40,7 @@ Options:
 | `--port`       | Must be an integer between 1 and 65535. Rejected with a clear error if invalid.                                                     |
 | `--template`   | Must be `core` or `app`. Any other value exits with a non-zero code.                                                                |
 | `--language`   | Must be `ts` or `js`. Any other value exits with a non-zero code.                                                                   |
+| `--channels`   | Comma-separated list of implemented channels. Unknown values exit with a non-zero code. Requires `--template app`.                  |
 
 ## Templates
 

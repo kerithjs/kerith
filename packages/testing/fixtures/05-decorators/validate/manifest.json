@@ -1,0 +1,19 @@
+{
+  "expect": "success",
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/users",
+      "requestBody": { "name": "Ada Lovelace", "email": "ada@example.com" },
+      "expectedStatus": 201,
+      "expectedBody": { "created": { "name": "Ada Lovelace", "email": "ada@example.com" } }
+    },
+    {
+      "method": "POST",
+      "path": "/users",
+      "requestBody": { "name": "Ada Lovelace" },
+      "expectedStatus": 400,
+      "expectedBody": { "error": "Validation failed", "details": "name and email must be strings" }
+    }
+  ]
+}

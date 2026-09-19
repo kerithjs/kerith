@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { runFixture, stopFixture, readManifest } from '../src/index.js';
+import { runFixture, stopFixture, readManifest, runEndpointAssertions } from '../src/index.js';
 import type { FixtureHandle, Manifest } from '../src/index.js';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,28 +7,7 @@ import { io } from 'socket.io-client';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-async function runEndpointAssertions(handle: FixtureHandle, manifest: Manifest): Promise<void> {
-  for (const endpoint of manifest.endpoints || []) {
-    if (endpoint.pollAfterMs) {
-      await new Promise((resolve) => setTimeout(resolve, endpoint.pollAfterMs));
-    }
 
-    const res = await handle.http.request(endpoint.path, { method: endpoint.method });
-
-    expect(
-      res.status,
-      `${endpoint.method} ${endpoint.path} — expected status ${endpoint.expectedStatus}, got ${res.status}`,
-    ).toBe(endpoint.expectedStatus);
-
-    if (endpoint.expectedBody !== null) {
-      const body = await res.json();
-      expect(
-        body,
-        `${endpoint.method} ${endpoint.path} — unexpected body`,
-      ).toEqual(endpoint.expectedBody);
-    }
-  }
-}
 
 describe('03-channels', () => {
   const fixtures = [

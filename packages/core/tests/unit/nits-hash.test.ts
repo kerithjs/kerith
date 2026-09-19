@@ -272,4 +272,67 @@ describe('computeModuleHash', () => {
     expect(identifiers).toContain('PaymentService');
     expect(identifiers).toContain('PaymentRepository');
   });
-});
+
+  // ── Fase 5.5 — Verification: Controller exclusion (BUG-1) survives the TS compiler fallback ──
+
+  it('Fase 5.5: @Controller-decorated class does NOT appear in hash identifiers (BUG-1 exclusion intact)', async () => {
+    // nits-hash.ts uses targetCallees = ['Service', 'Repository', 'Schema'] (line 108) —
+    // Controller is intentionally absent (comment lines 102-106: BUG-1).
+    // This test confirms that the new TS compiler fallback in ast-parser.ts does NOT
+    // "leak" Controller into the hash, because the exclusion lives at the call-site
+    // (nits-hash.ts), not inside the parser. Even though the TS compiler now correctly
+    // finds @Controller('/users') as a CallExpression, it only returns it when 'Controller'
+    // is in the calleeNames argument — which it never is from this file.
+    write(tmpDir, 'controller.ts', `
+      import { Controller, Get } from '@kerith/core';
+
+      @Controller('/users')
+      export class UsersController {
+        @Get('/')
+        list() {}
+      }
+    `);
+    const { hash, identifiers } = await computeModuleHash(tmpDir);
+    expect(hash).toHaveLength(10);
+    // '/users' (the Controller route path) must NOT appear in identifiers.
+    expect(identifiers).not.toContain('/users');
+    // No Service/Repository/Schema found → identifiers is empty → fallback to file structure hash.
+    expect(identifiers).toHaveLength(0);
+  });
+
+  it('Fase 5.5 (BUG-1 regression): two modules sharing a route prefix get different hashes when they have different Services', async () => {
+    // Demonstrates why BUG-1 matters: if Controller route paths were included in the hash,
+    // UsersController ('/users') and UsersAdminController ('/users/admin') would share the
+    // prefix '/users' in their identifier sets, inflating Jaccard similarity and causing
+    // false-positive identity matches between unrelated modules.
+    // With Controller excluded, the hashes are driven solely by Service names which differ.
+    const tmpDirA = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-nits-bug1-a-'));
+    const tmpDirB = fs.mkdtempSync(path.join(os.tmpdir(), 'Kerith-nits-bug1-b-'));
+    try {
+      write(tmpDirA, 'mod.ts', `
+        import { Controller } from '@kerith/core';
+        @Controller('/users')
+        export class UsersController {}
+        Service('UserService');
+      `);
+      write(tmpDirB, 'mod.ts', `
+        import { Controller } from '@kerith/core';
+        @Controller('/users/admin')
+        export class UsersAdminController {}
+        Service('AdminService');
+      `);
+      const { hash: hA, identifiers: idA } = await computeModuleHash(tmpDirA);
+      const { hash: hB, identifiers: idB } = await computeModuleHash(tmpDirB);
+
+      // Each module's hash is driven by its Service name, not by the shared '/users' prefix.
+      expect(hA).not.toBe(hB);
+      expect(idA).toContain('UserService');
+      expect(idB).toContain('AdminService');
+      expect(idA).not.toContain('/users');
+      expect(idB).not.toContain('/users/admin');
+    } finally {
+      fs.rmSync(tmpDirA, { recursive: true, force: true });
+      fs.rmSync(tmpDirB, { recursive: true, force: true });
+    }
+  });
+});

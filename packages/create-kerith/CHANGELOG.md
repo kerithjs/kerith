@@ -10,10 +10,14 @@ For the full Kerith suite changelog (all packages), see the [root CHANGELOG](../
 ---
 
 
-## [2.0.0-alpha.2] - Unreleased
+## [1.0.0-alpha.1] - Unreleased
 
 ### Changed
 - **BREAKING**: minimum supported Node version raised to 24 LTS
+- Added new non-interactive flags (`--channels`, `--redis`, `--socketio`) for automated scaffolding in CI/E2E environments.
+
+### Fixed
+- Fixed a wiring issue where certain channels were not properly integrated in the scaffolded app template.
 
 
 
@@ -42,6 +46,8 @@ For the full Kerith suite changelog (all packages), see the [root CHANGELOG](../
 - **`--port` accepted invalid values in non-interactive mode.** `parseInt(options.port, 10)` produced `NaN` when passed a non-numeric string via `--yes`, which flowed straight into the generated `server.ts`. The same validation used by the interactive prompt is now applied to the flag.
 - **`--template` accepted invalid values silently.** An unrecognized value (e.g. `--template foo`) fell through to the `core` template without warning. Invalid values now exit with a clear error instead.
 - **Missing optional dependencies for `worker`/`cron` channels.** `bullmq` and `node-cron` are peer dependencies of `@kerith/app` needed by the `Worker` and `Cron` channels respectively, but were never added to the generated `package.json`. Both are now added conditionally, alongside the existing `ioredis`/`socket.io` handling.
+- **(A1) Channel stubs were written to `src/channels/` instead of `src/modules/channels/`.** `core/src/bootstrap/scanner.ts` only scans for `**/index.{ts,js,mts,mjs}` files under the origin path's `modules/` hierarchy, so stubs placed in `src/channels/` were silently ignored — the module was never registered and no identifier was ever loaded. `channel-stubs.ts` now writes stubs to `src/modules/channels/<channel>.<ext>` and `app-template.ts` generates the required `src/modules/channels/index.<ext>` with a `Module('channels', …)` declaration so the scanner picks up the module.
+- **(A2) `--channels`, `--redis`, `--socketio` flags were missing from the CLI.** There was no way to specify channels non-interactively, making CI and automated E2E testing impossible with `--yes`. Added `--channels <list>` (comma-separated, validated against `IMPLEMENTED_CHANNELS`), `--redis`, and `--socketio` to `commander`. Added `validateChannels()` (pure, testable) to `prompts.ts`. The `--yes` branch in `runPrompts` now merges any supplied flag values over the defaults.
 
 ### Documentation
 
@@ -52,5 +58,4 @@ For the full Kerith suite changelog (all packages), see the [root CHANGELOG](../
 
 ### Known limitations
 
-- Channel selection is only available in the interactive flow — there is no `--channels` flag yet for choosing channels non-interactively with `--yes`. Non-interactive runs of the `app` template currently generate no channel stubs.
 - Not yet published to npm. `npm create kerith@alpha` will work once published; until then, use the local build (`node packages/create-kerith/dist/index.js`) from within this monorepo, where `@kerith/core`, `@kerith/app`, and `@kerith/identifiers` resolve through npm workspaces.

@@ -1,4 +1,4 @@
-// nits/domain-store.ts (nuevo)
+// nits/domain-store.ts
 import fs from 'node:fs';
 import path from 'node:path';
 import { atomicWriteJson } from './atomic-write.js';

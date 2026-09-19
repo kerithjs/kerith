@@ -1,0 +1,30 @@
+{
+  "expect": "success",
+  "errorCode": null,
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "expectedStatus": 200,
+      "expectedBody": { "status": "ok", "message": "Hello from Kerith!" }
+    },
+    {
+      "method": "GET",
+      "path": "/items/42?sort=asc",
+      "expectedStatus": 200,
+      "expectedBody": { "id": "42", "sort": "asc" }
+    },
+    {
+      "method": "GET",
+      "path": "/items/42",
+      "expectedStatus": 200,
+      "expectedBody": { "id": "42", "sort": null }
+    },
+    {
+      "method": "GET",
+      "path": "/items/42/raw?a=1&b=2",
+      "expectedStatus": 200,
+      "expectedBody": { "params": { "id": "42" }, "query": { "a": "1", "b": "2" } }
+    }
+  ]
+}

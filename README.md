@@ -362,7 +362,6 @@ For full configuration details, see the [`@kerith/eslint-plugin` README](./packa
 During the alpha cycle, the following known limitations apply:
 
 - **Mode B of `kerith init`**: Running `kerith init` in a directory with an existing `package.json` (Mode B) is currently disabled. The CLI will abort to prevent unintentional overwriting of your project files. If you want to scaffold a new Kerith project, please do so in an empty directory. `create-kerith` follows the same restriction — it only scaffolds new projects and will refuse to run against a directory that already has a `package.json`.
-- **`create-kerith` channel selection**: the interactive prompt offers all five channels (`Alias`, `Middleware`, `Cron`, `Worker`, `Gateway`), but there is currently no non-interactive flag to pick channels when using `--yes` — non-interactive runs generate the `app` template with no channel stubs.
 
 ---
 

@@ -8,37 +8,14 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { runFixture, stopFixture, readManifest } from '../src/index.js';
+import { runFixture, stopFixture, readManifest, runEndpointAssertions } from '../src/index.js';
 import type { FixtureHandle } from '../src/index.js';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// ---------------------------------------------------------------------------
-// Helper: drive a started fixture through its manifest endpoints
-// ---------------------------------------------------------------------------
 
-async function runEndpointAssertions(handle: FixtureHandle, fixtureDir: string): Promise<void> {
-  const manifest = readManifest(fixtureDir);
-
-  for (const endpoint of manifest.endpoints || []) {
-    const res = await handle.http.request(endpoint.path, { method: endpoint.method });
-
-    expect(
-      res.status,
-      `${endpoint.method} ${endpoint.path} — expected status ${endpoint.expectedStatus}, got ${res.status}`,
-    ).toBe(endpoint.expectedStatus);
-
-    if (endpoint.expectedBody !== null) {
-      const body = await res.json();
-      expect(
-        body,
-        `${endpoint.method} ${endpoint.path} — unexpected body`,
-      ).toEqual(endpoint.expectedBody);
-    }
-  }
-}
 
 // ---------------------------------------------------------------------------
 // core template
@@ -60,7 +37,8 @@ describe('01-minimal', () => {
     });
 
     it('boots and all manifest endpoints respond as declared', async () => {
-      await runEndpointAssertions(handle, fixtureDir);
+      const manifest = readManifest(fixtureDir);
+      await runEndpointAssertions(handle, manifest);
     });
 
     it('shuts down cleanly and executes onShutdown hook', async () => {
@@ -97,7 +75,8 @@ describe('01-minimal', () => {
     });
 
     it('boots and all manifest endpoints respond as declared', async () => {
-      await runEndpointAssertions(handle, fixtureDir);
+      const manifest = readManifest(fixtureDir);
+      await runEndpointAssertions(handle, manifest);
     });
 
     it('shuts down cleanly and executes onShutdown hook', async () => {

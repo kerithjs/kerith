@@ -1,0 +1,57 @@
+{
+  "version": "2.0.0-alpha.1",
+  "status": "ok",
+  "savedAt": "2026-09-19T21:38:51.805Z",
+  "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate",
+  "configHash": "ac112f50",
+  "data": {
+    "domains": [],
+    "modules": [
+      {
+        "name": "health",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/health",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/health/index.ts",
+        "imports": [],
+        "exports": [],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": []
+        },
+        "id": "mod_f97e7e53",
+        "files": [
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/health/health.routes.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 243,
+        "cachedMtime": 1789258162491.493
+      },
+      {
+        "name": "users",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users/index.ts",
+        "imports": [],
+        "exports": [],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": []
+        },
+        "id": "mod_bbd4af70",
+        "files": [
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users/user.schema.ts",
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate/src/modules/users/users.controller.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 761,
+        "cachedMtime": 1789258162491.618
+      }
+    ],
+    "submodules": [],
+    "shared": [],
+    "identifiers": [],
+    "aliases": []
+  }
+}

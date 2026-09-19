@@ -13,7 +13,8 @@
 import { program } from 'commander';
 import path from 'node:path';
 import * as p from '@clack/prompts';
-import { runPrompts, validatePort, type CliFlags } from './prompts.js';
+import { runPrompts, validatePort, validateChannels, type CliFlags } from './prompts.js';
+import type { ChannelType } from './generators/channel-stubs.js';
 import { buildCoreTemplate } from './generators/core-template.js';
 import { buildAppTemplate } from './generators/app-template.js';
 import { writeProject } from './fs-writer.js';
@@ -30,6 +31,9 @@ async function main() {
     .option('-l, --language <lang>', 'Language (ts|js)')
     .option('-p, --port <number>', 'Port for the server')
     .option('--prefix <prefix>', 'Route prefix')
+    .option('--channels <list>', 'Comma-separated channels: alias,middleware,cron,worker,gateway')
+    .option('--redis', 'Include Redis (ioredis) stub for worker/cron')
+    .option('--socketio', 'Include Socket.io support for gateway')
     .option('--no-install', 'Skip npm install')
     .option('-o, --out-dir <dir>', 'Output directory');
 
@@ -57,11 +61,23 @@ async function main() {
     program.error(`Invalid --language "${options.language}": must be "ts" or "js"`);
   }
 
+  let channelsFlag: ChannelType[] | undefined;
+  if (options.channels !== undefined) {
+    const result = validateChannels(String(options.channels), options.template);
+    if (!result.valid) {
+      program.error(result.error);
+    }
+    channelsFlag = result.channels;
+  }
+
   const flags: CliFlags = {
     yes: options.yes,
     projectName: args[0] || options.projectName,
     template: options.template as 'core' | 'app',
     language: options.language as 'ts' | 'js',
+    channels: channelsFlag,
+    redis: options.redis,
+    socketio: options.socketio,
     port: options.port ? parseInt(options.port, 10) : undefined,
     prefix: options.prefix,
     noInstall: options.install === false,

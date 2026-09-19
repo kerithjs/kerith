@@ -987,7 +987,7 @@ npx kerith dev src/server.ts --watch
 
 ### `kerith check`
 
-Static architecture analysis — inspects raw ASTs across the module structure without evaluating your application code. See the [next section](#kerith-check--architecture-violations) for the full violation table.
+Static architecture analysis — inspects raw ASTs across the module structure without evaluating your application code. (Note: Uses a fast lightweight parser by default, but gracefully falls back to the TypeScript compiler API to fully support decorators like `@Controller` without false positives). See the [next section](#kerith-check--architecture-violations) for the full violation table.
 
 ```bash
 npx kerith check --strict --format json

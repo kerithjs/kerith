@@ -1,16 +1,16 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-08-21T16:03:10.608Z",
-  "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\testing\\fixtures\\04-error-paths\\undeclared-shared\\strict-off",
+  "savedAt": "2026-09-19T21:38:59.043Z",
+  "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off",
   "configHash": "d46380c2",
   "data": {
     "domains": [],
     "modules": [
       {
         "name": "consumer",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/consumer",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/consumer/index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/consumer",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/consumer/index.ts",
         "imports": [],
         "exports": [],
         "shared": [
@@ -30,8 +30,8 @@
       },
       {
         "name": "health",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/health",
-        "indexPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/health/index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/health",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/health/index.ts",
         "imports": [],
         "exports": [],
         "shared": [],
@@ -41,12 +41,12 @@
         },
         "id": "mod_64bd7347",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/health/health.routes.ts"
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/04-error-paths/undeclared-shared/strict-off/src/modules/health/health.routes.ts"
         ],
         "identifiers": [],
         "aliases": [],
         "cachedSize": 243,
-        "cachedMtime": 1787166603044.7356
+        "cachedMtime": 1789257838443.1653
       }
     ],
     "submodules": [],

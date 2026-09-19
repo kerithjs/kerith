@@ -13,6 +13,9 @@ export {
   runFixtureTwice,
 } from './process.js';
 
+// Project Generation
+export { runCreateKerith } from './scaffold.js';
+
 // Health-gate (poll /health until 200 or timeout)
 export { waitForHealth } from './health.js';
 
@@ -21,6 +24,9 @@ export { createHttpClient } from './http-client.js';
 
 // Fixture artifact readers
 export { readManifest, readRegistrySnapshot, readDomainRegistrySnapshot } from './readers.js';
+
+// Assertions
+export { runEndpointAssertions } from './assertions.js';
 
 // Shared types (re-exported for test files)
 export type {
@@ -35,5 +41,6 @@ export type {
   RegistrySnapshot,
   RegistryRecord,
   RegistryModule,
+  ScaffoldOptions,
 } from './types.js';
 
