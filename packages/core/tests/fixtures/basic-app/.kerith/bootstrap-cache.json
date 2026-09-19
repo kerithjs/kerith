@@ -1,16 +1,16 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-09-06T17:58:25.992Z",
-  "cwd": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app",
-  "configHash": "79329199",
+  "savedAt": "2026-09-19T20:41:48.941Z",
+  "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app",
+  "configHash": "7050c03d",
   "data": {
     "domains": [],
     "modules": [
       {
         "name": "auth",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/auth",
-        "indexPath": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app\\src\\modules\\auth\\index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/auth",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/auth/index.ts",
         "imports": [],
         "exports": [
           "AuthService"
@@ -23,18 +23,18 @@
         },
         "id": "mod_8362dd1a",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/auth/auth.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/auth/auth.service.ts"
+          "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/auth/auth.routes.ts",
+          "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/auth/auth.service.ts"
         ],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 392,
-        "cachedMtime": 1786391079752.4192
+        "cachedSize": 377,
+        "cachedMtime": 1789257738775.8442
       },
       {
         "name": "core",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/core",
-        "indexPath": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app\\src\\modules\\core\\index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/core",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/core/index.ts",
         "imports": [],
         "exports": [
           "CoreService"
@@ -54,8 +54,8 @@
       },
       {
         "name": "notifications",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/notifications",
-        "indexPath": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app\\src\\modules\\notifications\\index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/notifications",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/notifications/index.ts",
         "imports": [],
         "exports": [
           "notify"
@@ -68,17 +68,17 @@
         },
         "id": "mod_965281db",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/notifications/notifications.service.ts"
+          "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/notifications/notifications.service.ts"
         ],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 67,
-        "cachedMtime": 1786391079767.9453
+        "cachedSize": 64,
+        "cachedMtime": 1789257738776.0847
       },
       {
         "name": "users",
-        "dirPath": "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/users",
-        "indexPath": "C:\\Users\\Keiver\\Desktop\\Projects\\Projects-Ideas\\CLI\\KerithJS\\Kerith\\packages\\core\\tests\\fixtures\\basic-app\\src\\modules\\users\\index.ts",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/users",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/users/index.ts",
         "imports": [
           "notifications"
         ],
@@ -96,13 +96,13 @@
         },
         "id": "mod_73d7f06b",
         "files": [
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/users/users.routes.ts",
-          "C:/Users/Keiver/Desktop/Projects/Projects-Ideas/CLI/KerithJS/Kerith/packages/core/tests/fixtures/basic-app/src/modules/users/users.service.ts"
+          "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/users/users.routes.ts",
+          "/home/kevin/Projects/KerithJS/kerith/packages/core/tests/fixtures/basic-app/src/modules/users/users.service.ts"
         ],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 581,
-        "cachedMtime": 1786391079776.9502
+        "cachedSize": 561,
+        "cachedMtime": 1789257738776.2095
       }
     ],
     "submodules": [],
