@@ -1,7 +1,7 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-09-19T21:38:55.285Z",
+  "savedAt": "2026-09-19T22:01:55.773Z",
   "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/param-query",
   "configHash": "4a13f453",
   "data": {
@@ -25,7 +25,7 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 243,
-        "cachedMtime": 1789666331540.0352
+        "cachedMtime": 1789854322934.8948
       },
       {
         "name": "items",
@@ -45,7 +45,7 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 663,
-        "cachedMtime": 1789666360728.308
+        "cachedMtime": 1789854322935.0244
       }
     ],
     "submodules": [],

@@ -32,8 +32,9 @@ function runCommand(command: string, args: string[], cwd: string): Promise<void>
 /**
  * Runs kerith sync-preload and optionally kerith sync-tsconfig.
  * Treats failures as warnings rather than fatal errors.
+ * Returns true if successful, false if there were errors.
  */
-export async function runSync(options: SyncOptions): Promise<void> {
+export async function runSync(options: SyncOptions): Promise<boolean> {
   const s = spinner();
   s.start('Syncing Kerith configuration...');
 
@@ -47,6 +48,7 @@ export async function runSync(options: SyncOptions): Promise<void> {
     }
 
     s.stop('Configuration synced successfully.');
+    return true;
   } catch (error) {
     s.stop('Configuration completed with warnings.');
     log.warn(
@@ -55,5 +57,6 @@ export async function runSync(options: SyncOptions): Promise<void> {
       (options.ext === 'ts' ? ' and "npx kerith sync-tsconfig"' : '') +
       ' manually inside the project folder.'
     );
+    return false;
   }
 }

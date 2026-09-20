@@ -65,7 +65,7 @@ describe('postgen/sync', () => {
   it('warns but does not throw on error', async () => {
     vi.mocked(cp.spawn).mockImplementation(() => createMockProc(1)); // Error exit code
 
-    await expect(runSync({ cwd: '/test', ext: 'ts' })).resolves.toBeUndefined();
+    await expect(runSync({ cwd: '/test', ext: 'ts' })).resolves.toBe(false);
 
     expect(prompts.log.warn).toHaveBeenCalled();
   });

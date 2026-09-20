@@ -8,6 +8,9 @@
  *  3. Delegate generation to generators/*.
  *  4. Hand the resulting file map to fs-writer.ts.
  *  5. Trigger post-gen hooks (postgen/sync.ts).
+ * 
+ * TODO(future): Extract the core generation logic (steps 3-5) into an exported `generate(options)` 
+ * function so `create-kerith` can be invoked programmatically without spawning a child process.
  */
 
 import { program } from 'commander';
@@ -122,8 +125,9 @@ async function main() {
   });
 
   // 5. Post-gen hooks
+  let syncSuccess = true;
   if (choices.installDeps) {
-    await runSync({
+    syncSuccess = await runSync({
       cwd: absoluteOutDir,
       ext: choices.language,
     });
@@ -132,8 +136,10 @@ async function main() {
   // 6. Outro
   const outDirName = choices.outDir === '.' ? choices.projectName : choices.outDir;
   let nextSteps = `cd ${outDirName}\n`;
-  if (!choices.installDeps) {
-    nextSteps += `npm install\n`;
+  if (!choices.installDeps || !syncSuccess) {
+    if (!choices.installDeps) {
+      nextSteps += `npm install\n`;
+    }
     nextSteps += `npx kerith sync-preload\n`;
     if (choices.language === 'ts') {
       nextSteps += `npx kerith sync-tsconfig\n`;
@@ -142,7 +148,13 @@ async function main() {
   nextSteps += `npm run dev`;
 
   p.note(nextSteps, 'Next steps');
-  p.outro(`Project ${choices.projectName} created successfully!`);
+  
+  if (!syncSuccess) {
+    p.outro(`Project ${choices.projectName} created, but configuration sync failed.`);
+    process.exit(1);
+  } else {
+    p.outro(`Project ${choices.projectName} created successfully!`);
+  }
 }
 
 main().catch((err) => {

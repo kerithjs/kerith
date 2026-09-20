@@ -37,9 +37,9 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "pretest": "node scripts/setup-fixtures.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:e2e": "vitest run"
+    "test": "vitest run --exclude tests/06-create-kerith-e2e.test.ts",
+    "test:watch": "vitest --exclude tests/06-create-kerith-e2e.test.ts",
+    "test:e2e": "vitest run tests/06-create-kerith-e2e.test.ts"
   },
   "peerDependencies": {
     "@kerith/app": ">=1.0.0-alpha.1",
