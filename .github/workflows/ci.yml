@@ -42,6 +42,10 @@ jobs:
       run: pnpm run test
       continue-on-error: ${{ matrix.node-version == '26.x' }}
 
+    - name: Run create-kerith E2E tests
+      run: pnpm --filter @kerith/testing run test:e2e
+      continue-on-error: ${{ matrix.node-version == '26.x' }}
+
   build-with-socketio:
     runs-on: ubuntu-latest
 

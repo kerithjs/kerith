@@ -1,7 +1,7 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-09-19T21:38:51.805Z",
+  "savedAt": "2026-09-19T22:01:52.585Z",
   "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/validate",
   "configHash": "ac112f50",
   "data": {
@@ -25,7 +25,7 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 243,
-        "cachedMtime": 1789258162491.493
+        "cachedMtime": 1789854322935.5898
       },
       {
         "name": "users",
@@ -46,7 +46,7 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 761,
-        "cachedMtime": 1789258162491.618
+        "cachedMtime": 1789854322935.7397
       }
     ],
     "submodules": [],

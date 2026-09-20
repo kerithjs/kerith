@@ -1,7 +1,7 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-09-19T21:38:53.763Z",
+  "savedAt": "2026-09-19T22:01:54.412Z",
   "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic",
   "configHash": "ac112f50",
   "data": {
@@ -25,27 +25,7 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 243,
-        "cachedMtime": 1789258162490.6172
-      },
-      {
-        "name": "home",
-        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home",
-        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/index.ts",
-        "imports": [],
-        "exports": [],
-        "shared": [],
-        "options": {
-          "imports": [],
-          "exports": []
-        },
-        "id": "mod_806125e6",
-        "files": [
-          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/home.controller.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 394,
-        "cachedMtime": 1789258162490.7585
+        "cachedMtime": 1789854322934.0432
       },
       {
         "name": "legacy",
@@ -65,7 +45,27 @@
         "identifiers": [],
         "aliases": [],
         "cachedSize": 219,
-        "cachedMtime": 1789258162490.8975
+        "cachedMtime": 1789854322934.2964
+      },
+      {
+        "name": "home",
+        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home",
+        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/index.ts",
+        "imports": [],
+        "exports": [],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": []
+        },
+        "id": "mod_806125e6",
+        "files": [
+          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/home.controller.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 394,
+        "cachedMtime": 1789854322934.1707
       }
     ],
     "submodules": [],
