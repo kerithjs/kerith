@@ -78,7 +78,7 @@
     "tsup": "8.5.1",
     "tsx": "^4.23.8",
     "typescript": "5.4.5",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   },
   "scripts": {
     "build": "tsup",
