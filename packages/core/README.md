@@ -85,12 +85,14 @@ Your project's root `package.json` **must** declare:
 
 Kerith validates this at the very start of `createApp()` and throws `INVALID_ESM_ENV` if it's missing — before touching the filesystem or the config.
 
-| Requirement   | Minimum                                                         |
-| ------------- | --------------------------------------------------------------- |
+| Requirement   | Minimum                                                          |
+| ------------- | ---------------------------------------------------------------- |
 | Node.js       | 20.6.0 (required for the native ESM Hooks `registerHooks()` API) |
-| Express       | 5.x (peer dependency, only needed for HTTP mode)                |
-| TypeScript    | 5.0+ (optional — types are bundled)                           |
-| Module system | ESM (`"type": "module"`)                                      |
+| Express       | 5.x (peer dependency, only needed for HTTP mode)                 |
+| TypeScript    | 5.4.5 (runtime dependency for AST parsing fallback)              |
+| Module system | ESM (`"type": "module"`)                                         |
+
+> **Why is TypeScript a runtime dependency?** `@kerith/core` ships with `typescript` in its `dependencies` (not `devDependencies`). This is intentional. The internal `ast-parser` uses the TypeScript Compiler API (`ts.createSourceFile`) as a fallback to parse complex decorators. It is part of the public contract of the package.
 
 ---
 

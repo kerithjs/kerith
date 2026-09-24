@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "rootDir": ".",
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "types": ["node"]
   },
   "include": ["src", "tests"],
   "exclude": ["node_modules", "dist"]

@@ -7,7 +7,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
       "@kerith/core": ["./packages/core/src/index.ts"],
       "@kerith/eslint-plugin": ["./packages/eslint-plugin/src/index.ts"]
