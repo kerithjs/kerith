@@ -61,7 +61,7 @@
     "@types/node": "^26.1.2",
     "tsup": "8.5.1",
     "tsx": "4.23.8",
-    "typescript": "5.4.5",
+    "typescript": "6.0.3",
     "vitest": "4.1.11"
   },
   "dependencies": {

@@ -8,8 +8,11 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"],
+    "ignoreDeprecations": "6.0",
+    "rootDir": "src"
   },
-  "include": ["src", "tests"],
-  "exclude": ["node_modules", "dist", "fixtures"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "fixtures", "tests"]
 }
