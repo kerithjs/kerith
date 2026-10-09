@@ -19,6 +19,8 @@ export type ResolveHook = (
 
 let activeHookRegistration: { deregister: () => void } | null = null;
 let activeAliasesHash: string | null = null;
+let accumulatedModuleAliases: Record<string, string> = {};
+let accumulatedFolderAliases: Record<string, string> = {};
 
 /** @internal exclusively for tests */
 export function clearAliasResolverOptions(): void {
@@ -27,6 +29,8 @@ export function clearAliasResolverOptions(): void {
     activeHookRegistration = null;
   }
   activeAliasesHash = null;
+  accumulatedModuleAliases = {};
+  accumulatedFolderAliases = {};
 }
 
 function mergeAliasesIntoPreloadConfig(aliases: Record<string, string>): void {
@@ -68,7 +72,10 @@ export async function activateAliasResolver(moduleAliases: Record<string, string
     normalizedFolderAliases[alias] = path.isAbsolute(target) ? target : path.resolve(process.cwd(), target);
   }
 
-  const combinedAliases = { ...normalizedModuleAliases, ...normalizedFolderAliases };
+  Object.assign(accumulatedModuleAliases, normalizedModuleAliases);
+  Object.assign(accumulatedFolderAliases, normalizedFolderAliases);
+
+  const combinedAliases = { ...accumulatedModuleAliases, ...accumulatedFolderAliases };
   const serialisedAliases = JSON.stringify(combinedAliases);
 
   if (globalThis.__KERITH_PRELOAD_CONFIG__?.preloaded === true) {

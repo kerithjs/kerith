@@ -38,6 +38,17 @@ describe('ESM Resolver Robustness (P2)', () => {
     expect(vi.mocked((nodeModule as any).registerHooks)).toHaveBeenCalledTimes(2);
   });
 
+  it('should accumulate aliases on successive calls', async () => {
+    await activateAliasResolver({}, { '@first': './first' }, mockLogger as any);
+    await activateAliasResolver({}, { '@second': './second' }, mockLogger as any);
+    
+    // The second registration call happened — verify log shows total accumulated aliases
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.stringContaining('ESM alias hook activated (2 alias(es))'),
+      expect.objectContaining({ aliasCount: 2 })
+    );
+  });
+
   it('should skip registration if aliases are identical', async () => {
     await activateAliasResolver({}, { '@a': './a' }, mockLogger as any);
     await activateAliasResolver({}, { '@a': './a' }, mockLogger as any);
