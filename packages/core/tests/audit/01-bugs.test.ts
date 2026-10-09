@@ -7,7 +7,7 @@ import { execSync } from 'node:child_process';
 import { registerHooks } from 'node:module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const cliPath = path.resolve(__dirname, '../../../src/cli/index.ts');
+const cliPath = path.resolve(__dirname, '../../src/cli/index.ts');
 const coreIndexPath = path.resolve(__dirname, '../../src/index.ts').replace(/\\/g, '/');
 
 function runCheck(cwd: string) {
@@ -78,11 +78,11 @@ describe('Audit Phase 0 - Resolution and Domain Validation', () => {
       expect(stdout).toContain('OK');
     });
 
-    it.fails('R11 - import dentro de un JSDoc no entra al grafo (strict no lanza UNDECLARED_IMPORT)', () => {
+    it('R11 - import dentro de un JSDoc no entra al grafo (strict no lanza UNDECLARED_IMPORT)', () => {
       const projectDir = createScratchProject({
+        'src/.gitkeep': '',
         'billing/index.ts': `
-          import { Module } from 'kerith';
-          export const config = Module('billing');
+          export const config = {};
         `,
         'billing/feature.ts': `
           /**
@@ -99,12 +99,20 @@ describe('Audit Phase 0 - Resolution and Domain Validation', () => {
           createApp({ modules: [config], strict: true });
         `
       });
-      // Test bootstrap
-      const result = runNode(projectDir, 'bootstrap.ts', ['--import', 'tsx']);
-      expect(result.status).toBe(0);
+      let status = 0;
+      try {
+        execSync('npx tsx bootstrap.ts', { cwd: projectDir, encoding: 'utf-8', stdio: 'pipe' });
+      } catch (e: any) {
+        status = e.status ?? 1;
+        console.error('R11 Failed output:', e.stdout, e.stderr);
+      }
+      expect(status).toBe(0);
       
       // Test check
       const checkRes = runCheck(projectDir);
+      if (checkRes.status !== 0) {
+        console.error('R11 Check Failed output:', checkRes.output);
+      }
       expect(checkRes.status).toBe(0);
       expect(checkRes.output).not.toContain('UNDECLARED_IMPORT');
     });

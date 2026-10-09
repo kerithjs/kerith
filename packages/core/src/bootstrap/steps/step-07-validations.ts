@@ -201,6 +201,20 @@ export async function runValidations(ctx: BootstrapContext): Promise<void> {
 
       for (const { file, actualImports } of allActualImports) {
         for (const imp of actualImports) {
+          if (imp.specifier.startsWith('@') && !imp.specifier.startsWith('@modules/')) {
+            const parts = imp.specifier.split('/');
+            const targetDomain = parts[0].slice(1);
+            if (
+              parts.length > 1 &&
+              registry.hasDomain(targetDomain) &&
+              registeredMod.domain !== targetDomain
+            ) {
+              const message = `Domain boundary violation: module "${registeredMod.name}" (domain: ${registeredMod.domain ?? 'none'}) imports from internal domain alias "${imp.specifier}" (domain: ${targetDomain}).`;
+              const details = `File: ${path.normalize(file)}:${imp.line} — Import from the domain root '@${targetDomain}' instead of the internal alias.`;
+              throw new KerithError("DOMAIN_BOUNDARY_VIOLATION", message, details);
+            }
+          }
+
           const parts = imp.specifier.split("/");
           const targetModule = imp.specifier.startsWith("@modules/")
             ? parts[1]
