@@ -191,7 +191,10 @@ export function createRegistry(): InternalRegistry {
       const graph = new Map<string, string[]>();
       for (const entry of modules.values()) {
         const key = buildModuleKey(entry.name, entry.domain);
-        graph.set(key, entry.imports);
+        graph.set(
+          key,
+          entry.imports.map((n) => buildModuleKey(n, entry.domain)),
+        );
       }
       return graph;
     },
@@ -199,7 +202,10 @@ export function createRegistry(): InternalRegistry {
     findCircularDependencies(): string[][] {
       const dependencyMap = new Map<string, string[]>();
       for (const entry of modules.values()) {
-        dependencyMap.set(buildModuleKey(entry.name, entry.domain), entry.imports);
+        dependencyMap.set(
+          buildModuleKey(entry.name, entry.domain),
+          entry.imports.map((n) => buildModuleKey(n, entry.domain)),
+        );
       }
       return findCircularDependencies(dependencyMap);
     },

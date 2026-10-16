@@ -128,29 +128,41 @@ describe('Audit Phase 0 - Resolution and Domain Validation', () => {
   });
 
   describe('Domain Boundaries (R12, R13a, R14, R15)', () => {
-    it.fails('R12 - ciclo a ↔ b dentro de un dominio lanza CIRCULAR_DEPENDENCY', () => {
+    it('R12 - ciclo a ↔ b dentro de un dominio lanza CIRCULAR_DEPENDENCY', () => {
       const projectDir = createScratchProject({
+        'kerith.config.ts': `
+          export default {
+            origin: '.',
+            strict: true,
+          };
+        `,
         'billing/index.ts': `
+          import { Domain } from 'kerith';
+          Domain('billing');
+        `,
+        'billing/a/index.ts': `
           import { Module } from 'kerith';
-          export const config = Module('billing');
+          Module('a', { imports: ['b'] });
         `,
-        'billing/a.ts': `
-          import { b } from './b.ts';
-          export const a = b;
+        'billing/a/use.ts': `
+          import '@billing/b';
         `,
-        'billing/b.ts': `
-          import { a } from './a.ts';
-          export const b = a;
+        'billing/b/index.ts': `
+          import { Module } from 'kerith';
+          Module('b', { imports: ['a'] });
+        `,
+        'billing/b/use.ts': `
+          import '@billing/a';
         `,
         'bootstrap.ts': `
           import { createApp } from '${coreIndexPath}';
-          import { config } from './billing/index.ts';
-          createApp({ modules: [config], strict: true });
+          await createApp(undefined as any);
         `
       });
       const result = runNode(projectDir, 'bootstrap.ts', ['--import', 'tsx']);
       expect(result.status).toBe(1);
       expect(result.stderr).toContain('CIRCULAR_DEPENDENCY');
+      expect(result.stderr).toContain('billing/a -> billing/b -> billing/a');
     });
 
     it.fails('R13a - @users/core, @modules/core y @users desde billing dan DOMAIN_BOUNDARY_VIOLATION en bootstrap y check con mismo mensaje', () => {

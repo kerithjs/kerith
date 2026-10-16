@@ -24,12 +24,31 @@ export function createScratchProject(files: Record<string, string>) {
     fs.writeFileSync(fullPath, content, 'utf8');
   }
 
+  const __dirname = path.dirname(new URL(import.meta.url).pathname);
+  const coreIndexPath = path.resolve(__dirname, '../../../src/index.ts').replace(/\\/g, '/');
+  const kerithModuleDir = path.join(projectDir, 'node_modules', 'kerith');
+  fs.mkdirSync(kerithModuleDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(kerithModuleDir, 'package.json'),
+    JSON.stringify({ name: 'kerith', type: 'module', main: './index.js', exports: { '.': './index.js' } }),
+    'utf8',
+  );
+  fs.writeFileSync(
+    path.join(kerithModuleDir, 'index.js'),
+    `export * from '${coreIndexPath}';`,
+    'utf8',
+  );
+
   return projectDir;
 }
 
 export function runNode(projectDir: string, entryFile: string, args: string[] = []) {
-  return spawnSync(process.execPath, [...args, entryFile], {
+  const resolvedArgs = args.map((arg) => (arg === 'tsx' ? import.meta.resolve('tsx') : arg));
+  return spawnSync(process.execPath, [...resolvedArgs, entryFile], {
     cwd: projectDir,
     encoding: 'utf8',
+    env: {
+      ...process.env,
+    },
   });
 }
