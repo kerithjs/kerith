@@ -210,38 +210,57 @@ export async function runValidations(ctx: BootstrapContext): Promise<void> {
       for (const { file, actualImports } of allActualImports) {
         for (const imp of actualImports) {
           const classified = classifyImportTarget(imp.specifier, classifierIndex);
-          if (classified.kind === 'domain-module' || classified.kind === 'modules-alias') {
-            if (isCrossDomainImport(registeredMod.domain, classified)) {
-              // Si es un modules-alias cross-domain, o un domain-module
-              const targetDomain = classified.kind === 'domain-module' 
-                ? classified.domain 
-                : (classified.candidates.length > 0 ? classified.candidates[0].domain ?? 'none' : 'none');
-              
-              const { message, details } = describeDomainBoundaryViolation(
-                registeredMod.name,
-                registeredMod.domain,
-                imp.specifier,
-                targetDomain
-              );
-              
-              const fullDetails = `File: ${path.normalize(file)}:${imp.line} — ${details}`;
-              throw new KerithError("DOMAIN_BOUNDARY_VIOLATION", message, fullDetails);
+          if (isCrossDomainImport(registeredMod.domain, classified)) {
+            const targetDomain =
+              classified.kind === 'domain-module' || classified.kind === 'domain-root'
+                ? classified.domain
+                : (classified.kind === 'modules-alias' && classified.candidates.length > 0
+                    ? classified.candidates[0].domain ?? 'none'
+                    : 'none');
+
+            const { message, details } = describeDomainBoundaryViolation(
+              registeredMod.name,
+              registeredMod.domain,
+              imp.specifier,
+              targetDomain,
+            );
+
+            const fullDetails = `File: ${path.normalize(file)}:${imp.line} — ${details}`;
+            throw new KerithError("DOMAIN_BOUNDARY_VIOLATION", message, fullDetails);
+          }
+
+          let targetModuleName: string | undefined;
+          let targetDomain: string | undefined;
+
+          if (classified.kind === 'domain-module') {
+            targetModuleName = classified.name;
+            targetDomain = classified.domain;
+          } else if (classified.kind === 'modules-alias') {
+            targetModuleName = classified.name;
+            const sameDomain = classified.candidates.find((c) => c.domain === registeredMod.domain);
+            targetDomain = sameDomain ? registeredMod.domain : classified.candidates[0]?.domain;
+          } else if (classified.kind === 'other') {
+            const parts = imp.specifier.split('/');
+            const fallbackName = (parts[1] || parts[0]).replace(/^@/, '');
+            if (registry.hasModule(fallbackName, registeredMod.domain)) {
+              targetModuleName = fallbackName;
+              targetDomain = registeredMod.domain;
             }
           }
 
-          const parts = imp.specifier.split("/");
-          const targetModule = imp.specifier.startsWith("@modules/")
-            ? parts[1]
-            : (parts[1] || parts[0]).replace(/^@/, "");
-          if (!targetModule || targetModule === registeredMod.name) continue;
+          if (!targetModuleName) continue;
 
-          if (!registry.hasModule(targetModule, registeredMod.domain)) continue;
+          const targetKey = buildModuleKey(targetModuleName, targetDomain);
+          const currentKey = buildModuleKey(registeredMod.name, registeredMod.domain);
+          if (targetKey === currentKey) continue;
 
-          usedImports.add(targetModule);
+          if (!registry.hasModule(targetModuleName, registeredMod.domain)) continue;
 
-          if (!registeredMod.imports.includes(targetModule)) {
-            const message = `Module "${registeredMod.name}" imports from "${targetModule}" but it is not declared in imports[].`;
-            const details = `File: ${path.normalize(file)}:${imp.line} — Add "${targetModule}" to Module() imports array for "${registeredMod.name}".`;
+          usedImports.add(targetModuleName);
+
+          if (!registeredMod.imports.includes(targetModuleName)) {
+            const message = `Module "${registeredMod.name}" imports from "${targetModuleName}" but it is not declared in imports[].`;
+            const details = `File: ${path.normalize(file)}:${imp.line} — Add "${targetModuleName}" to Module() imports array for "${registeredMod.name}".`;
 
             throw new KerithError("UNDECLARED_IMPORT", message, details);
           }

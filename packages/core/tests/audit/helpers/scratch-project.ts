@@ -9,6 +9,7 @@ export function createScratchProject(files: Record<string, string>) {
   // Default files as requested
   const defaultFiles = {
     'package.json': JSON.stringify({ type: 'module', name: 'scratch-project' }, null, 2),
+    'kerith.config.ts': `export default { origin: '.', strict: true };`,
     'billing/orders.ts': `export const name = 'billing/orders';`,
     'shipping/orders.ts': `export const name = 'shipping/orders';`,
     'users/core.ts': `export const name = 'users/core';`,
