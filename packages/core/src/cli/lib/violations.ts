@@ -3,8 +3,12 @@ import path from 'node:path';
 import fg from 'fast-glob';
 import type { ModuleGraph } from './graph-builder.js';
 import { extractRelativeCrossModuleImports } from './import-scanner.js';
-
-
+import {
+  buildClassifierIndexFromGraph,
+  classifyImportTarget,
+  isCrossDomainImport,
+  describeDomainBoundaryViolation
+} from '../../core/utils/import-classifier.js';
 export const ViolationType = {
   PRIVATE_IMPORT: 'private-import',
   UNDECLARED_IMPORT: 'undeclared-import',
@@ -167,43 +171,35 @@ export function detectViolations(
     }
   }
 
+  const classifierIndex = buildClassifierIndexFromGraph(graph);
+
   for (const node of allNodes) {
     for (const imp of node.actualImports) {
       if (imp.specifier.startsWith('./') || imp.specifier.startsWith('../')) {
         continue;
       }
 
-      // 1. DOMAIN_BOUNDARY_VIOLATION
-      // Patterns:
-      //   @domain              → public API of the domain (always allowed from outside)
-      //   @domain/module       → internal module alias  (parts.length === 2)
-      //   @domain/module/path  → deep private sub-path   (parts.length > 2, also caught by PRIVATE_IMPORT)
-      //
-      // Rule: @domain/X is a violation when the importer lives outside that domain.
-      //       Importers in the SAME domain may cross-reference sibling modules via
-      //       @domain/siblingModule — that is intentional and NOT a violation here.
-      if (imp.specifier.startsWith('@') && !imp.specifier.startsWith('@modules/')) {
-        const parts = imp.specifier.split('/');
-        const targetDomain = parts[0].slice(1); // strip leading '@'
+      const classified = classifyImportTarget(imp.specifier, classifierIndex);
 
-        // Only fire when the specifier drills into a specific module inside the domain.
-        // A bare `@domain` import is the public surface and is always valid from outside.
-        if (
-          parts.length > 1 &&
-          graph.domains?.some(d => d.name === targetDomain) &&
-          node.domain !== targetDomain
-        ) {
-          const isDeepPath = parts.length > 2;
-          const suggestion = isDeepPath
-            ? `Import only the public index '@${targetDomain}/${parts[1]}' or the domain root '@${targetDomain}'`
-            : `Import from the domain root '@${targetDomain}' instead of the internal alias '${imp.specifier}'`;
+      if (classified.kind === 'domain-module' || classified.kind === 'modules-alias') {
+        if (isCrossDomainImport(node.domain, classified)) {
+          const targetDomain = classified.kind === 'domain-module' 
+            ? classified.domain 
+            : (classified.candidates.length > 0 ? classified.candidates[0].domain ?? 'none' : 'none');
+
+          const { message, details } = describeDomainBoundaryViolation(
+            node.name,
+            node.domain,
+            imp.specifier,
+            targetDomain
+          );
 
           violations.push({
             type: ViolationType.DOMAIN_BOUNDARY_VIOLATION,
             severity: 'error',
             module: node.name,
-            message: `Domain boundary violation: module "${node.name}" (domain: ${node.domain ?? 'none'}) imports from internal domain alias "${imp.specifier}" (domain: ${targetDomain}).`,
-            suggestion,
+            message,
+            suggestion: details,
             location: { file: imp.file, line: imp.line },
           });
         }

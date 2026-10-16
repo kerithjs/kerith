@@ -20,6 +20,12 @@ import { KerithError } from "../../core/errors.js";
 import { extractModuleImportsAsync } from "../../nits/import-scanner.js";
 import { normalizePath, groupFilesByModulePath } from "../../core/utils/paths.js";
 import { buildModuleKey } from "../../core/registry.js";
+import {
+  buildClassifierIndexFromRegistry,
+  classifyImportTarget,
+  isCrossDomainImport,
+  describeDomainBoundaryViolation
+} from "../../core/utils/import-classifier.js";
 
 import type { BootstrapContext } from "../context.js";
 
@@ -29,6 +35,8 @@ export async function runValidations(ctx: BootstrapContext): Promise<void> {
   if (!config || !log || !allModules || !allProjectFiles) {
     throw new Error("runValidations requires config, log, allModules, and allProjectFiles in context");
   }
+
+  const classifierIndex = buildClassifierIndexFromRegistry(registry);
 
   // Generate lookup structures needed for validations and step-08
   const modulePathMap = new Map<string, { name: string; domain?: string }>();
@@ -201,17 +209,23 @@ export async function runValidations(ctx: BootstrapContext): Promise<void> {
 
       for (const { file, actualImports } of allActualImports) {
         for (const imp of actualImports) {
-          if (imp.specifier.startsWith('@') && !imp.specifier.startsWith('@modules/')) {
-            const parts = imp.specifier.split('/');
-            const targetDomain = parts[0].slice(1);
-            if (
-              parts.length > 1 &&
-              registry.hasDomain(targetDomain) &&
-              registeredMod.domain !== targetDomain
-            ) {
-              const message = `Domain boundary violation: module "${registeredMod.name}" (domain: ${registeredMod.domain ?? 'none'}) imports from internal domain alias "${imp.specifier}" (domain: ${targetDomain}).`;
-              const details = `File: ${path.normalize(file)}:${imp.line} — Import from the domain root '@${targetDomain}' instead of the internal alias.`;
-              throw new KerithError("DOMAIN_BOUNDARY_VIOLATION", message, details);
+          const classified = classifyImportTarget(imp.specifier, classifierIndex);
+          if (classified.kind === 'domain-module' || classified.kind === 'modules-alias') {
+            if (isCrossDomainImport(registeredMod.domain, classified)) {
+              // Si es un modules-alias cross-domain, o un domain-module
+              const targetDomain = classified.kind === 'domain-module' 
+                ? classified.domain 
+                : (classified.candidates.length > 0 ? classified.candidates[0].domain ?? 'none' : 'none');
+              
+              const { message, details } = describeDomainBoundaryViolation(
+                registeredMod.name,
+                registeredMod.domain,
+                imp.specifier,
+                targetDomain
+              );
+              
+              const fullDetails = `File: ${path.normalize(file)}:${imp.line} — ${details}`;
+              throw new KerithError("DOMAIN_BOUNDARY_VIOLATION", message, fullDetails);
             }
           }
 

@@ -25,10 +25,14 @@ describe('ESM Resolver Robustness (P2)', () => {
     const registerHooks = vi.mocked((nodeModule as any).registerHooks);
     const [opts] = registerHooks.mock.calls[0];
     
-    // Check if the resolve hook logic for subpaths is present
-    expect(opts.resolve.toString()).toContain('specifier.startsWith(alias + "/")');
-    // Check that the alias is referenced in the closure
-    expect(opts.resolve.toString()).toContain('combinedAliases');
+    // Verify the hook is a function and resolves subpaths behaviourally
+    expect(typeof opts.resolve).toBe('function');
+    const next = vi.fn((s: string) => ({ url: s, shortCircuit: true }));
+    opts.resolve('@shared/utils', { conditions: [] }, next);
+    expect(next).toHaveBeenCalledWith(
+      expect.stringContaining('src/shared/utils'),
+      expect.anything()
+    );
   });
 
   it('should allow multiple registrations if aliases change (idempotency)', async () => {
@@ -62,8 +66,13 @@ describe('ESM Resolver Robustness (P2)', () => {
     const registerHooks = vi.mocked((nodeModule as any).registerHooks);
     const [opts] = registerHooks.mock.calls[0];
     
-    expect(opts.resolve.toString()).toContain('alias.endsWith("/*")');
-    // Check that the alias is referenced in the closure
-    expect(opts.resolve.toString()).toContain('combinedAliases');
+    // Verify the hook resolves wildcard aliases behaviourally
+    expect(typeof opts.resolve).toBe('function');
+    const next = vi.fn((s: string) => ({ url: s, shortCircuit: true }));
+    opts.resolve('@modules/users', { conditions: [] }, next);
+    expect(next).toHaveBeenCalledWith(
+      expect.stringContaining('src/modules/users'),
+      expect.anything()
+    );
   });
 });

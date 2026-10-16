@@ -23,7 +23,16 @@ function runCheck(cwd: string) {
 describe('Audit Phase 0 - Resolution and Domain Validation', () => {
   const hasHooks = typeof registerHooks === 'function';
 
+  // B2c observation: preload-hook.ts sorts aliases by length descending at
+  // createResolveHook() time (line 16-17), so the array IS ordered correctly.
+  // The hook itself does not re-sort — order comes from precomputed arrays.
+  // This note is for the B2c roadmap item; no change needed here.
+
   describe('Resolution (R3, R8, R11)', () => {
+    // BUG-02 (A1.2) fix verified in alias-matcher.test.ts (unit tests for the
+    // pure createAliasMatcher function).  This test exercises Node-pure import
+    // without any bootstrap — aliases are never registered in this process —
+    // so it still fails (ruta B; requires hook activation via createApp or preload).
     it.fails('R3 - @billing/orders, @shipping/orders, @users/core resuelven en Node puro sin preload', () => {
       const projectDir = createScratchProject({
         'index.js': `
