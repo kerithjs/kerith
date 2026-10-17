@@ -61,7 +61,9 @@ let bootstrapState: BootstrapState = "idle";
  * Called by `createApp` just before returning the `KerithApp` object.
  */
 export function markBootstrapped(): void {
-  bootstrapState = "booted";
+  if (bootstrapState === "booting") {
+    bootstrapState = "booted";
+  }
 }
 
 /**

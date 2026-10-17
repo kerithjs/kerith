@@ -3,6 +3,7 @@ import path from 'node:path';
 
 export default defineConfig({
   test: {
+    setupFiles: ['./tests/setup.ts'],
     testTimeout: 15000,      // Integrations tests with filesystem can be slow in CI
     pool: 'forks',           // True isolation for process.cwd() spies across suites
     coverage: {
