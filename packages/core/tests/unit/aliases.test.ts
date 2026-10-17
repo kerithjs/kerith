@@ -3,6 +3,7 @@ import { resetGlobalState } from '../../src/core/state.js';
 import { updateAliasCache, getAliasCache } from '../../src/aliases/cache.js';
 import { getAliases } from '../../src/aliases/getAliases.js';
 import * as resolver from '../../src/aliases/resolver.js';
+// @ts-expect-error Node typings might be outdated or not have this experimental feature exported cleanly yet
 import { registerHooks } from 'node:module';
 import path from 'node:path';
 import { createRegistry, registryContext } from '../../src/core/registry.js';
@@ -95,8 +96,8 @@ describe('Aliases API', () => {
 
     const [opts] = (registerHooks as any).mock.calls[0];
     
-    // Aliases are baked into the hook source via closure
-    expect(opts.resolve.toString()).toContain('combinedAliases');
+    // The hook must be a function that resolves aliases
+    expect(typeof opts.resolve).toBe('function');
   });
 
   it('activateAliasResolver embeds all combined aliases into the hook source', async () => {
@@ -106,8 +107,16 @@ describe('Aliases API', () => {
 
     const [opts] = (registerHooks as any).mock.calls[0];
     
-    // Verify that the hook references the combined aliases closure
-    expect(opts.resolve.toString()).toContain('combinedAliases');
+    // Verify that the hook is a callable resolve function
+    expect(typeof opts.resolve).toBe('function');
+
+    // Verify the hook actually resolves our aliases (behavioural check)
+    const next = vi.fn((s: string) => ({ url: s, shortCircuit: true }));
+    opts.resolve('@modules/auth', { conditions: [] }, next);
+    expect(next).toHaveBeenCalledWith(
+      expect.stringContaining('/path/auth'),
+      expect.anything()
+    );
   });
 
   it('user configured aliases take precedence over auto-generated module aliases', async () => {
@@ -117,18 +126,34 @@ describe('Aliases API', () => {
 
     const [opts] = (registerHooks as any).mock.calls[0];
     
-    // Verify that the hook processes aliases (folder aliases override module aliases)
-    expect(opts.resolve.toString()).toContain('combinedAliases');
+    // Verify folder aliases override module aliases by testing the resolved path
+    const next = vi.fn((s: string) => ({ url: s, shortCircuit: true }));
+    opts.resolve('@modules/auth', { conditions: [] }, next);
+    // Must resolve to the folder (user-configured) path, not the auto-generated one
+    expect(next).toHaveBeenCalledWith(
+      expect.stringContaining('/path/configured'),
+      expect.anything()
+    );
   });
 
-  it('ESM hook contains logic to resolve subpaths correctly (P2/P6)', async () => {
+  it('ESM hook resolves subpaths correctly (P2/P6)', async () => {
     await resolver.activateAliasResolver({}, { '@config': '/abs/config' }, mockLogger as any);
     
     const [opts] = (registerHooks as any).mock.calls[0];
     
-    // Verify that the subpath resolution logic is baked into the hook
-    expect(opts.resolve.toString()).toContain('specifier.startsWith(alias + "/"');
-    // Verify our alias is referenced in the closure
-    expect(opts.resolve.toString()).toContain('combinedAliases');
+    // Verify that subpath resolution works: @config/db → /abs/config/db
+    const next = vi.fn((s: string) => ({ url: s, shortCircuit: true }));
+    opts.resolve('@config/settings', { conditions: [] }, next);
+    expect(next).toHaveBeenCalledWith(
+      expect.stringContaining('/abs/config/settings'),
+      expect.anything()
+    );
+    // Exact match still works
+    next.mockClear();
+    opts.resolve('@config', { conditions: [] }, next);
+    expect(next).toHaveBeenCalledWith(
+      expect.stringContaining('/abs/config'),
+      expect.anything()
+    );
   });
 });

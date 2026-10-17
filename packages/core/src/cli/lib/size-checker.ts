@@ -43,6 +43,7 @@ export function detectSizeViolations(
         violations.push({
           type: ViolationType.MODULE_TOO_LARGE,
           module: mod.name,
+          domain: mod.domain,
           severity: 'warn',
           message: `Too many files in the module (${fileCount} files, max ${rules.maxModuleFiles})`,
           suggestion: 'Consider extracting logic into a SubModule',
@@ -61,6 +62,7 @@ export function detectSizeViolations(
         violations.push({
           type: ViolationType.TOO_MANY_SUBMODULES,
           module: mod.name,
+          domain: mod.domain,
           severity: 'warn',
           message: `Too many SubModules in the module (${submodulesCount} SubModules, max ${rules.maxSubModulesPerModule})`,
           suggestion: 'Consider promoting some SubModules to independent modules or creating a domain',

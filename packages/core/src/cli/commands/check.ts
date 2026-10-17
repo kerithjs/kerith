@@ -13,7 +13,7 @@ import { reconcile, buildUpdatedNitsRegistry, buildNitsIdMap } from '../../nits/
 import { computeModuleHash } from '../../nits/nits-hash.js';
 import type { DiscoveredModule, NitsModuleRecord } from '../../types/nits.js';
 import { checkSharedAccess } from '../lib/shared-checker.js';
-import { createRegistry, registryContext } from '../../core/registry.js';
+import { createRegistry, registryContext, buildModuleKey } from '../../core/registry.js';
 import { registerEntitiesFromScan } from '../../bootstrap/register-from-scan.js';
 import { scanFromConfig } from '../../bootstrap/scanner.js';
 import { loadDomainRegistry } from '../../nits/domain-store.js';
@@ -204,11 +204,13 @@ export function checkCommand(): Command {
         const fanInMap = new Map<string, string[]>();
         const fanOutMap = new Map<string, number>();
         for (const node of graph.modules) {
-          if (!fanInMap.has(node.name)) fanInMap.set(node.name, []);
-          fanOutMap.set(node.name, node.declaredImports.length);
+          const nodeKey = buildModuleKey(node.name, node.domain);
+          if (!fanInMap.has(nodeKey)) fanInMap.set(nodeKey, []);
+          fanOutMap.set(nodeKey, node.declaredImports.length);
           for (const imp of node.declaredImports) {
-            if (!fanInMap.has(imp)) fanInMap.set(imp, []);
-            fanInMap.get(imp)!.push(node.name);
+            const impKey = buildModuleKey(imp, node.domain);
+            if (!fanInMap.has(impKey)) fanInMap.set(impKey, []);
+            fanInMap.get(impKey)!.push(nodeKey);
           }
         }
 
@@ -244,9 +246,10 @@ export function checkCommand(): Command {
         if (options.format === 'json') {
           const couplingJson: Record<string, { fanOut: number; fanIn: number }> = {};
           for (const node of graph.modules) {
-            couplingJson[node.name] = {
-              fanOut: fanOutMap.get(node.name) ?? 0,
-              fanIn:  (fanInMap.get(node.name) ?? []).length,
+            const nodeKey = buildModuleKey(node.name, node.domain);
+            couplingJson[nodeKey] = {
+              fanOut: fanOutMap.get(nodeKey) ?? 0,
+              fanIn:  (fanInMap.get(nodeKey) ?? []).length,
             };
           }
           console.log(JSON.stringify({ 

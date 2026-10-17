@@ -6,6 +6,7 @@ import type { ResolvedQualityRules } from '../../config/rules.types.js';
 export interface ModuleLike {
   name: string;
   dirPath: string;
+  domain?: string;
 }
 
 export function getModuleDepth(moduleDirPath: string): number {
@@ -74,6 +75,7 @@ export function detectDepthViolations(
       violations.push({
         type: ViolationType.MODULE_DEPTH_EXCEEDED,
         module: mod.name,
+        domain: mod.domain,
         message: `Excessive depth (${depth} levels, max ${rules.maxModuleDepth})`,
         suggestion: deepestPath
           ? `Consider moving the code from '${deepestPath}' into a SubModule`
