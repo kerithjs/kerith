@@ -162,7 +162,7 @@ describe('kerith check', () => {
       expect(undeclared).toHaveLength(0);
     });
 
-    it('imports from a domain NOT in declaredImports generates undeclared violation', () => {
+    it('imports from a domain NOT in declaredImports does not generate undeclared violation (BUG-12)', () => {
       const mockNodes: ModuleNode[] = [
         {
           name: 'orders', dirPath: '/orders', indexPath: '/orders/index.ts',
@@ -180,7 +180,37 @@ describe('kerith check', () => {
 
       const violations = detectViolations(mockGraph);
       const undeclared = violations.filter(v => v.type === ViolationType.UNDECLARED_IMPORT);
-      // domain name IS in moduleNames set, but not in declaredImports → undeclared violation
+      // BUG-12: cross-domain target must NOT emit undeclared violation
+      expect(undeclared).toHaveLength(0);
+      const domainViolations = violations.filter(v => v.type === ViolationType.DOMAIN_BOUNDARY_VIOLATION);
+      expect(domainViolations).toHaveLength(1);
+    });
+
+    it('imports from a module in same domain NOT in declaredImports generates undeclared violation', () => {
+      const mockNodes: ModuleNode[] = [
+        {
+          name: 'orders', domain: 'billing', dirPath: '/billing/orders', indexPath: '/billing/orders/index.ts',
+          declaredImports: [], // NOT declared
+          declaredExports: [],
+          actualImports: [{ specifier: '@billing/invoices', file: '/billing/orders/index.ts', line: 1 }],
+          internalIdentifiers: []
+        },
+        {
+          name: 'invoices', domain: 'billing', dirPath: '/billing/invoices', indexPath: '/billing/invoices/index.ts',
+          declaredImports: [],
+          declaredExports: [],
+          actualImports: [],
+          internalIdentifiers: []
+        }
+      ];
+      const mockGraph = {
+        domains: [{ name: 'billing', dirPath: '/billing', indexPath: '/billing/index.ts', modules: ['orders', 'invoices'] }],
+        submodules: [],
+        modules: mockNodes
+      };
+
+      const violations = detectViolations(mockGraph);
+      const undeclared = violations.filter(v => v.type === ViolationType.UNDECLARED_IMPORT);
       expect(undeclared).toHaveLength(1);
     });
 
@@ -246,7 +276,30 @@ describe('kerith check', () => {
       expect(jsonOutput.modules).toBeDefined();
       expect(jsonOutput.domains).toBeDefined();
       expect(jsonOutput.violations).toBeDefined();
-      expect(Array.isArray(jsonOutput.violations)).toBe(true);
+      expect(jsonOutput.coupling).toBeDefined();
+    });
+
+    it('--format json qualifies coupling keys for domain modules and prevents homonym collisions', async () => {
+      const graphBuilder = await import('../../src/cli/lib/graph-builder.js');
+      vi.spyOn(graphBuilder, 'buildModuleGraph').mockResolvedValueOnce({
+        domains: [{ name: 'billing', dirPath: '/billing', indexPath: '/billing/index.ts', modules: ['orders'] }],
+        submodules: [],
+        modules: [
+          { name: 'orders', domain: 'billing', dirPath: '/billing/orders', indexPath: '/billing/orders/index.ts', declaredImports: ['items'], declaredExports: [], actualImports: [], internalIdentifiers: [] },
+          { name: 'items', domain: 'billing', dirPath: '/billing/items', indexPath: '/billing/items/index.ts', declaredImports: [], declaredExports: [], actualImports: [], internalIdentifiers: [] },
+          { name: 'orders', domain: 'shipping', dirPath: '/shipping/orders', indexPath: '/shipping/orders/index.ts', declaredImports: [], declaredExports: [], actualImports: [], internalIdentifiers: [] },
+        ]
+      } as any);
+
+      const cmd = checkCommand();
+      await cmd.parseAsync(['node', 'test', '--format', 'json']);
+
+      const logCall = logSpy.mock.calls.find((call: any[]) => typeof call[0] === 'string' && call[0].includes('"coupling":'));
+      expect(logCall).toBeDefined();
+      const jsonOutput = JSON.parse(logCall[0]);
+      expect(jsonOutput.coupling['billing/orders']).toEqual({ fanOut: 1, fanIn: 0 });
+      expect(jsonOutput.coupling['shipping/orders']).toEqual({ fanOut: 0, fanIn: 0 });
+      expect(jsonOutput.coupling['billing/items']).toEqual({ fanOut: 0, fanIn: 1 });
     });
 
     it('--module with unknown name throws a descriptive error', async () => {

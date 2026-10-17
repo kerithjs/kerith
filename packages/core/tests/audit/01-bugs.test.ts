@@ -10,9 +10,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cliPath = path.resolve(__dirname, '../../src/cli/index.ts');
 const coreIndexPath = path.resolve(__dirname, '../../src/index.ts').replace(/\\/g, '/');
 
-function runCheck(cwd: string) {
+function runCheck(cwd: string, flags = '') {
   try {
-    const stdout = execSync(`npx tsx ${cliPath} check`, { cwd, encoding: 'utf-8', stdio: 'pipe' });
+    const cmd = flags ? `npx tsx ${cliPath} check ${flags}` : `npx tsx ${cliPath} check`;
+    const stdout = execSync(cmd, { cwd, encoding: 'utf-8', stdio: 'pipe' });
     return { status: 0, output: stdout };
   } catch (err: any) {
     return { status: err.status, output: err.stdout + '\n' + err.stderr };
@@ -165,46 +166,91 @@ describe('Audit Phase 0 - Resolution and Domain Validation', () => {
       expect(result.stderr).toContain('billing/a -> billing/b -> billing/a');
     });
 
-    it.fails('R13a - @users/core, @modules/core y @users desde billing dan DOMAIN_BOUNDARY_VIOLATION en bootstrap y check con mismo mensaje', () => {
+    it('R13a - @users/core, @modules/core y @users desde billing dan DOMAIN_BOUNDARY_VIOLATION en bootstrap y check con mismo mensaje', () => {
       const projectDir = createScratchProject({
-        'billing/index.ts': `
-          import { Module } from 'kerith';
-          export const config = Module('billing');
+        'kerith.config.ts': `
+          export default {
+            origin: '.',
+            strict: true,
+          };
         `,
-        'billing/bad.ts': `
+        'billing/index.ts': `
+          import { Domain } from 'kerith';
+          Domain('billing');
+        `,
+        'billing/orders/index.ts': `
+          import { Module } from 'kerith';
+          Module('orders');
+        `,
+        'billing/orders/bad.ts': `
           import '@users/core';
           import '@modules/core';
           import '@users';
         `,
-        'users/core.ts': `export const u = 1;`,
-        'modules/core.ts': `export const m = 1;`,
-        'users/index.ts': `export const idx = 1;`,
+        'users/index.ts': `
+          import { Domain } from 'kerith';
+          Domain('users');
+        `,
+        'users/core/index.ts': `
+          import { Module } from 'kerith';
+          Module('core');
+        `,
         'bootstrap.ts': `
           import { createApp } from '${coreIndexPath}';
-          import { config } from './billing/index.ts';
-          createApp({ modules: [config], strict: true });
+          await createApp(undefined as any);
         `
       });
 
       const checkRes = runCheck(projectDir);
       expect(checkRes.status).toBe(1);
-      expect(checkRes.output).toContain('DOMAIN_BOUNDARY_VIOLATION');
 
       const result = runNode(projectDir, 'bootstrap.ts', ['--import', 'tsx']);
       expect(result.status).toBe(1);
-      expect(result.stderr).toContain('DOMAIN_BOUNDARY_VIOLATION');
       
-      // Mismo mensaje se puede verificar si ambos strings son parecidos
-      // (Aquí lo asertamos de forma simple buscando el código de error)
+      // Verify exact identical violation message in both check and bootstrap
+      const expectedMessage = 'Domain boundary violation: module "orders" (domain: billing) imports from internal domain alias "@users/core" (domain: users).';
+      expect(checkRes.output).toContain(expectedMessage);
+      expect(result.stderr).toContain(expectedMessage);
+      expect(result.stderr).toContain('DOMAIN_BOUNDARY_VIOLATION');
     });
 
-    it.fails('R14 - homónimos billing/orders y shipping/orders no mezclan violaciones en check', () => {
+    it('R14 - homónimos billing/orders y shipping/orders no mezclan violaciones en check', () => {
       const projectDir = createScratchProject({
-        'billing/orders.ts': `
+        'kerith.config.ts': `
+          export default {
+            origin: '.',
+            strict: true,
+          };
+        `,
+        'billing/index.ts': `
+          import { Domain } from 'kerith';
+          Domain('billing');
+        `,
+        'billing/orders/index.ts': `
+          import { Module } from 'kerith';
+          Module('orders');
+        `,
+        'billing/orders/service.ts': `
           import '@shipping/unrelated'; // Domain boundary violation for billing
         `,
-        'shipping/orders.ts': `
+        'shipping/index.ts': `
+          import { Domain } from 'kerith';
+          Domain('shipping');
+        `,
+        'shipping/orders/index.ts': `
+          import { Module } from 'kerith';
+          Module('orders');
+        `,
+        'shipping/orders/service.ts': `
           import '@billing/unrelated'; // Domain boundary violation for shipping
+        `,
+        'shipping/unrelated/index.ts': `
+          import { Module } from 'kerith';
+          Module('unrelated');
+        `,
+        'billing/unrelated/index.ts': `
+          import { Module } from 'kerith';
+          Module('unrelated');
         `
       });
       const checkRes = runCheck(projectDir);
@@ -215,32 +261,125 @@ describe('Audit Phase 0 - Resolution and Domain Validation', () => {
       expect(checkRes.output).toContain('shipping/orders');
     });
 
-    it.fails('R15 - @otro pelado desde otro dominio es cross-domain en ambos (bootstrap y check)', () => {
+    it('R15 - @otro pelado desde otro dominio es cross-domain en ambos (bootstrap y check)', () => {
       const projectDir = createScratchProject({
-        'billing/index.ts': `
-          import { Module } from 'kerith';
-          export const config = Module('billing');
+        'kerith.config.ts': `
+          export default {
+            origin: '.',
+            strict: true,
+          };
         `,
-        'billing/bad.ts': `
+        'billing/index.ts': `
+          import { Domain } from 'kerith';
+          Domain('billing');
+        `,
+        'billing/orders/index.ts': `
+          import { Module } from 'kerith';
+          Module('orders');
+        `,
+        'billing/orders/bad.ts': `
           import '@otro';
         `,
         'otro/index.ts': `
-          export const o = 1;
+          import { Domain } from 'kerith';
+          Domain('otro');
+        `,
+        'otro/mod/index.ts': `
+          import { Module } from 'kerith';
+          Module('mod');
         `,
         'bootstrap.ts': `
           import { createApp } from '${coreIndexPath}';
-          import { config } from './billing/index.ts';
-          createApp({ modules: [config], strict: true });
+          await createApp(undefined as any);
         `
       });
 
       const checkRes = runCheck(projectDir);
       expect(checkRes.status).toBe(1);
-      expect(checkRes.output).toContain('DOMAIN_BOUNDARY_VIOLATION');
+      expect(checkRes.output).toMatch(/Domain boundary violation/i);
 
       const result = runNode(projectDir, 'bootstrap.ts', ['--import', 'tsx']);
       expect(result.status).toBe(1);
       expect(result.stderr).toContain('DOMAIN_BOUNDARY_VIOLATION');
+    });
+
+    it('R12 (check) - ciclo a ↔ b dentro de un dominio es detectado por kerith check vía rules-engine', () => {
+      const projectDir = createScratchProject({
+        'kerith.config.ts': `
+          export default {
+            origin: '.',
+            strict: true,
+          };
+        `,
+        'billing/index.ts': `
+          import { Domain } from 'kerith';
+          Domain('billing');
+        `,
+        'billing/a/index.ts': `
+          import { Module } from 'kerith';
+          Module('a', { imports: ['b'] });
+        `,
+        'billing/a/use.ts': `
+          import '@billing/b';
+        `,
+        'billing/b/index.ts': `
+          import { Module } from 'kerith';
+          Module('b', { imports: ['a'] });
+        `,
+        'billing/b/use.ts': `
+          import '@billing/a';
+        `
+      });
+      const checkRes = runCheck(projectDir, '--strict');
+      expect(checkRes.status).toBe(1);
+      expect(checkRes.output).toMatch(/Circular dependency detected.*billing\/[ab] -> billing\/[ab] -> billing\/[ab]/);
+    });
+
+    it('Paridad - bootstrap strict y kerith check rechazan exactamente las mismas violaciones de frontera', () => {
+      const projectDir = createScratchProject({
+        'kerith.config.ts': `
+          export default {
+            origin: '.',
+            strict: true,
+          };
+        `,
+        'billing/index.ts': `
+          import { Domain } from 'kerith';
+          Domain('billing');
+        `,
+        'billing/orders/index.ts': `
+          import { Module } from 'kerith';
+          Module('orders');
+        `,
+        'billing/orders/service.ts': `
+          import '@shipping/inventory';
+        `,
+        'shipping/index.ts': `
+          import { Domain } from 'kerith';
+          Domain('shipping');
+        `,
+        'shipping/inventory/index.ts': `
+          import { Module } from 'kerith';
+          Module('inventory');
+        `,
+        'bootstrap.ts': `
+          import { createApp } from '${coreIndexPath}';
+          await createApp(undefined as any);
+        `
+      });
+
+      // 1. Check detects the violation in orders importing @shipping/inventory
+      const checkRes = runCheck(projectDir);
+      expect(checkRes.status).toBe(1);
+      expect(checkRes.output).toMatch(/Domain boundary violation/i);
+      expect(checkRes.output).toContain('@shipping/inventory');
+      expect(checkRes.output).toContain('billing/orders');
+
+      // 2. Bootstrap in strict mode also halts on the exact same violation
+      const bootstrapRes = runNode(projectDir, 'bootstrap.ts', ['--import', 'tsx']);
+      expect(bootstrapRes.status).toBe(1);
+      expect(bootstrapRes.stderr).toContain('DOMAIN_BOUNDARY_VIOLATION');
+      expect(bootstrapRes.stderr).toContain('@shipping/inventory');
     });
   });
 });

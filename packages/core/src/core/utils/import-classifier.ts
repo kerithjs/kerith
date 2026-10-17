@@ -93,8 +93,13 @@ export function describeDomainBoundaryViolation(
   specifier: string,
   targetDomain: string
 ): { message: string; details: string } {
+  const isRoot = specifier === `@${targetDomain}`;
+  const targetDesc = isRoot
+    ? `domain root "${specifier}"`
+    : `internal domain alias "${specifier}"`;
+
   return {
-    message: `Domain boundary violation: module "${moduleName}" (domain: ${importerDomain ?? 'none'}) imports from internal domain alias "${specifier}" (domain: ${targetDomain}).`,
-    details: `Import from the domain root '@${targetDomain}' instead of the internal alias, or move lo común a '@shared' if it needs to be cross-domain.`
+    message: `Domain boundary violation: module "${moduleName}" (domain: ${importerDomain ?? 'none'}) imports from ${targetDesc} (domain: ${targetDomain}).`,
+    details: `Cross-domain imports are not allowed. Move shared code to '@shared' or communicate across domains through extension channels/events.`
   };
 }

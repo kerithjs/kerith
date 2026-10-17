@@ -31,6 +31,7 @@ export function detectUnusedExports(
         violations.push({
           type: ViolationType.UNUSED_EXPORT,
           module: mod.name,
+          domain: mod.domain,
           severity: 'warn',
           message: `'${exportedId}' is declared in exports[] but no module imports it`,
           suggestion: `Consider removing '${exportedId}' from exports[] or verify that the consuming module declares it in imports[]`,
@@ -61,6 +62,7 @@ export function detectEmptyModules(
       violations.push({
         type: ViolationType.EMPTY_MODULE,
         module: mod.name,
+        domain: mod.domain,
         severity: 'warn',
         message: `'${mod.name}' has no registered identifiers`,
         suggestion: `Add at least one Service(), Repository(), or Controller() to the module`,

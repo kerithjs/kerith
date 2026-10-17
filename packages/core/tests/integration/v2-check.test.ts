@@ -57,7 +57,7 @@ describe('CLI Integration: kerith check', () => {
     expect(output).toContain('../../invoices/invoices.service');
     
     // Summary
-    expect(output).toContain('(5 errors)');
+    expect(output).toContain('(3 errors)');
   }, 30000);
 
   it('kerith check in v1-compat-app -> exit 0, flat v1.x output', () => {
