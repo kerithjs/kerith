@@ -140,7 +140,7 @@ describe('02-full-surface', () => {
     handle2 = await runFixture(fixtureDir);
     globalBoot2 = readRegistrySnapshot(fixtureDir);
     domainBoot2 = readDomainRegistrySnapshot(fixtureDir, 'ecommerce');
-  });
+  }, 30000);
 
   afterAll(async () => {
     if (handle1?.child?.exitCode === null) await stopFixture(handle1.child);

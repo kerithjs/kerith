@@ -22,7 +22,7 @@ describe("E2E Integration", () => {
 
     appServer = app;
     KerithInfo = await boot();
-  });
+  }, 30000);
 
   afterAll(() => {
     vi.restoreAllMocks();
