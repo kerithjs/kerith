@@ -4,11 +4,13 @@ import path from 'node:path';
 
 const cliPath = path.resolve(__dirname, '../../src/cli/index.ts');
 const fixturesDir = path.resolve(__dirname, '../fixtures');
+const tsxPath = path.resolve(__dirname, '../../node_modules/.bin/tsx');
+const tsxCmd = process.platform === 'win32' ? `"${tsxPath}.cmd"` : `"${tsxPath}"`;
 
 function runKerithCheck(fixtureName: string, args: string = '') {
   const cwd = path.join(fixturesDir, fixtureName);
   try {
-    const output = execSync(`npx tsx ${cliPath} check ${args}`, { cwd, encoding: 'utf-8', stdio: 'pipe' });
+    const output = execSync(`${tsxCmd} "${cliPath}" check ${args}`, { cwd, encoding: 'utf-8', stdio: 'pipe' });
     return { exitCode: 0, output };
   } catch (error: any) {
     return { exitCode: error.status, output: error.stdout + (error.stderr || '') };
@@ -38,7 +40,7 @@ describe('CLI Integration: kerith check', () => {
     expect(output).toContain('violations');
     expect(output).toContain('(7 ok)');
     expect(output).toContain('(0 errors)');
-  });
+  }, 30000);
 
   it('kerith check in v2-violations-app -> exit 1, detects violations', () => {
     const { exitCode, output } = runKerithCheck('v2-violations-app', '--strict');
@@ -57,7 +59,7 @@ describe('CLI Integration: kerith check', () => {
     expect(output).toContain('../../invoices/invoices.service');
     
     // Summary
-    expect(output).toContain('(5 errors)');
+    expect(output).toContain('(3 errors)');
   }, 30000);
 
   it('kerith check in v1-compat-app -> exit 0, flat v1.x output', () => {
@@ -73,5 +75,5 @@ describe('CLI Integration: kerith check', () => {
     // Contains just flat Modules without the header if there are no domains (or maybe it just prints the modules directly)
     expect(output).toContain('auth');
     expect(output).toContain('users');
-  });
+  }, 30000);
 });

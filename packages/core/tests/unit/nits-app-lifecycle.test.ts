@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApp } from "../../src/bootstrap/createApp.js";
+import { resetGlobalState } from "../../src/core/state.js";
 import { hashSimilarity } from "../../src/nits/nits-hash.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -95,6 +96,7 @@ describe("NITS App Lifecycle (Shadow File Integration)", () => {
     fs.writeFileSync(configPath, `export default { modules: '{src/modules/*,src/domains/auth/*}', strict: false };`);
 
     // 4. Reconciliar (second bootstrap)
+    resetGlobalState();
     result = await createApp(makeMockApp() as any);
 
     // 5. Verificar ID y movimiento
@@ -159,6 +161,7 @@ describe("NITS App Lifecycle (Shadow File Integration)", () => {
     // 3. Second boot -> should upgrade legacy registry and generate new shadow files with preserved IDs
     const dir2 = createCycleDir(dir1);
     cwdSpy.mockReturnValue(dir2);
+    resetGlobalState();
     await createApp(makeMockApp() as any);
 
     const registryContentStr = fs.readFileSync(path.join(dir2, ".kerith", "registry.json"), "utf8");
@@ -203,6 +206,7 @@ describe("NITS App Lifecycle (Shadow File Integration)", () => {
 
     // 2. Reconciliar
     try {
+      resetGlobalState();
       await createApp(makeMockApp() as any, { logger: loggerHandler });
     } catch (e: any) {
       console.error(e.details);

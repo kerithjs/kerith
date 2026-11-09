@@ -1,9 +1,9 @@
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { registerHooks } from 'node:module';
 import type { Logger } from '../types/index.js';
+import { createAliasMatcher } from './matcher.js';
 
-// Node.js Customization Hooks types
+// Node.js Customization Hooks types (re-exported for back-compat)
 export type ResolveHookContext = {
   conditions: string[];
   parentURL?: string;
@@ -19,6 +19,8 @@ export type ResolveHook = (
 
 let activeHookRegistration: { deregister: () => void } | null = null;
 let activeAliasesHash: string | null = null;
+let accumulatedModuleAliases: Record<string, string> = {};
+let accumulatedFolderAliases: Record<string, string> = {};
 
 /** @internal exclusively for tests */
 export function clearAliasResolverOptions(): void {
@@ -27,6 +29,8 @@ export function clearAliasResolverOptions(): void {
     activeHookRegistration = null;
   }
   activeAliasesHash = null;
+  accumulatedModuleAliases = {};
+  accumulatedFolderAliases = {};
 }
 
 function mergeAliasesIntoPreloadConfig(aliases: Record<string, string>): void {
@@ -68,7 +72,10 @@ export async function activateAliasResolver(moduleAliases: Record<string, string
     normalizedFolderAliases[alias] = path.isAbsolute(target) ? target : path.resolve(process.cwd(), target);
   }
 
-  const combinedAliases = { ...normalizedModuleAliases, ...normalizedFolderAliases };
+  Object.assign(accumulatedModuleAliases, normalizedModuleAliases);
+  Object.assign(accumulatedFolderAliases, normalizedFolderAliases);
+
+  const combinedAliases = { ...accumulatedModuleAliases, ...accumulatedFolderAliases };
   const serialisedAliases = JSON.stringify(combinedAliases);
 
   if (globalThis.__KERITH_PRELOAD_CONFIG__?.preloaded === true) {
@@ -103,30 +110,11 @@ export async function activateAliasResolver(moduleAliases: Record<string, string
     }
 
     if (typeof registerHooks === 'function') {
-      activeHookRegistration = registerHooks({
-        resolve(specifier: string, context: ResolveHookContext, nextResolve: NextResolve) {
-          for (const [alias, target] of Object.entries(combinedAliases)) {
-            if (alias.endsWith('/*')) {
-              const baseAlias = alias.slice(0, -2);
-              if (specifier === baseAlias || specifier.startsWith(baseAlias + '/')) {
-                const baseTarget = target.endsWith('/*') ? target.slice(0, -2) : target;
-                const subPath = specifier.slice(baseAlias.length);
-                const resolvedPath = path.resolve(baseTarget, subPath.startsWith('/') ? subPath.slice(1) : subPath);
-                return nextResolve(pathToFileURL(resolvedPath).href, context);
-              }
-            } else if (specifier === alias) {
-              const exactTarget = target.endsWith('/*') ? target.slice(0, -2) : target;
-              return nextResolve(pathToFileURL(exactTarget).href, context);
-            } else if (specifier.startsWith(alias + '/')) {
-              const baseTarget = target.endsWith('/*') ? target.slice(0, -2) : target;
-              const subPath = specifier.slice(alias.length + 1);
-              const resolvedPath = path.resolve(baseTarget, subPath);
-              return nextResolve(pathToFileURL(resolvedPath).href, context);
-            }
-          }
-          return nextResolve(specifier, context);
-        }
-      });
+      // BUG-02 fix (A1.2): use createAliasMatcher instead of the inline loop so
+      // that resolution order is exact → wildcard-longest → prefix-longest,
+      // independent of insertion order in combinedAliases.
+      const resolveAlias = createAliasMatcher(combinedAliases);
+      activeHookRegistration = registerHooks({ resolve: resolveAlias as any });
       log.info(`ESM alias hook activated (${Object.keys(combinedAliases).length} alias(es))`, {
         _module: 'alias',
         aliasCount: Object.keys(combinedAliases).length,

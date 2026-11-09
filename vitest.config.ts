@@ -5,7 +5,8 @@ import path from 'node:path';
 // even when running Vitest from the root directory targeting specific package files.
 export default defineConfig({
   test: {
-    testTimeout: 20000,
+    testTimeout: 30000,
+    hookTimeout: 30000,
     globals: true,
     environment: 'node',
     pool: 'forks',

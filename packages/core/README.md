@@ -850,7 +850,7 @@ try {
 | Code                                                              | When it's thrown                                                                                                               |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `INVALID_ESM_ENV`                                                 | Project's root `package.json` is missing `"type": "module"`.                                                                   |
-| `DUPLICATE_BOOTSTRAP`                                             | The same Express `app` instance is passed to `createApp()` more than once.                                                     |
+| `DUPLICATE_BOOTSTRAP`                                             | The same Express `app` instance is passed to `createApp()` more than once, or `createApp()` is called more than once in the same process. |
 | `ORIGIN_NOT_FOUND`                                                | Configured `origin` directory does not exist.                                                                                  |
 | `PRELOADER_REQUIRED`                                              | `requirePreloader: true` and the process wasn't started with `--import ./.kerith/preload.js`.                                  |
 | `ALIAS_RESERVED`                                                  | An alias key in `kerith.config.ts` is `@modules`, `@shared`, or `@`.                                                           |

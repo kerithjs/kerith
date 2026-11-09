@@ -9,14 +9,52 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "paths": {
-      "@middleware/*": ["./src/middleware/*"],
-      "@middleware/*.js": ["./src/middleware/*.ts"],
-      "@config/*": ["./src/config/*"],
-      "@config/*.js": ["./src/config/*.ts"],
-      "@modules/*": ["./src/modules/*"],
-      "@modules/*.js": ["./src/modules/*.ts"]
+      "@config": [
+        "./src/config"
+      ],
+      "@config/*": [
+        "./src/config/*"
+      ],
+      "@config/*.js": [
+        "./src/config/*.ts"
+      ],
+      "@middleware": [
+        "./src/middleware"
+      ],
+      "@middleware/*": [
+        "./src/middleware/*"
+      ],
+      "@middleware/*.js": [
+        "./src/middleware/*.ts"
+      ],
+      "@modules/auth": [
+        "./src/modules/auth/index.ts"
+      ],
+      "@modules/auth/*": [
+        "./src/modules/auth/*"
+      ],
+      "@modules/core": [
+        "./src/modules/core/index.ts"
+      ],
+      "@modules/core/*": [
+        "./src/modules/core/*"
+      ],
+      "@modules/notifications": [
+        "./src/modules/notifications/index.ts"
+      ],
+      "@modules/notifications/*": [
+        "./src/modules/notifications/*"
+      ],
+      "@modules/users": [
+        "./src/modules/users/index.ts"
+      ],
+      "@modules/users/*": [
+        "./src/modules/users/*"
+      ]
     }
   },
-  "include": ["src/**/*", "../../../src/**/*.ts"]
+  "include": [
+    "src/**/*",
+    "../../../src/**/*.ts"
+  ]
 }
-

@@ -5,7 +5,7 @@ import type { ModuleGraph, ModuleNode, SubModuleNode } from './graph-builder.js'
 import type { Violation } from './violations.js';
 import { ViolationType } from './violations.js';
 import { extractModuleImports } from './import-scanner.js';
-import type { InternalRegistry } from '../../core/registry.js';
+import { type InternalRegistry, buildModuleKey } from '../../core/registry.js';
 
 /**
  * Checks for shared access violations across the module graph.
@@ -17,10 +17,10 @@ export async function checkSharedAccess(
 ): Promise<Violation[]> {
   const violations: Violation[] = [];
 
-  // Build a map of module name -> node for quick lookup
+  // Build a map of qualified module key -> node for quick lookup
   const moduleMap = new Map<string, ModuleNode>();
   for (const mod of graph.modules) {
-    moduleMap.set(mod.name, mod);
+    moduleMap.set(buildModuleKey(mod.name, mod.domain), mod);
   }
 
   // Build a map of file path -> module node for domain resolution
@@ -60,6 +60,7 @@ export async function checkSharedAccess(
               type: ViolationType.UNDECLARED_SHARED,
               severity: 'warn',
               module: mod.name,
+              domain: mod.domain,
               message: `Module "${mod.name}" imports from "${imp.specifier}" but does not declare it in shared[].`,
               suggestion: `Add "${imp.specifier}" to shared[] in Module("${mod.name}").`,
               location: { file: path.relative(cwd, file).replace(/\\/g, '/'), line: imp.line },
@@ -104,6 +105,7 @@ export async function checkSharedAccess(
           type: ViolationType.UNUSED_SHARED,
           severity: 'warn',
           module: mod.name,
+          domain: mod.domain,
           message: `Module "${mod.name}" declares "${sharedDecl}" in shared[] but never imports from it.`,
           suggestion: `Remove "${sharedDecl}" from shared[] in Module("${mod.name}").`,
         });
@@ -142,6 +144,7 @@ export async function checkSharedAccess(
               type: ViolationType.SHARED_SCOPE_VIOLATION,
               severity: 'error',
               module: sourceNode.name,
+              domain: sourceNode.domain,
               message: `'@${targetDomain}/shared' is only available within the '${targetDomain}' domain.`,
               suggestion: `Move this resource to '@shared' global if it needs to be cross-domain.`,
               location: { file: path.relative(cwd, file).replace(/\\/g, '/'), line: imp.line },
@@ -154,7 +157,7 @@ export async function checkSharedAccess(
 
   // ─── Step D: SubModules inherit from parent ─────────────────────────────────
   for (const sub of graph.submodules) {
-    const parentNode = moduleMap.get(sub.parentModule);
+    const parentNode = moduleMap.get(buildModuleKey(sub.parentModule, sub.domain));
     if (!parentNode) continue;
 
     const rawParent = registry.getRawModule(parentNode.name, parentNode.domain);
@@ -173,6 +176,7 @@ export async function checkSharedAccess(
               type: ViolationType.UNDECLARED_SHARED,
               severity: 'warn',
               module: parentNode.name, // Report on parent, not submodule
+              domain: parentNode.domain,
               message: `Module "${parentNode.name}" (parent of submodule "${sub.name}") imports from "${imp.specifier}" but does not declare it in shared[].`,
               suggestion: `Add "${imp.specifier}" to shared[] in Module("${parentNode.name}").`,
               location: { file: path.relative(cwd, file).replace(/\\/g, '/'), line: imp.line },

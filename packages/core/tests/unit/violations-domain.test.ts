@@ -35,7 +35,7 @@ describe('Domain boundary violations (v2 hierarchy)', () => {
     expect(imports.some(m => m.includes('@billing/payments'))).toBe(true);
 
     for (const v of domainViolations) {
-      expect((v as any).suggestion).toContain('instead of');
+      expect((v as any).suggestion).toContain('@shared');
     }
   });
 

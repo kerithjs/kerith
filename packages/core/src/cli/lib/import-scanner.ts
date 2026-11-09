@@ -19,17 +19,125 @@ const RELATIVE_IMPORT_REGEX =
   /(?:import|export)(?:\s+type\s+)?(?:\s+|\s*\()(?:[^"';]+\s+from\s+)?['"](\.\.?\/[^"';]+)['"]/g;
 
 /**
- * Strips `//`-style line comments from source code while preserving line count.
- * Each removed comment is replaced with the same number of characters as spaces
- * so that match.index → line-number calculations remain accurate.
+ * Strips comments from source code while preserving line count.
  *
- * Block comments (`/* ... *\/`) are intentionally left as-is: the regex requires
- * `import`/`export` to appear at the start of a meaningful token, which virtually
- * never occurs inside a block comment in real-world code.
+ * Uses a state machine to handle:
+ *   - `//` line comments
+ *   - `/* ... *\/` block comments (including multi-line JSDoc)
+ *   - single-quoted, double-quoted, and template-literal strings
+ *     (so `'http://x'` or `'**\/*.ts'` never trigger false comment stripping)
+ *   - escape sequences inside strings (`\'`, `\"`, `` \` ``)
+ *
+ * Each comment character is replaced with a space, **except `\n`**, so that
+ * line-number calculations derived from `code.split('\n')` remain accurate.
+ *
+ * Known limitation: regex literals are not tracked. An AST-based
+ * stripper (B7) is the definitive fix for that edge case.
  */
-function stripLineComments(code: string): string {
-  // Replace everything from `//` to end-of-line with spaces (preserves \n).
-  return code.replace(/\/\/[^\n]*/g, (match) => ' '.repeat(match.length));
+export function stripComments(code: string): string {
+  type State =
+    | 'code'
+    | 'lineComment'
+    | 'blockComment'
+    | 'singleStr'
+    | 'doubleStr'
+    | 'templateStr';
+
+  let state: State = 'code';
+  const out = code.split('');
+  const len = code.length;
+
+  for (let i = 0; i < len; i++) {
+    const ch = code[i];
+    const next = code[i + 1];
+
+    switch (state) {
+      case 'code':
+        if (ch === '/' && next === '/') {
+          state = 'lineComment';
+          out[i] = ' ';
+        } else if (ch === '/' && next === '*') {
+          state = 'blockComment';
+          out[i] = ' ';
+        } else if (ch === "'") {
+          state = 'singleStr';
+        } else if (ch === '"') {
+          state = 'doubleStr';
+        } else if (ch === '`') {
+          state = 'templateStr';
+        }
+        break;
+
+      case 'lineComment':
+        if (ch === '\n') {
+          state = 'code';
+          // keep the newline so line numbers are preserved
+        } else {
+          out[i] = ' ';
+        }
+        break;
+
+      case 'blockComment':
+        if (ch === '*' && next === '/') {
+          out[i] = ' ';
+          out[i + 1] = ' ';
+          i++; // skip '/'
+          state = 'code';
+        } else if (ch !== '\n') {
+          out[i] = ' ';
+        }
+        break;
+
+      case 'singleStr':
+        if (ch === '\\') {
+          i++; // skip escaped char
+        } else if (ch === "'") {
+          state = 'code';
+        }
+        break;
+
+      case 'doubleStr':
+        if (ch === '\\') {
+          i++;
+        } else if (ch === '"') {
+          state = 'code';
+        }
+        break;
+
+      case 'templateStr':
+        if (ch === '\\') {
+          i++;
+        } else if (ch === '`') {
+          state = 'code';
+        }
+        break;
+    }
+  }
+
+  return out.join('');
+}
+
+/**
+ * Shared regex scanner: runs the supplied regex over `code` and returns each
+ * match's captured specifier together with its 1-based line number.
+ *
+ * Both sync and async parse paths call this helper so the logic lives in one place (H2).
+ */
+function extractSpecifiersFromCode(
+  code: string,
+  regex: RegExp,
+): { specifier: string; line: number }[] {
+  const results: { specifier: string; line: number }[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(code)) !== null) {
+    const specifier = match[1];
+    const textBeforeMatch = code.substring(0, match.index);
+    const line = textBeforeMatch.split('\n').length;
+    results.push({ specifier, line });
+  }
+
+  return results;
 }
 
 const DEFAULT_ACTIVE_ALIASES = ['@modules'] as const;
@@ -110,22 +218,11 @@ function parseImportSpecifiers(
       }
     }
 
-    const results: { specifier: string; line: number }[] = [];
-    let match: RegExpExecArray | null;
+    // Strip both line and block comments so imports inside JSDoc / commented-out
+    // blocks are not reported as real imports (fixes BUG-10 / N-52).
+    const strippedCode = stripComments(code);
     const regex = new RegExp(IMPORT_REGEX.source, IMPORT_REGEX.flags);
-    // Strip line comments before scanning so commented-out imports
-    // (e.g. `// import { X } from '@modules/foo'`) are not reported
-    // as real imports (N-52 false-positive fix).
-    const strippedCode = stripLineComments(code);
-
-    while ((match = regex.exec(strippedCode)) !== null) {
-      const specifier = match[1];
-      const textBeforeMatch = strippedCode.substring(0, match.index);
-      const line = textBeforeMatch.split('\n').length;
-      results.push({ specifier, line });
-    }
-
-    return results;
+    return extractSpecifiersFromCode(strippedCode, regex);
   } catch (error: unknown) {
     const err = error as NodeJS.ErrnoException;
     if (err.code === 'ENOENT') {
@@ -183,19 +280,9 @@ async function parseImportSpecifiersAsync(
       }
     }
 
-    const results: { specifier: string; line: number }[] = [];
-    let match: RegExpExecArray | null;
+    const strippedCode = stripComments(code);
     const regex = new RegExp(IMPORT_REGEX.source, IMPORT_REGEX.flags);
-    const strippedCode = stripLineComments(code);
-
-    while ((match = regex.exec(strippedCode)) !== null) {
-      const specifier = match[1];
-      const textBeforeMatch = strippedCode.substring(0, match.index);
-      const line = textBeforeMatch.split('\n').length;
-      results.push({ specifier, line });
-    }
-
-    return results;
+    return extractSpecifiersFromCode(strippedCode, regex);
   } catch (error: unknown) {
     const err = error as NodeJS.ErrnoException;
     if (err.code === 'ENOENT') {
@@ -244,13 +331,12 @@ export function extractRelativeCrossModuleImports(
     const fileDir = path.dirname(filePath);
     const crossModule: RelativeCrossModuleImport[] = [];
 
-    let match: RegExpExecArray | null;
+    // Strip both line and block comments (fixes M-10: the relative scanner had no stripping at all).
+    const strippedCode = stripComments(code);
     const regex = new RegExp(RELATIVE_IMPORT_REGEX.source, RELATIVE_IMPORT_REGEX.flags);
+    const specifiers = extractSpecifiersFromCode(strippedCode, regex);
 
-    while ((match = regex.exec(code)) !== null) {
-      const specifier = match[1];
-      const textBeforeMatch = code.substring(0, match.index);
-      const line = textBeforeMatch.split('\n').length;
+    for (const { specifier, line } of specifiers) {
       try {
         const resolvedPath = normalizePath(path.resolve(fileDir, specifier));
         const isInside =

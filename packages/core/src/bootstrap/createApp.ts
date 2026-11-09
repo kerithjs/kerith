@@ -16,7 +16,7 @@ import type { CreateAppOptions, KerithApp } from "../types/index.js";
 
 // Bootstrap
 import type { BootstrapContext } from "./context.js";
-import { runGuard } from "./steps/step-00-guard.js";
+import { runGuard, markBootstrapped, releaseBootstrap } from "./steps/step-00-guard.js";
 import { runConfigLoad } from "./steps/step-01-config.js";
 import { runSetupPhase } from "./steps/step-01b-setup.js";
 import { runCacheAndScan } from "./steps/step-02-cache-scan.js";
@@ -183,6 +183,9 @@ export async function createApp(
         }
       }
 
+      // Mark bootstrap as complete — process-level singleton sealed.
+      markBootstrapped();
+
       return {
         modules: safeRegisteredModules,
         routes: mountedRoutes,
@@ -216,6 +219,7 @@ export async function createApp(
         CacheManager.fail(err.message);
       }
       registry.clearRegistry();
+      releaseBootstrap();
       throw err;
     }
   });

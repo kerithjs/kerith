@@ -210,6 +210,22 @@ describe('Registry', () => {
     });
   });
 
+  it('findCircularDependencies() detects cycles within a domain (billing/a -> billing/b -> billing/a)', async () => {
+    const r = createRegistry();
+    await registryContext.run(r, async () => {
+      getActiveRegistry().registerModule('a', { imports: ['b'] }, '/billing/a', '/billing/a/index.ts', 'id_a', 'billing');
+      getActiveRegistry().registerModule('b', { imports: ['a'] }, '/billing/b', '/billing/b/index.ts', 'id_b', 'billing');
+
+      const cycles = getActiveRegistry().findCircularDependencies();
+      expect(cycles.length).toBeGreaterThan(0);
+      expect(cycles[0]).toEqual(['billing/a', 'billing/b', 'billing/a']);
+
+      const graph = getActiveRegistry().getDependencyGraph();
+      expect(graph.get('billing/a')).toEqual(['billing/b']);
+      expect(graph.get('billing/b')).toEqual(['billing/a']);
+    });
+  });
+
   it('seeds and retrieves NITS IDs by path', () => {
     const r = createRegistry();
     r.seedNitsIds(new Map([['/abs/path', 'mod_123']]));

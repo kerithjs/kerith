@@ -1,4 +1,5 @@
 import { findCircularDependencies } from '../../core/utils/cycle-detector.js';
+import { buildModuleKey } from '../../core/registry.js';
 import { detectDepthViolations } from './depth-checker.js';
 import { detectSizeViolations } from './size-checker.js';
 import { detectUnusedExports, detectEmptyModules } from './export-checker.js';
@@ -60,18 +61,30 @@ function runCouplingDetector(
 function runCircularDetector(graph: ModuleGraph): Violation[] {
   const dependencyMap = new Map<string, string[]>();
   for (const node of graph.modules) {
-    dependencyMap.set(node.name, node.declaredImports);
+    const key = buildModuleKey(node.name, node.domain);
+    dependencyMap.set(
+      key,
+      (node.declaredImports ?? []).map(imp => buildModuleKey(imp, node.domain))
+    );
   }
 
   const cycles = findCircularDependencies(dependencyMap);
-  return cycles.map((cycle): StandardViolation => ({
-    type: ViolationType.CIRCULAR_DEPENDENCY,
-    severity: 'warn',
-    module: cycle[0],
-    message: `Circular dependency detected: ${cycle.join(' -> ')}`,
-    suggestion: 'Extract shared logic into a separate module to break the cycle.',
-    cycle,
-  }));
+  return cycles.map((cycle): StandardViolation => {
+    const firstKey = cycle[0];
+    const slashIdx = firstKey.indexOf('/');
+    const domain = slashIdx !== -1 ? firstKey.slice(0, slashIdx) : undefined;
+    const moduleName = slashIdx !== -1 ? firstKey.slice(slashIdx + 1) : firstKey;
+
+    return {
+      type: ViolationType.CIRCULAR_DEPENDENCY,
+      severity: 'warn',
+      module: moduleName,
+      domain,
+      message: `Circular dependency detected: ${cycle.join(' -> ')}`,
+      suggestion: 'Extract shared logic into a separate module to break the cycle.',
+      cycle,
+    };
+  });
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────

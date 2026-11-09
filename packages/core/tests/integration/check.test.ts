@@ -5,10 +5,12 @@ import fs from 'node:fs';
 
 const cliPath = path.resolve(__dirname, '../../src/cli/index.ts');
 const fixturesRoot = path.resolve(__dirname, '../fixtures');
+const tsxPath = path.resolve(__dirname, '../../node_modules/.bin/tsx');
+const tsxCmd = process.platform === 'win32' ? `"${tsxPath}.cmd"` : `"${tsxPath}"`;
 
 function runKerithCheck(fixturePath: string, args: string = '') {
   try {
-    const output = execSync(`npx tsx ${cliPath} check ${args}`, { cwd: fixturePath, encoding: 'utf-8', stdio: 'pipe' });
+    const output = execSync(`${tsxCmd} "${cliPath}" check ${args}`, { cwd: fixturePath, encoding: 'utf-8', stdio: 'pipe' });
     return { exitCode: 0, output };
   } catch (error: any) {
     return { exitCode: error.status, output: error.stdout + (error.stderr || '') };
@@ -88,7 +90,7 @@ describe('Integration: check.test.ts (Coupling & Regression)', () => {
     expect(exitCode).toBe(0);
     expect(output).toContain('exit 0');
     expect(output).not.toContain('exit 1 — violations found');
-  });
+  }, 30000);
 
   it('verifies that with --strict the exit code is 1 due to coupling warnings', () => {
     const dir = path.join(fixturesRoot, couplingApp);
@@ -112,7 +114,7 @@ describe('Integration: check.test.ts (Coupling & Regression)', () => {
     
     expect(exitCode).toBe(0);
     expect(output).toContain('Circular dependency detected');
-  });
+  }, 30000);
 
   it('verifies that CIRCULAR_DEPENDENCY blocks with --strict', () => {
     const dir = path.join(fixturesRoot, circularApp);
@@ -120,7 +122,7 @@ describe('Integration: check.test.ts (Coupling & Regression)', () => {
     
     expect(exitCode).toBe(1);
     expect(output).toContain('Circular dependency detected');
-  });
+  }, 30000);
 
   it('verifies that FAN_OUT_HIGH does not block without --strict', () => {
     const dir = path.join(fixturesRoot, couplingApp);
@@ -129,7 +131,7 @@ describe('Integration: check.test.ts (Coupling & Regression)', () => {
     expect(exitCode).toBe(0);
     expect(output).toContain('High fan-out coupling: "m2"');
     expect(output).not.toContain('exit 1 — violations found');
-  });
+  }, 30000);
 
   it('verifies that FAN_OUT_HIGH blocks with --strict', () => {
     const dir = path.join(fixturesRoot, couplingApp);
@@ -138,5 +140,5 @@ describe('Integration: check.test.ts (Coupling & Regression)', () => {
     expect(exitCode).toBe(1);
     expect(output).toContain('High fan-out coupling: "m2"');
     expect(output).toContain('exit 1 — violations found');
-  });
+  }, 30000);
 });

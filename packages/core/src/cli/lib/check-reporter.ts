@@ -3,6 +3,15 @@ import type { ResolvedQualityRules } from '../../config/rules.types.js';
 import type { Violation, RelativeBoundaryViolation, StandardViolation } from './violations.js';
 import { ViolationType, isHardViolation } from './violations.js';
 import { type ModuleNode as ModuleGraphNode, type DomainNode, type SubModuleNode } from './graph-builder.js';
+import { buildModuleKey } from '../../core/registry.js';
+
+/** Returns true when violation v belongs to the graph node (matches both name and domain). */
+function belongsTo(v: Violation, node: { name: string; domain?: string }): boolean {
+  if (v.module !== node.name) return false;
+  const vDomain = 'domain' in v ? (v as { domain?: string }).domain : undefined;
+  if (vDomain !== undefined) return vDomain === node.domain;
+  return true;
+}
 
 const R    = '\x1b[0m';
 const BOLD = '\x1b[1m';
@@ -153,7 +162,7 @@ function printNodeGroup(nodes: (ModuleGraphNode | DomainNode | SubModuleNode)[],
 
   for (const mod of nodes) {
     const qualifiedName = getQualifiedName(mod);
-    const modViolations = data.violations.filter(v => v.module === mod.name);
+    const modViolations = data.violations.filter(v => belongsTo(v, mod));
     const hasCircular = modViolations.some(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
     const boundaryViolations = modViolations.filter(
       (v): v is RelativeBoundaryViolation => v.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION,
@@ -279,7 +288,7 @@ function printNodeGroupWithIdentity(nodes: (ModuleGraphNode | DomainNode | SubMo
 
   for (const mod of nodes) {
     const qualifiedName = getQualifiedName(mod);
-    const modViolations = data.violations.filter(v => v.module === mod.name);
+    const modViolations = data.violations.filter(v => belongsTo(v, mod));
     const hasCircular = modViolations.some(v => v.type === ViolationType.CIRCULAR_DEPENDENCY);
     const hasBoundary = modViolations.some(
       v => v.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION,
@@ -338,11 +347,19 @@ function printIdentityLegend(): void {
 export function printViolationDetails(violations: Violation[], data: CheckReportData): void {
   if (violations.length === 0) return;
 
-  const modulesWithViolations = Array.from(new Set(violations.map(v => v.module)));
+  // Group by qualified key (domain/name) to distinguish homonymous modules across domains.
+  const seenKeys = new Set<string>();
+  const moduleKeys: string[] = [];
+  for (const v of violations) {
+    const key = buildModuleKey(v.module, (v as any).domain as string | undefined);
+    if (!seenKeys.has(key)) { seenKeys.add(key); moduleKeys.push(key); }
+  }
 
-  for (const moduleName of modulesWithViolations) {
-    console.log(`  ${AYU.muted}${moduleName}${R}`);
-    const moduleViolations = violations.filter(v => v.module === moduleName);
+  for (const moduleKey of moduleKeys) {
+    console.log(`  ${AYU.muted}${moduleKey}${R}`);
+    const moduleViolations = violations.filter(
+      v => buildModuleKey(v.module, (v as any).domain as string | undefined) === moduleKey
+    );
 
     for (const v of moduleViolations) {
       if (v.type === ViolationType.RELATIVE_BOUNDARY_VIOLATION) {
@@ -358,7 +375,7 @@ export function printViolationDetails(violations: Violation[], data: CheckReport
       }
 
       if (v.type === ViolationType.FAN_OUT_HIGH && data.coupling) {
-        const imports = data.modules.find(m => m.name === v.module)?.declaredImports ?? [];
+        const imports = data.modules.find(m => belongsTo(v, m))?.declaredImports ?? [];
         console.log(`    ${AYU.orange}⚠${R}  ${AYU.fg}${v.message}${R}`);
         console.log(`       ${AYU.dim}Imported modules: ${imports.join(', ')}${R}`);
         console.log(`       ${AYU.dim}Suggestion: ${v.suggestion}${R}`);
@@ -366,7 +383,8 @@ export function printViolationDetails(violations: Violation[], data: CheckReport
       }
 
       if (v.type === ViolationType.FAN_IN_HIGH && data.coupling) {
-        const consumers = data.coupling.fanInMap.get(v.module) ?? [];
+        const vKey = buildModuleKey(v.module, (v as any).domain as string | undefined);
+        const consumers = data.coupling.fanInMap.get(vKey) ?? [];
         console.log(`    ${AYU.orange}⚠${R}  ${AYU.fg}${v.message}${R}`);
         console.log(`       ${AYU.dim}Consumed by: ${consumers.join(', ')}${R}`);
         console.log(`       ${AYU.dim}Suggestion: ${v.suggestion}${R}`);
@@ -403,13 +421,20 @@ export function printQualityWarningsSection(data: CheckReportData): void {
 
   sectionHeader('Quality Warnings');
 
-  // Group by module for display
-  const moduleNames = Array.from(new Set(warnings.map(w => w.module)));
+  // Group by qualified key (domain/name) to distinguish homonymous modules.
+  const seenKeys = new Set<string>();
+  const moduleKeys: string[] = [];
+  for (const w of warnings) {
+    const key = buildModuleKey(w.module, (w as any).domain as string | undefined);
+    if (!seenKeys.has(key)) { seenKeys.add(key); moduleKeys.push(key); }
+  }
 
-  for (const moduleName of moduleNames) {
-    const moduleWarnings = warnings.filter(w => w.module === moduleName);
-    const maxLen = Math.min(30, Math.max(...moduleNames.map(n => n.length), 4));
-    const paddedName = moduleName.padEnd(maxLen + 2, ' ');
+  for (const moduleKey of moduleKeys) {
+    const moduleWarnings = warnings.filter(
+      w => buildModuleKey(w.module, (w as any).domain as string | undefined) === moduleKey
+    );
+    const maxLen = Math.min(30, Math.max(...moduleKeys.map(k => k.length), 4));
+    const paddedName = moduleKey.padEnd(maxLen + 2, ' ');
 
     for (const rawW of moduleWarnings) {
       const w = rawW as StandardViolation;
@@ -419,13 +444,14 @@ export function printQualityWarningsSection(data: CheckReportData): void {
       // Verbose: extra per-type detail
       if (data.options.verbose) {
         if (w.type === ViolationType.FAN_IN_HIGH && data.coupling) {
-          const consumers = data.coupling.fanInMap.get(w.module) ?? [];
+          const wKey = buildModuleKey(w.module, (w as any).domain as string | undefined);
+          const consumers = data.coupling.fanInMap.get(wKey) ?? [];
           if (consumers.length > 0) {
             console.log(`     ${AYU.dim}Consumers: ${consumers.join(', ')}${R}`);
           }
         }
         if (w.type === ViolationType.FAN_OUT_HIGH) {
-          const imports = data.modules.find(m => m.name === w.module)?.declaredImports ?? [];
+          const imports = data.modules.find(m => belongsTo(w, m))?.declaredImports ?? [];
           if (imports.length > 0) {
             console.log(`     ${AYU.dim}Imports: ${imports.join(', ')}${R}`);
           }
@@ -597,7 +623,7 @@ export function printSummary(data: CheckReportData): void {
 
   const totalNodes = modules.length + submodules.length + domains.length;
   const allNodes = [...modules, ...submodules, ...domains];
-  const okNodes = allNodes.filter(n => data.violations.filter(v => v.module === n.name).length === 0).length;
+  const okNodes = allNodes.filter(n => data.violations.filter(v => belongsTo(v, n)).length === 0).length;
   const newModules = data.nitsResult?.newModules?.length || 0;
   const okCount = Math.max(0, okNodes - newModules);
 

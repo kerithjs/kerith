@@ -3,8 +3,13 @@ import path from 'node:path';
 import fg from 'fast-glob';
 import type { ModuleGraph } from './graph-builder.js';
 import { extractRelativeCrossModuleImports } from './import-scanner.js';
-
-
+import {
+  buildClassifierIndexFromGraph,
+  classifyImportTarget,
+  isCrossDomainImport,
+  describeDomainBoundaryViolation
+} from '../../core/utils/import-classifier.js';
+import { buildModuleKey } from '../../core/registry.js';
 export const ViolationType = {
   PRIVATE_IMPORT: 'private-import',
   UNDECLARED_IMPORT: 'undeclared-import',
@@ -33,6 +38,7 @@ export interface RelativeBoundaryViolation {
   type: typeof ViolationType.RELATIVE_BOUNDARY_VIOLATION;
   severity: 'error' | 'warn';
   module: string;
+  domain?: string;
   file: string;
   line?: number;
   import: string;
@@ -46,6 +52,7 @@ export interface StandardViolation {
   >;
   severity: 'error' | 'warn';
   module: string;
+  domain?: string;
   message: string;
   suggestion: string;
   location?: { file: string; line: number };
@@ -110,6 +117,7 @@ export function detectRelativeBoundaryViolations(
           type: ViolationType.RELATIVE_BOUNDARY_VIOLATION,
           severity: 'error',
           module: moduleNode.name,
+          domain: moduleNode.domain,
           file: path.relative(cwd, file).replace(/\\/g, '/'),
           line,
           import: specifier,
@@ -159,13 +167,9 @@ export function detectViolations(
   const nodes = graph.modules;
   const subNodes = graph.submodules || [];
   const allNodes = [...nodes, ...subNodes];
-  const moduleNames = new Set(nodes.map(n => n.name));
+  const moduleKeys = new Set(nodes.map(n => buildModuleKey(n.name, n.domain)));
 
-  if (graph.domains) {
-    for (const d of graph.domains) {
-      moduleNames.add(d.name);
-    }
-  }
+  const classifierIndex = buildClassifierIndexFromGraph(graph);
 
   for (const node of allNodes) {
     for (const imp of node.actualImports) {
@@ -173,40 +177,33 @@ export function detectViolations(
         continue;
       }
 
-      // 1. DOMAIN_BOUNDARY_VIOLATION
-      // Patterns:
-      //   @domain              → public API of the domain (always allowed from outside)
-      //   @domain/module       → internal module alias  (parts.length === 2)
-      //   @domain/module/path  → deep private sub-path   (parts.length > 2, also caught by PRIVATE_IMPORT)
-      //
-      // Rule: @domain/X is a violation when the importer lives outside that domain.
-      //       Importers in the SAME domain may cross-reference sibling modules via
-      //       @domain/siblingModule — that is intentional and NOT a violation here.
-      if (imp.specifier.startsWith('@') && !imp.specifier.startsWith('@modules/')) {
-        const parts = imp.specifier.split('/');
-        const targetDomain = parts[0].slice(1); // strip leading '@'
+      const classified = classifyImportTarget(imp.specifier, classifierIndex);
+      const isCrossDomain = isCrossDomainImport(node.domain, classified);
 
-        // Only fire when the specifier drills into a specific module inside the domain.
-        // A bare `@domain` import is the public surface and is always valid from outside.
-        if (
-          parts.length > 1 &&
-          graph.domains?.some(d => d.name === targetDomain) &&
-          node.domain !== targetDomain
-        ) {
-          const isDeepPath = parts.length > 2;
-          const suggestion = isDeepPath
-            ? `Import only the public index '@${targetDomain}/${parts[1]}' or the domain root '@${targetDomain}'`
-            : `Import from the domain root '@${targetDomain}' instead of the internal alias '${imp.specifier}'`;
+      if (isCrossDomain) {
+        const targetDomain =
+          classified.kind === 'domain-module' || classified.kind === 'domain-root'
+            ? classified.domain
+            : (classified.kind === 'modules-alias' && classified.candidates.length > 0
+                ? classified.candidates[0].domain ?? 'none'
+                : 'none');
 
-          violations.push({
-            type: ViolationType.DOMAIN_BOUNDARY_VIOLATION,
-            severity: 'error',
-            module: node.name,
-            message: `Domain boundary violation: module "${node.name}" (domain: ${node.domain ?? 'none'}) imports from internal domain alias "${imp.specifier}" (domain: ${targetDomain}).`,
-            suggestion,
-            location: { file: imp.file, line: imp.line },
-          });
-        }
+        const { message, details } = describeDomainBoundaryViolation(
+          node.name,
+          node.domain,
+          imp.specifier,
+          targetDomain,
+        );
+
+        violations.push({
+          type: ViolationType.DOMAIN_BOUNDARY_VIOLATION,
+          severity: 'error',
+          module: node.name,
+          domain: node.domain,
+          message,
+          suggestion: details,
+          location: { file: imp.file, line: imp.line },
+        });
       }
 
       // 2. SUBMODULE_DIRECT_SIBLING
@@ -219,6 +216,7 @@ export function detectViolations(
             type: ViolationType.SUBMODULE_DIRECT_SIBLING,
             severity: 'warn',
             module: node.name,
+            domain: node.domain,
             message: `Direct sibling access: submodule "${node.name}" directly imports sibling submodule "${sibling}".`,
             suggestion: `Access '${sibling}' through the parent module '${parentAlias}'`,
             location: { file: imp.file, line: imp.line },
@@ -245,6 +243,7 @@ export function detectViolations(
             type: ViolationType.SUBMODULE_DOMAIN_BYPASS,
             severity: 'warn',
             module: node.name,
+            domain: node.domain,
             message: `Domain bypass: submodule "${node.name}" directly imports its own domain root "@${node.domain}".`,
             suggestion: `Access domain resources through the parent module "@modules/${node.parentModule}" instead of the domain root.`,
             location: { file: imp.file, line: imp.line },
@@ -252,38 +251,50 @@ export function detectViolations(
         }
       }
 
-      const { isPrivate, suggestion, target } = analyzeImport(imp.specifier);
+      const { isPrivate, suggestion, target: fallbackTarget } = analyzeImport(imp.specifier);
 
       if (isPrivate) {
         violations.push({
           type: ViolationType.PRIVATE_IMPORT,
           severity: 'warn',
           module: node.name,
+          domain: node.domain,
           message: `Private import detected: module "${node.name}" directly imports internal path from "${imp.specifier}".`,
           suggestion: `Import only the public index: "${suggestion}".`,
           location: { file: imp.file, line: imp.line },
         });
-      } else if (target && target !== node.name && moduleNames.has(target)) {
-        if (!node.declaredImports.includes(target)) {
-          violations.push({
-            type: ViolationType.UNDECLARED_IMPORT,
-            severity: 'warn',
-            module: node.name,
-            message: `Undeclared import: module "${node.name}" imports from "${target}" but it is not declared.`,
-            suggestion: `Add "${target}" to the imports array in the Module() declaration of "${node.name}".`,
-            location: { file: imp.file, line: imp.line },
-          });
+      } else if (!isCrossDomain) {
+        let target: string | undefined;
+        if (classified.kind === 'domain-module' && classified.domain === node.domain) {
+          target = classified.name;
+        } else if (classified.kind === 'modules-alias') {
+          const sameDomainCand = classified.candidates.find(c => c.domain === node.domain);
+          if (sameDomainCand) {
+            target = sameDomainCand.name;
+          }
+        } else if (classified.kind === 'other') {
+          target = fallbackTarget;
+        }
+
+        if (target && target !== node.name) {
+          const targetKey = buildModuleKey(target, node.domain);
+          if (moduleKeys.has(targetKey)) {
+            if (!node.declaredImports.includes(target) && !node.declaredImports.includes(targetKey)) {
+              violations.push({
+                type: ViolationType.UNDECLARED_IMPORT,
+                severity: 'warn',
+                module: node.name,
+                domain: node.domain,
+                message: `Undeclared import: module "${node.name}" imports from "${target}" but it is not declared.`,
+                suggestion: `Add "${target}" to the imports array in the Module() declaration of "${node.name}".`,
+                location: { file: imp.file, line: imp.line },
+              });
+            }
+          }
         }
       }
     }
   }
-
-  const dependencyMap = new Map<string, string[]>();
-  for (const node of nodes) {
-    dependencyMap.set(node.name, node.declaredImports);
-  }
-
-
 
   // 4. MODULE_SPACE_CONFLICT
   const nameToDomains = new Map<string, Set<string | undefined>>();
@@ -329,11 +340,13 @@ export function detectCouplingWarnings(
   const fanInMap = new Map<string, string[]>();
   const fanOutMap = new Map<string, number>();
   for (const node of nodes) {
-    if (!fanInMap.has(node.name)) fanInMap.set(node.name, []);
-    fanOutMap.set(node.name, node.declaredImports.length);
+    const nodeKey = buildModuleKey(node.name, node.domain);
+    if (!fanInMap.has(nodeKey)) fanInMap.set(nodeKey, []);
+    fanOutMap.set(nodeKey, node.declaredImports.length);
     for (const imp of node.declaredImports) {
-      if (!fanInMap.has(imp)) fanInMap.set(imp, []);
-      fanInMap.get(imp)!.push(node.name);
+      const impKey = buildModuleKey(imp, node.domain);
+      if (!fanInMap.has(impKey)) fanInMap.set(impKey, []);
+      fanInMap.get(impKey)!.push(nodeKey);
     }
   }
 
@@ -341,6 +354,7 @@ export function detectCouplingWarnings(
   const fanInThreshold  = config?.coupling?.fanIn?.threshold ?? Number.MAX_SAFE_INTEGER;
 
   for (const node of nodes) {
+    const nodeKey = buildModuleKey(node.name, node.domain);
     // --- Fan-out ---
     const fanOutCount = node.declaredImports.length;
     if (fanOutCount > fanOutThreshold) {
@@ -348,8 +362,9 @@ export function detectCouplingWarnings(
         type: ViolationType.FAN_OUT_HIGH,
         severity: 'warn',
         module: node.name,
-        message: `High fan-out coupling: "${node.name}" imports from ${fanOutCount} modules (threshold: ${fanOutThreshold}).`,
-        suggestion: `Consider if "${node.name}" has too many responsibilities. It could be split into more cohesive modules.`,
+        domain: node.domain,
+        message: `High fan-out coupling: "${nodeKey}" imports from ${fanOutCount} modules (threshold: ${fanOutThreshold}).`,
+        suggestion: `Consider if "${nodeKey}" has too many responsibilities. It could be split into more cohesive modules.`,
       } satisfies StandardViolation);
     }
 
@@ -357,15 +372,16 @@ export function detectCouplingWarnings(
     // Exclude _shared: has high fan-in by design, it's not a problem.
     const isSharedModule = node.name === '_shared' || node.name.endsWith('/_shared');
     if (!isSharedModule) {
-      const consumers = fanInMap.get(node.name) ?? [];
+      const consumers = fanInMap.get(nodeKey) ?? [];
       const fanInCount = consumers.length;
       if (fanInCount > fanInThreshold) {
         warnings.push({
           type: ViolationType.FAN_IN_HIGH,
           severity: 'warn',
           module: node.name,
-          message: `High fan-in coupling: "${node.name}" is consumed by ${fanInCount} modules (threshold: ${fanInThreshold}).`,
-          suggestion: `"${node.name}" is a central dependency. Consider moving it to \`_shared\` or revisiting its responsibilities.`,
+          domain: node.domain,
+          message: `High fan-in coupling: "${nodeKey}" is consumed by ${fanInCount} modules (threshold: ${fanInThreshold}).`,
+          suggestion: `"${nodeKey}" is a central dependency. Consider moving it to \`_shared\` or revisiting its responsibilities.`,
         } satisfies StandardViolation);
       }
     }
