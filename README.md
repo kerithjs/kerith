@@ -46,11 +46,14 @@ kerith/
 ├── packages/
 │   ├── core/                        # @kerith/core
 │   │   ├── src/
-│   │   │   ├── bootstrap/           # createApp() — 11-step deterministic pipeline
+│   │   │   ├── bootstrap/           # createApp() — deterministic pipeline
+│   │   │   │   └── steps/           # step-00-guard (DUPLICATE_BOOTSTRAP + ESM env checks)
 │   │   │   ├── identifiers/         # Module() (re-export), Controller(), Service(), Repository(), Schema()
 │   │   │   ├── aliases/             # ESM hook — runtime alias resolution
+│   │   │   │   └── matcher.ts       # createAliasMatcher() — O(1) deterministic resolver
 │   │   │   ├── nits/                # NITS — Node Identity Tracking System
 │   │   │   ├── cli/                 # kerith check, create-module, sync-*, init
+│   │   │   │   └── lib/             # violations.ts, graph-builder, cycle-detector, import-classifier
 │   │   │   ├── core/                # Registry, state, logger, http-logger, errors
 │   │   │   │   └── identifiers/     # Module(), Domain(), SubModule() — real implementations + validation
 │   │   │   ├── preload/             # Runtime pre-loader hook
@@ -58,6 +61,7 @@ kerith/
 │   │   └── tests/
 │   │       ├── unit/                # Isolated unit tests
 │   │       ├── integration/         # End-to-end bootstrap tests
+│   │       ├── audit/               # Audit test suite (R8–R15, R10a–R10e)
 │   │       └── fixtures/            # Test application stubs
 │   │
 │   ├── eslint-plugin/               # @kerith/eslint-plugin
@@ -218,6 +222,107 @@ For the full API reference, configuration options, and CLI documentation, see [d
 
 ---
 
+## `kerith check` — Structural Analysis CLI
+
+`kerith check` is the primary static analysis command. It scans the project, builds a module graph, and reports all architectural violations without starting the server.
+
+```bash
+kerith check
+```
+
+### Flags
+
+| Flag | Description |
+| --- | --- |
+| `--strict` | Exit with code 1 if **any** violation is found (including quality warnings) |
+| `--module <name>` | Filter analysis to a single module |
+| `--level <domain\|module\|submodule\|flat>` | Filter the output section shown in the report |
+| `--format <text\|json>` | Output format — `text` (default) or machine-readable `json` |
+| `--no-circular` | Skip circular dependency detection |
+| `--verbose` | Show verbose output including internal NITS IDs |
+
+### Exit behavior
+
+- **System violations** (e.g. `DOMAIN_BOUNDARY_VIOLATION`, `RELATIVE_BOUNDARY_VIOLATION`, `SHARED_SCOPE_VIOLATION`) → always exit 1.
+- **Quality warnings** (e.g. fan-in/fan-out, `CIRCULAR_DEPENDENCY`, `UNUSED_EXPORT`) → exit 0 normally, exit 1 with `--strict`.
+
+---
+
+## Violation Reference
+
+Kerith separates violations into two categories.
+
+### System Violations (always exit 1)
+
+These are hard architectural invariants. They cannot be disabled.
+
+| Code | Trigger |
+| --- | --- |
+| `UNDECLARED_IMPORT` | Module imports another without declaring it in `imports[]` |
+| `RELATIVE_BOUNDARY_VIOLATION` | A relative `../` import escapes the module boundary |
+| `DOMAIN_BOUNDARY_VIOLATION` | A module imports from another domain's internal alias (e.g. `@billing/orders` from `workspace`) |
+| `SHARED_SCOPE_VIOLATION` | A module in a foreign domain imports `@{domain}/shared` |
+| `UNDECLARED_SHARED` | A module imports `@shared` without declaring it in `shared[]` |
+| `SHARED_IN_IMPORTS` | A shared alias was placed in `imports[]` instead of `shared[]` |
+| `MODULE_IN_SHARED` | A module name was placed in `shared[]` instead of `imports[]` |
+| `MODULE_SPACE_CONFLICT` | A module name exists in both flat space and domain space |
+
+### Quality Warnings (configurable)
+
+These are design signals, not framework invariants. They become blocking only with `--strict`.
+
+| Code | Trigger |
+| --- | --- |
+| `CIRCULAR_DEPENDENCY` | Circular import chain detected (disable with `--no-circular`) |
+| `FAN_OUT_HIGH` | Module imports from more modules than `fanOutThreshold` |
+| `FAN_IN_HIGH` | More modules depend on this one than `fanInThreshold` |
+| `MODULE_DEPTH_EXCEEDED` | Module nesting exceeds `maxModuleDepth` |
+| `MODULE_TOO_LARGE` | Module has more files than `maxModuleFiles` |
+| `TOO_MANY_SUBMODULES` | Module declares more SubModules than `maxSubModulesPerModule` |
+| `UNUSED_EXPORT` | A declared export is never consumed by any other module |
+| `EMPTY_MODULE` | Module has no registered identifiers |
+| `UNUSED_SHARED` | Module declares `@shared` in `shared[]` but no file imports it |
+| `PRIVATE_IMPORT` | Direct deep path import into another module's internals |
+| `SUBMODULE_DIRECT_SIBLING` | SubModule imports a sibling SubModule directly |
+| `SUBMODULE_DOMAIN_BYPASS` | SubModule imports its own domain root barrel (`@{domain}`) |
+
+### Runtime Errors
+
+Thrown by `createApp()` and the bootstrap pipeline at startup.
+
+| Code | Trigger |
+| --- | --- |
+| `DUPLICATE_BOOTSTRAP` | `createApp()` called more than once (same app instance, or same process) |
+| `INVALID_ESM_ENV` | Project `package.json` does not declare `"type": "module"` |
+| `DUPLICATE_MODULE` | Two modules registered with the same name |
+| `DUPLICATE_DOMAIN` | Two domains registered with the same name |
+| `CIRCULAR_DEPENDENCY` | Circular import detected during bootstrap |
+| `ALIAS_CONFLICT` | Two aliases resolve to conflicting targets |
+| `ALIAS_RESERVED` | An alias key conflicts with a Kerith-reserved name |
+| `MODULE_LOAD_TIMEOUT` | A module failed to load within `moduleLoadTimeout` ms |
+| `PRELOADER_REQUIRED` | Alias hook not registered before `createApp()` |
+| `PRELOADER_VERSION_MISMATCH` | Preload file version differs from installed `@kerith/core` |
+| `MISSING_PEER_DEPENDENCY` | A required peer (e.g. `bullmq`, `node-cron`) is not installed |
+| `INVALID_CRON_EXPRESSION` | A `Cron()` identifier has an invalid cron expression |
+| `BINDING_EXECUTION_FAILED` | A BindingProvider failed during its `bind()` execution |
+| `MIDDLEWARE_RESOLUTION_FAILED` | A MiddlewareResolver threw during `getHandlers()` |
+
+---
+
+## Bootstrap Pipeline
+
+`createApp()` runs a deterministic, ordered pipeline before returning. Each step is isolated and throws a `KerithError` with a typed code on failure.
+
+**Step 00 — Precondition Guards** (runs before any state is created):
+
+1. **Duplicate instance guard** — throws `DUPLICATE_BOOTSTRAP` if the same Express app is passed twice.
+2. **Process-level singleton guard** — throws `DUPLICATE_BOOTSTRAP` if `createApp()` is called more than once in the same process (sequential or concurrent via `Promise.all`).
+3. **ESM environment guard** — throws `INVALID_ESM_ENV` if `"type": "module"` is absent from `package.json`.
+
+The process-level guard implements a three-state machine (`idle → booting → booted`). On failure, the state reverts to `idle` automatically, so a corrected second call can proceed without manual cleanup.
+
+---
+
 ## Quality Rules
 
 Kerith distinguishes between two types of rules:
@@ -232,21 +337,50 @@ They have sensible defaults and can be adjusted per project.
 // kerith.config.ts
 export default defineConfig({
   rules: {
-    maxModuleDepth: 3, // warn if a module exceeds this depth
-    fanOutThreshold: 5, // warn if a module imports from more than N modules
-    fanInThreshold: 5, // warn if more than N modules depend on this one
-    maxModuleFiles: 30, // warn if a module has more than N files
-    maxSubModulesPerModule: 5, // warn if a module has more than N SubModules
-    unusedExports: true, // warn if a declared export is never used
-    emptyModule: true, // warn if a module has no registered identifiers
+    maxModuleDepth: 3,        // warn if a module exceeds this depth
+    fanOutThreshold: 5,       // warn if a module imports from more than N modules
+    fanInThreshold: 5,        // warn if more than N modules depend on this one
+    maxModuleFiles: 30,       // warn if a module has more than N files
+    maxSubModulesPerModule: 5,// warn if a module has more than N SubModules
+    unusedExports: true,      // warn if a declared export is never used
+    emptyModule: true,        // warn if a module has no registered identifiers
     circularDependency: true, // warn (error with --strict)
-    moduleLoadTimeout: 30_000, // ms before MODULE_LOAD_TIMEOUT
-    stalePurgeCycles: 5, // bootstrap cycles before purging a stale module
+    moduleLoadTimeout: 30_000,// ms before MODULE_LOAD_TIMEOUT
+    stalePurgeCycles: 5,      // bootstrap cycles before purging a stale module
   },
 });
 ```
 
 Any rule above can be disabled explicitly by setting it to `false` instead of omitting it.
+
+---
+
+## ESM Alias Resolution
+
+Kerith resolves aliases via a Node.js ESM customization hook (`--import` flag). The resolution order is **deterministic regardless of alias insertion order**:
+
+1. **Exact match** — O(1) via `Map` (`@billing/orders` → specific `index.ts`)
+2. **Wildcard** — longest base first (`@billing/*` → any sub-path under billing)
+3. **Implicit prefix** — longest prefix first (bare alias used as directory root)
+4. **Pass-through** — delegated to Node's default resolver
+
+This logic lives in [`createAliasMatcher()`](./packages/core/src/aliases/matcher.ts) and is the fix for BUG-02 (prefix match incorrectly winning over exact match). It also correctly handles Windows paths where the trailing `\*` wildcard separator differs from Unix `/\*`.
+
+Configure aliases in `kerith.config.ts`:
+
+```ts
+export default defineConfig({
+  aliases: {
+    "@users":        "./src/users",
+    "@users/*":      "./src/users/*",
+    "@billing":      "./src/billing",
+    "@billing/*":    "./src/billing/*",
+    "@shared":       "./src/shared",
+  },
+});
+```
+
+> **Tip:** Run `kerith sync-preload` after changing aliases to regenerate `.kerith/preload.js`. The preloader is verified on every `kerith check` run — a version mismatch triggers a warning.
 
 ---
 
@@ -328,6 +462,25 @@ The `@kerith/eslint-plugin` enforces the same rules at edit time:
 
 ---
 
+## NITS — Node Identity Tracking System
+
+NITS is an identity layer that assigns each module a stable UUID that **survives renames, moves, and refactors**. It runs automatically during `kerith check` and `createApp()`.
+
+- **Shadow files** (`.kerith/nits/<module>.json`) persist the UUID alongside a content hash.
+- On each run the reconciler compares the current module graph against the registry: confirmed, moved, candidate (content-similar), new, stale, and deleted.
+- Stale modules are purged after `stalePurgeCycles` runs (configurable).
+- The `--verbose` flag on `kerith check` prints internal NITS IDs for each module in the report.
+
+NITS can be disabled in `kerith.config.ts`:
+
+```ts
+export default defineConfig({
+  nits: { enabled: false },
+});
+```
+
+---
+
 ## ESLint Plugin
 
 ```bash
@@ -354,6 +507,22 @@ Ships five rules out of the box:
 | `no-deep-imports`           | warn     | Import path exceeds the configured depth (default `maxDepth: 3`) |
 
 For full configuration details, see the [`@kerith/eslint-plugin` README](./packages/eslint-plugin/README.md).
+
+---
+
+## Testing Utilities
+
+`@kerith/core` exports `resetGlobalState()` for use in test teardown. It resets all in-process Kerith state (alias cache, alias resolver options, and bootstrap guard) to `idle`, preventing state leakage between test runs:
+
+```ts
+import { resetGlobalState } from "@kerith/core";
+
+afterEach(() => {
+  resetGlobalState();
+});
+```
+
+> **Internal:** `resetGlobalState()` is not part of the public production API — it is intended only for test environments. The function resets the same bootstrap guard state that `DUPLICATE_BOOTSTRAP` relies on, so calling it in production code would allow multiple `createApp()` calls in the same process.
 
 ---
 
