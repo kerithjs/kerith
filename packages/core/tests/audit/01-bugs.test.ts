@@ -1,18 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { createScratchProject, runNode } from './helpers/scratch-project.js';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 // @ts-expect-error Node typings might be outdated or not have this experimental feature exported cleanly yet
 import { registerHooks } from 'node:module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cliPath = path.resolve(__dirname, '../../src/cli/index.ts');
-const coreIndexPath = path.resolve(__dirname, '../../src/index.ts').replace(/\\/g, '/');
+const coreIndexPath = pathToFileURL(path.resolve(__dirname, '../../src/index.ts')).href;
+const tsxPath = path.resolve(__dirname, '../../node_modules/.bin/tsx');
+const tsxCmd = process.platform === 'win32' ? `"${tsxPath}.cmd"` : `"${tsxPath}"`;
 
 function runCheck(cwd: string, flags = '') {
   try {
-    const cmd = flags ? `npx tsx ${cliPath} check ${flags}` : `npx tsx ${cliPath} check`;
+    const cmd = flags ? `${tsxCmd} "${cliPath}" check ${flags}` : `${tsxCmd} "${cliPath}" check`;
     const stdout = execSync(cmd, { cwd, encoding: 'utf-8', stdio: 'pipe' });
     return { status: 0, output: stdout };
   } catch (err: any) {
@@ -84,7 +86,7 @@ describe('Audit Phase 0 - Resolution and Domain Validation', () => {
         `
       });
       
-      const stdout = execSync('npx tsx bootstrap.ts', { cwd: projectDir, encoding: 'utf-8', stdio: 'pipe' });
+      const stdout = execSync(`${tsxCmd} bootstrap.ts`, { cwd: projectDir, encoding: 'utf-8', stdio: 'pipe' });
       expect(stdout).toContain('OK');
     });
 
@@ -111,7 +113,7 @@ describe('Audit Phase 0 - Resolution and Domain Validation', () => {
       });
       let status = 0;
       try {
-        execSync('npx tsx bootstrap.ts', { cwd: projectDir, encoding: 'utf-8', stdio: 'pipe' });
+        execSync(`${tsxCmd} bootstrap.ts`, { cwd: projectDir, encoding: 'utf-8', stdio: 'pipe' });
       } catch (e: any) {
         status = e.status ?? 1;
         console.error('R11 Failed output:', e.stdout, e.stderr);
@@ -125,7 +127,7 @@ describe('Audit Phase 0 - Resolution and Domain Validation', () => {
       }
       expect(checkRes.status).toBe(0);
       expect(checkRes.output).not.toContain('UNDECLARED_IMPORT');
-    });
+    }, 60000);
   });
 
   describe('Domain Boundaries (R12, R13a, R14, R15)', () => {

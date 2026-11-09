@@ -14,10 +14,11 @@ describe("CLI: Version Flag", () => {
     const expectedVersion = pkgJSON.version;
 
     const cliPath = path.resolve(__dirname, "../../src/cli/index.ts");
+    const tsxPath = path.resolve(__dirname, "../../node_modules/.bin/tsx");
+    const tsxCmd = process.platform === "win32" ? `"${tsxPath}.cmd"` : `"${tsxPath}"`;
     
     // Execute CLI passing the --version flag
-    // We execute with ts-node since the CLI index inside src/ is written in Typescript
-    const output = execSync(`npx tsx "${cliPath}" --version`, { encoding: "utf8" }).trim();
+    const output = execSync(`${tsxCmd} "${cliPath}" --version`, { encoding: "utf8" }).trim();
     
     expect(output).toBe(expectedVersion);
   }, 30000);

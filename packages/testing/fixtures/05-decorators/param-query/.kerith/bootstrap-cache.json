@@ -1,16 +1,16 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-10-17T20:56:29.971Z",
-  "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/param-query",
+  "savedAt": "2026-11-09T17:23:53.920Z",
+  "cwd": "C:\\Users\\work\\Documents\\kerith\\packages\\testing\\fixtures\\05-decorators\\param-query",
   "configHash": "4a13f453",
   "data": {
     "domains": [],
     "modules": [
       {
         "name": "health",
-        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/health",
-        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/health/index.ts",
+        "dirPath": "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/health",
+        "indexPath": "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/health/index.ts",
         "imports": [],
         "exports": [],
         "shared": [],
@@ -20,17 +20,17 @@
         },
         "id": "mod_5634b90a",
         "files": [
-          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/health/health.routes.ts"
+          "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/health/health.routes.ts"
         ],
         "identifiers": [],
         "aliases": [],
         "cachedSize": 243,
-        "cachedMtime": 1789854322934.8948
+        "cachedMtime": 1792428989658.429
       },
       {
         "name": "items",
-        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/items",
-        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/items/index.ts",
+        "dirPath": "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/items",
+        "indexPath": "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/items/index.ts",
         "imports": [],
         "exports": [],
         "shared": [],
@@ -40,12 +40,12 @@
         },
         "id": "mod_c66dec9f",
         "files": [
-          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/items/items.controller.ts"
+          "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/param-query/src/modules/items/items.controller.ts"
         ],
         "identifiers": [],
         "aliases": [],
         "cachedSize": 663,
-        "cachedMtime": 1789854322935.0244
+        "cachedMtime": 1792428989668.6626
       }
     ],
     "submodules": [],

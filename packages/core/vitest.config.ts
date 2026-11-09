@@ -4,7 +4,8 @@ import path from 'node:path';
 export default defineConfig({
   test: {
     setupFiles: ['./tests/setup.ts'],
-    testTimeout: 15000,      // Integrations tests with filesystem can be slow in CI
+    testTimeout: 30000,      // Integration tests with filesystem and CLI subprocessing can be slow in CI and Windows
+    hookTimeout: 30000,
     pool: 'forks',           // True isolation for process.cwd() spies across suites
     coverage: {
       provider: 'v8',

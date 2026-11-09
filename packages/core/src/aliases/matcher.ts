@@ -84,8 +84,8 @@ export function createAliasMatcher(aliases: Record<string, string>): ResolveHook
   );
 
   for (const [alias, rawTarget] of sortedEntries) {
-    // Normalise target: strip trailing `/*` from the filesystem path.
-    const target = rawTarget.endsWith('/*') ? rawTarget.slice(0, -2) : rawTarget;
+    // Normalise target: strip trailing `/*` or `\*` from the filesystem path.
+    const target = rawTarget.replace(/[/\\]\*$/, '');
 
     if (alias.endsWith('/*')) {
       // Wildcard alias: `@billing/*` → base = `@billing`

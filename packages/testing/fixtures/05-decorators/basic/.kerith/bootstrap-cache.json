@@ -1,16 +1,16 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-10-17T20:56:28.126Z",
-  "cwd": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic",
+  "savedAt": "2026-11-09T17:23:49.807Z",
+  "cwd": "C:\\Users\\work\\Documents\\kerith\\packages\\testing\\fixtures\\05-decorators\\basic",
   "configHash": "ac112f50",
   "data": {
     "domains": [],
     "modules": [
       {
         "name": "health",
-        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health",
-        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health/index.ts",
+        "dirPath": "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health",
+        "indexPath": "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health/index.ts",
         "imports": [],
         "exports": [],
         "shared": [],
@@ -20,37 +20,17 @@
         },
         "id": "mod_64bd7347",
         "files": [
-          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health/health.routes.ts"
+          "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/health/health.routes.ts"
         ],
         "identifiers": [],
         "aliases": [],
         "cachedSize": 243,
-        "cachedMtime": 1789854322934.0432
-      },
-      {
-        "name": "legacy",
-        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy",
-        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy/index.ts",
-        "imports": [],
-        "exports": [],
-        "shared": [],
-        "options": {
-          "imports": [],
-          "exports": []
-        },
-        "id": "mod_f8221947",
-        "files": [
-          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy/legacy.routes.ts"
-        ],
-        "identifiers": [],
-        "aliases": [],
-        "cachedSize": 219,
-        "cachedMtime": 1789854322934.2964
+        "cachedMtime": 1792428989601.8425
       },
       {
         "name": "home",
-        "dirPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home",
-        "indexPath": "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/index.ts",
+        "dirPath": "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home",
+        "indexPath": "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/index.ts",
         "imports": [],
         "exports": [],
         "shared": [],
@@ -60,12 +40,32 @@
         },
         "id": "mod_806125e6",
         "files": [
-          "/home/kevin/Projects/KerithJS/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/home.controller.ts"
+          "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/home/home.controller.ts"
         ],
         "identifiers": [],
         "aliases": [],
         "cachedSize": 394,
-        "cachedMtime": 1789854322934.1707
+        "cachedMtime": 1792428989613.1814
+      },
+      {
+        "name": "legacy",
+        "dirPath": "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy",
+        "indexPath": "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy/index.ts",
+        "imports": [],
+        "exports": [],
+        "shared": [],
+        "options": {
+          "imports": [],
+          "exports": []
+        },
+        "id": "mod_f8221947",
+        "files": [
+          "C:/Users/work/Documents/kerith/packages/testing/fixtures/05-decorators/basic/src/modules/legacy/legacy.routes.ts"
+        ],
+        "identifiers": [],
+        "aliases": [],
+        "cachedSize": 219,
+        "cachedMtime": 1792428989619.7756
       }
     ],
     "submodules": [],

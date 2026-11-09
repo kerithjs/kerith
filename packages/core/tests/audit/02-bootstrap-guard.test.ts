@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { createScratchProject, runNode } from './helpers/scratch-project.js';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const coreIndexPath = path.resolve(__dirname, '../../src/index.ts').replace(/\\/g, '/');
+const coreIndexPath = pathToFileURL(path.resolve(__dirname, '../../src/index.ts')).href;
 
 /**
  * Minimum scratch project: ESM package.json + kerith.config.ts with origin '.'
