@@ -1,14 +1,22 @@
 # Kerith — Suite Changelog
 
 All notable changes to the **Kerith suite** are documented here.
-This file covers [`@kerith/core`](./packages/core), [`@kerith/identifiers`](./packages/identifiers), [`@kerith/app`](./packages/app), and [`@kerith/eslint-plugin`](./packages/eslint-plugin).
-All packages are versioned in lockstep and published independently to npm.
+This file covers [`@kerith/core`](./packages/core), [`@kerith/identifiers`](./packages/identifiers), [`@kerith/app`](./packages/app), [`@kerith/eslint-plugin`](./packages/eslint-plugin), and [`create-kerith`](./packages/create-kerith).
+Packages are managed with Changesets and published independently to npm.
 
 For full technical details, see the individual package changelogs:
 -> [`packages/core/CHANGELOG.md`](./packages/core/CHANGELOG.md)
 -> [`packages/identifiers/CHANGELOG.md`](./packages/identifiers/CHANGELOG.md)
 -> [`packages/app/CHANGELOG.md`](./packages/app/CHANGELOG.md)
 -> [`packages/eslint-plugin/CHANGELOG.md`](./packages/eslint-plugin/CHANGELOG.md)
+
+## [Unreleased]
+
+### CI/CD & Infrastructure
+
+- **Automated Monorepo Publishing with Changesets**: Migrated the publication strategy to Changesets (`@changesets/cli`) to support independent versioning and selective package publication (`core`, `identifiers`, `eslint-plugin`, `app`, `create-kerith`).
+- **Main-only Release Pipeline**: Configured `.github/workflows/publish.yml` to trigger exclusively on `push` to `main`, generating automatic "Version Packages" pull requests when changesets exist and publishing only modified packages to npm with `--provenance`. `develop` branch remains reserved for validation and pre-release integration.
+
 
 > **Note:** v1.0.0 - v1.8.1 were developed under the `Nodulus` repository
 > prior to the KerithJS rebranding. Full history is preserved below for reference.

@@ -18,9 +18,12 @@
     "pipeline": "turbo run build",
     "pipeline:e2e": "turbo run test:e2e",
     "bench": "pnpm --filter @kerith/core bench",
-    "bench:scaling": "pnpm --filter @kerith/core bench:scaling"
+    "bench:scaling": "pnpm --filter @kerith/core bench:scaling",
+    "version-packages": "changeset version",
+    "publish-packages": "changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "@eslint/js": "10.0.1",
     "eslint": "10.2.0",
     "turbo": "^2.10.8",
