@@ -56,4 +56,40 @@ export type { StreamOptions } from './realtime/stream.js'
 export { Gateway } from './realtime/gateway.js'
 export type { GatewayOptions } from './realtime/gateway.js'
 
+// ─── Structural Store & Factory ───────────────────────────────────────────────
+export {
+  getStructuralEntries,
+  getStructuralEntriesByType,
+  getStructuralEntriesByCategory,
+  _resetStructuralStore,
+} from './structural/index.js'
+export type { StructuralEntry, BaseStructuralOptions } from './structural/index.js'
+
+// ─── Data — Structural ────────────────────────────────────────────────────────
+export {
+  Entity,
+  Aggregate,
+  ValueObject,
+  Migration,
+  Seed,
+  Fixture,
+  Snapshot,
+  View,
+  Index,
+  Query,
+} from './data/index.js'
+export type {
+  EntityOptions,
+  AggregateOptions,
+  ValueObjectOptions,
+  MigrationOptions,
+  SeedOptions,
+  FixtureOptions,
+  SnapshotOptions,
+  ViewOptions,
+  IndexOptions,
+  QueryOptions,
+} from './data/index.js'
+
+
 
