@@ -248,3 +248,4 @@ Sí. Los archivos `.changeset/*.md` son archivos planos en texto markdown. Puede
 
 ### ¿Qué secreto requiere GitHub Actions para publicar?
 Requiere `NPM_TOKEN` configurado en **Settings → Secrets and variables → Actions** del repositorio de GitHub con permisos de publicación para la organización/scope `@kerith` y el paquete `create-kerith`.
+
