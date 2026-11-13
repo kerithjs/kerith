@@ -19,6 +19,16 @@ export * from './bootstrap/createApp.js';
 export * from './aliases/getAliases.js';
 export * from './aliases/cache.js';
 export * from './aliases/resolver.js';
+export {
+  ALIAS_RUNTIME_KEY,
+  getAliasRuntime,
+  normalizeCanonicalFileUrl,
+} from './aliases/runtime.js';
+export type {
+  AliasDeclaration,
+  AliasDeclarationOptions,
+  AliasRuntime,
+} from './aliases/runtime.js';
 export * from './core/config.js';
 export * from './core/logger.js';
 export * from './core/http-logger.js';
