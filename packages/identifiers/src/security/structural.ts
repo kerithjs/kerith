@@ -44,3 +44,4 @@ export const Scope = createStructuralIdentifier<ScopeOptions>('Scope', 'security
 export const Token = createStructuralIdentifier<TokenOptions>('Token', 'security', true);
 export const Session = createStructuralIdentifier<SessionOptions>('Session', 'security', true);
 export const Audit = createStructuralIdentifier<AuditOptions>('Audit', 'security', true);
+

@@ -18,3 +18,4 @@ export interface SocketOptions extends BaseStructuralOptions {
 export const Room = createStructuralIdentifier<RoomOptions>('Room', 'realtime', true);
 export const Broadcast = createStructuralIdentifier<BroadcastOptions>('Broadcast', 'realtime', true);
 export const Socket = createStructuralIdentifier<SocketOptions>('Socket', 'realtime', true);
+

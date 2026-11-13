@@ -20,3 +20,4 @@ export interface DashboardOptions extends BaseStructuralOptions {
 export const Logger = createStructuralIdentifier<LoggerOptions>('Logger', 'observability', true);
 export const Alert = createStructuralIdentifier<AlertOptions>('Alert', 'observability', true);
 export const Dashboard = createStructuralIdentifier<DashboardOptions>('Dashboard', 'observability', true);
+

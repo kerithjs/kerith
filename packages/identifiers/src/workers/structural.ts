@@ -30,3 +30,4 @@ export const Task = createStructuralIdentifier<TaskOptions>('Task', 'workers', t
 export const Step = createStructuralIdentifier<StepOptions>('Step', 'workers', true);
 export const Scheduler = createStructuralIdentifier<SchedulerOptions>('Scheduler', 'workers', true);
 export const Runner = createStructuralIdentifier<RunnerOptions>('Runner', 'workers', true);
+

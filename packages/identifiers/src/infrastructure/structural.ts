@@ -22,3 +22,4 @@ export interface PoolOptions extends BaseStructuralOptions {
 export const Registry = createStructuralIdentifier<RegistryOptions>('Registry', 'infrastructure', true);
 export const Connection = createStructuralIdentifier<ConnectionOptions>('Connection', 'infrastructure', true);
 export const Pool = createStructuralIdentifier<PoolOptions>('Pool', 'infrastructure', true);
+

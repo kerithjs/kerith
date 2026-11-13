@@ -23,3 +23,4 @@ export const Flag = createStructuralIdentifier<FlagOptions>('Flag', 'flags', tru
 export const Experiment = createStructuralIdentifier<ExperimentOptions>('Experiment', 'flags', true);
 export const Variant = createStructuralIdentifier<VariantOptions>('Variant', 'flags', true);
 export const Rollout = createStructuralIdentifier<RolloutOptions>('Rollout', 'flags', true);
+

@@ -23,3 +23,4 @@ export const Mock = createStructuralIdentifier<MockOptions>('Mock', 'testing', f
 export const Stub = createStructuralIdentifier<StubOptions>('Stub', 'testing', false);
 export const Factory = createStructuralIdentifier<FactoryOptions>('Factory', 'testing', false);
 export const Scenario = createStructuralIdentifier<ScenarioOptions>('Scenario', 'testing', false);
+

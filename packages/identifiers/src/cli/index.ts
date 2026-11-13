@@ -42,3 +42,4 @@ export const Argument = createStructuralIdentifier<ArgumentOptions>('Argument', 
 export const Prompt = createStructuralIdentifier<PromptOptions>('Prompt', 'cli', true);
 export const Script = createStructuralIdentifier<ScriptOptions>('Script', 'cli', true);
 export const Hook = createStructuralIdentifier<HookOptions>('Hook', 'cli', true);
+

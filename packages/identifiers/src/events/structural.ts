@@ -42,3 +42,4 @@ export const Inbox = createStructuralIdentifier<InboxOptions>('Inbox', 'events',
 export const Topic = createStructuralIdentifier<TopicOptions>('Topic', 'events', true);
 export const Queue = createStructuralIdentifier<QueueOptions>('Queue', 'events', true);
 export const Channel = createStructuralIdentifier<ChannelOptions>('Channel', 'events', true);
+

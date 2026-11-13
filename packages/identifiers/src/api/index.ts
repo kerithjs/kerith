@@ -45,3 +45,4 @@ export const Mutation = createStructuralIdentifier<MutationOptions>('Mutation', 
 export const Subscription = createStructuralIdentifier<SubscriptionOptions>('Subscription', 'api', true);
 export const Procedure = createStructuralIdentifier<ProcedureOptions>('Procedure', 'api', true);
 export const Resource = createStructuralIdentifier<ResourceOptions>('Resource', 'api', true);
+
