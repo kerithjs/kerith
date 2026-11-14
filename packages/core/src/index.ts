@@ -19,6 +19,7 @@ export * from './bootstrap/createApp.js';
 export * from './aliases/getAliases.js';
 export * from './aliases/cache.js';
 export * from './aliases/resolver.js';
+export * from './aliases/virtual-hooks.js';
 export {
   ALIAS_RUNTIME_KEY,
   getAliasRuntime,

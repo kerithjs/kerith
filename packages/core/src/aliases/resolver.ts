@@ -2,6 +2,7 @@ import path from 'node:path';
 import { registerHooks } from 'node:module';
 import type { Logger } from '../types/index.js';
 import { createAliasMatcher } from './matcher.js';
+import { registerVirtualAliasHooks, isVirtualAliasHookRegistered } from './virtual-hooks.js';
 
 // Node.js Customization Hooks types (re-exported for back-compat)
 export type ResolveHookContext = {
@@ -115,6 +116,12 @@ export async function activateAliasResolver(moduleAliases: Record<string, string
       // independent of insertion order in combinedAliases.
       const resolveAlias = createAliasMatcher(combinedAliases);
       activeHookRegistration = registerHooks({ resolve: resolveAlias as any });
+
+      // If virtual alias hook was active, re-register it so it sits at the top (LIFO precedence)
+      if (isVirtualAliasHookRegistered()) {
+        registerVirtualAliasHooks();
+      }
+
       log.info(`ESM alias hook activated (${Object.keys(combinedAliases).length} alias(es))`, {
         _module: 'alias',
         aliasCount: Object.keys(combinedAliases).length,
