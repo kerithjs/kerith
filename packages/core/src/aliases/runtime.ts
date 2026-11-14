@@ -1,19 +1,11 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { KerithError } from '../core/errors.js';
+import { assertValidIdentifierName } from '../extension/index.js';
 
 export const ALIAS_RUNTIME_KEY = Symbol.for('kerith.alias-runtime');
 
-const INVALID_NAME_PATTERN = /[/\s]/;
-
-export function assertValidIdentifierName(name: string, providerLabel: string): void {
-  if (typeof name !== 'string' || name.length === 0 || INVALID_NAME_PATTERN.test(name)) {
-    throw new KerithError(
-      'INVALID_IDENTIFIER_NAME',
-      `invalid ${providerLabel} name "${name}" — must be a non-empty string with no "/" or whitespace`,
-    );
-  }
-}
+export { assertValidIdentifierName };
 
 /**
  * Normalizes any file path or file URL to a canonical file URL string.
@@ -281,3 +273,4 @@ export function getAliasRuntime(): AliasRuntime {
   }
   return globalObj[ALIAS_RUNTIME_KEY];
 }
+

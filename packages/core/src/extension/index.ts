@@ -21,7 +21,7 @@ import type {
 
 const INVALID_NAME_PATTERN = /[/\s]/;
 
-function assertValidIdentifierName(name: string, providerLabel: string): void {
+export function assertValidIdentifierName(name: string, providerLabel: string): void {
   if (typeof name !== 'string' || name.length === 0 || INVALID_NAME_PATTERN.test(name)) {
     throw new KerithError(
       'INVALID_IDENTIFIER_NAME',
