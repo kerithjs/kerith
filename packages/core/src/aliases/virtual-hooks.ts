@@ -45,21 +45,29 @@ export function createVirtualAliasHooks() {
 
         if (ALIAS_CHANNEL_PREFIXES.has(prefix)) {
           const rest = specifier.slice(slashIndex + 1);
-          // Check for subpaths: e.g. @client/db/sub -> invalid
-          if (rest.includes('/')) {
-            throw new KerithError(
-              'ALIAS_INVALID',
-              `Subpaths are not supported for channel alias "${specifier}". Alias imports must be in the form "@${prefix}/{name}".`,
-              `Received: "${specifier}"`,
-            );
-          }
+          const firstSlashInRest = rest.indexOf('/');
 
-          const key = `${prefix}/${rest}`;
-          if (runtime.table.has(key)) {
-            return {
-              shortCircuit: true,
-              url: `kerith-alias:${key}`,
-            };
+          if (firstSlashInRest !== -1) {
+            // Subpath detected, e.g. @client/db/something
+            const baseName = rest.slice(0, firstSlashInRest);
+            const baseKey = `${prefix}/${baseName}`;
+            // Only throw ALIAS_INVALID if the base alias exists in the table.
+            // If it's not a known channel alias in the table, don't block user aliases (GAP-6).
+            if (runtime.table.has(baseKey)) {
+              throw new KerithError(
+                'ALIAS_INVALID',
+                `Subpaths are not supported for channel alias "${specifier}". Alias imports must be in the form "@${prefix}/${baseName}".`,
+                `Received: "${specifier}"`,
+              );
+            }
+          } else {
+            const key = `${prefix}/${rest}`;
+            if (runtime.table.has(key)) {
+              return {
+                shortCircuit: true,
+                url: `kerith-alias:${key}`,
+              };
+            }
           }
         }
       }
@@ -126,3 +134,4 @@ export function clearVirtualAliasHooks(): void {
     virtualHookRegistration = null;
   }
 }
+

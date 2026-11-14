@@ -112,7 +112,7 @@ export async function createApp(
       // and registered their AliasProviders. We must now inject them into the ESM hook so that
       // subsequent steps (like Step 08, which imports controllers) can resolve them.
       const extensionAliases = getRegisteredAliasProviders();
-      if (extensionAliases.length > 0) {
+      if (extensionAliases.length > 0 && ctx.config?.resolveAliases !== false) {
         const pureExtensionAliases: Record<string, string> = {};
         for (const provider of extensionAliases) {
           const fullAlias = `@${provider.prefix}/${provider.name}`;

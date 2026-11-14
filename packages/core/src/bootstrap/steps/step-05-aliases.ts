@@ -15,6 +15,7 @@
 
 import path from "node:path";
 import { activateAliasResolver } from "../../aliases/resolver.js";
+import { registerVirtualAliasHooks } from "../../aliases/virtual-hooks.js";
 import { updateAliasCache } from "../../aliases/cache.js";
 import type { BootstrapContext } from "../context.js";
 
@@ -26,6 +27,7 @@ import type { BootstrapContext } from "../context.js";
 export async function runAliasActivation(ctx: BootstrapContext): Promise<void> {
   // If alias resolution is disabled in config, skip entirely.
   if (ctx.config?.resolveAliases === false) {
+    registerVirtualAliasHooks({ resolveAliases: false });
     return;
   }
 
@@ -100,5 +102,6 @@ export async function runAliasActivation(ctx: BootstrapContext): Promise<void> {
   }
 
   await activateAliasResolver(pureModuleAliases, normalizedConfigAliases, log);
+  registerVirtualAliasHooks({ resolveAliases: config.resolveAliases });
   updateAliasCache(registry.getAllAliases());
 }
