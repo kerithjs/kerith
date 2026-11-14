@@ -2,12 +2,12 @@
 // Internal helper — NOT exported from src/index.ts.
 // Each alias-channel identifier is a thin wrapper produced by this factory.
 
-import { getFileCallerInfo } from '@kerith/core';
+import { getFileCallerInfo, getAliasRuntime } from '@kerith/core';
 import { registerAliasPlugin } from '../channels/index.js';
 
 /**
  * Options accepted by alias-channel identifiers (Client, Config, Provider, Store, Adapter).
- * Stored for future use by the @kerith/app executor — not acted upon inside @kerith/identifiers.
+ * Stored for future use by the @kerith/app executor and alias runtime.
  */
 export interface AliasIdentifierOptions {
   /**
@@ -17,7 +17,7 @@ export interface AliasIdentifierOptions {
   lazy?: boolean;
   /**
    * Maximum milliseconds to wait for the factory to resolve (applies to async factories).
-   * Consumed by the @kerith/app executor, not by this package.
+   * Consumed by the @kerith/app executor and alias runtime.
    */
   timeout?: number;
   /**
@@ -25,6 +25,11 @@ export interface AliasIdentifierOptions {
    * @default true
    */
   required?: boolean;
+  /**
+   * Optional cleanup function invoked on shutdown.
+   */
+  dispose?: (instance: unknown) => void | Promise<void>;
+  [key: string]: unknown;
 }
 
 /**
@@ -44,14 +49,26 @@ export function createAliasIdentifier(
   return function (
     name: string,
     factory: () => unknown,
-    _options: AliasIdentifierOptions = {},
+    options: AliasIdentifierOptions = {},
   ): void {
     const { filePath } = getFileCallerInfo(`${publicName}()`);
+
+    // 1. Compatibility with existing @kerith/app channel pipeline
     registerAliasPlugin({
       prefix,
       name,
       filePath,
       resolve: factory,
+      options: { ...options },
+    });
+
+    // 2. Direct registration in the core AliasRuntime singleton
+    getAliasRuntime().declare({
+      prefix,
+      name,
+      filePath,
+      factory,
+      options: { ...options },
     });
   };
 }

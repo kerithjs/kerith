@@ -5,6 +5,7 @@ export interface AliasProvider {
   name: string;
   filePath: string;
   resolve: () => unknown;
+  options?: Record<string, unknown>;
 }
 
 export interface MiddlewareResolver {

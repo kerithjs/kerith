@@ -1,13 +1,18 @@
 // tests/infrastructure-alias.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { _resetAllChannels, getAliasPlugins } from '../src/channels/index.js'
+import { getAliasRuntime } from '@kerith/core'
 
 // ─── Mock @kerith/core ─────────────────────────────────────────────────────────
 // getFileCallerInfo() uses a real stack trace — in tests the call depth differs.
 // We mock it to return a predictable filePath so our assertions stay stable.
-vi.mock('@kerith/core', () => ({
-  getFileCallerInfo: (_name: string) => ({ filePath: '/mock/test-file.ts' }),
-}))
+vi.mock('@kerith/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@kerith/core')>()
+  return {
+    ...actual,
+    getFileCallerInfo: (_name: string) => ({ filePath: '/mock/test-file.ts' }),
+  }
+})
 
 // Identifiers must be imported AFTER the mock is in place.
 const { Client } = await import('../src/infrastructure/client.js')
@@ -18,6 +23,7 @@ const { Adapter } = await import('../src/infrastructure/adapter.js')
 
 beforeEach(() => {
   _resetAllChannels()
+  getAliasRuntime()._reset()
 })
 
 // ─── Client ───────────────────────────────────────────────────────────────────
