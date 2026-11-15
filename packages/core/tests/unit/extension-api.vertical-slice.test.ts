@@ -18,6 +18,8 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { createApp } from '../../src/bootstrap/createApp.js';
+import { getAliases } from '../../src/aliases/getAliases.js';
+import { isVirtualAliasHookRegistered } from '../../src/aliases/virtual-hooks.js';
 import {
   registerAliasProvider,
   registerMiddlewareResolver,
@@ -89,6 +91,7 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
 
     registerScheduleProvider({
       name: 'fake-after-bootstrap',
+      filePath: '/fake/path/to/after-bootstrap.ts',
       timing: 'after-bootstrap',
       execute: async () => {
         executeOrder.push('schedule-executed');
@@ -113,6 +116,7 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
 
     registerScheduleProvider({
       name: 'fake-on-listen',
+      filePath: '/fake/path/to/on-listen.ts',
       timing: 'on-listen',
       execute: async () => {
         executeOrder.push('on-listen-executed');
@@ -143,6 +147,7 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
 
     registerScheduleProvider({
       name: 'fake-on-shutdown',
+      filePath: '/fake/path/to/on-shutdown.ts',
       timing: 'on-shutdown',
       execute: async () => {
         executeOrder.push('on-shutdown-executed');
@@ -175,6 +180,7 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
 
     registerBindingProvider({
       name: 'fake-worker',
+      filePath: '/fake/path/to/worker.ts',
       kind: 'worker',
       bind: async () => {
         bindOrder.push('bind-executed');
@@ -283,7 +289,7 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
 
   // ─── Canal: AliasProvider ────────────────────────────────────────────────
 
-  it('[Alias] AliasProvider registra el alias en el Kerith registry despues del bootstrap', async () => {
+  it('[Alias] AliasProvider registra el alias virtual en el Kerith registry despues del bootstrap', async () => {
     const fakeFilePath = '/fake/path/to/db.client.ts';
 
     registerAliasProvider({
@@ -297,11 +303,12 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
       const kerith = await createApp(app as any);
 
       const resolved = kerith.registry.resolveAlias('@client/db');
-      expect(resolved).toBe(fakeFilePath);
+      expect(resolved).toBe('kerith-alias:client/db');
+      expect(kerith.registry.isVirtualAlias('@client/db')).toBe(true);
     });
   });
 
-  it('[Alias] AliasProvider aparece en getAllAliases() con el prefijo correcto', async () => {
+  it('[Alias] AliasProvider aparece en getAllAliases() con target virtual y se excluye de getAliases()', async () => {
     const fakeFilePath = '/fake/path/to/redis.client.ts';
 
     registerAliasProvider({
@@ -315,7 +322,33 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
       const kerith = await createApp(app as any);
 
       const allAliases = kerith.registry.getAllAliases();
-      expect(allAliases['@client/redis']).toBe(fakeFilePath);
+      expect(allAliases['@client/redis']).toBe('kerith-alias:client/redis');
+
+      // getAliases() must exclude virtual aliases
+      const publicAliases = await getAliases();
+      expect(publicAliases).not.toHaveProperty('@client/redis');
+    });
+  });
+
+  it('[Alias] resolveAliases: false no registra alias virtuales ni activa hooks en createApp()', async () => {
+    registerAliasProvider({
+      prefix: 'client',
+      name: 'metrics',
+      filePath: '/fake/path/to/metrics.client.ts',
+      resolve: () => ({}),
+    });
+
+    const structureWithResolveFalse = {
+      ...baseAppStructure,
+      'kerith.config.ts': 'export default { resolveAliases: false };',
+    };
+
+    await runInTmpApp(structureWithResolveFalse, async (_tmpDir, app) => {
+      const kerith = await createApp(app as any);
+
+      // Virtual alias is not registered when resolveAliases is false
+      expect(kerith.registry.resolveAlias('@client/metrics')).toBeUndefined();
+      expect(isVirtualAliasHookRegistered()).toBe(false);
     });
   });
 
@@ -324,6 +357,7 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
   it('[Store] _resetExtensionStore() garantiza aislamiento entre tests', () => {
     registerBindingProvider({
       name: 'leftover-provider',
+      filePath: '/fake/path/to/leftover.ts',
       kind: 'worker',
       bind: async () => {},
     });
@@ -333,6 +367,7 @@ describe('Extension API — Vertical Slice (Fase 3)', () => {
     expect(() => {
       registerBindingProvider({
         name: 'leftover-provider',
+        filePath: '/fake/path/to/leftover.ts',
         kind: 'worker',
         bind: async () => {},
       });

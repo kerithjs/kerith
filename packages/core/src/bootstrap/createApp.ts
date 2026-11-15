@@ -117,7 +117,7 @@ export async function createApp(
       // marked as virtual so getAliases() excludes them from bundler output, and register
       // them into getAliasRuntime() if not already declared.
       const extensionAliases = getRegisteredAliasProviders();
-      if (extensionAliases.length > 0) {
+      if (extensionAliases.length > 0 && ctx.config?.resolveAliases !== false) {
         const runtime = getAliasRuntime();
         for (const provider of extensionAliases) {
           const fullAlias = `@${provider.prefix}/${provider.name}`;

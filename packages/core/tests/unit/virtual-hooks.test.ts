@@ -6,7 +6,7 @@ import {
   isVirtualAliasHookRegistered,
 } from '../../src/aliases/virtual-hooks.js';
 import { getAliasRuntime } from '../../src/aliases/runtime.js';
-import { activateAliasResolver, clearAliasResolverOptions } from '../../src/aliases/resolver.js';
+import { clearAliasResolverOptions } from '../../src/aliases/resolver.js';
 import { KerithError } from '../../src/core/errors.js';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
@@ -62,6 +62,50 @@ describe('virtual-hooks (core/src/aliases/virtual-hooks.ts)', () => {
     const res2 = resolve('@client/not-in-table', {}, nextResolve);
     expect(nextPassed).toBe('@client/not-in-table');
     expect(res2.url).toBe('resolved-@client/not-in-table');
+  });
+
+  it('converts ERR_MODULE_NOT_FOUND into ALIAS_NOT_FOUND for unknown channel aliases', () => {
+    runtime.registerTableEntry('client/db', '/path/to/db.ts');
+    const { resolve } = createVirtualAliasHooks();
+
+    const nextResolve = () => {
+      const err: any = new Error("Cannot find package '@client/not-in-table'");
+      err.code = 'ERR_MODULE_NOT_FOUND';
+      throw err;
+    };
+
+    let caught: any;
+    try {
+      resolve('@client/not-in-table', {}, nextResolve);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught).toBeInstanceOf(KerithError);
+    expect(caught.code).toBe('ALIAS_NOT_FOUND');
+    expect(caught.message).toContain('Alias "@client/not-in-table" not found in static alias table.');
+    expect(caught.message).toContain('Did you mean: @client/db?');
+  });
+
+  it('preserves ERR_MODULE_NOT_FOUND for non-channel specifiers', () => {
+    const { resolve } = createVirtualAliasHooks();
+
+    const nextResolve = () => {
+      const err: any = new Error("Cannot find package '@other/unknown'");
+      err.code = 'ERR_MODULE_NOT_FOUND';
+      throw err;
+    };
+
+    let caught: any;
+    try {
+      resolve('@other/unknown', {}, nextResolve);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught).not.toBeInstanceOf(KerithError);
+    expect(caught.code).toBe('ERR_MODULE_NOT_FOUND');
   });
 
   it('throws ALIAS_INVALID when subpath is used on an alias in the table (e.g. @client/db/sub)', () => {

@@ -1,6 +1,6 @@
 import { registerHooks } from 'node:module';
 import { KerithError } from '../core/errors.js';
-import { getAliasRuntime } from './runtime.js';
+import { getAliasRuntime, createAliasNotFoundError } from './runtime.js';
 
 export const ALIAS_CHANNEL_PREFIXES = new Set([
   'config',
@@ -38,6 +38,8 @@ export function createVirtualAliasHooks() {
     context: any,
     nextResolve: (s: string, c?: any) => any,
   ) {
+    let channelKeyToCatch: string | null = null;
+
     if (specifier.startsWith('@')) {
       const slashIndex = specifier.indexOf('/');
       if (slashIndex > 1) {
@@ -68,12 +70,23 @@ export function createVirtualAliasHooks() {
                 url: `kerith-alias:${key}`,
               };
             }
+            channelKeyToCatch = key;
           }
         }
       }
     }
 
-    return nextResolve(specifier, context);
+    try {
+      return nextResolve(specifier, context);
+    } catch (err: any) {
+      if (
+        channelKeyToCatch &&
+        (err?.code === 'ERR_MODULE_NOT_FOUND' || err?.code === 'MODULE_NOT_FOUND')
+      ) {
+        throw createAliasNotFoundError(channelKeyToCatch, Array.from(runtime.table.keys()));
+      }
+      throw err;
+    }
   }
 
   function load(

@@ -62,6 +62,22 @@ function findSimilarKeys(targetKey: string, availableKeys: string[]): string[] {
     .slice(0, 3);
 }
 
+/**
+ * Builds the canonical `ALIAS_NOT_FOUND` error, including "Did you mean"
+ * suggestions. Shared by the runtime resolver and the ESM virtual-alias hook
+ * so both entry points report identical errors.
+ */
+export function createAliasNotFoundError(targetKey: string, availableKeys: string[]): KerithError {
+  const similar = findSimilarKeys(targetKey, availableKeys);
+  const suggestionMsg =
+    similar.length > 0 ? ` Did you mean: ${similar.map((s) => `@${s}`).join(', ')}?` : '';
+  return new KerithError(
+    'ALIAS_NOT_FOUND',
+    `Alias "@${targetKey}" not found in static alias table.${suggestionMsg}`,
+    `Available aliases: ${availableKeys.map((a) => `@${a}`).join(', ')}`,
+  );
+}
+
 class DefaultAliasRuntime implements AliasRuntime {
   public table = new Map<string, string>();
   public declarations = new Map<string, AliasDeclaration>();
@@ -152,14 +168,7 @@ class DefaultAliasRuntime implements AliasRuntime {
     if (!this.declarations.has(key)) {
       const declaringFile = this.table.get(key);
       if (!declaringFile) {
-        const available = Array.from(this.table.keys());
-        const similar = findSimilarKeys(key, available);
-        const suggestionMsg = similar.length > 0 ? ` Did you mean: ${similar.map((s) => `@${s}`).join(', ')}?` : '';
-        throw new KerithError(
-          'ALIAS_NOT_FOUND',
-          `Alias "@${key}" not found in static alias table.${suggestionMsg}`,
-          `Available aliases: ${available.map((a) => `@${a}`).join(', ')}`,
-        );
+        throw createAliasNotFoundError(key, Array.from(this.table.keys()));
       }
 
       try {
