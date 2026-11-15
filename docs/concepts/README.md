@@ -198,10 +198,16 @@ interface AliasProvider {
   name: string;
   filePath: string;
   resolve: () => unknown;
+  options?: {
+    lazy?: boolean;      // default false
+    timeout?: number;    // default 30000 ms; 0 = no timeout
+    required?: boolean;  // default true
+    dispose?: (instance: unknown) => void | Promise<void>;
+  };
 }
 ```
 
-> `resolve()` is reserved for a future dependency injection container — it is not invoked anywhere in `@kerith/core` or `@kerith/app` in v2.0.0-alpha.1. Current alias resolution works via `filePath` + the ESM alias hook, without calling `resolve()`.
+> `resolve()` is the alias factory. During `createApp()`, Step 06b resolves every declared alias with `lazy: false` (the default) in parallel and aborts bootstrap if a `required` alias fails. With `lazy: true`, the bootstrap skips it: it is resolved on first import — including a top-level import during module evaluation. The ESM virtual-alias hook returns the factory value as the module's default export, so `import config from '@config/app'` yields the resolved instance.
 
 #### Middleware
 

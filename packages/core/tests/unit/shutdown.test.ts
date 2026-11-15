@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { registerShutdown } from '../../src/core/shutdown.js';
+import { getAliasRuntime } from '../../src/aliases/runtime.js';
 import type { Server } from 'node:http';
 import type { Logger } from '../../src/types/index.js';
 
@@ -74,6 +75,25 @@ describe('Shutdown Manager', () => {
 
     expect(hookSpy).toHaveBeenCalled();
     expect(mockLogger.debug).toHaveBeenCalledWith('onShutdown hook completed.', expect.any(Object));
+    expect(exitSpy).toHaveBeenCalledWith(0);
+  });
+
+  it('should call getAliasRuntime().disposeAll() during shutdown', async () => {
+    const runtime = getAliasRuntime();
+    const disposeSpy = vi.fn();
+    runtime.declare({
+      prefix: 'client',
+      name: 'shutdown-db',
+      filePath: '/db.ts',
+      factory: () => ({ name: 'db' }),
+      options: { dispose: disposeSpy },
+    });
+    await runtime.get('client/shutdown-db');
+
+    const shutdown = registerShutdown({ logger: mockLogger });
+    await shutdown();
+
+    expect(disposeSpy).toHaveBeenCalledOnce();
     expect(exitSpy).toHaveBeenCalledWith(0);
   });
 

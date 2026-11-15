@@ -40,6 +40,8 @@ export interface AliasDeclarationOptions {
   [key: string]: unknown;
 }
 
+export type AliasIdentifierOptions = AliasDeclarationOptions;
+
 export interface AliasDeclaration {
   prefix: string;
   name: string;
@@ -59,8 +61,8 @@ export interface AliasRuntime {
   get(key: string): Promise<unknown>;
   registerTableEntry(key: string, filePath: string): void;
   setTable(entries: Record<string, string> | Map<string, string>): void;
-  /** Injects the bootstrap logger so `required: false` warnings use `log.warn`. */
-  setLogger(logger: Pick<Logger, 'warn'> | undefined): void;
+  /** Injects the bootstrap logger so `required: false` warnings and disposal errors use the logger. */
+  setLogger(logger: Pick<Logger, 'warn' | 'error'> | undefined): void;
   disposeAll(): Promise<void>;
   _reset(): void;
 }
@@ -103,10 +105,10 @@ class DefaultAliasRuntime implements AliasRuntime {
   private resolvingKeys = new Set<string>();
   /** Keys for which a `required: false` warning has already been emitted. */
   private warnedKeys = new Set<string>();
-  /** Bootstrap logger — used for `required: false` warnings when available. */
-  private logger?: Pick<Logger, 'warn'>;
+  /** Bootstrap logger — used for `required: false` warnings and disposal errors when available. */
+  private logger?: Pick<Logger, 'warn' | 'error'>;
 
-  public setLogger(logger: Pick<Logger, 'warn'> | undefined): void {
+  public setLogger(logger: Pick<Logger, 'warn' | 'error'> | undefined): void {
     this.logger = logger;
   }
 
@@ -325,7 +327,6 @@ class DefaultAliasRuntime implements AliasRuntime {
           }
         }
         this.instances.set(key, undefined);
-        this.resolutionOrder.push(key);
         return undefined;
       }
 
@@ -353,10 +354,29 @@ class DefaultAliasRuntime implements AliasRuntime {
       const instance = this.instances.get(key);
 
       if (decl?.options.dispose && typeof decl.options.dispose === 'function') {
+        const timeoutMs = 5000;
+        let timer: NodeJS.Timeout | undefined;
         try {
-          await decl.options.dispose(instance);
-        } catch (err: any) {
-          console.error(`[Kerith] Error disposing alias "@${key}":`, err);
+          const disposePromise = Promise.resolve().then(() => decl.options.dispose!(instance));
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timer = setTimeout(() => {
+              reject(new Error(`Dispose timed out after ${timeoutMs}ms for alias "@${key}".`));
+            }, timeoutMs);
+          });
+
+          await Promise.race([
+            disposePromise.finally(() => {
+              if (timer) clearTimeout(timer);
+            }),
+            timeoutPromise,
+          ]);
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (this.logger) {
+            this.logger.error(`Error disposing alias "@${key}": ${message}`, { _module: 'shutdown' });
+          } else {
+            console.error(`[Kerith] Error disposing alias "@${key}": ${message}`);
+          }
         }
       }
     }
@@ -374,6 +394,14 @@ class DefaultAliasRuntime implements AliasRuntime {
     this.warnedKeys.clear();
     this.logger = undefined;
   }
+}
+
+/**
+ * Resets the global AliasRuntime singleton for test isolation.
+ * Análogo a `_resetExtensionStore()`.
+ */
+export function _resetAliasRuntime(): void {
+  getAliasRuntime()._reset();
 }
 
 export function getAliasRuntime(): AliasRuntime {

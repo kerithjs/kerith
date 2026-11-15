@@ -23,11 +23,13 @@ export * from './aliases/virtual-hooks.js';
 export {
   ALIAS_RUNTIME_KEY,
   getAliasRuntime,
+  _resetAliasRuntime,
   normalizeCanonicalFileUrl,
 } from './aliases/runtime.js';
 export type {
   AliasDeclaration,
   AliasDeclarationOptions,
+  AliasIdentifierOptions,
   AliasRuntime,
 } from './aliases/runtime.js';
 export * from './core/config.js';

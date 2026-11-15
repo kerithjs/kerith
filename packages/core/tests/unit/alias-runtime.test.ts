@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   getAliasRuntime,
+  _resetAliasRuntime,
   ALIAS_RUNTIME_KEY,
   normalizeCanonicalFileUrl,
 } from '../../src/aliases/runtime.js';
@@ -304,6 +305,185 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
     expect(disposed).toEqual(['client/db', 'config/app']);
     expect(runtime.instances.size).toBe(0);
     expect(runtime.declarations.size).toBe(0);
+  });
+
+  it('disposeAll() does not call dispose for aliases that were not resolved', async () => {
+    const runtime = getAliasRuntime();
+    const disposed: string[] = [];
+
+    // Resolved alias
+    runtime.declare({
+      prefix: 'client',
+      name: 'resolved',
+      filePath: '/resolved.ts',
+      factory: () => ({ name: 'resolved' }),
+      options: {
+        dispose: () => {
+          disposed.push('client/resolved');
+        },
+      },
+    });
+
+    // Lazy alias — never resolved
+    runtime.declare({
+      prefix: 'client',
+      name: 'unresolved-lazy',
+      filePath: '/lazy.ts',
+      factory: () => ({ name: 'lazy' }),
+      options: {
+        lazy: true,
+        dispose: () => {
+          disposed.push('client/unresolved-lazy');
+        },
+      },
+    });
+
+    // Non-required alias that throws — never resolved
+    runtime.declare({
+      prefix: 'client',
+      name: 'unresolved-failed',
+      filePath: '/failed.ts',
+      factory: () => {
+        throw new Error('failed');
+      },
+      options: {
+        required: false,
+        dispose: () => {
+          disposed.push('client/unresolved-failed');
+        },
+      },
+    });
+
+    await runtime.get('client/resolved');
+    await runtime.get('client/unresolved-failed'); // returns undefined, does not resolve instance
+
+    await runtime.disposeAll();
+
+    expect(disposed).toEqual(['client/resolved']);
+  });
+
+  it('disposeAll() catches errors and continues disposing remaining aliases', async () => {
+    const runtime = getAliasRuntime();
+    const disposed: string[] = [];
+
+    runtime.declare({
+      prefix: 'client',
+      name: 'first',
+      filePath: '/first.ts',
+      factory: () => ({ name: 'first' }),
+      options: {
+        dispose: () => {
+          disposed.push('client/first');
+        },
+      },
+    });
+
+    runtime.declare({
+      prefix: 'client',
+      name: 'failing',
+      filePath: '/failing.ts',
+      factory: () => ({ name: 'failing' }),
+      options: {
+        dispose: () => {
+          disposed.push('client/failing-attempted');
+          throw new Error('Failed to close client');
+        },
+      },
+    });
+
+    runtime.declare({
+      prefix: 'client',
+      name: 'last',
+      filePath: '/last.ts',
+      factory: () => ({ name: 'last' }),
+      options: {
+        dispose: () => {
+          disposed.push('client/last');
+        },
+      },
+    });
+
+    await runtime.get('client/first');
+    await runtime.get('client/failing');
+    await runtime.get('client/last');
+
+    // Suppress console.error during test
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await runtime.disposeAll();
+
+    // LIFO order: last, then failing (throws but caught), then first
+    expect(disposed).toEqual(['client/last', 'client/failing-attempted', 'client/first']);
+    expect(errSpy).toHaveBeenCalledOnce();
+    expect(errSpy.mock.calls[0][0]).toMatch(/Failed to close client/);
+    errSpy.mockRestore();
+  });
+
+  it('disposeAll() enforces 5000ms timeout per alias and continues with next', async () => {
+    vi.useFakeTimers();
+    const runtime = getAliasRuntime();
+    const disposed: string[] = [];
+
+    runtime.declare({
+      prefix: 'client',
+      name: 'fast',
+      filePath: '/fast.ts',
+      factory: () => ({ name: 'fast' }),
+      options: {
+        dispose: () => {
+          disposed.push('client/fast');
+        },
+      },
+    });
+
+    runtime.declare({
+      prefix: 'client',
+      name: 'slow',
+      filePath: '/slow.ts',
+      factory: () => ({ name: 'slow' }),
+      options: {
+        dispose: () => new Promise(() => {}), // never settles
+      },
+    });
+
+    await runtime.get('client/fast');
+    await runtime.get('client/slow');
+
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const disposePromise = runtime.disposeAll();
+
+    // Advance 5000ms for the slow alias timeout
+    await vi.advanceTimersByTimeAsync(5000);
+    await disposePromise;
+
+    // Fast was disposed after slow timed out (LIFO)
+    expect(disposed).toEqual(['client/fast']);
+    // Check call count and error message
+    expect(errSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
+    const timeoutCall = errSpy.mock.calls.find((call) =>
+      typeof call[0] === 'string' && call[0].includes('Dispose timed out after 5000ms')
+    );
+    expect(timeoutCall).toBeDefined();
+
+    errSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it('_resetAliasRuntime() clears the runtime singleton', () => {
+    const runtime = getAliasRuntime();
+    runtime.declare({
+      prefix: 'client',
+      name: 'db',
+      filePath: '/db.ts',
+      factory: () => ({}),
+    });
+
+    expect(runtime.declarations.size).toBe(1);
+    _resetAliasRuntime();
+    expect(runtime.declarations.size).toBe(0);
+    expect(runtime.table.size).toBe(0);
+    expect(runtime.instances.size).toBe(0);
   });
 
   // ─── ALIAS_NOT_FOUND ──────────────────────────────────────────────────────

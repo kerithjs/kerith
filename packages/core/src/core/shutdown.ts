@@ -1,6 +1,7 @@
 import type { Server } from 'node:http';
 import type { Logger } from '../types/index.js';
 import { getRegisteredScheduleProviders } from '../extension/store.js';
+import { getAliasRuntime } from '../aliases/runtime.js';
 
 // ─── Shutdown Manager ─────────────────────────────────────────────────────────
 //
@@ -79,6 +80,14 @@ export function registerShutdown(options: ShutdownManagerOptions): import('../ty
         const message = err instanceof Error ? err.message : String(err);
         logger.error(`onShutdown hook threw an error: ${message}`, { _module: 'shutdown' });
       }
+    }
+
+    // ─── Step 3: Alias runtime disposal (LIFO order with 5s timeout) ──────────
+    try {
+      await getAliasRuntime().disposeAll();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`Error during alias disposal: ${message}`, { _module: 'shutdown' });
     }
 
     logger.info('Process terminated cleanly.', { _module: 'shutdown' });
