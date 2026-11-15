@@ -58,6 +58,26 @@ describe('Client()', () => {
   })
 })
 
+// ─── 6.1 — Declared options are validated by the core runtime ────────────────
+describe('alias identifier options — validation (6.1)', () => {
+  it('throws ALIAS_INVALID when timeout is negative', () => {
+    expect(() => Client('redis', () => ({}), { timeout: -1 })).toThrowError(
+      /ALIAS_INVALID|non-negative integer/,
+    )
+  })
+
+  it('throws ALIAS_INVALID when required is not a boolean', () => {
+    expect(() => Client('redis', () => ({}), { required: 'yes' as any })).toThrowError(
+      /ALIAS_INVALID|must be a boolean/,
+    )
+  })
+
+  it('does not register a plugin when the declaration is rejected', () => {
+    expect(() => Client('redis', () => ({}), { timeout: -1 })).toThrow()
+    expect(getAliasPlugins()).toHaveLength(0)
+  })
+})
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 describe('Config()', () => {
   it('registers an alias plugin with prefix "config"', () => {

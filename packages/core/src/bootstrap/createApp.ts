@@ -25,6 +25,7 @@ import { runNitsReconciliation } from "./steps/step-04-nits.js";
 import { runAliasActivation } from "./steps/step-05-aliases.js";
 import { runVirtualAliases } from "./steps/step-05b-virtual-aliases.js";
 import { runDynamicImports } from "./steps/step-06-imports.js";
+import { runEagerAliases } from "./steps/step-06b-eager-aliases.js";
 import { runValidations } from "./steps/step-07-validations.js";
 import { runControllersAndMount } from "./steps/step-08-controllers.js";
 import { runCacheWrite } from "./steps/step-09-cache-write.js";
@@ -56,6 +57,10 @@ export async function createApp(
 
       const { config, log, preloaderActive, preloadConfig } = ctx;
       if (!config || !log) throw new Error("Config load failed");
+
+      // Inject the bootstrap logger into the alias runtime so non-required
+      // alias failures are reported through `log.warn` instead of console.
+      getAliasRuntime().setLogger(log);
 
       // Step 02 — Cache Decision & Scanner
       await runCacheAndScan(ctx);
@@ -89,28 +94,6 @@ export async function createApp(
         await options._onDynamicImportsComplete();
       }
 
-      // Execute bindings sequentially to guarantee predictability
-      const bindings = getRegisteredBindingProviders();
-      for (const provider of bindings) {
-        const bindStart = performance.now();
-        try {
-          await provider.bind();
-          if (process.env.KERITH_PROFILE === "true") {
-            log.debug(
-              `[perf] binding ${provider.name} took ${Math.round(performance.now() - bindStart)}ms`,
-              { _module: "boot" },
-            );
-          }
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : String(err);
-          throw new KerithError(
-            'BINDING_EXECUTION_FAILED',
-            `Binding provider "${provider.name}" failed during bind() execution`,
-            message
-          );
-        }
-      }
-
       // --- Extension API: Alias Providers ---
       // At this point, modules have been evaluated and alias providers have been registered.
       // Register them into the registry with destination `kerith-alias:<prefix>/<name>`
@@ -135,6 +118,32 @@ export async function createApp(
           }
         }
         updateAliasCache(registry.getAllAliases());
+      }
+
+      // Step 06b — Eager alias resolution (lazy: false, the default)
+      // Runs after dynamic imports and provider mapping so all declarations are present.
+      await runEagerAliases(ctx);
+
+      // Execute bindings sequentially to guarantee predictability
+      const bindings = getRegisteredBindingProviders();
+      for (const provider of bindings) {
+        const bindStart = performance.now();
+        try {
+          await provider.bind();
+          if (process.env.KERITH_PROFILE === "true") {
+            log.debug(
+              `[perf] binding ${provider.name} took ${Math.round(performance.now() - bindStart)}ms`,
+              { _module: "boot" },
+            );
+          }
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          throw new KerithError(
+            'BINDING_EXECUTION_FAILED',
+            `Binding provider "${provider.name}" failed during bind() execution`,
+            message
+          );
+        }
       }
 
       // Step 07 — Validate dependencies (strict mode only)

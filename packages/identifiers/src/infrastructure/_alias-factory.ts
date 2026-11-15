@@ -11,17 +11,21 @@ import { registerAliasPlugin } from '../channels/index.js';
  */
 export interface AliasIdentifierOptions {
   /**
-   * If true, the factory is not called at register time — it is called lazily on first access.
+   * Accepted and validated by the alias runtime. Eager bootstrap resolution is
+   * not implemented yet: aliases currently resolve on first import/access, so
+   * `lazy: true` and `lazy: false` behave the same at runtime.
    * @default false
    */
   lazy?: boolean;
   /**
    * Maximum milliseconds to wait for the factory to resolve (applies to async factories).
-   * Consumed by the @kerith/app executor and alias runtime.
+   * `0` disables the timeout. Consumed by the alias runtime.
+   * @default 30000
    */
   timeout?: number;
   /**
    * If true, bootstrap fails when this alias cannot be resolved.
+   * When false, resolution failures are logged once and `undefined` is memoized.
    * @default true
    */
   required?: boolean;
@@ -53,21 +57,24 @@ export function createAliasIdentifier(
   ): void {
     const { filePath } = getFileCallerInfo(`${publicName}()`);
 
-    // 1. Compatibility with existing @kerith/app channel pipeline
-    registerAliasPlugin({
-      prefix,
-      name,
-      filePath,
-      resolve: factory,
-      options: { ...options },
-    });
-
-    // 2. Direct registration in the core AliasRuntime singleton
+    // 1. Direct registration in the core AliasRuntime singleton. This is the
+    //    validating step: invalid options throw `ALIAS_INVALID` here. Do it
+    //    before touching the compatibility plugin store so a rejected
+    //    declaration doesn't leave a half-registered plugin behind.
     getAliasRuntime().declare({
       prefix,
       name,
       filePath,
       factory,
+      options: { ...options },
+    });
+
+    // 2. Compatibility with existing @kerith/app channel pipeline
+    registerAliasPlugin({
+      prefix,
+      name,
+      filePath,
+      resolve: factory,
       options: { ...options },
     });
   };

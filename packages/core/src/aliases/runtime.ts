@@ -2,6 +2,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { KerithError } from '../core/errors.js';
 import { assertValidIdentifierName } from '../extension/index.js';
+import type { Logger } from '../types/index.js';
 
 export const ALIAS_RUNTIME_KEY = Symbol.for('kerith.alias-runtime');
 
@@ -26,7 +27,7 @@ export function normalizeCanonicalFileUrl(rawUrlOrPath: string): string {
  *
  * | Option    | Type       | Default   | Description                                                     |
  * |-----------|------------|-----------|-----------------------------------------------------------------|
- * | `lazy`    | boolean    | `false`   | Skip eager resolution at bootstrap; resolve on first access.    |
+ * | `lazy`    | boolean    | `false`   | Accepted + validated. Eager bootstrap resolution is not implemented yet; aliases resolve on first access. |
  * | `timeout` | integer≥0  | `30000`   | ms before `ALIAS_FACTORY_TIMEOUT`. `0` = no timeout.           |
  * | `required`| boolean    | `true`    | When `false`, errors are downgraded to a warn and `undefined` is memoized. |
  * | `dispose` | function   | —         | Called with the instance during `disposeAll()`.                 |
@@ -58,6 +59,8 @@ export interface AliasRuntime {
   get(key: string): Promise<unknown>;
   registerTableEntry(key: string, filePath: string): void;
   setTable(entries: Record<string, string> | Map<string, string>): void;
+  /** Injects the bootstrap logger so `required: false` warnings use `log.warn`. */
+  setLogger(logger: Pick<Logger, 'warn'> | undefined): void;
   disposeAll(): Promise<void>;
   _reset(): void;
 }
@@ -100,6 +103,12 @@ class DefaultAliasRuntime implements AliasRuntime {
   private resolvingKeys = new Set<string>();
   /** Keys for which a `required: false` warning has already been emitted. */
   private warnedKeys = new Set<string>();
+  /** Bootstrap logger — used for `required: false` warnings when available. */
+  private logger?: Pick<Logger, 'warn'>;
+
+  public setLogger(logger: Pick<Logger, 'warn'> | undefined): void {
+    this.logger = logger;
+  }
 
   public registerTableEntry(key: string, filePath: string): void {
     const canonical = normalizeCanonicalFileUrl(filePath);
@@ -264,7 +273,9 @@ class DefaultAliasRuntime implements AliasRuntime {
           timer = setTimeout(() => {
             // 6.2 Cycle hint: if other keys are in-flight while this one times out,
             // it is likely caused by a cycle between aliases via dynamic imports.
-            const inFlight = Array.from(this.promises.keys()).filter((k) => k !== key);
+            // Use `resolvingKeys` (not `promises`): the latter keeps settled
+            // promises cached and would produce false-positive cycle hints.
+            const inFlight = Array.from(this.resolvingKeys).filter((k) => k !== key);
             const cycleHint =
               inFlight.length > 0
                 ? ` Possible cycle between aliases? In-flight keys: ${inFlight.map((k) => `@${k}`).join(', ')}.`
@@ -304,10 +315,14 @@ class DefaultAliasRuntime implements AliasRuntime {
       if (decl.options.required === false) {
         if (!this.warnedKeys.has(key)) {
           this.warnedKeys.add(key);
-          console.warn(
-            `[Kerith] Non-required alias "@${key}" failed — returning undefined. ` +
-              `Error: ${err?.message ?? String(err)}`,
-          );
+          const message =
+            `Non-required alias "@${key}" failed — returning undefined. ` +
+            `Error: ${err?.message ?? String(err)}`;
+          if (this.logger) {
+            this.logger.warn(message, { _module: 'alias' });
+          } else {
+            console.warn(`[Kerith] ${message}`);
+          }
         }
         this.instances.set(key, undefined);
         this.resolutionOrder.push(key);
@@ -357,6 +372,7 @@ class DefaultAliasRuntime implements AliasRuntime {
     this.resolutionOrder = [];
     this.resolvingKeys.clear();
     this.warnedKeys.clear();
+    this.logger = undefined;
   }
 }
 

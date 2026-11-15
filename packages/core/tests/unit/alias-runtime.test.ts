@@ -471,6 +471,28 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
       warnSpy.mockRestore();
     });
 
+    it('uses the injected logger.warn instead of console.warn when available', async () => {
+      const runtime = getAliasRuntime();
+      const warn = vi.fn();
+      runtime.setLogger({ warn });
+
+      runtime.declare({
+        prefix: 'client',
+        name: 'logger-optional',
+        filePath: '/logger-opt.ts',
+        factory: () => {
+          throw new Error('boom');
+        },
+        options: { required: false },
+      });
+
+      const res = await runtime.get('client/logger-optional');
+      expect(res).toBeUndefined();
+      expect(warn).toHaveBeenCalledOnce();
+      expect(warn.mock.calls[0][0]).toMatch(/Non-required alias "@client\/logger-optional"/);
+      expect(warn.mock.calls[0][1]).toEqual({ _module: 'alias' });
+    });
+
     it('memoizes undefined so subsequent calls return same undefined without re-running factory', async () => {
       vi.spyOn(console, 'warn').mockImplementation(() => {});
       const runtime = getAliasRuntime();
@@ -553,6 +575,38 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
 
       const errB = await pbCaught;
       expect(errB.code).toBe('ALIAS_FACTORY_TIMEOUT');
+
+      vi.useRealTimers();
+    }, 10000);
+
+    it('does NOT hint a cycle when the other key already settled', async () => {
+      vi.useFakeTimers();
+      const runtime = getAliasRuntime();
+
+      // Resolves first and stays cached in the runtime.
+      runtime.declare({
+        prefix: 'client',
+        name: 'fast',
+        filePath: '/fast.ts',
+        factory: () => ({ ok: true }),
+        options: {},
+      });
+      runtime.declare({
+        prefix: 'client',
+        name: 'slow-settled',
+        filePath: '/slow-settled.ts',
+        factory: () => new Promise(() => {}),
+        options: { timeout: 100 },
+      });
+
+      await runtime.get('client/fast');
+
+      const pCaught = runtime.get('client/slow-settled').catch((e) => e);
+      await vi.advanceTimersByTimeAsync(200);
+
+      const err = await pCaught;
+      expect(err.code).toBe('ALIAS_FACTORY_TIMEOUT');
+      expect(err.message).not.toMatch(/Possible cycle between aliases/);
 
       vi.useRealTimers();
     }, 10000);
