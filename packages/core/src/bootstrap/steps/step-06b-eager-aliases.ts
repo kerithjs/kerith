@@ -17,13 +17,17 @@
  * **`lazy: true` aliases**
  * They are skipped here entirely. If a module file imports a lazy alias at
  * top-level during step 06, the ESM virtual-alias hook resolves it on demand
- * at that point. The bootstrap does not eagerly touch lazy aliases.
+ * at that point. The bootstrap does not proactively touch lazy aliases.
+ * (A lazy alias can still be resolved during Step 06b if an eager factory
+ * imports it — that is on-demand resolution through the ESM hook, not eager
+ * bootstrap resolution.)
  *
  * **Failure policy**
  * A `required: true` alias (the default) that fails propagates immediately
  * via `Promise.all`, aborting the bootstrap. A `required: false` alias that
- * fails produces a single `console.warn` and memoizes `undefined` (handled
- * inside `AliasRuntime.get()`).
+ * fails is downgraded inside `AliasRuntime.get()`: it emits a single
+ * `log.warn` (or `console.warn` when no logger was injected) and memoizes
+ * `undefined`.
  */
 
 import { performance } from "node:perf_hooks";

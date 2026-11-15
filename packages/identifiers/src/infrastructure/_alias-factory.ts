@@ -11,9 +11,10 @@ import { registerAliasPlugin } from '../channels/index.js';
  */
 export interface AliasIdentifierOptions {
   /**
-   * Accepted and validated by the alias runtime. Eager bootstrap resolution is
-   * not implemented yet: aliases currently resolve on first import/access, so
-   * `lazy: true` and `lazy: false` behave the same at runtime.
+   * When `false` (the default), the factory is resolved eagerly during the
+   * bootstrap (Step 06b). When `true`, it is skipped at bootstrap and resolved
+   * on first import/access — including a top-level import during module
+   * evaluation.
    * @default false
    */
   lazy?: boolean;

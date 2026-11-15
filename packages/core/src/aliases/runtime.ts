@@ -27,7 +27,7 @@ export function normalizeCanonicalFileUrl(rawUrlOrPath: string): string {
  *
  * | Option    | Type       | Default   | Description                                                     |
  * |-----------|------------|-----------|-----------------------------------------------------------------|
- * | `lazy`    | boolean    | `false`   | Accepted + validated. Eager bootstrap resolution is not implemented yet; aliases resolve on first access. |
+ * | `lazy`    | boolean    | `false`   | When false (default), resolved eagerly during bootstrap (Step 06b). When true, skipped at bootstrap and resolved on first import/access. |
  * | `timeout` | integer≥0  | `30000`   | ms before `ALIAS_FACTORY_TIMEOUT`. `0` = no timeout.           |
  * | `required`| boolean    | `true`    | When `false`, errors are downgraded to a warn and `undefined` is memoized. |
  * | `dispose` | function   | —         | Called with the instance during `disposeAll()`.                 |

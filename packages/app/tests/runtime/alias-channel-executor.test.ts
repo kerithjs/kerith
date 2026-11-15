@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createApp } from '../../src/index.js'
 import { Client } from '@kerith/identifiers'
-import { getRegisteredAliasProviders } from '@kerith/core'
+import { getRegisteredAliasProviders, getAliasRuntime } from '@kerith/core'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -46,6 +46,10 @@ describe('Alias Channel Executor', () => {
     const factory = () => ({ connection: 'mock-db-connection' })
     Client('database', factory)
 
+    // lazy: true must NOT be resolved during bootstrap (Step 06b).
+    let lazyCalls = 0
+    Client('lazy-database', () => { lazyCalls++; return { lazy: true } }, { lazy: true })
+
     vi.spyOn(process, 'cwd').mockReturnValue(tmpDir)
 
     try {
@@ -72,6 +76,17 @@ describe('Alias Channel Executor', () => {
       expect(dbProvider?.resolve()).toEqual({ connection: 'mock-db-connection' })
       // Calling resolve() twice must return identical values (factory is pure)
       expect(dbProvider?.resolve()).toEqual(dbProvider?.resolve())
+
+      // ── 3. Step 06b — eager resolution semantics ───────────────────────────
+      // lazy defaults to false → createApp() must have resolved the alias
+      // during bootstrap, without importing '@client/database'.
+      const runtime = getAliasRuntime()
+      expect(runtime.instances.get('client/database')).toEqual({
+        connection: 'mock-db-connection',
+      })
+      // lazy: true → skipped during bootstrap; factory not invoked yet.
+      expect(runtime.instances.has('client/lazy-database')).toBe(false)
+      expect(lazyCalls).toBe(0)
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true })
     }
