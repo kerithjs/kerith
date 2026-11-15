@@ -45,27 +45,27 @@ export type KerithErrorCode =
   // ─── Part 2 — Shared system violation codes ───────────────────────────────
   /**
    * Module imports `@shared` (or a subpath) without declaring it in `shared[]`.
-   * @since v2.0.0
+   * @since v2.0.0-alpha.1
    */
   | "UNDECLARED_SHARED"
   /**
    * Module declares `@shared` in `shared[]` but no source file imports it.
-   * @since v2.0.0 (detected via kerith check, not thrown at runtime)
+   * @since v2.0.0-alpha.1 (detected via kerith check, not thrown at runtime)
    */
   | "UNUSED_SHARED"
   /**
    * Module from a foreign domain imports `@{domain}/shared`.
-   * @since v2.0.0 (detected via kerith check, not thrown at runtime)
+   * @since v2.0.0-alpha.1 (detected via kerith check, not thrown at runtime)
    */
   | "SHARED_SCOPE_VIOLATION"
   /**
    * A shared alias was placed in `imports[]` instead of `shared[]`.
-   * @since v2.0.0
+   * @since v2.0.0-alpha.1
    */
   | "SHARED_IN_IMPORTS"
   /**
    * A module name was placed in `shared[]` instead of `imports[]`.
-   * @since v2.0.0
+   * @since v2.0.0-alpha.1
    */
   | "MODULE_IN_SHARED"
   // ─── Extension API — identifier registration codes ────────────────────────
@@ -134,6 +134,38 @@ export type KerithErrorCode =
    */
   | "INVALID_CRON_EXPRESSION"
   /**
+   * The factory of an alias identifier (`Config`, `Client`, `Store`,
+   * `Provider`, `Adapter`) threw synchronously or rejected during resolution.
+   * The original error is preserved as `error.cause`.
+   *
+   * Tier: `[app]` — the factory is user code.
+   * @since v2.0.0-alpha.1
+   */
+  | "ALIAS_FACTORY_FAILED"
+  /**
+   * The factory of an alias identifier did not resolve within the configured
+   * `timeout` milliseconds. The factory promise is left running (cannot be
+   * cancelled) but the alias resolution rejects immediately.
+   *
+   * Common cause: a cycle between aliases resolved via dynamic imports
+   * (a TLA that never settles). The error message includes a hint when
+   * other aliases are currently in-flight.
+   *
+   * Tier: `[app]` — the factory is user code.
+   * @since v2.0.0-alpha.1
+   */
+  | "ALIAS_FACTORY_TIMEOUT"
+  /**
+   * A direct or indirect cycle between alias factories was detected at
+   * declaration time or during static analysis. At runtime the cycle
+   * manifests as an `ALIAS_FACTORY_TIMEOUT`; this code is reserved for
+   * structural/static detection.
+   *
+   * Tier: `[system]`.
+   * @since v2.0.0-alpha.1
+   */
+  | "ALIAS_CIRCULAR"
+  /**
    * A BindingProvider (e.g., Worker, Message, Subscriber) failed during
    * its `bind()` execution. This is a fail-fast error that aborts the
    * bootstrap process to prevent the application from running with a
@@ -170,11 +202,19 @@ export class KerithError extends Error {
   readonly code: KerithErrorCode;
   readonly details?: string;
 
-  constructor(code: KerithErrorCode, message: string, details?: string) {
-    super(message);
+  constructor(
+    code: KerithErrorCode,
+    message: string,
+    details?: string,
+    options?: { cause?: unknown },
+  ) {
+    super(message, options);
     this.name = "KerithError";
     this.code = code;
     this.details = details;
+    if (options?.cause !== undefined && (this as any).cause === undefined) {
+      (this as any).cause = options.cause;
+    }
   }
 }
 

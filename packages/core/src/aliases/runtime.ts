@@ -21,6 +21,16 @@ export function normalizeCanonicalFileUrl(rawUrlOrPath: string): string {
   return u.href;
 }
 
+/**
+ * Options accepted by alias-channel declarations.
+ *
+ * | Option    | Type       | Default   | Description                                                     |
+ * |-----------|------------|-----------|-----------------------------------------------------------------|
+ * | `lazy`    | boolean    | `false`   | Skip eager resolution at bootstrap; resolve on first access.    |
+ * | `timeout` | integer≥0  | `30000`   | ms before `ALIAS_FACTORY_TIMEOUT`. `0` = no timeout.           |
+ * | `required`| boolean    | `true`    | When `false`, errors are downgraded to a warn and `undefined` is memoized. |
+ * | `dispose` | function   | —         | Called with the instance during `disposeAll()`.                 |
+ */
 export interface AliasDeclarationOptions {
   lazy?: boolean;
   timeout?: number;
@@ -78,6 +88,9 @@ export function createAliasNotFoundError(targetKey: string, availableKeys: strin
   );
 }
 
+// Prefixes whose factory returning null/undefined counts as a failure (6.2).
+const NULL_DISALLOWED_PREFIXES = new Set(['config']);
+
 class DefaultAliasRuntime implements AliasRuntime {
   public table = new Map<string, string>();
   public declarations = new Map<string, AliasDeclaration>();
@@ -85,6 +98,8 @@ class DefaultAliasRuntime implements AliasRuntime {
   public promises = new Map<string, Promise<unknown>>();
   public resolutionOrder: string[] = [];
   private resolvingKeys = new Set<string>();
+  /** Keys for which a `required: false` warning has already been emitted. */
+  private warnedKeys = new Set<string>();
 
   public registerTableEntry(key: string, filePath: string): void {
     const canonical = normalizeCanonicalFileUrl(filePath);
@@ -103,9 +118,46 @@ class DefaultAliasRuntime implements AliasRuntime {
     }
   }
 
-  public declare(declInput: Omit<AliasDeclaration, 'key'> & { key?: string }): void {
+  public declare(
+    declInput: Omit<AliasDeclaration, 'key' | 'options'> & { key?: string; options?: AliasDeclarationOptions },
+  ): void {
     assertValidIdentifierName(declInput.name, 'Alias identifier');
     assertValidIdentifierName(declInput.prefix, 'Alias prefix');
+
+    // ── 6.1 Option validation ────────────────────────────────────────────────
+    const opts = declInput.options;
+    if (opts !== undefined) {
+      if (opts.timeout !== undefined) {
+        if (!Number.isInteger(opts.timeout) || (opts.timeout as number) < 0) {
+          throw new KerithError(
+            'ALIAS_INVALID',
+            `Invalid option "timeout" for alias "${declInput.prefix}/${declInput.name}": must be a non-negative integer (ms).`,
+            `Received: ${JSON.stringify(opts.timeout)}`,
+          );
+        }
+      }
+      if (opts.lazy !== undefined && typeof opts.lazy !== 'boolean') {
+        throw new KerithError(
+          'ALIAS_INVALID',
+          `Invalid option "lazy" for alias "${declInput.prefix}/${declInput.name}": must be a boolean.`,
+          `Received: ${JSON.stringify(opts.lazy)}`,
+        );
+      }
+      if (opts.required !== undefined && typeof opts.required !== 'boolean') {
+        throw new KerithError(
+          'ALIAS_INVALID',
+          `Invalid option "required" for alias "${declInput.prefix}/${declInput.name}": must be a boolean.`,
+          `Received: ${JSON.stringify(opts.required)}`,
+        );
+      }
+      if (opts.dispose !== undefined && typeof opts.dispose !== 'function') {
+        throw new KerithError(
+          'ALIAS_INVALID',
+          `Invalid option "dispose" for alias "${declInput.prefix}/${declInput.name}": must be a function.`,
+          `Received: ${JSON.stringify(opts.dispose)}`,
+        );
+      }
+    }
 
     const key = declInput.key ?? `${declInput.prefix}/${declInput.name}`;
     const canonicalFilePath = normalizeCanonicalFileUrl(declInput.filePath);
@@ -137,7 +189,7 @@ class DefaultAliasRuntime implements AliasRuntime {
         lazy: false,
         required: true,
         timeout: 30000,
-        ...declInput.options,
+        ...opts,
       },
     };
 
@@ -194,7 +246,7 @@ class DefaultAliasRuntime implements AliasRuntime {
 
     if (this.resolvingKeys.has(key)) {
       throw new KerithError(
-        'CIRCULAR_DEPENDENCY',
+        'ALIAS_CIRCULAR',
         `Circular dependency detected while resolving alias "@${key}".`,
         `Resolution path: ${Array.from(this.resolvingKeys).join(' -> ')} -> ${key}`,
       );
@@ -207,13 +259,20 @@ class DefaultAliasRuntime implements AliasRuntime {
       let factoryPromise = Promise.resolve().then(() => decl.factory());
 
       if (timeoutMs > 0) {
-        let timer: NodeJS.Timeout;
-        const timeoutPromise = new Promise((_, reject) => {
+        let timer!: NodeJS.Timeout;
+        const timeoutPromise = new Promise<never>((_, reject) => {
           timer = setTimeout(() => {
+            // 6.2 Cycle hint: if other keys are in-flight while this one times out,
+            // it is likely caused by a cycle between aliases via dynamic imports.
+            const inFlight = Array.from(this.promises.keys()).filter((k) => k !== key);
+            const cycleHint =
+              inFlight.length > 0
+                ? ` Possible cycle between aliases? In-flight keys: ${inFlight.map((k) => `@${k}`).join(', ')}.`
+                : '';
             reject(
               new KerithError(
-                'MODULE_LOAD_TIMEOUT',
-                `Factory execution timed out after ${timeoutMs}ms for alias "@${key}".`,
+                'ALIAS_FACTORY_TIMEOUT',
+                `Factory for alias "@${key}" timed out after ${timeoutMs}ms.${cycleHint}`,
                 `File: ${decl.filePath}`,
               ),
             );
@@ -223,23 +282,48 @@ class DefaultAliasRuntime implements AliasRuntime {
         factoryPromise = Promise.race([
           factoryPromise.finally(() => clearTimeout(timer)),
           timeoutPromise,
-        ]);
+        ]) as Promise<unknown>;
       }
 
-      const instance = await factoryPromise;
+      let instance = await factoryPromise;
+
+      // 6.2: Config prefix — null/undefined returned from factory counts as failure.
+      if (NULL_DISALLOWED_PREFIXES.has(decl.prefix) && (instance === null || instance === undefined)) {
+        throw new KerithError(
+          'ALIAS_FACTORY_FAILED',
+          `Factory for "@${key}" (Config) returned ${JSON.stringify(instance)}. Config factories must return a non-null object.`,
+          `File: ${decl.filePath}`,
+        );
+      }
+
       this.instances.set(key, instance);
       this.resolutionOrder.push(key);
       return instance;
     } catch (err: any) {
+      // 6.2: required: false — downgrade to warn, memoize undefined, warn only once per key.
       if (decl.options.required === false) {
-        console.warn(
-          `[Kerith] Warning: Non-required alias "@${key}" factory threw an error. Returning undefined. Error: ${err?.message ?? String(err)}`,
-        );
+        if (!this.warnedKeys.has(key)) {
+          this.warnedKeys.add(key);
+          console.warn(
+            `[Kerith] Non-required alias "@${key}" failed — returning undefined. ` +
+              `Error: ${err?.message ?? String(err)}`,
+          );
+        }
         this.instances.set(key, undefined);
         this.resolutionOrder.push(key);
         return undefined;
       }
-      throw err;
+
+      // 6.2: Wrap factory errors in ALIAS_FACTORY_FAILED (unless already a KerithError).
+      if (err instanceof KerithError) {
+        throw err;
+      }
+      throw new KerithError(
+        'ALIAS_FACTORY_FAILED',
+        `Factory for alias "@${key}" failed: ${err?.message ?? String(err)}`,
+        `File: ${decl.filePath}`,
+        { cause: err },
+      );
     } finally {
       this.resolvingKeys.delete(key);
     }
@@ -272,6 +356,7 @@ class DefaultAliasRuntime implements AliasRuntime {
     this.promises.clear();
     this.resolutionOrder = [];
     this.resolvingKeys.clear();
+    this.warnedKeys.clear();
   }
 }
 
@@ -282,4 +367,3 @@ export function getAliasRuntime(): AliasRuntime {
   }
   return globalObj[ALIAS_RUNTIME_KEY];
 }
-
