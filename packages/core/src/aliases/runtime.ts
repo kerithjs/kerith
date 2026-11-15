@@ -44,7 +44,7 @@ export interface AliasRuntime {
   instances: Map<string, unknown>; // key -> resolved instance
   promises: Map<string, Promise<unknown>>; // key -> in-flight resolution promise
   resolutionOrder: string[]; // keys in order of resolution for LIFO disposal
-  declare(declaration: Omit<AliasDeclaration, 'key'> & { key?: string }): void;
+  declare(declaration: Omit<AliasDeclaration, 'key' | 'options'> & { key?: string; options?: AliasDeclarationOptions }): void;
   get(key: string): Promise<unknown>;
   registerTableEntry(key: string, filePath: string): void;
   setTable(entries: Record<string, string> | Map<string, string>): void;

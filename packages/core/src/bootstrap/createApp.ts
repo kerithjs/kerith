@@ -10,7 +10,7 @@ import { createRegistry, registryContext } from "../core/registry.js";
 import { registerShutdown } from "../core/shutdown.js";
 import { KerithError } from "../core/errors.js";
 import { getRegisteredScheduleProviders, getRegisteredAliasProviders, getRegisteredBindingProviders } from "../extension/store.js";
-import { activateAliasResolver } from "../aliases/resolver.js";
+import { getAliasRuntime } from "../aliases/runtime.js";
 import { updateAliasCache } from "../aliases/cache.js";
 import type { CreateAppOptions, KerithApp } from "../types/index.js";
 
@@ -23,6 +23,7 @@ import { runCacheAndScan } from "./steps/step-02-cache-scan.js";
 import { runEntityRegistration } from "./steps/step-03-register.js";
 import { runNitsReconciliation } from "./steps/step-04-nits.js";
 import { runAliasActivation } from "./steps/step-05-aliases.js";
+import { runVirtualAliases } from "./steps/step-05b-virtual-aliases.js";
 import { runDynamicImports } from "./steps/step-06-imports.js";
 import { runValidations } from "./steps/step-07-validations.js";
 import { runControllersAndMount } from "./steps/step-08-controllers.js";
@@ -77,6 +78,9 @@ export async function createApp(
       // Step 05 — Activate runtime aliases (domains, modules, shared from scan)
       await runAliasActivation(ctx);
 
+      // Step 05b — Virtual alias hooks (Level 1 alias channel)
+      await runVirtualAliases(ctx);
+
       // Step 06 — Dynamic Imports
       await runDynamicImports(ctx);
 
@@ -108,19 +112,28 @@ export async function createApp(
       }
 
       // --- Extension API: Alias Providers ---
-      // At this point, modules have been evaluated, meaning Client(), Store(), etc. have executed
-      // and registered their AliasProviders. We must now inject them into the ESM hook so that
-      // subsequent steps (like Step 08, which imports controllers) can resolve them.
+      // At this point, modules have been evaluated and alias providers have been registered.
+      // Register them into the registry with destination `kerith-alias:<prefix>/<name>`
+      // marked as virtual so getAliases() excludes them from bundler output, and register
+      // them into getAliasRuntime() if not already declared.
       const extensionAliases = getRegisteredAliasProviders();
-      if (extensionAliases.length > 0 && ctx.config?.resolveAliases !== false) {
-        const pureExtensionAliases: Record<string, string> = {};
+      if (extensionAliases.length > 0) {
+        const runtime = getAliasRuntime();
         for (const provider of extensionAliases) {
           const fullAlias = `@${provider.prefix}/${provider.name}`;
-          registry.registerAlias(fullAlias, provider.filePath);
-          pureExtensionAliases[fullAlias] = provider.filePath;
+          const target = `kerith-alias:${provider.prefix}/${provider.name}`;
+          registry.registerAlias(fullAlias, target, { virtual: true });
+          const key = `${provider.prefix}/${provider.name}`;
+          if (!runtime.declarations.has(key)) {
+            runtime.declare({
+              prefix: provider.prefix as any,
+              name: provider.name,
+              filePath: provider.filePath,
+              factory: provider.resolve,
+              options: provider.options ?? {},
+            });
+          }
         }
-        
-        await activateAliasResolver(pureExtensionAliases, {}, log);
         updateAliasCache(registry.getAllAliases());
       }
 

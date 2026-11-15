@@ -116,18 +116,19 @@ describe('Alias Channel Executor', () => {
       `)
 
       // "Another file in the same boot" — this is the file that calls Client() and
-      // will later be imported as @client/database. It exports a sentinel value.
+      // will later be imported as @client/database.
+      // Notice: It does NOT export dbMock as default! Level 1 virtual module returns
+      // the instantiated factory value directly as default export.
       const dbFilePath = path.join(moduleDir, 'database.ts')
       fs.writeFileSync(dbFilePath, `
         import { Client } from '@kerith/identifiers'
         
         const dbMock = { connection: 'mock-db-connection' }
         
-        // Declare the alias so executeAliasChannel() picks it up during boot.
-        // filePath is captured from the real call stack by getFileCallerInfo().
+        // Declare the alias. No export default!
         Client('database', () => dbMock)
         
-        export default dbMock
+        export const otherExport = 'unrelated'
       `)
 
       // The E2E boot script — runs entirely inside the spawned process.
