@@ -1,16 +1,29 @@
 # Migrating to Kerith 2.0.0
 
-Kerith 2.0.0 introduces **Domain-Driven Architecture**. Instead of a single flat list of modules, Kerith now infers a `Domain → Module → SubModule` hierarchy entirely from your filesystem structure.
-
-The good news: **v1.x projects work perfectly without any changes.**
-
-You do not need to rewrite your entire application to upgrade. Kerith 2.0.0 is 100% backward compatible with the v1.x `modules:` configuration and flat structure. You can upgrade today and adopt domains incrementally.
+Kerith 2.0.0 succeeds Nodulus (≤1.8.2) and introduces a **Domain-Driven Architecture**. Instead of a single flat list of modules, Kerith now infers a `Domain → Module → SubModule` hierarchy directly from your filesystem structure.
 
 ---
 
-## 1. Upgrading without changes (v1.x mode)
+## 0. Migrating from Nodulus (≤1.8.2)
 
-If your `kerith.config.js` looks like this:
+If you are upgrading an existing project from `@vlynk-studios/nodulus-core`, rename and update the following project assets:
+
+| Nodulus (≤1.8.2) | Kerith (≥2.0.0) | Description |
+|---|---|---|
+| `@vlynk-studios/nodulus-core` | `@kerith/core` | Core framework dependency |
+| `@vlynk-studios/eslint-plugin-nodulus` | `@kerith/eslint-plugin` | ESLint architecture rules |
+| `nodulus` binary | `kerith` binary | CLI command in terminal and `scripts` |
+| `nodulus.config.ts` (or `.js`) | `kerith.config.ts` (or `.js`) | Project configuration file |
+| `.nodulus/` directory | `.kerith/` directory | Cache and NITS registry storage |
+| `tsconfig.nodulus.json` | `tsconfig.kerith.json` | Generated IDE paths configuration |
+| `__NODULUS_PRELOAD_CONFIG__` | `__KERITH_PRELOAD_CONFIG__` | Pre-loader global configuration |
+| `nodulus:shutdown` | `kerith:shutdown` | Process IPC shutdown signal |
+
+---
+
+## 1. Upgrading in Flat Mode (Legacy Compatibility)
+
+If you are already on `kerith.config.js` and use the flat module structure:
 
 ```js
 export default {
