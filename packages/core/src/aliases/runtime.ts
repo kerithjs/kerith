@@ -285,7 +285,7 @@ class DefaultAliasRuntime implements AliasRuntime {
         ]) as Promise<unknown>;
       }
 
-      let instance = await factoryPromise;
+      const instance = await factoryPromise;
 
       // 6.2: Config prefix — null/undefined returned from factory counts as failure.
       if (NULL_DISALLOWED_PREFIXES.has(decl.prefix) && (instance === null || instance === undefined)) {
