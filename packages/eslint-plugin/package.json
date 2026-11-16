@@ -39,7 +39,7 @@
   "bugs": {
     "url": "https://github.com/kerithjs/kerith/issues"
   },
-  "homepage": "https://github.com/kerithjs/kerith/tree/main/packages/eslint-plugin#readme",
+  "homepage": "https://kerithjs.dev",
   "peerDependencies": {
     "eslint": ">=8.0.0"
   },

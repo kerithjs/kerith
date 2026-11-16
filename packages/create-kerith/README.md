@@ -1,6 +1,6 @@
 # create-kerith
 
-> Scaffold a new [Kerith](https://kerith.dev) project in seconds.
+> Scaffold a new [Kerith](https://kerithjs.dev) project in seconds.
 
 ```bash
 npm create kerith@alpha

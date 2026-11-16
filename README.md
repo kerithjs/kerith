@@ -13,7 +13,7 @@
 [![npm](https://img.shields.io/npm/v/create-kerith?color=e4f222&label=create-kerith&style=flat-square)](https://www.npmjs.com/package/create-kerith)
 [![License: MIT](https://img.shields.io/badge/license-MIT-e4f222?style=flat-square)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D24.0-e4f222?style=flat-square)](https://nodejs.org/)
-[![kerith.dev](https://img.shields.io/badge/docs-kerith.dev-e4f222?style=flat-square)](https://docs.kerith.dev)
+[![kerithjs.dev](https://img.shields.io/badge/docs-kerithjs.dev-e4f222?style=flat-square)](https://kerithjs.dev)
 
 > **Node.js ≥ 24.0** · **Express 5.x** · **ESM Only** · **TypeScript included**
 
@@ -218,7 +218,7 @@ Module("users", {
 export { UserService } from "./users.service.js";
 ```
 
-For the full API reference, configuration options, and CLI documentation, see [docs.kerith.dev](https://docs.kerith.dev).
+For the full API reference, configuration options, and CLI documentation, see [kerithjs.dev](https://kerithjs.dev).
 
 ---
 
@@ -561,6 +561,6 @@ MIT — see [LICENSE](./LICENSE).
 
 Built and maintained by **[Vlynk Studios](https://github.com/vlynk-studios)** — Porto Alegre, Brasil.
 
-[npm](https://www.npmjs.com/org/kerith) · [docs.kerith.dev](https://docs.kerith.dev) · [github.com/KerithJS](https://github.com/KerithJS)
+[npm](https://www.npmjs.com/org/kerith) · [kerithjs.dev](https://kerithjs.dev) · [github.com/KerithJS](https://github.com/KerithJS)
 
 </div>
