@@ -7,7 +7,7 @@ import { registerAliasPlugin } from '../channels/index.js';
 
 /**
  * Options accepted by alias-channel identifiers (Client, Config, Provider, Store, Adapter).
- * Stored for future use by the @kerith/app executor and alias runtime.
+ * Validated by the alias runtime when the identifier is declared.
  */
 export interface AliasIdentifierOptions {
   /**
@@ -31,7 +31,11 @@ export interface AliasIdentifierOptions {
    */
   required?: boolean;
   /**
-   * Optional cleanup function invoked on shutdown.
+   * Optional cleanup function invoked once per resolved instance during
+   * graceful shutdown (`disposeAll()`). Aliases are disposed in reverse
+   * resolution order (LIFO) with a 5000 ms budget each; errors are logged and
+   * do not stop the remaining disposals. Never called for aliases that did not
+   * resolve an instance (lazy and never imported, or failed).
    */
   dispose?: (instance: unknown) => void | Promise<void>;
   [key: string]: unknown;

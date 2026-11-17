@@ -470,6 +470,81 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
     vi.useRealTimers();
   });
 
+  it('records resolutionOrder by completion time, not declaration order', async () => {
+    const runtime = getAliasRuntime();
+
+    runtime.declare({
+      prefix: 'client',
+      name: 'slow',
+      filePath: '/slow-order.ts',
+      factory: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        return { name: 'slow' };
+      },
+    });
+    runtime.declare({
+      prefix: 'client',
+      name: 'fast',
+      filePath: '/fast-order.ts',
+      factory: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        return { name: 'fast' };
+      },
+    });
+
+    // Resolve in parallel: `fast` finishes first even though `slow` was declared first.
+    await Promise.all([runtime.get('client/slow'), runtime.get('client/fast')]);
+
+    expect(runtime.resolutionOrder).toEqual(['client/fast', 'client/slow']);
+  });
+
+  it('disposeAll() falls back to console.error when the injected logger has no error()', async () => {
+    const runtime = getAliasRuntime();
+    const disposed: string[] = [];
+
+    // Partial logger: implements warn() but not error().
+    runtime.setLogger({ warn: vi.fn() });
+
+    runtime.declare({
+      prefix: 'client',
+      name: 'after',
+      filePath: '/after.ts',
+      factory: () => ({ name: 'after' }),
+      options: {
+        dispose: () => {
+          disposed.push('client/after');
+        },
+      },
+    });
+    runtime.declare({
+      prefix: 'client',
+      name: 'throwing',
+      filePath: '/throwing.ts',
+      factory: () => ({ name: 'throwing' }),
+      options: {
+        dispose: () => {
+          disposed.push('client/throwing-attempted');
+          throw new Error('dispose exploded');
+        },
+      },
+    });
+
+    // Resolution order: after, throwing → LIFO disposes throwing first.
+    await runtime.get('client/after');
+    await runtime.get('client/throwing');
+
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(runtime.disposeAll()).resolves.toBeUndefined();
+
+    // The failing dispose is logged via console.error and does not abort the next one.
+    expect(disposed).toEqual(['client/throwing-attempted', 'client/after']);
+    expect(errSpy).toHaveBeenCalledOnce();
+    expect(errSpy.mock.calls[0][0]).toMatch(/dispose exploded/);
+
+    errSpy.mockRestore();
+  });
+
   it('_resetAliasRuntime() clears the runtime singleton', () => {
     const runtime = getAliasRuntime();
     runtime.declare({
@@ -513,7 +588,7 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
         options: {},
       });
 
-      const err = await runtime.get('client/redis').catch((e) => e);
+      const err: any = await runtime.get('client/redis').catch((e) => e);
       expect(err).toBeInstanceOf(KerithError);
       expect(err.code).toBe('ALIAS_FACTORY_FAILED');
       expect(err.message).toMatch(/Factory for alias "@client\/redis" failed/);
@@ -533,7 +608,7 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
         options: {},
       });
 
-      const err = await runtime.get('client/async-fail').catch((e) => e);
+      const err: any = await runtime.get('client/async-fail').catch((e) => e);
       expect(err).toBeInstanceOf(KerithError);
       expect(err.code).toBe('ALIAS_FACTORY_FAILED');
       expect(err.cause).toBe(originalError);
@@ -552,7 +627,7 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
         options: {},
       });
 
-      const err = await runtime.get('client/kerith-fail').catch((e) => e);
+      const err: any = await runtime.get('client/kerith-fail').catch((e) => e);
       expect(err).toBe(kerithErr);
       expect(err.code).toBe('ALIAS_CONFLICT');
     });
@@ -571,7 +646,7 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
         options: {},
       });
 
-      const err = await runtime.get('config/app').catch((e) => e);
+      const err: any = await runtime.get('config/app').catch((e) => e);
       expect(err).toBeInstanceOf(KerithError);
       expect(err.code).toBe('ALIAS_FACTORY_FAILED');
       expect(err.message).toMatch(/Config.*returned/);
@@ -587,7 +662,7 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
         options: {},
       });
 
-      const err = await runtime.get('config/db').catch((e) => e);
+      const err: any = await runtime.get('config/db').catch((e) => e);
       expect(err).toBeInstanceOf(KerithError);
       expect(err.code).toBe('ALIAS_FACTORY_FAILED');
     });
@@ -713,10 +788,10 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
 
       const p = runtime.get('client/slow');
       // Attach catch immediately to suppress unhandled-rejection before timers fire
-      const pCaught = p.catch((e) => e);
+      const pCaught: Promise<any> = p.catch((e) => e);
       await vi.advanceTimersByTimeAsync(200);
 
-      const err = await pCaught;
+      const err: any = await pCaught;
       expect(err).toBeInstanceOf(KerithError);
       expect(err.code).toBe('ALIAS_FACTORY_TIMEOUT');
       expect(err.message).toMatch(/timed out after 100ms/);
@@ -744,16 +819,16 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
       });
 
       // Attach catch handlers immediately to suppress unhandled rejections
-      const paCaught = runtime.get('client/a').catch((e) => e);
-      const pbCaught = runtime.get('client/b').catch((e) => e);
+      const paCaught: Promise<any> = runtime.get('client/a').catch((e) => e);
+      const pbCaught: Promise<any> = runtime.get('client/b').catch((e) => e);
 
       await vi.advanceTimersByTimeAsync(200);
 
-      const errA = await paCaught;
+      const errA: any = await paCaught;
       expect(errA.code).toBe('ALIAS_FACTORY_TIMEOUT');
       expect(errA.message).toMatch(/Possible cycle between aliases/);
 
-      const errB = await pbCaught;
+      const errB: any = await pbCaught;
       expect(errB.code).toBe('ALIAS_FACTORY_TIMEOUT');
 
       vi.useRealTimers();
@@ -781,10 +856,10 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
 
       await runtime.get('client/fast');
 
-      const pCaught = runtime.get('client/slow-settled').catch((e) => e);
+      const pCaught: Promise<any> = runtime.get('client/slow-settled').catch((e) => e);
       await vi.advanceTimersByTimeAsync(200);
 
-      const err = await pCaught;
+      const err: any = await pCaught;
       expect(err.code).toBe('ALIAS_FACTORY_TIMEOUT');
       expect(err.message).not.toMatch(/Possible cycle between aliases/);
 

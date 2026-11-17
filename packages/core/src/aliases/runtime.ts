@@ -30,7 +30,7 @@ export function normalizeCanonicalFileUrl(rawUrlOrPath: string): string {
  * | `lazy`    | boolean    | `false`   | When false (default), resolved eagerly during bootstrap (Step 06b). When true, skipped at bootstrap and resolved on first import/access. |
  * | `timeout` | integer≥0  | `30000`   | ms before `ALIAS_FACTORY_TIMEOUT`. `0` = no timeout.           |
  * | `required`| boolean    | `true`    | When `false`, errors are downgraded to a warn and `undefined` is memoized. |
- * | `dispose` | function   | —         | Called with the instance during `disposeAll()`.                 |
+ * | `dispose` | function   | —         | Called once per resolved instance during `disposeAll()`, in reverse resolution order, with a 5000 ms budget per alias. Errors are logged and do not stop the remaining disposals. |
  */
 export interface AliasDeclarationOptions {
   lazy?: boolean;
@@ -62,7 +62,14 @@ export interface AliasRuntime {
   registerTableEntry(key: string, filePath: string): void;
   setTable(entries: Record<string, string> | Map<string, string>): void;
   /** Injects the bootstrap logger so `required: false` warnings and disposal errors use the logger. */
-  setLogger(logger: Pick<Logger, 'warn' | 'error'> | undefined): void;
+  setLogger(logger: Partial<Pick<Logger, 'warn' | 'error'>> | undefined): void;
+  /**
+   * Runs every resolved alias's `dispose(instance)` in reverse resolution order
+   * (LIFO), awaiting each one with a 5000 ms budget. Failures and timeouts are
+   * logged and do not abort the remaining disposals. Aliases that never resolved
+   * an instance (lazy, failed, or `required: false` downgraded) are skipped.
+   * Resets the runtime afterwards, so a second call is a no-op.
+   */
   disposeAll(): Promise<void>;
   _reset(): void;
 }
@@ -96,6 +103,9 @@ export function createAliasNotFoundError(targetKey: string, availableKeys: strin
 // Prefixes whose factory returning null/undefined counts as a failure (6.2).
 const NULL_DISALLOWED_PREFIXES = new Set(['config']);
 
+/** Per-alias budget for `dispose()` during `disposeAll()` (6.4). */
+const DISPOSE_TIMEOUT_MS = 5000;
+
 class DefaultAliasRuntime implements AliasRuntime {
   public table = new Map<string, string>();
   public declarations = new Map<string, AliasDeclaration>();
@@ -106,9 +116,9 @@ class DefaultAliasRuntime implements AliasRuntime {
   /** Keys for which a `required: false` warning has already been emitted. */
   private warnedKeys = new Set<string>();
   /** Bootstrap logger — used for `required: false` warnings and disposal errors when available. */
-  private logger?: Pick<Logger, 'warn' | 'error'>;
+  private logger?: Partial<Pick<Logger, 'warn' | 'error'>>;
 
-  public setLogger(logger: Pick<Logger, 'warn' | 'error'> | undefined): void {
+  public setLogger(logger: Partial<Pick<Logger, 'warn' | 'error'>> | undefined): void {
     this.logger = logger;
   }
 
@@ -320,7 +330,7 @@ class DefaultAliasRuntime implements AliasRuntime {
           const message =
             `Non-required alias "@${key}" failed — returning undefined. ` +
             `Error: ${err?.message ?? String(err)}`;
-          if (this.logger) {
+          if (this.logger?.warn) {
             this.logger.warn(message, { _module: 'alias' });
           } else {
             console.warn(`[Kerith] ${message}`);
@@ -346,42 +356,50 @@ class DefaultAliasRuntime implements AliasRuntime {
   }
 
   public async disposeAll(): Promise<void> {
-    // Reverse resolution order (LIFO)
+    // Reverse resolution order (LIFO). Only aliases that finished resolving an
+    // instance are present here; lazy/failed aliases are never disposed.
     const order = [...this.resolutionOrder].reverse();
 
-    for (const key of order) {
-      const decl = this.declarations.get(key);
-      const instance = this.instances.get(key);
+    try {
+      for (const key of order) {
+        const decl = this.declarations.get(key);
+        const instance = this.instances.get(key);
 
-      if (decl?.options.dispose && typeof decl.options.dispose === 'function') {
-        const timeoutMs = 5000;
-        let timer: NodeJS.Timeout | undefined;
-        try {
-          const disposePromise = Promise.resolve().then(() => decl.options.dispose!(instance));
-          const timeoutPromise = new Promise<never>((_, reject) => {
-            timer = setTimeout(() => {
-              reject(new Error(`Dispose timed out after ${timeoutMs}ms for alias "@${key}".`));
-            }, timeoutMs);
-          });
+        if (decl?.options.dispose && typeof decl.options.dispose === 'function') {
+          let timer: NodeJS.Timeout | undefined;
+          try {
+            const disposePromise = Promise.resolve().then(() => decl.options.dispose!(instance));
+            const timeoutPromise = new Promise<never>((_, reject) => {
+              timer = setTimeout(() => {
+                reject(
+                  new Error(`Dispose timed out after ${DISPOSE_TIMEOUT_MS}ms for alias "@${key}".`),
+                );
+              }, DISPOSE_TIMEOUT_MS);
+            });
 
-          await Promise.race([
-            disposePromise.finally(() => {
-              if (timer) clearTimeout(timer);
-            }),
-            timeoutPromise,
-          ]);
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : String(err);
-          if (this.logger) {
-            this.logger.error(`Error disposing alias "@${key}": ${message}`, { _module: 'shutdown' });
-          } else {
-            console.error(`[Kerith] Error disposing alias "@${key}": ${message}`);
+            await Promise.race([
+              disposePromise.finally(() => {
+                if (timer) clearTimeout(timer);
+              }),
+              timeoutPromise,
+            ]);
+          } catch (err: unknown) {
+            // 6.4: a failing/timing-out dispose is logged and must not abort the
+            // remaining disposals. The logger may be partial (tests), so fall
+            // back to console.error when `error` is not implemented.
+            const message = err instanceof Error ? err.message : String(err);
+            if (this.logger?.error) {
+              this.logger.error(`Error disposing alias "@${key}": ${message}`, { _module: 'shutdown' });
+            } else {
+              console.error(`[Kerith] Error disposing alias "@${key}": ${message}`);
+            }
           }
         }
       }
+    } finally {
+      // Clear instances/declarations even if an unexpected error escapes the loop.
+      this._reset();
     }
-
-    this._reset();
   }
 
   public _reset(): void {

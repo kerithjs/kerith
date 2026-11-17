@@ -121,6 +121,39 @@ import { Client } from '@kerith/identifiers';
   process.stdout.write('CHECK 1 PASSED: required: true + failing factory rejects createApp with ALIAS_FACTORY_FAILED\\n');
 }
 
+// ── Criterio 4: timeout: 50 con factory de 200ms -> ALIAS_FACTORY_TIMEOUT (vía createApp) ──
+{
+  const runtime = getAliasRuntime();
+  runtime._reset();
+
+  runtime.declare({
+    prefix: 'client',
+    name: 'slow-hang',
+    filePath: '/infra/slow.ts',
+    factory: () => new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 200)),
+    options: { timeout: 50, required: true, lazy: false },
+  });
+
+  let timeoutErr = null;
+  try {
+    await createApp();
+  } catch (err) {
+    timeoutErr = err;
+  }
+
+  assert.notEqual(timeoutErr, null, 'Criterio 4 fallido: createApp no rechazó');
+  assert.equal(
+    timeoutErr.code,
+    'ALIAS_FACTORY_TIMEOUT',
+    'Criterio 4 fallido: se esperaba ALIAS_FACTORY_TIMEOUT pero se recibió ' + timeoutErr.code,
+  );
+  assert(
+    timeoutErr.message.includes('@client/slow-hang') && timeoutErr.message.includes('50ms'),
+    'Criterio 4 fallido: el mensaje no incluye key y timeout: ' + timeoutErr.message,
+  );
+  process.stdout.write('CHECK 4 PASSED: timeout: 50 with 200ms factory makes createApp reject with ALIAS_FACTORY_TIMEOUT\\n');
+}
+
 // ── Criterios 2 y 3: lazy: false ejecuta exactamente una vez tras createApp; lazy: true ejecuta 0 veces ──
 {
   const runtime = getAliasRuntime();
@@ -175,35 +208,6 @@ import { Client } from '@kerith/identifiers';
 
   process.stdout.write('CHECK 2 PASSED: lazy: false executes exactly once when createApp finishes\\n');
   process.stdout.write('CHECK 3 PASSED: lazy: true has zero executions after createApp, one after first import\\n');
-}
-
-// ── Criterio 4: timeout: 50 con factory de 200ms -> ALIAS_FACTORY_TIMEOUT ──
-{
-  const runtime = getAliasRuntime();
-  runtime._reset();
-
-  runtime.declare({
-    prefix: 'client',
-    name: 'slow-hang',
-    filePath: '/infra/slow.ts',
-    factory: () => new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 200)),
-    options: { timeout: 50, required: true, lazy: true },
-  });
-
-  let timeoutErr = null;
-  try {
-    await runtime.get('client/slow-hang');
-  } catch (err) {
-    timeoutErr = err;
-  }
-
-  assert.notEqual(timeoutErr, null, 'Criterio 4 fallido: no lanzó timeout');
-  assert.equal(
-    timeoutErr.code,
-    'ALIAS_FACTORY_TIMEOUT',
-    'Criterio 4 fallido: se esperaba ALIAS_FACTORY_TIMEOUT pero se recibió ' + timeoutErr.code,
-  );
-  process.stdout.write('CHECK 4 PASSED: timeout: 50 with 200ms factory produces ALIAS_FACTORY_TIMEOUT\\n');
 }
 
 // ── Criterio 5: dispose se llama una vez por alias resuelto en orden inverso, nunca para los no resueltos ──
@@ -311,5 +315,6 @@ process.stdout.write('ALL 5 LIFECYCLE ACCEPTANCE CRITERIA PASSED!\\n');
         // ignore cleanup error
       }
     }
-  })
+  }, 30_000)
 })
+

@@ -208,6 +208,8 @@ interface AliasProvider {
 ```
 
 > `resolve()` is the alias factory. During `createApp()`, Step 06b resolves every declared alias with `lazy: false` (the default) in parallel and aborts bootstrap if a `required` alias fails. With `lazy: true`, the bootstrap skips it: it is resolved on first import — including a top-level import during module evaluation. The ESM virtual-alias hook returns the factory value as the module's default export, so `import config from '@config/app'` yields the resolved instance.
+>
+> On graceful shutdown, `dispose(instance)` runs once per resolved alias in reverse resolution order (LIFO), with a 5000 ms budget per alias. A failing or timed-out `dispose` is logged and does not stop the remaining disposals. Aliases that never resolved an instance (lazy and never imported, or failed) are never disposed.
 
 #### Middleware
 

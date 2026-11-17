@@ -385,7 +385,9 @@ export interface KerithApp {
    * shutdown sequence:
    *   1. Close the HTTP server (no new connections accepted).
    *   2. Run the `onShutdown` hook from {@link ListenOptions} (if provided).
-   *   3. Exit with code 0.
+   *   3. Dispose resolved alias instances in reverse resolution order (LIFO),
+   *      with a 5000 ms budget per alias.
+   *   4. Exit with code 0.
    *
    * Also returns a `shutdown()` function you can call programmatically.
    *
