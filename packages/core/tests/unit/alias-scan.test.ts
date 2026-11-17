@@ -104,6 +104,33 @@ describe('7.1 Escaneo estático del canal alias (bootstrap/alias-scan.ts)', () =
       expect(warnMock).toHaveBeenCalled();
       expect(warnMock.mock.calls[0][0]).toMatch(/Renamed import of "Client"/);
     });
+
+    it('does not warn for a renamed import from a non-Kerith package', async () => {
+      const warnMock = vi.fn();
+      const file = writeFile(
+        'src/infra/foreign.client.ts',
+        `import { Client as K } from 'my-lib';
+         K('foreign', () => ({}));`,
+      );
+
+      const calls = await extractMultipleIdentifierCalls(file, ['Client'], { warn: warnMock });
+      expect(calls).toHaveLength(0);
+      expect(warnMock).not.toHaveBeenCalled();
+    });
+
+    it('strictLiteralName:false skips non-literal calls instead of throwing', async () => {
+      const file = writeFile(
+        'src/infra/dynamic.client.ts',
+        `import { Client } from '@kerith/identifiers';
+         const dynamicName = 'my-client';
+         Client(dynamicName, () => ({}));`,
+      );
+
+      const calls = await extractMultipleIdentifierCalls(file, ['Client'], {
+        strictLiteralName: false,
+      });
+      expect(calls).toHaveLength(0);
+    });
   });
 
   describe('scanAliasDeclarations()', () => {
@@ -135,6 +162,24 @@ describe('7.1 Escaneo estático del canal alias (bootstrap/alias-scan.ts)', () =
       const result = await scanAliasDeclarations({ originPath: path.join(tmpDir, 'src') });
       expect(result.entries).toHaveLength(1);
       expect(result.entries[0].key).toBe('config/app');
+    });
+
+    it('pre-filter still reaches files whose only alias reference is a renamed import', async () => {
+      const warnMock = vi.fn();
+      writeFile(
+        'src/infra/renamed.client.ts',
+        `import { Client as K } from '@kerith/identifiers';
+         K('renamed', () => ({}));`,
+      );
+
+      const result = await scanAliasDeclarations({
+        originPath: path.join(tmpDir, 'src'),
+        warn: warnMock,
+      });
+
+      expect(result.entries).toHaveLength(0);
+      expect(warnMock).toHaveBeenCalled();
+      expect(warnMock.mock.calls[0][0]).toMatch(/Renamed import of "Client"/);
     });
 
     it('throws DUPLICATE_EXTENSION_PROVIDER when the same alias is declared across different files', async () => {

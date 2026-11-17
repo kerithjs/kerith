@@ -5,6 +5,7 @@ import type { LogHandler } from '../../types/index.js';
 import type { KerithConfig } from '../../config/kerith-config.types.js';
 import type { KerithRegistry } from '../../types/index.js';
 import { normalizePath } from '../../core/utils/paths.js';
+import { ALIAS_CHANNEL_PREFIXES } from '../../aliases/virtual-hooks.js';
 
 export interface ImportFound {
   specifier: string;
@@ -166,13 +167,21 @@ export function getRegisteredAliases(registry: KerithRegistry): string[] {
 /**
  * Builds the active-alias list for static analysis (CLI `check`) from config + discovered modules.
  * `@modules` covers every `@modules/<name>` subpath via prefix matching (REGLA-22).
+ *
+ * The five alias-channel prefixes are always active: they are registered at
+ * bootstrap independently of `config.aliases`. Without them, `@client/x`
+ * imports never reach `ModuleNode.actualImports`, so `detectAliasViolations()`
+ * cannot report undeclared aliases (Fase 3 / 7.1).
  */
 export function buildActiveAliasesFromConfig(
   config: KerithConfig,
   _moduleNames: string[] = [],
   domainNames: string[] = [],
 ): string[] {
-  const aliases = new Set<string>(['@modules']);
+  const aliases = new Set<string>([
+    '@modules',
+    ...[...ALIAS_CHANNEL_PREFIXES].map((prefix) => `@${prefix}`),
+  ]);
   if (config.aliases) {
     for (const key of Object.keys(config.aliases)) {
       aliases.add(key);

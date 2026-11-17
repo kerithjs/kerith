@@ -25,6 +25,18 @@
  * 5. Duplicados → `DUPLICATE_EXTENSION_PROVIDER` si es en archivos distintos,
  *    `DUPLICATE_ALIAS_IDENTIFIER` si es en el mismo archivo.
  *
+ * # Limitaciones
+ *
+ * - El grafo sólo ve los imports del archivo declarante. No sigue imports a
+ *   través de módulos intermedios ni specifiers computados (`import(variable)`).
+ *   Los `import('@config/x')` con string literal **sí** se capturan: el regex
+ *   de `extractStaticAliasImports` incluye `import(`.
+ * - Si un archivo declara varios aliases, todos sus imports se asocian a todas
+ *   las declaraciones de ese archivo. Esto puede producir dependencias falsas.
+ * - Los ciclos que escapan a este análisis se cubren en runtime (6.2):
+ *   `ALIAS_CIRCULAR` al re-resolver una key en vuelo y el hint de ciclo del
+ *   `ALIAS_FACTORY_TIMEOUT` cuando una factoría no termina a tiempo.
+ *
  * # Resultado
  *
  * `AliasScanResult.entries`: lista de `AliasScanEntry` con
@@ -65,6 +77,9 @@ export interface AliasScanResult {
 
 /** Callee names that map to alias-channel identifiers. */
 export const ALIAS_CALLEE_NAMES = ['Config', 'Client', 'Store', 'Provider', 'Adapter'];
+
+/** Word-boundary probe for the pre-filter (also matches `Client as K`). */
+const ALIAS_CALLEE_WORD_RE = new RegExp(`\\b(?:${ALIAS_CALLEE_NAMES.join('|')})\\b`);
 
 // ─── Cycle detection (DFS with stack) ────────────────────────────────────────
 
@@ -182,8 +197,9 @@ export async function scanAliasDeclarations(opts: AliasScanOptions): Promise<Ali
       continue;
     }
 
-    // Pre-filter: skip files with no alias callee text at all (perf optimisation)
-    if (!ALIAS_CALLEE_NAMES.some((n) => code.includes(n + '('))) continue;
+    // Pre-filter: skip files that never mention an alias identifier. Word
+    // boundaries keep `Client as K` and `Client ('db')` from being skipped.
+    if (!ALIAS_CALLEE_WORD_RE.test(code)) continue;
 
     const canonicalUrl = pathToFileURL(absFile).href;
 

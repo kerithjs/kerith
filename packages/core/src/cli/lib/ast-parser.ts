@@ -20,7 +20,10 @@ export interface IdentifierCall {
 export interface ExtractMultipleOptions {
   /** If provided, only identifiers imported from one of these packages are returned. */
   validSources?: string[];
-  /** If true, non-literal name throws ALIAS_INVALID with file and line. */
+  /**
+   * Alias calls with a non-literal first argument throw `ALIAS_INVALID` with
+   * file and line by default. Set to `false` to skip those calls instead.
+   */
   strictLiteralName?: boolean;
   /** Optional warn callback for non-fatal issues (e.g. renamed imports). */
   warn?: (msg: string) => void;
@@ -175,7 +178,13 @@ function extractCallsViaTsCompiler(
         const lineNum = line + 1;
 
         if (isAlias) {
-          if (importInfo?.renamed) {
+          if (!importInfo?.fromKerith) {
+            // Not imported from @kerith/app or @kerith/identifiers — skip user function with same name
+            ts.forEachChild(node, visit);
+            return;
+          }
+
+          if (importInfo.renamed) {
             (options?.warn ?? console.warn)(
               `Renamed import of "${callee}" in ${filePath}:${lineNum} is not supported by the static alias scanner in v1. Use "import { ${callee} } from '@kerith/identifiers'" directly.`
             );
@@ -183,14 +192,14 @@ function extractCallsViaTsCompiler(
             return;
           }
 
-          if (!importInfo?.fromKerith) {
-            // Not imported from @kerith/app or @kerith/identifiers — skip user function with same name
-            ts.forEachChild(node, visit);
-            return;
-          }
-
           const nameArg = node.arguments[0];
           if (!nameArg || !ts.isStringLiteral(nameArg)) {
+            if (options?.strictLiteralName === false) {
+              // Opt-out for callers that only need literal declarations; the
+              // bootstrap scanner passes `true` and always fails fast here.
+              ts.forEachChild(node, visit);
+              return;
+            }
             throw new KerithError(
               'ALIAS_INVALID',
               `Alias identifier call "${callee}" in ${filePath}:${lineNum} has a non-literal name. Alias names must be string literals.`

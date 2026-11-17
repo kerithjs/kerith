@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** Kerith 2.0.0 succeeds Nodulus (≤1.8.2). Releases prior to 2.0.0 were developed under `@vlynk-studios/nodulus-core`. For migration guidance and project asset renaming, see [MIGRATION.md](./MIGRATION.md).
 
+## [Unreleased]
+
+### Added
+
+- **Static alias discovery (Fase 3 / 7.1)**: `scanAliasDeclarations()` scans `origin` for `Config()`, `Client()`, `Store()`, `Provider()` and `Adapter()` imported from `@kerith/app` / `@kerith/identifiers`. Step 05b injects the resulting `key → file` table into the alias runtime before dynamic imports run, so `@prefix/name` works without the declaring file having been evaluated first. Duplicate declarations and dependency cycles (`ALIAS_CIRCULAR`, with the full chain and declaring files) fail fast before Step 06.
+- **`kerith check` alias rules**: new `undeclared-alias` and `alias-cycle` violations, with "did you mean" hints for typos. Alias-channel imports are excluded from domain/module boundary checks and validated by the new rules instead.
+
+### Fixed
+
+- Alias-channel imports (`@config`, `@client`, `@store`, `@provider`, `@adapter`) are now part of the CLI module graph, so `undeclared-alias` fires in real projects and not only in unit tests.
+- `kerith check` honours `resolveAliases: false`, and fatal scan errors (`ALIAS_INVALID`, duplicates, cycles) are reported as blocking violations instead of crashing the command.
+- Renamed imports (`import { Client as K }`) now emit the v1 warning from the scanner itself; the warning no longer fires for third-party libraries with the same identifier name.
+- `extractMultipleIdentifierCalls()` honours `strictLiteralName: false` (skip non-literal calls instead of throwing).
+- Documented static-scan limitations (no transitive modules, no computed specifiers) and the runtime timeout fallback; `ALIAS_INVALID` is no longer listed as a reserved/unused error code.
+
 ## [2.0.0-alpha.1] - 2026-07-26
 
 ### Breaking Changes

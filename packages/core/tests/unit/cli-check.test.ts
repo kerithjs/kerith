@@ -10,7 +10,8 @@ import {
 import { runQualityRules } from '../../src/cli/lib/rules-engine.js';
 import { detectEmptyModules } from '../../src/cli/lib/export-checker.js';
 import { buildModuleGraph, ModuleNode } from '../../src/cli/lib/graph-builder.js';
-import { checkCommand } from '../../src/cli/commands/check.js';
+import { checkCommand, aliasScanErrorToViolation } from '../../src/cli/commands/check.js';
+import { KerithError } from '../../src/core/errors.js';
 import * as configModule from '../../src/core/config.js';
 import * as nitsStore from '../../src/nits/nits-store.js';
 import * as nitsReconciler from '../../src/nits/nits-reconciler.js';
@@ -230,6 +231,37 @@ describe('kerith check', () => {
       expect(priv).toBeDefined();
       expect((priv as any)?.location).toBeDefined();
       expect((priv as any)?.location?.file).toBe('/orders/service.ts');
+    });
+  });
+
+  describe('alias scan errors as check violations', () => {
+    it('converts ALIAS_CIRCULAR into an error violation with the chain and declaring files', () => {
+      const err = new KerithError(
+        'ALIAS_CIRCULAR',
+        'Circular dependency detected between aliases: @config/a → @client/b → @config/a',
+        'Declaring files:\n  /src/a.config.ts\n  /src/b.client.ts',
+      );
+
+      const violation = aliasScanErrorToViolation(err);
+
+      expect(violation.type).toBe(ViolationType.ALIAS_CYCLE);
+      expect(violation.severity).toBe('error');
+      expect(violation.cycle).toEqual(['@config/a', '@client/b', '@config/a']);
+      expect((violation as any).suggestion).toContain('/src/a.config.ts');
+      expect((violation as any).suggestion).toContain('/src/b.client.ts');
+    });
+
+    it('converts ALIAS_INVALID into a blocking violation instead of crashing check', () => {
+      const err = new KerithError(
+        'ALIAS_INVALID',
+        'Alias identifier call "Client" has a non-literal name.',
+      );
+
+      const violation = aliasScanErrorToViolation(err);
+
+      expect(violation.type).toBe(ViolationType.ALIAS_SCAN_ERROR);
+      expect(violation.severity).toBe('error');
+      expect(violation.message).toMatch(/non-literal name/);
     });
   });
 

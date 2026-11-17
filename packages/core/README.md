@@ -885,7 +885,7 @@ try {
 
 ### Reserved codes present in the type union but not currently thrown anywhere in `src/`
 
-These exist in `KerithErrorCode` for forward-compatibility, but no current code path constructs a `KerithError` with them: `ALIAS_NOT_FOUND`, `ALIAS_INVALID`, `ALIAS_CONFLICT`, `DUPLICATE_ALIAS`, `UNUSED_SHARED`, `SHARED_SCOPE_VIOLATION`, `MODULE_IN_SHARED`. Of these, `UNUSED_SHARED` and `SHARED_SCOPE_VIOLATION` **are** implemented — just as `kerith check` violation types, not as bootstrap-time exceptions. `RELATIVE_BOUNDARY_VIOLATION` and the other `kerith check`-only violation types are also part of `KerithErrorCode` but are only ever surfaced through the CLI report, not thrown by `createApp()`.
+These exist in `KerithErrorCode` for forward-compatibility, but no current code path constructs a `KerithError` with them: `ALIAS_NOT_FOUND`, `ALIAS_CONFLICT`, `DUPLICATE_ALIAS`, `UNUSED_SHARED`, `SHARED_SCOPE_VIOLATION`, `MODULE_IN_SHARED`. Of these, `UNUSED_SHARED` and `SHARED_SCOPE_VIOLATION` **are** implemented — just as `kerith check` violation types, not as bootstrap-time exceptions. `ALIAS_INVALID` is no longer reserved: the static alias scanner throws it for non-literal names, and the alias runtime throws it for invalid options. `RELATIVE_BOUNDARY_VIOLATION` and the other `kerith check`-only violation types are also part of `KerithErrorCode` but are only ever surfaced through the CLI report, not thrown by `createApp()`.
 
 ---
 

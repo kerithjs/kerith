@@ -11,6 +11,7 @@ import {
 } from '../../core/utils/import-classifier.js';
 import { buildModuleKey } from '../../core/registry.js';
 import type { AliasScanResult } from '../../bootstrap/alias-scan.js';
+import { ALIAS_CHANNEL_PREFIXES } from '../../aliases/virtual-hooks.js';
 
 export const ViolationType = {
   PRIVATE_IMPORT: 'private-import',
@@ -34,6 +35,7 @@ export const ViolationType = {
   // Fase 3 / 7.1
   UNDECLARED_ALIAS: 'undeclared-alias',
   ALIAS_CYCLE: 'alias-cycle',
+  ALIAS_SCAN_ERROR: 'alias-scan-error',
 } as const;
 
 export type ViolationType = typeof ViolationType[keyof typeof ViolationType];
@@ -135,6 +137,12 @@ export function detectRelativeBoundaryViolations(
   return violations;
 }
 
+/** True for `@config/x`, `@client/x`, etc. (including deeper channel subpaths). */
+export function isAliasChannelSpecifier(specifier: string): boolean {
+  if (!specifier.startsWith('@')) return false;
+  return ALIAS_CHANNEL_PREFIXES.has(specifier.slice(1).split('/')[0]);
+}
+
 /**
  * Heuristic to detect private imports and extract target module names.
  * Covers: @modules/name, @domain/module, @domain patterns.
@@ -185,7 +193,7 @@ export function detectViolations(
       // Alias channel imports (@config, @client, @store, @provider, @adapter)
       // are verified separately by detectAliasViolations and must not be treated
       // as cross-domain or cross-module boundaries.
-      if (/^@(config|client|store|provider|adapter)\//.test(imp.specifier)) {
+      if (isAliasChannelSpecifier(imp.specifier)) {
         continue;
       }
 
@@ -441,9 +449,6 @@ export function detectAliasViolations(opts: AliasViolationOptions): StandardViol
   const { table } = aliasScan;
   const violations: StandardViolation[] = [];
 
-  // Known alias-channel prefixes (mirror ALIAS_CHANNEL_PREFIXES from virtual-hooks)
-  const ALIAS_PREFIXES = new Set(['config', 'client', 'store', 'provider', 'adapter']);
-
   // ── 1. UNDECLARED_ALIAS ────────────────────────────────────────────────────
   // Walk every module file's actual imports, find @prefix/name specifiers whose
   // key is NOT in the static table.
@@ -455,7 +460,7 @@ export function detectAliasViolations(opts: AliasViolationOptions): StandardViol
       const parts = spec.split('/');
       if (parts.length !== 2) continue;
       const prefix = parts[0].slice(1); // strip '@'
-      if (!ALIAS_PREFIXES.has(prefix)) continue;
+      if (!ALIAS_CHANNEL_PREFIXES.has(prefix)) continue;
       const key = `${prefix}/${parts[1]}`;
       if (!table.has(key)) {
         // Build "did you mean" suggestions
