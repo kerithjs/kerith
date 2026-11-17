@@ -9,7 +9,7 @@ import {
 } from '../../src/cli/lib/violations.js';
 import { runQualityRules } from '../../src/cli/lib/rules-engine.js';
 import { detectEmptyModules } from '../../src/cli/lib/export-checker.js';
-import { buildModuleGraph, ModuleNode } from '../../src/cli/lib/graph-builder.js';
+import { buildModuleGraph, type ModuleGraph, type ModuleNode } from '../../src/cli/lib/graph-builder.js';
 import { checkCommand, aliasScanErrorToViolation } from '../../src/cli/commands/check.js';
 import { KerithError } from '../../src/core/errors.js';
 import * as configModule from '../../src/core/config.js';
@@ -204,8 +204,8 @@ describe('kerith check', () => {
           internalIdentifiers: []
         }
       ];
-      const mockGraph = {
-        domains: [{ name: 'billing', dirPath: '/billing', indexPath: '/billing/index.ts', modules: ['orders', 'invoices'] }],
+      const mockGraph: ModuleGraph = {
+        domains: [{ name: 'billing', dirPath: '/billing', indexPath: '/billing/index.ts', modules: mockNodes }],
         submodules: [],
         modules: mockNodes
       };
