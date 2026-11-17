@@ -264,10 +264,13 @@ describe('7.1 Escaneo estático del canal alias (bootstrap/alias-scan.ts)', () =
           {
             name: 'users',
             dirPath: '/src/modules/users',
+            indexPath: '/src/modules/users/index.ts',
             declaredImports: [],
             actualImports: [
               { specifier: '@client/non-existent', file: '/src/modules/users/service.ts', line: 5 },
             ],
+            internalIdentifiers: [],
+            declaredExports: [],
           },
         ],
         domains: [],
@@ -296,10 +299,13 @@ describe('7.1 Escaneo estático del canal alias (bootstrap/alias-scan.ts)', () =
           {
             name: 'users',
             dirPath: '/src/modules/users',
+            indexPath: '/src/modules/users/index.ts',
             declaredImports: [],
             actualImports: [
               { specifier: '@client/databse', file: '/src/modules/users/service.ts', line: 5 },
             ],
+            internalIdentifiers: [],
+            declaredExports: [],
           },
         ],
         domains: [],
@@ -323,14 +329,24 @@ describe('7.1 Escaneo estático del canal alias (bootstrap/alias-scan.ts)', () =
             name: 'billing',
             domain: 'finance',
             dirPath: '/src/modules/billing',
+            indexPath: '/src/modules/billing/index.ts',
             declaredImports: [],
             actualImports: [
               { specifier: '@config/app', file: '/src/modules/billing/index.ts', line: 2 },
               { specifier: '@client/database', file: '/src/modules/billing/index.ts', line: 3 },
             ],
+            internalIdentifiers: [],
+            declaredExports: [],
           },
         ],
-        domains: [{ name: 'finance', dirPath: '/src/domains/finance' }],
+        domains: [
+          {
+            name: 'finance',
+            dirPath: '/src/domains/finance',
+            indexPath: '/src/domains/finance/index.ts',
+            modules: [],
+          },
+        ],
         submodules: [],
       };
 

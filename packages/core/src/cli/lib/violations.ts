@@ -422,7 +422,7 @@ export interface AliasViolationOptions {
   /**
    * Absolute path to the project root (for relative-path display).
    */
-  cwd: string;
+  cwd?: string;
 }
 
 /**
@@ -435,7 +435,7 @@ export interface AliasViolationOptions {
  *  - `ALIAS_CYCLE` for every cycle detected in the alias dep-graph (DFS).
  */
 export function detectAliasViolations(opts: AliasViolationOptions): StandardViolation[] {
-  const { aliasScan, graph, cwd } = opts;
+  const { aliasScan, graph } = opts;
   if (!aliasScan) return [];
 
   const { table } = aliasScan;

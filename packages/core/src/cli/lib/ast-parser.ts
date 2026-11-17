@@ -340,7 +340,7 @@ export async function extractMultipleIdentifierCalls(
   options?: ExtractMultipleOptions,
 ): Promise<IdentifierCall[]> {
   const found: IdentifierCall[] = [];
-  let code = "";
+  let code: string;
 
   try {
     code = await fs.promises.readFile(filePath, "utf-8");

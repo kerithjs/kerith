@@ -44,18 +44,23 @@ export async function runVirtualAliases(ctx: BootstrapContext): Promise<void> {
       if (scan.table.size > 0) {
         getAliasRuntime().setTable(scan.table);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Errors that indicate broken app design abort bootstrap (design contract).
+      const code = err && typeof err === 'object' && 'code' in err ? (err as { code: string }).code : undefined;
       if (
-        err?.code === 'ALIAS_CIRCULAR' ||
-        err?.code === 'DUPLICATE_ALIAS_IDENTIFIER' ||
-        err?.code === 'DUPLICATE_EXTENSION_PROVIDER' ||
-        err?.code === 'ALIAS_INVALID'
+        code === 'ALIAS_CIRCULAR' ||
+        code === 'DUPLICATE_ALIAS_IDENTIFIER' ||
+        code === 'DUPLICATE_EXTENSION_PROVIDER' ||
+        code === 'ALIAS_INVALID'
       ) {
         throw err;
       }
       const msg = err instanceof Error ? err.message : String(err);
-      (ctx.log?.warn ?? console.warn)(`[alias-scan] Static alias scan failed: ${msg}`);
+      if (ctx.log) {
+        ctx.log.warn(`[alias-scan] Static alias scan failed: ${msg}`, { _module: 'alias' });
+      } else {
+        console.warn(`[alias-scan] Static alias scan failed: ${msg}`);
+      }
     }
   }
 
