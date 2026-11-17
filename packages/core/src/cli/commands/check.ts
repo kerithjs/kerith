@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import pc from 'picocolors';
 import { loadConfig } from '../../core/config.js';
 import { buildModuleGraph } from '../lib/graph-builder.js';
-import { detectViolations, ViolationType, isHardViolation } from '../lib/violations.js';
+import { detectViolations, detectAliasViolations, ViolationType, isHardViolation } from '../lib/violations.js';
 import { runQualityRules } from '../lib/rules-engine.js';
 import { printCheckReport, AYU, type CheckReportData } from '../lib/check-reporter.js';
 import { loadNitsRegistry, saveNitsRegistry, initNitsRegistry, inferProjectName, scanShadowFiles } from '../../nits/nits-store.js';
@@ -17,6 +17,7 @@ import { createRegistry, registryContext, buildModuleKey } from '../../core/regi
 import { registerEntitiesFromScan } from '../../bootstrap/register-from-scan.js';
 import { scanFromConfig } from '../../bootstrap/scanner.js';
 import { loadDomainRegistry } from '../../nits/domain-store.js';
+import { scanAliasDeclarations, type AliasScanResult } from '../../bootstrap/alias-scan.js';
 
 function resolveCorePkgVersion(): string | null {
   const depths = [
@@ -196,6 +197,35 @@ export function checkCommand(): Command {
         // Add shared access violations (system level)
         const sharedViolations = await checkSharedAccess(graph, registry, cwd);
         systemViolations = [...systemViolations, ...sharedViolations];
+
+        // Add alias-channel violations (Fase 3 / 7.1)
+        const originPath = config.origin
+          ? path.resolve(cwd, config.origin)
+          : path.resolve(cwd, 'src');
+
+        let aliasScan: AliasScanResult | undefined;
+        try {
+          aliasScan = await scanAliasDeclarations({ originPath });
+        } catch (err: any) {
+          if (err?.code === 'ALIAS_CIRCULAR') {
+            systemViolations.push({
+              type: ViolationType.ALIAS_CYCLE,
+              severity: 'error',
+              module: '',
+              message: err.message,
+              suggestion: 'Break the circular dependency between aliases.',
+            });
+          }
+        }
+
+        if (aliasScan) {
+          const aliasViolations = detectAliasViolations({
+            aliasScan,
+            graph,
+            cwd,
+          });
+          systemViolations = [...systemViolations, ...aliasViolations];
+        }
 
         // Run all quality rules via the unified engine
         const qualityWarnings = runQualityRules(graph, config.resolvedRules);

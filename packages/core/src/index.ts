@@ -32,6 +32,12 @@ export type {
   AliasIdentifierOptions,
   AliasRuntime,
 } from './aliases/runtime.js';
+export {
+  scanAliasDeclarations,
+  type AliasScanEntry,
+  type AliasScanResult,
+  type AliasScanOptions,
+} from './bootstrap/alias-scan.js';
 export * from './core/config.js';
 export * from './core/logger.js';
 export * from './core/http-logger.js';
