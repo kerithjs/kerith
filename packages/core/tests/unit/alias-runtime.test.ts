@@ -1,3 +1,5 @@
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   getAliasRuntime,
@@ -24,7 +26,7 @@ describe('AliasRuntime (core/src/aliases/runtime.ts)', () => {
 
   it('normalizes file URLs canonically', () => {
     const normal = normalizeCanonicalFileUrl('/some/path/db.ts');
-    expect(normal).toBe('file:///some/path/db.ts');
+    expect(normal).toBe(pathToFileURL(path.resolve('/some/path/db.ts')).href);
 
     const withQuery = normalizeCanonicalFileUrl('file:///some/path/db.ts?hash=123#frag');
     expect(withQuery).toBe('file:///some/path/db.ts');

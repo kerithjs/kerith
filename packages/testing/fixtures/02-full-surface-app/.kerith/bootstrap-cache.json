@@ -1,7 +1,7 @@
 {
   "version": "2.0.0-alpha.1",
   "status": "ok",
-  "savedAt": "2026-11-09T17:38:08.864Z",
+  "savedAt": "2026-11-18T18:50:12.147Z",
   "cwd": "C:\\Users\\work\\Documents\\kerith\\packages\\testing\\fixtures\\02-full-surface-app",
   "configHash": "297d8d5c",
   "data": {
@@ -24,8 +24,8 @@
         ],
         "identifiers": [],
         "aliases": [],
-        "cachedSize": 883,
-        "cachedMtime": 1792428988907.4832
+        "cachedSize": 867,
+        "cachedMtime": 1795026443011.7673
       },
       {
         "name": "health",
