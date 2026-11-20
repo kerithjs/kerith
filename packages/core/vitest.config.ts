@@ -13,7 +13,10 @@ export default defineConfig({
       exclude: [
         'tests/**',
         'dist/**',
-        'src/cli/index.ts',   // CLI entry point — no logic to test
+        'src/cli/index.ts',          // CLI entry point — no logic to test
+        'src/identifiers/module.ts', // Pure barrel re-export, no logic
+        'src/types/**',              // Type-only files, nothing executable
+        'src/**/*.types.ts',         // Interface/type declaration files
       ],
       thresholds: {
         lines: 85,
