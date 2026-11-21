@@ -5,6 +5,7 @@ import pc from 'picocolors';
 import { loadConfig } from '../../core/config.js';
 import { generatePreloadFile } from '../lib/preload-generator.js';
 import { createLogger, defaultLogHandler } from '../../core/logger.js';
+import { generateAliasTable, writeAliasTableFile } from '../../bootstrap/alias-table.js';
 
 const getPkg = () => {
   const depths = ['../package.json', '../../package.json', '../../../package.json'];
@@ -55,21 +56,38 @@ export async function runSyncPreload(logger: any, silent: boolean = false) {
         if (!silent) {
             logger.info('Pre-loader is already up to date (no changes).', { _module: 'alias' });
         }
-        return;
+    } else {
+        try {
+            fs.writeFileSync(preloadPath, newContent, 'utf8');
+            logger.info(`Pre-loader updated at ${pc.cyan('.kerith/preload.js')}`, { _module: 'alias' });
+        } catch (err: any) {
+            if (err.code === 'EACCES') {
+                logger.error('Cannot write to .kerith/preload.js — permission denied.', { _module: 'alias' });
+            } else {
+                logger.error(`Cannot write to .kerith/preload.js: ${err.message}`, { _module: 'alias' });
+            }
+            throw err;
+        }
     }
 
+    // ── Generate & sync .kerith/alias-table.json (7.2 D9) ────────────────────
     try {
-        fs.writeFileSync(preloadPath, newContent, 'utf8');
-    } catch (err: any) {
-        if (err.code === 'EACCES') {
-            logger.error('Cannot write to .kerith/preload.js — permission denied.', { _module: 'alias' });
-        } else {
-            logger.error(`Cannot write to .kerith/preload.js: ${err.message}`, { _module: 'alias' });
+        const originPath = config.origin
+            ? path.resolve(cwd, config.origin)
+            : path.resolve(cwd, 'src');
+        const tableFile = await generateAliasTable({
+            cwd,
+            originPath,
+            warn: (msg) => logger.warn(msg, { _module: 'alias' }),
+        });
+        writeAliasTableFile(cwd, tableFile);
+        if (!silent) {
+            const count = Object.keys(tableFile.entries).length;
+            logger.info(`Alias table synchronized at ${pc.cyan('.kerith/alias-table.json')} (${count} entries)`, { _module: 'alias' });
         }
-        throw err;
+    } catch (err: any) {
+        logger.warn(`Could not sync alias table: ${err.message}`, { _module: 'alias' });
     }
-    
-    logger.info(`Pre-loader updated at ${pc.cyan('.kerith/preload.js')}`, { _module: 'alias' });
 
     if (!silent) {
         const ext = fs.existsSync(path.join(cwd, 'kerith.config.ts')) ? 'ts' : 'js';

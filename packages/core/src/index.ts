@@ -38,6 +38,20 @@ export {
   type AliasScanResult,
   type AliasScanOptions,
 } from './bootstrap/alias-scan.js';
+export {
+  generateAliasTable,
+  writeAliasTableFile,
+  readAliasTableFile,
+  getAliasTablePath,
+  isRuntimeDistMode,
+  selectAliasTarget,
+  resolveTsConfigOptions,
+  computeDistPath,
+  type AliasTableFile,
+  type AliasTableFileEntry,
+  type CachedAliasEntry,
+} from './bootstrap/alias-table.js';
+export { CACHE_SCHEMA_VERSION } from './cache/bootstrap-cache.js';
 export * from './core/config.js';
 export * from './core/logger.js';
 export * from './core/http-logger.js';

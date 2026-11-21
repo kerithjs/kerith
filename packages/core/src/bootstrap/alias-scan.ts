@@ -46,11 +46,14 @@
  */
 
 import fs from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import fg from 'fast-glob';
 import { KerithError } from '../core/errors.js';
 import { ALIAS_CHANNEL_PREFIXES } from '../aliases/virtual-hooks.js';
 import { extractMultipleIdentifierCalls } from '../cli/lib/ast-parser.js';
+import { validateAliasFiles } from '../cache/mtime-validator.js';
+import type { CachedAliasEntry } from './alias-table.js';
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -66,6 +69,10 @@ export interface AliasScanEntry {
   filePath: string;
   /** Keys of `@prefix/name` imports detected as direct static deps of this alias's file */
   deps: string[];
+  /** File mtime in ms (for cache validation) */
+  mtimeMs?: number;
+  /** File size in bytes (for cache validation) */
+  size?: number;
 }
 
 export interface AliasScanResult {
@@ -79,7 +86,7 @@ export interface AliasScanResult {
 export const ALIAS_CALLEE_NAMES = ['Config', 'Client', 'Store', 'Provider', 'Adapter'];
 
 /** Word-boundary probe for the pre-filter (also matches `Client as K`). */
-const ALIAS_CALLEE_WORD_RE = new RegExp(`\\b(?:${ALIAS_CALLEE_NAMES.join('|')})\\b`);
+export const ALIAS_CALLEE_WORD_RE = new RegExp(`\\b(?:${ALIAS_CALLEE_NAMES.join('|')})\\b`);
 
 // ─── Cycle detection (DFS with stack) ────────────────────────────────────────
 
@@ -88,7 +95,7 @@ const ALIAS_CALLEE_WORD_RE = new RegExp(`\\b(?:${ALIAS_CALLEE_NAMES.join('|')})\
  * Returns the cycle as an ordered list of keys (first = entry point, repeated
  * at the end), or `null` if there is no cycle.
  */
-function detectCycle(
+export function detectCycle(
   startKey: string,
   depGraph: Map<string, string[]>,
 ): string[] | null {
@@ -116,7 +123,7 @@ function detectCycle(
 
 // ─── Extract static alias imports from file content ──────────────────────────
 
-function extractStaticAliasImports(code: string): string[] {
+export function extractStaticAliasImports(code: string): string[] {
   const aliasImports: string[] = [];
   const importRegex = /(?:from\s+|import\s*\()\s*['"]@([a-z]+)\/([a-z0-9_-]+)['"]/g;
   let m: RegExpExecArray | null;
@@ -143,6 +150,11 @@ export interface AliasScanOptions {
    * based pattern. Relative to `originPath`.
    */
   extraGlobs?: string[];
+  /**
+   * Optional cached alias declarations from bootstrap-cache.json.
+   * If provided, only files that are new or whose mtime/size changed are re-parsed.
+   */
+  cachedAliases?: CachedAliasEntry[];
 }
 
 /**
@@ -183,16 +195,61 @@ export async function scanAliasDeclarations(opts: AliasScanOptions): Promise<Ali
     ],
   });
 
-  // ── 2. Parse each file ───────────────────────────────────────────────────
+  // ── 2. Parse candidate files (incremental if cache provided) ────────────
   const entries: AliasScanEntry[] = [];
   const table = new Map<string, string>();
   const depGraph = new Map<string, string[]>(); // key → dep keys
   const keyToFile = new Map<string, string>();  // for dup detection
+  const statsByFile = new Map<string, { mtimeMs: number; size: number }>();
+
+  // If cachedAliases provided, determine which files need parsing
+  const { dirtyFiles, unchangedEntries } = validateAliasFiles(opts.cachedAliases, files);
+
+  // Group unchanged entries by file
+  const unchangedByFile = new Map<string, CachedAliasEntry[]>();
+  for (const u of unchangedEntries) {
+    const abs = u.filePath.startsWith('file://') ? fileURLToPath(u.filePath) : u.filePath;
+    const norm = path.resolve(abs);
+    if (!unchangedByFile.has(norm)) unchangedByFile.set(norm, []);
+    unchangedByFile.get(norm)!.push(u);
+  }
 
   for (const absFile of files) {
+    const normFile = path.resolve(absFile);
+    const canonicalUrl = pathToFileURL(absFile).href;
+
+    // Check if we can reuse unchanged cache entries for this file
+    if (!dirtyFiles.has(normFile) && unchangedByFile.has(normFile)) {
+      const cachedList = unchangedByFile.get(normFile)!;
+      for (const c of cachedList) {
+        if (keyToFile.has(c.key)) {
+          const existing = keyToFile.get(c.key)!;
+          if (existing !== canonicalUrl) {
+            throw new KerithError(
+              'DUPLICATE_EXTENSION_PROVIDER',
+              `Alias "@${c.key}" is declared in two different files:`,
+              `  1. ${existing}\n  2. ${canonicalUrl}`,
+            );
+          } else {
+            throw new KerithError(
+              'DUPLICATE_ALIAS_IDENTIFIER',
+              `Alias "@${c.key}" is declared more than once in ${canonicalUrl}.`,
+            );
+          }
+        }
+        keyToFile.set(c.key, canonicalUrl);
+        table.set(c.key, canonicalUrl);
+        depGraph.set(c.key, [...c.deps]);
+        statsByFile.set(c.key, { mtimeMs: c.mtimeMs, size: c.size });
+      }
+      continue;
+    }
+
     let code: string;
+    let fileStats: fs.Stats;
     try {
       code = fs.readFileSync(absFile, 'utf-8');
+      fileStats = fs.statSync(absFile);
     } catch {
       continue;
     }
@@ -200,8 +257,6 @@ export async function scanAliasDeclarations(opts: AliasScanOptions): Promise<Ali
     // Pre-filter: skip files that never mention an alias identifier. Word
     // boundaries keep `Client as K` and `Client ('db')` from being skipped.
     if (!ALIAS_CALLEE_WORD_RE.test(code)) continue;
-
-    const canonicalUrl = pathToFileURL(absFile).href;
 
     // Use extractMultipleIdentifierCalls from ast-parser
     const calls = await extractMultipleIdentifierCalls(absFile, ALIAS_CALLEE_NAMES, {
@@ -234,6 +289,7 @@ export async function scanAliasDeclarations(opts: AliasScanOptions): Promise<Ali
 
       keyToFile.set(key, canonicalUrl);
       table.set(key, canonicalUrl);
+      statsByFile.set(key, { mtimeMs: fileStats.mtimeMs, size: fileStats.size });
     }
 
     // Extract @prefix/name imports in this file for dependency graph
@@ -279,7 +335,16 @@ export async function scanAliasDeclarations(opts: AliasScanOptions): Promise<Ali
     const prefix = key.slice(0, slashIdx);
     const name = key.slice(slashIdx + 1);
     const deps = (depGraph.get(key) ?? []).filter((d) => table.has(d));
-    entries.push({ prefix, name, key, filePath, deps });
+    const stats = statsByFile.get(key);
+    entries.push({
+      prefix,
+      name,
+      key,
+      filePath,
+      deps,
+      mtimeMs: stats?.mtimeMs,
+      size: stats?.size,
+    });
   }
 
   return { entries, table };

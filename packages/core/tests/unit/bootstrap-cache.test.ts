@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { CacheManager } from '../../src/cache/bootstrap-cache.js';
+import { CacheManager, CACHE_SCHEMA_VERSION } from '../../src/cache/bootstrap-cache.js';
 import { MtimeValidator } from '../../src/cache/mtime-validator.js';
 
 describe('CacheManager', () => {
@@ -119,8 +119,16 @@ describe('CacheManager', () => {
   });
 
   it('5.1.12 — CacheManager.valid() returns true when everything matches', () => {
-    const cache = { status: 'ok' as const, version: '2.0.0', configHash: 'hash', cwd: tmpDir, data: {} as any };
+    const cache = { status: 'ok' as const, version: '2.0.0', schemaVersion: CACHE_SCHEMA_VERSION, configHash: 'hash', cwd: tmpDir, data: {} as any };
     expect(CacheManager.valid(cache, '2.0.0', 'hash')).toBe(true);
+  });
+
+  it('5.1.12b — CacheManager.valid() returns false if schemaVersion mismatch or missing', () => {
+    const cacheOld = { status: 'ok' as const, version: '2.0.0', configHash: 'hash', cwd: tmpDir, data: {} as any };
+    expect(CacheManager.valid(cacheOld, '2.0.0', 'hash')).toBe(false);
+
+    const cacheDiffSchema = { status: 'ok' as const, version: '2.0.0', schemaVersion: 999, configHash: 'hash', cwd: tmpDir, data: {} as any };
+    expect(CacheManager.valid(cacheDiffSchema, '2.0.0', 'hash')).toBe(false);
   });
 
   it('5.1.13 — CacheManager.invalidate() elimina el archivo', () => {
