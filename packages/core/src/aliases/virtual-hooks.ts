@@ -21,10 +21,15 @@ export type NextLoad = (
   context?: LoadHookContext
 ) => { shortCircuit?: boolean; format: string; source: string | ArrayBuffer | Uint8Array };
 
+export const VIRTUAL_HOOKS_REGISTERED_KEY = Symbol.for('kerith.virtual-hooks-registered');
+
 let virtualHookRegistration: { deregister: () => void } | null = null;
 
 export function isVirtualAliasHookRegistered(): boolean {
-  return virtualHookRegistration !== null;
+  return (
+    virtualHookRegistration !== null ||
+    (globalThis as any)[VIRTUAL_HOOKS_REGISTERED_KEY] === true
+  );
 }
 
 /**
@@ -114,15 +119,18 @@ export function createVirtualAliasHooks() {
 /**
  * Registers the virtual alias hooks idempotently.
  *
- * If resolveAliases is false, this is a no-op.
- * Re-registering deregisters any previous registration to ensure LIFO precedence.
+ * If resolveAliases is false, this is a no-op (or deregisters previous registration).
+ * If already registered (e.g. by preload.js), this is a no-op unless options.force is true.
  */
-export function registerVirtualAliasHooks(options: { resolveAliases?: boolean } = {}): void {
+export function registerVirtualAliasHooks(
+  options: { resolveAliases?: boolean; force?: boolean } = {},
+): void {
   if (options.resolveAliases === false) {
     if (virtualHookRegistration) {
       virtualHookRegistration.deregister();
       virtualHookRegistration = null;
     }
+    delete (globalThis as any)[VIRTUAL_HOOKS_REGISTERED_KEY];
     return;
   }
 
@@ -130,7 +138,12 @@ export function registerVirtualAliasHooks(options: { resolveAliases?: boolean } 
     return;
   }
 
-  // Deregister previous registration if exists so the new one takes LIFO front position
+  // Idempotence: if already registered, createApp (or subsequent calls) does not re-register
+  if (!options.force && isVirtualAliasHookRegistered()) {
+    return;
+  }
+
+  // Deregister previous registration if force re-registering
   if (virtualHookRegistration) {
     virtualHookRegistration.deregister();
     virtualHookRegistration = null;
@@ -138,6 +151,7 @@ export function registerVirtualAliasHooks(options: { resolveAliases?: boolean } 
 
   const hooks = createVirtualAliasHooks();
   virtualHookRegistration = registerHooks(hooks);
+  (globalThis as any)[VIRTUAL_HOOKS_REGISTERED_KEY] = true;
 }
 
 /** @internal exclusively for tests */
@@ -146,5 +160,6 @@ export function clearVirtualAliasHooks(): void {
     virtualHookRegistration.deregister();
     virtualHookRegistration = null;
   }
+  delete (globalThis as any)[VIRTUAL_HOOKS_REGISTERED_KEY];
 }
 

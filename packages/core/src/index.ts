@@ -56,6 +56,7 @@ export * from './core/config.js';
 export * from './core/logger.js';
 export * from './core/http-logger.js';
 export * from './preload/index.js';
+export { initPreloadVirtualAliases } from './preload/preload-hook.js';
 export * from './extension/index.js';
 export { resetGlobalState } from './core/state.js';
 

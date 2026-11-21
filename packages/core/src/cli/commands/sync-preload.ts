@@ -5,7 +5,7 @@ import pc from 'picocolors';
 import { loadConfig } from '../../core/config.js';
 import { generatePreloadFile } from '../lib/preload-generator.js';
 import { createLogger, defaultLogHandler } from '../../core/logger.js';
-import { generateAliasTable, writeAliasTableFile } from '../../bootstrap/alias-table.js';
+import { readAliasTableFile } from '../../bootstrap/alias-table.js';
 
 const getPkg = () => {
   const depths = ['../package.json', '../../package.json', '../../../package.json'];
@@ -42,7 +42,9 @@ export async function runSyncPreload(logger: any, silent: boolean = false) {
     }
 
     const preloadPath = path.join(kerithDir, 'preload.js');
-    const newContent = await generatePreloadFile(config, pkg.version, cwd);
+    const newContent = await generatePreloadFile(config, pkg.version, cwd, {
+        warn: (msg) => logger.warn(msg, { _module: 'alias' }),
+    });
 
     let isIdentical = false;
     if (fs.existsSync(preloadPath)) {
@@ -70,18 +72,10 @@ export async function runSyncPreload(logger: any, silent: boolean = false) {
         }
     }
 
-    // ── Generate & sync .kerith/alias-table.json (7.2 D9) ────────────────────
+    // ── Alias table sync log (written during generatePreloadFile) ─────────────
     try {
-        const originPath = config.origin
-            ? path.resolve(cwd, config.origin)
-            : path.resolve(cwd, 'src');
-        const tableFile = await generateAliasTable({
-            cwd,
-            originPath,
-            warn: (msg) => logger.warn(msg, { _module: 'alias' }),
-        });
-        writeAliasTableFile(cwd, tableFile);
-        if (!silent) {
+        const tableFile = readAliasTableFile(cwd);
+        if (!silent && tableFile) {
             const count = Object.keys(tableFile.entries).length;
             logger.info(`Alias table synchronized at ${pc.cyan('.kerith/alias-table.json')} (${count} entries)`, { _module: 'alias' });
         }

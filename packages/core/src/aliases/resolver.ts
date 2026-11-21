@@ -119,7 +119,7 @@ export async function activateAliasResolver(moduleAliases: Record<string, string
 
       // If virtual alias hook was active, re-register it so it sits at the top (LIFO precedence)
       if (isVirtualAliasHookRegistered()) {
-        registerVirtualAliasHooks();
+        registerVirtualAliasHooks({ force: true });
       }
 
       log.info(`ESM alias hook activated (${Object.keys(combinedAliases).length} alias(es))`, {

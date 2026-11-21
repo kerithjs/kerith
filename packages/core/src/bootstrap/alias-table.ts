@@ -86,10 +86,13 @@ export function computeDistPath(
   const normSrc = path.resolve(srcAbsPath);
   let rel: string;
 
-  if (rootDir && normSrc.startsWith(path.resolve(rootDir))) {
-    rel = path.relative(path.resolve(rootDir), normSrc);
-  } else if (originPath && normSrc.startsWith(path.resolve(originPath))) {
-    rel = path.relative(path.resolve(originPath), normSrc);
+  const normRootDir = rootDir ? path.resolve(rootDir) : undefined;
+  const normOrigin = originPath ? path.resolve(originPath) : undefined;
+
+  if (normRootDir && (normSrc === normRootDir || normSrc.startsWith(normRootDir + path.sep))) {
+    rel = path.relative(normRootDir, normSrc);
+  } else if (normOrigin && (normSrc === normOrigin || normSrc.startsWith(normOrigin + path.sep))) {
+    rel = path.relative(normOrigin, normSrc);
   } else {
     rel = path.relative(cwd, normSrc);
   }
