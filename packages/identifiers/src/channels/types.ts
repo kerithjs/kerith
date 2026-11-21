@@ -13,6 +13,8 @@ export interface AliasPlugin {
   filePath: string;
   /** Factory that returns the real instance */
   resolve: () => unknown;
+  /** Configuration options */
+  options?: Record<string, unknown>;
 }
 
 /**

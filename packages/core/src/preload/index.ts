@@ -1,3 +1,5 @@
+import type { AliasTableFileEntry } from '../bootstrap/alias-table.js';
+
 /**
  * Shape of the configuration object embedded in `.kerith/preload.js`
  * and stored in `globalThis.__KERITH_PRELOAD_CONFIG__` at runtime.
@@ -9,6 +11,8 @@ export interface PreloadConfig {
   modulesDir: string;
   /** All aliases resolved to absolute paths at sync-preload time. */
   aliases: Record<string, string>;
+  /** Alias channel table mapping key -> { src, dist?, deps } */
+  aliasTable?: Record<string, AliasTableFileEntry>;
   /** Always `true` — used as a type-safe discriminator. */
   preloaded: true;
   /** Version of `Kerith-core` that generated this file. Used for mismatch detection. */

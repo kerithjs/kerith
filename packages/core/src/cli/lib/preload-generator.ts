@@ -7,8 +7,40 @@ const HOOK_URL = '@kerith/core/preload-hook';
 
 
 import { scanFromConfig } from '../../bootstrap/scanner.js';
+import {
+  generateAliasTable,
+  writeAliasTableFile,
+  type AliasTableFile,
+} from '../../bootstrap/alias-table.js';
 
-export async function generatePreloadFile(config: KerithConfig, version: string, cwd: string): Promise<string> {
+export interface GeneratePreloadOptions {
+  warn?: (msg: string) => void;
+  writeTable?: boolean;
+  tableFile?: AliasTableFile;
+}
+
+export async function generatePreloadFile(
+  config: KerithConfig,
+  version: string,
+  cwd: string,
+  options?: GeneratePreloadOptions,
+): Promise<string> {
+  const originPath = config.origin
+    ? path.resolve(cwd, config.origin)
+    : path.resolve(cwd, 'src');
+
+  let tableFile: AliasTableFile;
+  try {
+    tableFile =
+      options?.tableFile ??
+      (await generateAliasTable({ cwd, originPath, warn: options?.warn }));
+    if (options?.writeTable !== false) {
+      writeAliasTableFile(cwd, tableFile);
+    }
+  } catch {
+    tableFile = { version, entries: {} };
+  }
+
   let modulesBase = '';
   if (config.origin) {
     modulesBase = config.origin.replace(/\\/g, '/');
@@ -97,7 +129,7 @@ export async function generatePreloadFile(config: KerithConfig, version: string,
 import { registerHooks } from 'node:module';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { createResolveHook } from '${hookUrl}';
+import { createResolveHook, initPreloadVirtualAliases } from '${hookUrl}';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -107,6 +139,7 @@ const KERITH_PRELOAD_CONFIG = {
   aliases: {
 ${aliasesEntries}
   },
+  aliasTable: ${JSON.stringify(tableFile.entries, null, 2)},
   preloaded: true,
   _version: '${escapeStr(version)}'
 };
@@ -120,5 +153,8 @@ const resolveHook = createResolveHook(KERITH_PRELOAD_CONFIG.aliases);
 registerHooks({
   resolve: resolveHook
 });
+
+// Initialize virtual alias runtime table and register virtual hooks ({ resolve, load })
+initPreloadVirtualAliases(KERITH_PRELOAD_CONFIG.aliasTable, resolve(__dirname, '..'), KERITH_PRELOAD_CONFIG._version);
 `;
 }

@@ -14,3 +14,4 @@ export const HTTP_CLIENT = {
 }
 
 Client('http', () => HTTP_CLIENT)
+export default HTTP_CLIENT

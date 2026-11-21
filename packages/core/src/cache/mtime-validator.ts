@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { BootstrapCache } from './bootstrap-cache.js';
 import type { KerithConfig } from '../config/kerith-config.types.js';
+import type { CachedAliasEntry } from '../bootstrap/alias-table.js';
 
 export interface MtimeValidationResult {
   toRescan: string[];        // domain IDs that need to be rescanned
@@ -198,6 +200,63 @@ function detectNewSubModuleDirs(cache: BootstrapCache): Set<string> {
   return dirty;
 }
 
+export interface AliasFilesValidationResult {
+  /** Absolute file paths that are new or whose mtime/size has changed */
+  dirtyFiles: Set<string>;
+  /** Cached declarations belonging to files that are unchanged */
+  unchangedEntries: CachedAliasEntry[];
+}
+
+/**
+ * Validates alias candidate files against cached alias declarations.
+ * Returns which files need re-parsing and which cached entries can be preserved.
+ */
+export function validateAliasFiles(
+  cachedAliases: CachedAliasEntry[] | undefined,
+  currentCandidateFiles: string[],
+): AliasFilesValidationResult {
+  const dirtyFiles = new Set<string>();
+  const unchangedEntries: CachedAliasEntry[] = [];
+
+  if (!cachedAliases || cachedAliases.length === 0) {
+    for (const f of currentCandidateFiles) dirtyFiles.add(path.resolve(f));
+    return { dirtyFiles, unchangedEntries };
+  }
+
+  const cachedByFile = new Map<string, CachedAliasEntry[]>();
+  for (const entry of cachedAliases) {
+    const abs = entry.filePath.startsWith('file://')
+      ? fileURLToPath(entry.filePath)
+      : path.resolve(entry.filePath);
+    const norm = path.resolve(abs);
+    if (!cachedByFile.has(norm)) cachedByFile.set(norm, []);
+    cachedByFile.get(norm)!.push(entry);
+  }
+
+  for (const file of currentCandidateFiles) {
+    const norm = path.resolve(file);
+    const cachedList = cachedByFile.get(norm);
+    if (!cachedList || cachedList.length === 0) {
+      dirtyFiles.add(norm);
+      continue;
+    }
+
+    try {
+      const stats = fs.statSync(norm);
+      const first = cachedList[0];
+      if (stats.mtimeMs === first.mtimeMs && stats.size === first.size) {
+        unchangedEntries.push(...cachedList);
+      } else {
+        dirtyFiles.add(norm);
+      }
+    } catch {
+      dirtyFiles.add(norm);
+    }
+  }
+
+  return { dirtyFiles, unchangedEntries };
+}
+
 export const MtimeValidator = {
   validate(
     cache: BootstrapCache,
@@ -253,4 +312,5 @@ export const MtimeValidator = {
       toRescan: Array.from(toRescanSet),
     };
   },
+  validateAliases: validateAliasFiles,
 };

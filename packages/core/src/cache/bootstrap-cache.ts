@@ -4,8 +4,12 @@ import crypto from 'node:crypto';
 
 import type { DomainScanEntry, SubModuleScanEntry, ModuleScanEntry } from '../bootstrap/scanner.js';
 import type { SharedEntry } from '../types/index.js';
+import type { CachedAliasEntry } from '../bootstrap/alias-table.js';
 
 export type CacheStatus = 'pending' | 'ok' | 'failed';
+
+/** Schema version for the cache structure. Upgraded to 2 for Fase 3 / 7.2. */
+export const CACHE_SCHEMA_VERSION = 2;
 
 export interface CachedModule extends ModuleScanEntry {
   id: string;           // NITS ID — mod_{hex}
@@ -18,13 +22,14 @@ export interface CachedModule extends ModuleScanEntry {
 
 /**
  * The cache optimizes the file-system scan and AST parsing (which are the most expensive
- * steps of the first boot). It does NOT skip the dynamic \`import()\` of the modules.
+ * steps of the first boot). It does NOT skip the dynamic `import()` of the modules.
  * This is intentional: modules may have side-effects in their index.ts files that must
- * run. The \`import()\` is cheap on boots 2+ because Node.js retains the compiled module
+ * run. The `import()` is cheap on boots 2+ because Node.js retains the compiled module
  * in its internal memory cache, ensuring subsequent boots remain extremely fast.
  */
 export interface BootstrapCache {
   version: string;       // installed version
+  schemaVersion?: number; // cache schema version (2 in 7.2)
   status: CacheStatus;
   savedAt?: string;      // ISO 8601
   cwd?: string;          // origin directory to prevent cross-dir cache bleed
@@ -35,7 +40,7 @@ export interface BootstrapCache {
     submodules: SubModuleScanEntry[];
     shared: SharedEntry[];
     identifiers: unknown[];
-    aliases: unknown[];
+    aliases: CachedAliasEntry[];
   };
   error?: string;        // only if status === 'failed'
 }
@@ -91,6 +96,7 @@ export const CacheManager = {
       
       const cache: BootstrapCache = {
         version,
+        schemaVersion: CACHE_SCHEMA_VERSION,
         status: 'ok',
         savedAt: new Date().toISOString(),
         cwd: process.cwd(),
@@ -126,6 +132,7 @@ export const CacheManager = {
   valid(cache: BootstrapCache, currentVersion: string, currentConfigHash: string): boolean {
     if (cache.status !== 'ok') return false;
     if (cache.version !== currentVersion) return false;
+    if (cache.schemaVersion !== CACHE_SCHEMA_VERSION) return false;
     if (cache.configHash !== currentConfigHash) return false;
     if (cache.cwd && cache.cwd !== process.cwd()) return false;
     return true;

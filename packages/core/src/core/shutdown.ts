@@ -1,14 +1,19 @@
 import type { Server } from 'node:http';
 import type { Logger } from '../types/index.js';
 import { getRegisteredScheduleProviders } from '../extension/store.js';
+import { getAliasRuntime } from '../aliases/runtime.js';
 
 // ─── Shutdown Manager ─────────────────────────────────────────────────────────
 //
 // Coordinates a single, ordered shutdown sequence:
 //
 //   1. Close the HTTP server (stop accepting new connections).
-//   2. Run the user's `onShutdown()` hook (DB close, cleanup, etc.).
-//   3. Exit with code 0.
+//   2. Run the `on-shutdown` extension schedules.
+//   3. Run the user's `onShutdown()` hook (DB close, cleanup, etc.).
+//   4. Dispose resolved alias instances in reverse resolution order (LIFO),
+//      with a 5000 ms budget per alias. Errors are logged and never abort the
+//      remaining disposals.
+//   5. Exit with code 0.
 //
 // Both SIGINT (Ctrl+C) and SIGTERM (kill / process manager) are handled.
 // A guard prevents double-execution if both signals fire simultaneously.
@@ -25,8 +30,10 @@ export interface ShutdownManagerOptions {
 /**
  * Registers SIGINT and SIGTERM handlers that perform a graceful shutdown:
  *  1. Closes the HTTP server (stops new connections).
- *  2. Runs the optional `onShutdown` hook.
- *  3. Calls `process.exit(0)`.
+ *  2. Runs `on-shutdown` extension schedules.
+ *  3. Runs the optional `onShutdown` hook.
+ *  4. Disposes resolved alias instances (LIFO, 5s per alias).
+ *  5. Calls `process.exit(0)`.
  *
  * @returns A `shutdown()` function you can call programmatically (e.g. in tests) which also contains an `.unregister()` method to remove the listeners.
  */
@@ -79,6 +86,14 @@ export function registerShutdown(options: ShutdownManagerOptions): import('../ty
         const message = err instanceof Error ? err.message : String(err);
         logger.error(`onShutdown hook threw an error: ${message}`, { _module: 'shutdown' });
       }
+    }
+
+    // ─── Step 3: Alias runtime disposal (LIFO order with 5s timeout) ──────────
+    try {
+      await getAliasRuntime().disposeAll();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`Error during alias disposal: ${message}`, { _module: 'shutdown' });
     }
 
     logger.info('Process terminated cleanly.', { _module: 'shutdown' });

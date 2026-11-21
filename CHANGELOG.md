@@ -12,6 +12,13 @@ For full technical details, see the individual package changelogs:
 
 ## [Unreleased]
 
+### `@kerith/core`
+
+- Completed Fase 3 alias-channel discovery: static scan under `origin`, `key → file` table injected at bootstrap Step 05b, duplicate detection and dependency-cycle detection (`ALIAS_CIRCULAR`) before dynamic imports.
+- `kerith check` now reports undeclared `@prefix/name` imports and alias cycles, and no longer treats alias-channel imports as module/domain boundary violations.
+- Fixed alias-channel imports being invisible to the CLI module graph, `resolveAliases: false` being ignored by `check`, and fatal scan errors crashing the command instead of becoming blocking violations.
+- Renamed-import warnings now originate from the scanner, `strictLiteralName: false` is honoured, and the static-scan limitations are documented.
+
 ### CI/CD & Infrastructure
 
 - **Automated Monorepo Publishing with Changesets**: Migrated the publication strategy to Changesets (`@changesets/cli`) to support independent versioning and selective package publication (`core`, `identifiers`, `eslint-plugin`, `app`, `create-kerith`).

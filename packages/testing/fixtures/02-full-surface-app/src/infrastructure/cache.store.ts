@@ -10,3 +10,4 @@ export const CACHE_STORE = {
 }
 
 Store('cache', () => CACHE_STORE)
+export default CACHE_STORE

@@ -19,10 +19,44 @@ export * from './bootstrap/createApp.js';
 export * from './aliases/getAliases.js';
 export * from './aliases/cache.js';
 export * from './aliases/resolver.js';
+export * from './aliases/virtual-hooks.js';
+export {
+  ALIAS_RUNTIME_KEY,
+  getAliasRuntime,
+  _resetAliasRuntime,
+  normalizeCanonicalFileUrl,
+} from './aliases/runtime.js';
+export type {
+  AliasDeclaration,
+  AliasDeclarationOptions,
+  AliasIdentifierOptions,
+  AliasRuntime,
+} from './aliases/runtime.js';
+export {
+  scanAliasDeclarations,
+  type AliasScanEntry,
+  type AliasScanResult,
+  type AliasScanOptions,
+} from './bootstrap/alias-scan.js';
+export {
+  generateAliasTable,
+  writeAliasTableFile,
+  readAliasTableFile,
+  getAliasTablePath,
+  isRuntimeDistMode,
+  selectAliasTarget,
+  resolveTsConfigOptions,
+  computeDistPath,
+  type AliasTableFile,
+  type AliasTableFileEntry,
+  type CachedAliasEntry,
+} from './bootstrap/alias-table.js';
+export { CACHE_SCHEMA_VERSION } from './cache/bootstrap-cache.js';
 export * from './core/config.js';
 export * from './core/logger.js';
 export * from './core/http-logger.js';
 export * from './preload/index.js';
+export { initPreloadVirtualAliases } from './preload/preload-hook.js';
 export * from './extension/index.js';
 export { resetGlobalState } from './core/state.js';
 

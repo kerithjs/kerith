@@ -1,6 +1,59 @@
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import path from 'node:path';
 import type { ResolveHookContext, NextResolve } from '../aliases/resolver.js';
+import { KERITH_VERSION } from '../bootstrap/version.js';
+import {
+  isRuntimeDistMode,
+  selectAliasTarget,
+  type AliasTableFileEntry,
+} from '../bootstrap/alias-table.js';
+import { getAliasRuntime, normalizeCanonicalFileUrl } from '../aliases/runtime.js';
+import {
+  registerVirtualAliasHooks,
+  isVirtualAliasHookRegistered,
+  createVirtualAliasHooks,
+  clearVirtualAliasHooks,
+} from '../aliases/virtual-hooks.js';
+
+export {
+  registerVirtualAliasHooks,
+  isVirtualAliasHookRegistered,
+  createVirtualAliasHooks,
+  clearVirtualAliasHooks,
+};
+
+/**
+ * Initializes the virtual alias runtime table and registers virtual alias hooks in Node.
+ * Called at top-level of preload.js.
+ */
+export function initPreloadVirtualAliases(
+  aliasTable?: Record<string, AliasTableFileEntry>,
+  cwd: string = process.cwd(),
+  version?: string,
+): void {
+  if (version && version !== KERITH_VERSION) {
+    console.warn(
+      `[Kerith] Pre-loader version mismatch: preload.js was generated with v${version} but Kerith-core v${KERITH_VERSION} is installed. Run: kerith sync-preload`,
+    );
+  }
+
+  if (aliasTable && typeof aliasTable === 'object') {
+    const isDist = isRuntimeDistMode(cwd);
+    const runtime = getAliasRuntime();
+    const tableMap = new Map<string, string>();
+
+    for (const [key, entry] of Object.entries(aliasTable)) {
+      const target = selectAliasTarget(key, entry, isDist);
+      tableMap.set(key, normalizeCanonicalFileUrl(target));
+    }
+
+    if (tableMap.size > 0) {
+      runtime.setTable(tableMap);
+    }
+  }
+
+  registerVirtualAliasHooks();
+}
 
 /**
  * Creates a resolve hook with precomputed alias structures.

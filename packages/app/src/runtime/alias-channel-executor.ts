@@ -8,6 +8,7 @@ export function executeAliasChannel() {
       name: plugin.name,
       filePath: plugin.filePath,
       resolve: plugin.resolve,
+      options: plugin.options,
     })
   }
 }

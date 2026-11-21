@@ -2,6 +2,17 @@ import path from 'node:path';
 import { getAliasCache } from './cache.js';
 import type { GetAliasesOptions } from '../types/index.js';
 
+let hasWarnedVirtualAlias = false;
+
+/**
+ * Resets the virtual alias exclusion warning flag.
+ * Used primarily for testing.
+ * @internal
+ */
+export function _resetWarnedVirtualAlias(): void {
+  hasWarnedVirtualAlias = false;
+}
+
 export async function getAliases(options: GetAliasesOptions = {}): Promise<Record<string, string>> {
   const includeConfigAliases = options.includeConfigAliases ?? options.includeFolders ?? true;
   const absolute = options.absolute ?? false;
@@ -11,6 +22,16 @@ export async function getAliases(options: GetAliasesOptions = {}): Promise<Recor
   const cwd = process.cwd();
   
   for (const [alias, target] of Object.entries(allAliases)) {
+    if (target.startsWith('kerith-alias:')) {
+      if (!hasWarnedVirtualAlias) {
+        console.warn(
+          `[kerith] Virtual alias "${alias}" (${target}) excluded from getAliases(). Virtual aliases resolve to runtime instances and cannot be bundled as static file paths.`
+        );
+        hasWarnedVirtualAlias = true;
+      }
+      continue;
+    }
+
     if (!includeConfigAliases && !alias.startsWith('@modules/')) {
       continue;
     }

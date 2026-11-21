@@ -322,6 +322,7 @@ export interface KerithRegistry {
   getDomain(name: string): DomainRegistration | undefined;
   getAllDomains(): DomainRegistration[];
   resolveAlias(alias: string): string | undefined;
+  isVirtualAlias(alias: string): boolean;
   getAllAliases(): Record<string, string>;
   /** Bare alias keys (no `/*` wildcards) used for import scanning (REGLA-22). */
   getRegisteredAliases(): string[];
@@ -384,7 +385,9 @@ export interface KerithApp {
    * shutdown sequence:
    *   1. Close the HTTP server (no new connections accepted).
    *   2. Run the `onShutdown` hook from {@link ListenOptions} (if provided).
-   *   3. Exit with code 0.
+   *   3. Dispose resolved alias instances in reverse resolution order (LIFO),
+   *      with a 5000 ms budget per alias.
+   *   4. Exit with code 0.
    *
    * Also returns a `shutdown()` function you can call programmatically.
    *

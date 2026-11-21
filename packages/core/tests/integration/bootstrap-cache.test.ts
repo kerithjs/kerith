@@ -71,6 +71,7 @@ describe("Bootstrap Cache Integration", () => {
       fs.mkdirSync(path.join(tmpDir, ".kerith"), { recursive: true });
       fs.writeFileSync(cachePath, JSON.stringify({
         version: pkgVersion,
+        schemaVersion: 2,
         status: "ok",
         savedAt: new Date(Date.now() + 10000).toISOString(), // future so it doesn't trigger mtime rescan
         cwd: tmpDir,
@@ -159,6 +160,7 @@ describe("Bootstrap Cache Integration", () => {
       fs.mkdirSync(path.join(tmpDir, ".kerith"), { recursive: true });
       fs.writeFileSync(cachePath, JSON.stringify({
         version: pkgVersion,
+        schemaVersion: 2,
         status: "ok",
         savedAt: new Date().toISOString(),
         cwd: tmpDir,
@@ -253,6 +255,7 @@ describe("Bootstrap Cache Integration", () => {
       fs.mkdirSync(path.join(tmpDir, ".kerith"), { recursive: true });
       fs.writeFileSync(cachePath, JSON.stringify({
         version: pkgVersion,
+        schemaVersion: 2,
         status: "ok",
         savedAt: new Date(Date.now() + 10000).toISOString(),
         cwd: tmpDir,

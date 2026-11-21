@@ -10,6 +10,9 @@ import {
   describeDomainBoundaryViolation
 } from '../../core/utils/import-classifier.js';
 import { buildModuleKey } from '../../core/registry.js';
+import type { AliasScanResult } from '../../bootstrap/alias-scan.js';
+import { ALIAS_CHANNEL_PREFIXES } from '../../aliases/virtual-hooks.js';
+
 export const ViolationType = {
   PRIVATE_IMPORT: 'private-import',
   UNDECLARED_IMPORT: 'undeclared-import',
@@ -29,6 +32,10 @@ export const ViolationType = {
   TOO_MANY_SUBMODULES: 'too-many-submodules',
   UNUSED_EXPORT: 'unused-export',
   EMPTY_MODULE: 'empty-module',
+  // Fase 3 / 7.1
+  UNDECLARED_ALIAS: 'undeclared-alias',
+  ALIAS_CYCLE: 'alias-cycle',
+  ALIAS_SCAN_ERROR: 'alias-scan-error',
 } as const;
 
 export type ViolationType = typeof ViolationType[keyof typeof ViolationType];
@@ -130,6 +137,12 @@ export function detectRelativeBoundaryViolations(
   return violations;
 }
 
+/** True for `@config/x`, `@client/x`, etc. (including deeper channel subpaths). */
+export function isAliasChannelSpecifier(specifier: string): boolean {
+  if (!specifier.startsWith('@')) return false;
+  return ALIAS_CHANNEL_PREFIXES.has(specifier.slice(1).split('/')[0]);
+}
+
 /**
  * Heuristic to detect private imports and extract target module names.
  * Covers: @modules/name, @domain/module, @domain patterns.
@@ -174,6 +187,13 @@ export function detectViolations(
   for (const node of allNodes) {
     for (const imp of node.actualImports) {
       if (imp.specifier.startsWith('./') || imp.specifier.startsWith('../')) {
+        continue;
+      }
+
+      // Alias channel imports (@config, @client, @store, @provider, @adapter)
+      // are verified separately by detectAliasViolations and must not be treated
+      // as cross-domain or cross-module boundaries.
+      if (isAliasChannelSpecifier(imp.specifier)) {
         continue;
       }
 
@@ -388,4 +408,130 @@ export function detectCouplingWarnings(
   }
 
   return { warnings, fanInMap, fanOutMap };
+}
+
+
+// ─── Alias-channel violations (Fase 3 / 7.1) ─────────────────────────────────
+
+/**
+ * Options for `detectAliasViolations`.
+ */
+export interface AliasViolationOptions {
+  /**
+   * Result from `scanAliasDeclarations()`.
+   * When `undefined`, the alias checks are skipped (config.resolveAliases = false).
+   */
+  aliasScan: AliasScanResult | undefined;
+  /**
+   * The module graph, used to extract `@prefix/name` imports from every file
+   * in the module tree.
+   */
+  graph: ModuleGraph;
+  /**
+   * Absolute path to the project root (for relative-path display).
+   */
+  cwd?: string;
+}
+
+/**
+ * Checks imports of the form `@prefix/name` where `prefix` is a known alias
+ * channel prefix (`config`, `client`, `store`, `provider`, `adapter`).
+ *
+ * Returns:
+ *  - `UNDECLARED_ALIAS` for every import of `@prefix/name` that is not in
+ *    the static alias table (likely a typo or a missing declaration).
+ *  - `ALIAS_CYCLE` for every cycle detected in the alias dep-graph (DFS).
+ */
+export function detectAliasViolations(opts: AliasViolationOptions): StandardViolation[] {
+  const { aliasScan, graph } = opts;
+  if (!aliasScan) return [];
+
+  const { table } = aliasScan;
+  const violations: StandardViolation[] = [];
+
+  // ── 1. UNDECLARED_ALIAS ────────────────────────────────────────────────────
+  // Walk every module file's actual imports, find @prefix/name specifiers whose
+  // key is NOT in the static table.
+  const allNodes = [...graph.modules, ...(graph.submodules ?? [])];
+  for (const node of allNodes) {
+    for (const imp of node.actualImports) {
+      const spec = imp.specifier;
+      if (!spec.startsWith('@')) continue;
+      const parts = spec.split('/');
+      if (parts.length !== 2) continue;
+      const prefix = parts[0].slice(1); // strip '@'
+      if (!ALIAS_CHANNEL_PREFIXES.has(prefix)) continue;
+      const key = `${prefix}/${parts[1]}`;
+      if (!table.has(key)) {
+        // Build "did you mean" suggestions
+        const similar = [...table.keys()]
+          .filter((k) => {
+            const [kp, kn] = k.split('/');
+            if (kp !== prefix) return false;
+            if (kn.includes(parts[1]) || parts[1].includes(kn)) return true;
+            if (kn.length >= 3 && parts[1].length >= 3 && kn.slice(0, 3) === parts[1].slice(0, 3)) return true;
+            return false;
+          })
+          .slice(0, 3)
+          .map((k) => `@${k}`)
+          .join(', ');
+        const suggestion = similar
+          ? `No declaration found for "@${key}". Did you mean: ${similar}?`
+          : `No declaration found for "@${key}". Declare it with ${prefix.charAt(0).toUpperCase() + prefix.slice(1)}('${parts[1]}', factory) in a *.${prefix}.ts file.`;
+
+        violations.push({
+          type: ViolationType.UNDECLARED_ALIAS,
+          severity: 'warn',
+          module: node.name,
+          domain: node.domain,
+          message: `Undeclared alias import "@${key}" in module "${node.name}".`,
+          suggestion,
+          location: { file: imp.file, line: imp.line },
+        });
+      }
+    }
+  }
+
+  // ── 2. ALIAS_CYCLE (DFS on dep-graph) ─────────────────────────────────────
+  // Build dep-graph from entries
+  const depGraph = new Map<string, string[]>();
+  for (const entry of aliasScan.entries) {
+    depGraph.set(entry.key, entry.deps);
+  }
+
+  const globalVisited = new Set<string>();
+
+  function dfs(key: string, stack: string[]): string[] | null {
+    if (stack.includes(key)) {
+      const start = stack.indexOf(key);
+      return [...stack.slice(start), key];
+    }
+    if (globalVisited.has(key)) return null;
+    globalVisited.add(key);
+    stack.push(key);
+    for (const dep of depGraph.get(key) ?? []) {
+      const result = dfs(dep, stack);
+      if (result) return result;
+    }
+    stack.pop();
+    return null;
+  }
+
+  for (const key of table.keys()) {
+    if (globalVisited.has(key)) continue;
+    const cycle = dfs(key, []);
+    if (cycle) {
+      const chain = cycle.map((k) => `@${k}`).join(' → ');
+      violations.push({
+        type: ViolationType.ALIAS_CYCLE,
+        severity: 'error',
+        module: '', // cycle spans multiple files, no single module
+        message: `Circular alias dependency: ${chain}.`,
+        suggestion: `Break the cycle by restructuring the alias factories. Circular aliases cannot be resolved at bootstrap.`,
+        cycle: cycle.map((k) => `@${k}`),
+      });
+    }
+  }
+
+  return violations;
 }

@@ -96,3 +96,31 @@ describe('KerithErrorCode — Part 3 (Extension API)', () => {
     expect(err.details).toBe('Month field must be 1-12.')
   })
 })
+
+// ─── Alias lifecycle codes (6.1 / 6.2) ───────────────────────────────────────
+describe('KerithErrorCode — Alias lifecycle (6.1 / 6.2)', () => {
+  it('accepts ALIAS_FACTORY_FAILED and stores cause', () => {
+    const cause = new Error('connection refused')
+    const err = new KerithError('ALIAS_FACTORY_FAILED', 'factory failed', 'File: /db.ts', { cause })
+    expect(err.code).toBe('ALIAS_FACTORY_FAILED')
+    expect(err.cause).toBe(cause)
+    expect(err.details).toBe('File: /db.ts')
+  })
+
+  it('accepts ALIAS_FACTORY_TIMEOUT', () => {
+    const err = new KerithError('ALIAS_FACTORY_TIMEOUT', 'timed out after 30000ms')
+    expect(err.code).toBe('ALIAS_FACTORY_TIMEOUT')
+    expect(err instanceof KerithError).toBe(true)
+  })
+
+  it('accepts ALIAS_CIRCULAR', () => {
+    const err = new KerithError('ALIAS_CIRCULAR', 'cycle detected')
+    expect(err.code).toBe('ALIAS_CIRCULAR')
+    expect(err instanceof KerithError).toBe(true)
+  })
+
+  it('KerithError without cause has no .cause property set', () => {
+    const err = new KerithError('ALIAS_INVALID', 'bad timeout')
+    expect((err as any).cause).toBeUndefined()
+  })
+})

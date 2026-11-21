@@ -42,6 +42,8 @@ import type { BootConfig } from "../core/config.js";
 import type { PreloadConfig } from "../preload/index.js";
 import type { InternalRegistry } from "../core/registry.js";
 import type { ScanResult } from "./scanner.js";
+import type { AliasScanEntry } from "./alias-scan.js";
+import type { BootstrapCache } from "../cache/bootstrap-cache.js";
 
 // ─── Convenience alias for the resolved-module shape used inside the pipeline ──
 // (scanModulesToResolved return type, inlined to avoid a scanner import cycle)
@@ -118,6 +120,12 @@ export interface BootstrapContext {
 
   /** `true` when using `origin` mode (v2 scanner) instead of `modules` glob. */
   isOriginMode?: boolean;
+
+  /** Raw bootstrap cache read at step-02 (if cacheEnabled). */
+  rawCache?: BootstrapCache | null;
+
+  /** Alias declarations discovered statically (for cache write in step-09). */
+  aliasScanEntries?: AliasScanEntry[];
 
   /**
    * Flat list of resolved modules derived from `scanResult`.

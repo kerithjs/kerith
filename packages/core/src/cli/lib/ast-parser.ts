@@ -3,6 +3,7 @@ import * as acorn from "acorn";
 import * as walk from "acorn-walk";
 import * as ts from "typescript";
 import type { CallExpression, Literal, ObjectExpression, ArrayExpression } from 'estree';
+import { KerithError } from '../../core/errors.js';
 
 // Note about TypeScript and acorn parsing:
 // Acorn does not support TS syntax natively — if parsing fails, the file falls back to
@@ -11,6 +12,21 @@ export interface IdentifierCall {
   name: string;
   options: Record<string, unknown>;
   type?: string;
+  callee?: string;
+  prefix?: string;
+  line?: number;
+}
+
+export interface ExtractMultipleOptions {
+  /** If provided, only identifiers imported from one of these packages are returned. */
+  validSources?: string[];
+  /**
+   * Alias calls with a non-literal first argument throw `ALIAS_INVALID` with
+   * file and line by default. Set to `false` to skip those calls instead.
+   */
+  strictLiteralName?: boolean;
+  /** Optional warn callback for non-fatal issues (e.g. renamed imports). */
+  warn?: (msg: string) => void;
 }
 
 export interface ModuleDeclaration {
@@ -86,12 +102,41 @@ export function extractOptionsFromSource(src: string): Record<string, unknown> {
  *   - template literals (`` `foo` ``)
  *   - references to variables (`schema: createUserSchema`)
  */
+const ALIAS_CALLEE_NAMES = new Set(['Config', 'Client', 'Store', 'Provider', 'Adapter']);
+const DEFAULT_KERITH_SOURCES = new Set(['@kerith/app', '@kerith/identifiers']);
+
 function extractCallsViaTsCompiler(
   code: string,
   calleeNames: string[],
-): Array<{ name: string; options: Record<string, unknown>; type: string }> {
-  const found: Array<{ name: string; options: Record<string, unknown>; type: string }> = [];
-  const sourceFile = ts.createSourceFile('temp.ts', code, ts.ScriptTarget.Latest, /* setParentNodes */ true, ts.ScriptKind.TS);
+  filePath = 'temp.ts',
+  options?: ExtractMultipleOptions,
+): IdentifierCall[] {
+  const found: IdentifierCall[] = [];
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    code,
+    ts.ScriptTarget.Latest,
+    /* setParentNodes */ true,
+    filePath.endsWith('.js') || filePath.endsWith('.mjs') ? ts.ScriptKind.JS : ts.ScriptKind.TS,
+  );
+
+  const importMap = new Map<string, { original: string; fromKerith: boolean; renamed: boolean }>();
+  const validSources = options?.validSources ? new Set(options.validSources) : DEFAULT_KERITH_SOURCES;
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
+      const src = node.moduleSpecifier.text;
+      const isKerith = validSources.has(src);
+      const clause = node.importClause;
+      if (clause?.namedBindings && ts.isNamedImports(clause.namedBindings)) {
+        for (const el of clause.namedBindings.elements) {
+          const original = el.propertyName?.text ?? el.name.text;
+          const local = el.name.text;
+          importMap.set(local, { original, fromKerith: isKerith, renamed: local !== original });
+        }
+      }
+    }
+  });
 
   function extractOptionsFromObjectLiteral(obj: ts.ObjectLiteralExpression): Record<string, unknown> {
     const options: Record<string, unknown> = {};
@@ -104,6 +149,10 @@ function extractCallsViaTsCompiler(
 
       if (ts.isStringLiteral(prop.initializer) || ts.isNumericLiteral(prop.initializer)) {
         options[key] = prop.initializer.text;
+      } else if (prop.initializer.kind === ts.SyntaxKind.TrueKeyword) {
+        options[key] = true;
+      } else if (prop.initializer.kind === ts.SyntaxKind.FalseKeyword) {
+        options[key] = false;
       } else if (ts.isArrayLiteralExpression(prop.initializer)) {
         options[key] = prop.initializer.elements
           .filter(ts.isStringLiteral)
@@ -118,13 +167,80 @@ function extractCallsViaTsCompiler(
   }
 
   function visit(node: ts.Node) {
-    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && calleeNames.includes(node.expression.text)) {
-      const [nameArg, optionsArg] = node.arguments;
-      if (nameArg && ts.isStringLiteral(nameArg)) {
-        const options = optionsArg && ts.isObjectLiteralExpression(optionsArg)
-          ? extractOptionsFromObjectLiteral(optionsArg)
-          : {};
-        found.push({ name: nameArg.text, options, type: node.expression.text });
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+      const localName = node.expression.text;
+      const importInfo = importMap.get(localName);
+      const callee = importInfo?.original ?? localName;
+
+      if (calleeNames.includes(callee)) {
+        const isAlias = ALIAS_CALLEE_NAMES.has(callee) || Boolean(options?.validSources);
+        const { line } = ts.getLineAndCharacterOfPosition(sourceFile, node.getStart());
+        const lineNum = line + 1;
+
+        if (isAlias) {
+          if (!importInfo?.fromKerith) {
+            // Not imported from @kerith/app or @kerith/identifiers — skip user function with same name
+            ts.forEachChild(node, visit);
+            return;
+          }
+
+          if (importInfo.renamed) {
+            (options?.warn ?? console.warn)(
+              `Renamed import of "${callee}" in ${filePath}:${lineNum} is not supported by the static alias scanner in v1. Use "import { ${callee} } from '@kerith/identifiers'" directly.`
+            );
+            ts.forEachChild(node, visit);
+            return;
+          }
+
+          const nameArg = node.arguments[0];
+          if (!nameArg || !ts.isStringLiteral(nameArg)) {
+            if (options?.strictLiteralName === false) {
+              // Opt-out for callers that only need literal declarations; the
+              // bootstrap scanner passes `true` and always fails fast here.
+              ts.forEachChild(node, visit);
+              return;
+            }
+            throw new KerithError(
+              'ALIAS_INVALID',
+              `Alias identifier call "${callee}" in ${filePath}:${lineNum} has a non-literal name. Alias names must be string literals.`
+            );
+          }
+
+          const optionsArg = node.arguments.find(
+            (arg, idx) => idx > 0 && ts.isObjectLiteralExpression(arg),
+          ) as ts.ObjectLiteralExpression | undefined;
+
+          const optObj = optionsArg
+            ? extractOptionsFromObjectLiteral(optionsArg)
+            : {};
+
+          found.push({
+            name: nameArg.text,
+            options: optObj,
+            type: callee,
+            callee,
+            prefix: callee.toLowerCase(),
+            line: lineNum,
+          });
+          ts.forEachChild(node, visit);
+          return;
+        }
+
+        // Non-alias callee (Domain, Module, Controller, etc.)
+        const [nameArg, optionsArg] = node.arguments;
+        if (nameArg && ts.isStringLiteral(nameArg)) {
+          const optObj = optionsArg && ts.isObjectLiteralExpression(optionsArg)
+            ? extractOptionsFromObjectLiteral(optionsArg)
+            : {};
+          found.push({
+            name: nameArg.text,
+            options: optObj,
+            type: callee,
+            callee,
+            prefix: callee.toLowerCase(),
+            line: lineNum,
+          });
+        }
       }
     }
     ts.forEachChild(node, visit);
@@ -229,13 +345,28 @@ export async function extractIdentifierCall(
 
 export async function extractMultipleIdentifierCalls(
   filePath: string,
-  calleeNames: string[]
+  calleeNames: string[],
+  options?: ExtractMultipleOptions,
 ): Promise<IdentifierCall[]> {
   const found: IdentifierCall[] = [];
-  let code = "";
+  let code: string;
 
   try {
     code = await fs.promises.readFile(filePath, "utf-8");
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      return [];
+    }
+    throw error;
+  }
+
+  // If scanning for alias identifiers or custom valid sources, use the TS compiler directly
+  // so decorators, type annotations, and import tracking are fully supported.
+  if (calleeNames.some((c) => ALIAS_CALLEE_NAMES.has(c)) || options?.validSources) {
+    return extractCallsViaTsCompiler(code, calleeNames, filePath, options);
+  }
+
+  try {
     const ast = acorn.parse(code, {
       ecmaVersion: "latest",
       sourceType: "module",

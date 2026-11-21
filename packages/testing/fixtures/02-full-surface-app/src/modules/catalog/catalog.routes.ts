@@ -1,9 +1,9 @@
 import { Controller } from '@kerith/app'
 import { Router } from 'express'
-import { APP_CONFIG } from '@config/app'
-import { HTTP_CLIENT } from '@client/http'
-import { CACHE_STORE } from '@store/cache'
-import { DATA_PROVIDER } from '@provider/data'
+import APP_CONFIG from '@config/app'
+import HTTP_CLIENT from '@client/http'
+import CACHE_STORE from '@store/cache'
+import DATA_PROVIDER from '@provider/data'
 
 Controller('/catalog')
 

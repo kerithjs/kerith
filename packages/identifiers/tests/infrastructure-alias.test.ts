@@ -1,13 +1,18 @@
 // tests/infrastructure-alias.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { _resetAllChannels, getAliasPlugins } from '../src/channels/index.js'
+import { getAliasRuntime } from '@kerith/core'
 
 // ─── Mock @kerith/core ─────────────────────────────────────────────────────────
 // getFileCallerInfo() uses a real stack trace — in tests the call depth differs.
 // We mock it to return a predictable filePath so our assertions stay stable.
-vi.mock('@kerith/core', () => ({
-  getFileCallerInfo: (_name: string) => ({ filePath: '/mock/test-file.ts' }),
-}))
+vi.mock('@kerith/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@kerith/core')>()
+  return {
+    ...actual,
+    getFileCallerInfo: (_name: string) => ({ filePath: '/mock/test-file.ts' }),
+  }
+})
 
 // Identifiers must be imported AFTER the mock is in place.
 const { Client } = await import('../src/infrastructure/client.js')
@@ -18,6 +23,7 @@ const { Adapter } = await import('../src/infrastructure/adapter.js')
 
 beforeEach(() => {
   _resetAllChannels()
+  getAliasRuntime()._reset()
 })
 
 // ─── Client ───────────────────────────────────────────────────────────────────
@@ -49,6 +55,26 @@ describe('Client()', () => {
 
   it('accepts an optional third argument without throwing', () => {
     expect(() => Client('redis', () => ({}), { lazy: true, required: false })).not.toThrow()
+  })
+})
+
+// ─── 6.1 — Declared options are validated by the core runtime ────────────────
+describe('alias identifier options — validation (6.1)', () => {
+  it('throws ALIAS_INVALID when timeout is negative', () => {
+    expect(() => Client('redis', () => ({}), { timeout: -1 })).toThrowError(
+      /ALIAS_INVALID|non-negative integer/,
+    )
+  })
+
+  it('throws ALIAS_INVALID when required is not a boolean', () => {
+    expect(() => Client('redis', () => ({}), { required: 'yes' as any })).toThrowError(
+      /ALIAS_INVALID|must be a boolean/,
+    )
+  })
+
+  it('does not register a plugin when the declaration is rejected', () => {
+    expect(() => Client('redis', () => ({}), { timeout: -1 })).toThrow()
+    expect(getAliasPlugins()).toHaveLength(0)
   })
 })
 

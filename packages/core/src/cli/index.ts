@@ -11,6 +11,7 @@ import { syncPreloadCommand } from './commands/sync-preload.js'
 import { cleanCommand } from './commands/clean.js'
 import { initCommand } from './commands/init.js'
 import { generateCommand } from './commands/generate.js'
+import { buildCommand } from './commands/build.js'
 
 import fs from 'node:fs';
 
@@ -32,6 +33,7 @@ program
   .addCommand(checkCommand())
   .addCommand(devCommand())
   .addCommand(syncPreloadCommand())
+  .addCommand(buildCommand())
   .addCommand(cleanCommand())
   .exitOverride();
 

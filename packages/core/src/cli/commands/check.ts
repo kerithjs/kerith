@@ -4,7 +4,13 @@ import fs from 'node:fs';
 import pc from 'picocolors';
 import { loadConfig } from '../../core/config.js';
 import { buildModuleGraph } from '../lib/graph-builder.js';
-import { detectViolations, ViolationType, isHardViolation } from '../lib/violations.js';
+import {
+  detectViolations,
+  detectAliasViolations,
+  ViolationType,
+  isHardViolation,
+  type StandardViolation,
+} from '../lib/violations.js';
 import { runQualityRules } from '../lib/rules-engine.js';
 import { printCheckReport, AYU, type CheckReportData } from '../lib/check-reporter.js';
 import { loadNitsRegistry, saveNitsRegistry, initNitsRegistry, inferProjectName, scanShadowFiles } from '../../nits/nits-store.js';
@@ -17,6 +23,7 @@ import { createRegistry, registryContext, buildModuleKey } from '../../core/regi
 import { registerEntitiesFromScan } from '../../bootstrap/register-from-scan.js';
 import { scanFromConfig } from '../../bootstrap/scanner.js';
 import { loadDomainRegistry } from '../../nits/domain-store.js';
+import { scanAliasDeclarations, type AliasScanResult } from '../../bootstrap/alias-scan.js';
 
 function resolveCorePkgVersion(): string | null {
   const depths = [
@@ -36,6 +43,38 @@ function resolveCorePkgVersion(): string | null {
     }
   }
   return null;
+}
+
+/**
+ * Converts a fatal static-alias-scan error into a reportable `kerith check`
+ * violation, so a broken declaration never crashes the CLI with a stack trace.
+ */
+export function aliasScanErrorToViolation(err: unknown): StandardViolation {
+  const code =
+    err && typeof err === 'object' && 'code' in err
+      ? (err as { code?: string }).code
+      : undefined;
+  const isCycle = code === 'ALIAS_CIRCULAR';
+  const message = err instanceof Error ? err.message : String(err);
+  const cycleMatch = isCycle ? /:\s*(@[^\n]+)$/.exec(message) : null;
+  const details =
+    err && typeof err === 'object' && 'details' in err
+      ? (err as { details?: string }).details
+      : undefined;
+
+  const violation: StandardViolation = {
+    type: isCycle ? ViolationType.ALIAS_CYCLE : ViolationType.ALIAS_SCAN_ERROR,
+    severity: 'error',
+    module: '',
+    message,
+    suggestion: details
+      ? String(details).replace(/\s*\n\s*/g, ' | ')
+      : isCycle
+        ? 'Break the circular dependency between aliases.'
+        : 'Fix the static alias declaration before running `kerith check`.',
+  };
+  if (cycleMatch) violation.cycle = cycleMatch[1].split(' → ');
+  return violation;
 }
 
 export function checkCommand(): Command {
@@ -196,6 +235,30 @@ export function checkCommand(): Command {
         // Add shared access violations (system level)
         const sharedViolations = await checkSharedAccess(graph, registry, cwd);
         systemViolations = [...systemViolations, ...sharedViolations];
+
+        // Add alias-channel violations (Fase 3 / 7.1). When `resolveAliases`
+        // is disabled the scan and its rules do not apply at all.
+        if (config.resolveAliases !== false) {
+          const originPath = config.origin
+            ? path.resolve(cwd, config.origin)
+            : path.resolve(cwd, 'src');
+
+          let aliasScan: AliasScanResult | undefined;
+          try {
+            aliasScan = await scanAliasDeclarations({ originPath });
+          } catch (err: unknown) {
+            systemViolations.push(aliasScanErrorToViolation(err));
+          }
+
+          if (aliasScan) {
+            const aliasViolations = detectAliasViolations({
+              aliasScan,
+              graph,
+              cwd,
+            });
+            systemViolations = [...systemViolations, ...aliasViolations];
+          }
+        }
 
         // Run all quality rules via the unified engine
         const qualityWarnings = runQualityRules(graph, config.resolvedRules);

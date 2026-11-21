@@ -22,9 +22,12 @@
  */
 
 
+import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { CacheManager } from "../../cache/bootstrap-cache.js";
 import type { CachedModule } from "../../cache/bootstrap-cache.js";
+import type { CachedAliasEntry } from "../alias-table.js";
 import { getModuleSignature } from "../../cache/mtime-validator.js";
 import { normalizePath } from "../../core/utils/paths.js";
 import type { BootstrapContext } from "../context.js";
@@ -92,6 +95,39 @@ export function runCacheWrite(ctx: BootstrapContext): void {
     },
   );
 
+  // Build cached alias declarations with mtime/size
+  let cachedAliases: CachedAliasEntry[] = [];
+  if (ctx.aliasScanEntries && ctx.aliasScanEntries.length > 0) {
+    for (const entry of ctx.aliasScanEntries) {
+      let mtimeMs = entry.mtimeMs ?? 0;
+      let size = entry.size ?? 0;
+      if (!mtimeMs || !size) {
+        try {
+          const abs = entry.filePath.startsWith("file://")
+            ? fileURLToPath(entry.filePath)
+            : path.resolve(entry.filePath);
+          const stats = fs.statSync(abs);
+          mtimeMs = stats.mtimeMs;
+          size = stats.size;
+        } catch {
+          // File not accessible, default 0
+        }
+      }
+      cachedAliases.push({
+        prefix: entry.prefix,
+        name: entry.name,
+        key: entry.key,
+        filePath: entry.filePath,
+        deps: entry.deps,
+        mtimeMs,
+        size,
+      });
+    }
+  } else if (ctx.rawCache?.data?.aliases && Array.isArray(ctx.rawCache.data.aliases)) {
+    // Preserve previously cached aliases if not overwritten
+    cachedAliases = ctx.rawCache.data.aliases;
+  }
+
   CacheManager.write(
     {
       domains: ctx.scanResult.domains,
@@ -99,7 +135,7 @@ export function runCacheWrite(ctx: BootstrapContext): void {
       submodules: ctx.scanResult.submodules,
       shared: ctx.scanResult.shared,
       identifiers: [],
-      aliases: [],
+      aliases: cachedAliases,
     },
     KERITH_VERSION,
     ctx.configHash,

@@ -10,3 +10,4 @@ export const APP_CONFIG = {
 }
 
 Config('app', () => APP_CONFIG)
+export default APP_CONFIG

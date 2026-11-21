@@ -60,6 +60,27 @@ describe('cli/lib/import-scanner — REGLA-22', () => {
     expect(aliases).toContain('@middleware');
   });
 
+  it('buildActiveAliasesFromConfig keeps alias-channel imports visible to kerith check', () => {
+    const aliases = buildActiveAliasesFromConfig({ aliases: {} });
+    for (const prefix of ['config', 'client', 'store', 'provider', 'adapter']) {
+      expect(aliases).toContain(`@${prefix}`);
+    }
+
+    const p = writeTempFile([
+      "import db from '@client/db';",
+      "import app from '@config/app';",
+      "import ui from '@vitest/ui';",
+    ].join('\n'));
+    tmpFiles.push(p);
+
+    // Without the channel prefixes these never reach ModuleNode.actualImports,
+    // so detectAliasViolations() cannot report undeclared aliases (Fase 3/7.1).
+    expect(extractModuleImports(p, aliases).map(r => r.specifier)).toEqual([
+      '@client/db',
+      '@config/app',
+    ]);
+  });
+
   it('getRegisteredAliases returns registry keys without wildcards', () => {
     const registry = createRegistry();
     registry.registerAlias('@modules', '/abs/modules');

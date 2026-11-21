@@ -15,7 +15,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { CacheManager } from "../../cache/bootstrap-cache.js";
+import { CacheManager, CACHE_SCHEMA_VERSION } from "../../cache/bootstrap-cache.js";
 import { MtimeValidator } from "../../cache/mtime-validator.js";
 import { scanFromConfig, scanModulesToResolved } from "../scanner.js";
 import type { BootstrapContext } from "../context.js";
@@ -66,6 +66,7 @@ export async function runCacheAndScan(ctx: BootstrapContext): Promise<void> {
 
   if (cacheEnabled) {
     const rawCache = CacheManager.read();
+    ctx.rawCache = rawCache;
     CacheManager.pending();
     configHash = CacheManager.hashConfig(configPath);
 
@@ -74,9 +75,11 @@ export async function runCacheAndScan(ctx: BootstrapContext): Promise<void> {
         cacheLogReason =
           rawCache.version !== KERITH_VERSION
             ? "(cache invalid — version mismatch)"
-            : rawCache.cwd !== process.cwd()
-              ? "(cache invalid — directory moved)"
-              : "(cache invalid — config modified)";
+            : rawCache.schemaVersion !== CACHE_SCHEMA_VERSION
+              ? "(cache invalid — schema version mismatch)"
+              : rawCache.cwd !== process.cwd()
+                ? "(cache invalid — directory moved)"
+                : "(cache invalid — config modified)";
       } else {
         // toRescan: domain IDs whose modules on disk changed (by mtime or size).
         // Domains not in toRescan will be loaded directly from rawCache.data.

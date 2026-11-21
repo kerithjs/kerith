@@ -81,7 +81,8 @@ export interface InternalRegistry extends KerithRegistryAdvanced {
   hasModuleById(nitsId: string): boolean;
   getModuleById(nitsId: string): RegisteredModule | undefined;
   getModuleByPath(dirPath: string): RegisteredModule | undefined;
-  registerAlias(alias: string, path: string): void;
+  registerAlias(alias: string, path: string, options?: { virtual?: boolean }): void;
+  isVirtualAlias(alias: string): boolean;
   registerShared(entry: SharedEntry, log?: LogHandler): void;
   getShared(alias: string): SharedEntry | undefined;
   getAllShared(): SharedEntry[];
@@ -136,6 +137,7 @@ export function createRegistry(): InternalRegistry {
   const submodulesByPath = new Map<string, string>();
 
   const aliases = new Map<string, string>();
+  const virtualAliases = new Set<string>();
   const shared = new Map<string, SharedEntry>();
   const controllers = new Map<string, ControllerEntry>();
   const services = new Map<string, ServiceEntry>();
@@ -411,8 +413,15 @@ export function createRegistry(): InternalRegistry {
       return 'module';
     },
 
-    registerAlias(alias: string, targetPath: string): void {
+    registerAlias(alias: string, targetPath: string, options?: { virtual?: boolean }): void {
       aliases.set(alias, targetPath);
+      if (options?.virtual || targetPath.startsWith('kerith-alias:')) {
+        virtualAliases.add(alias);
+      }
+    },
+
+    isVirtualAlias(alias: string): boolean {
+      return virtualAliases.has(alias) || aliases.get(alias)?.startsWith('kerith-alias:') === true;
     },
 
     registerShared(entry: SharedEntry, log?: LogHandler): void {
@@ -544,6 +553,7 @@ export function createRegistry(): InternalRegistry {
       submodules.clear();
       submodulesByPath.clear();
       aliases.clear();
+      virtualAliases.clear();
       shared.clear();
       controllers.clear();
       services.clear();

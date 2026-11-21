@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { getAliases, resolveAlias } from '../../src/index.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { getAliases, resolveAlias, _resetWarnedVirtualAlias } from '../../src/index.js';
 import { updateAliasCache, clearAliasCache } from '../../src/aliases/cache.js';
 
 describe('P4 getAliases and resolveAlias', () => {
@@ -45,6 +45,33 @@ describe('P4 getAliases and resolveAlias', () => {
       // includeConfigAliases=true wins even if includeFolders=false
       const aliases = await getAliases({ includeConfigAliases: true, includeFolders: false });
       expect(aliases).toHaveProperty('@shared');
+    });
+
+    it('should exclude virtual aliases (kerith-alias:) and emit warning only once', async () => {
+      _resetWarnedVirtualAlias();
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      updateAliasCache({
+        ...mockAliases,
+        '@client/db': 'kerith-alias:client/db',
+        '@store/cache': 'kerith-alias:store/cache',
+      });
+
+      const aliases = await getAliases({ absolute: true });
+      expect(aliases).not.toHaveProperty('@client/db');
+      expect(aliases).not.toHaveProperty('@store/cache');
+      expect(aliases).toHaveProperty('@modules/users');
+      expect(aliases).toHaveProperty('@shared');
+
+      // Warns once on the first virtual alias encountered
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Virtual alias "@client/db"'));
+
+      // Subsequent call does not emit another warning
+      await getAliases({ absolute: true });
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+
+      warnSpy.mockRestore();
     });
   });
 

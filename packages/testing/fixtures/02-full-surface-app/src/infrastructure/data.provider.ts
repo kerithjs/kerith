@@ -14,3 +14,4 @@ export const DATA_PROVIDER = {
 }
 
 Provider('data', () => DATA_PROVIDER)
+export default DATA_PROVIDER
